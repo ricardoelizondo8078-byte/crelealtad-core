@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "CRELEALTAD Mobile",
+    "slug": "crelealtad-mobile",
+    "version": "1.0.0",
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}

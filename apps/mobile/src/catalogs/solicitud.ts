@@ -1,0 +1,60 @@
+export const GENERO_OPTIONS = ['MASCULINO', 'FEMENINO'] as const;
+
+export const ESTADO_CIVIL_OPTIONS = ['SOLTERO', 'DIVORCIADO', 'UNION LIBRE', 'CASADO', 'VIUDO'] as const;
+
+export const NIVEL_ESTUDIO_OPTIONS = ['PRIMARIA', 'SECUNDARIA', 'PREPARATORIA', 'TECNICA', 'UNIVERSIDAD'] as const;
+
+export const NACIONALIDADES_OPTIONS = ['MEXICANA', 'EXTRANJERA'] as const;
+
+export const ESTADOS_MEXICO_OPTIONS = [
+  'AGUASCALIENTES',
+  'BAJA CALIFORNIA',
+  'BAJA CALIFORNIA SUR',
+  'CAMPECHE',
+  'CHIAPAS',
+  'CHIHUAHUA',
+  'CIUDAD DE MEXICO',
+  'COAHUILA',
+  'COLIMA',
+  'DURANGO',
+  'ESTADO DE MEXICO',
+  'GUANAJUATO',
+  'GUERRERO',
+  'HIDALGO',
+  'JALISCO',
+  'MICHOACAN',
+  'MORELOS',
+  'NAYARIT',
+  'NUEVO LEON',
+  'OAXACA',
+  'PUEBLA',
+  'QUERETARO',
+  'QUINTANA ROO',
+  'SAN LUIS POTOSI',
+  'SINALOA',
+  'SONORA',
+  'TABASCO',
+  'TAMAULIPAS',
+  'TLAXCALA',
+  'VERACRUZ',
+  'YUCATAN',
+  'ZACATECAS',
+] as const;
+
+export const PARENTESCO_OPTIONS = [
+  'ESPOSO(A)',
+  'HIJO(A)',
+  'PADRE/MADRE',
+  'HERMANO(A)',
+  'FAMILIAR',
+  'AMIGO(A)',
+  'OTRO',
+] as const;
+
+export const ANTIGUEDAD_NEGOCIO_OPTIONS = [
+  '0-1 AÑO',
+  '1-3 AÑOS',
+  '3-5 AÑOS',
+  '5-10 AÑOS',
+  'MÁS DE 10 AÑOS',
+] as const;

@@ -1,0 +1,1 @@
+export { SolicitudFormScreen } from './SolicitudFormScreen';

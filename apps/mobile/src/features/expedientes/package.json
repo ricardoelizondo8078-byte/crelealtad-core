@@ -1,0 +1,11 @@
+{
+  "name": "crelealtad-core",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"cd apps/api && npm start\" \"cd apps/mobile && npx expo start --clear\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

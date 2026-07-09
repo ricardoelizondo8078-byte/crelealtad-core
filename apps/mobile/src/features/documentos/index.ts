@@ -1,0 +1,1 @@
+export { DocumentosScreen } from './DocumentosScreen';

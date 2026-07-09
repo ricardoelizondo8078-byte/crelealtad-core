@@ -1,0 +1,11 @@
+{
+  "name": "crelealtad-core",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev-runner.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
