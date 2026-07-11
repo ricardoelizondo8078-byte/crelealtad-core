@@ -1,0 +1,67 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { SolicitudesService } from './solicitudes.service';
+import { SolicitudEntity } from './solicitud.entity';
+
+describe('SolicitudesService', () => {
+  let service: SolicitudesService;
+  let repository: Repository<SolicitudEntity>;
+
+  const mockRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    find: jest.fn(),
+    findOne: jest.fn(),
+    merge: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        SolicitudesService,
+        {
+          provide: getRepositoryToken(SolicitudEntity),
+          useValue: mockRepository,
+        },
+      ],
+    }).compile();
+
+    service = module.get<SolicitudesService>(SolicitudesService);
+    repository = module.get<Repository<SolicitudEntity>>(getRepositoryToken(SolicitudEntity));
+  });
+
+  it('creates a solicitud attached to a solicitante', async () => {
+    const dto = {
+      solicitanteId: 'sol-1',
+      curp: 'LOPA900101',
+      fechaNacimiento: '1990-01-01',
+      domicilio: 'Calle 1',
+      beneficiarioNombre: 'Juan López',
+      beneficiarioTelefono: '5550000',
+      referencia1Nombre: 'María',
+      referencia1Telefono: '5550001',
+      referencia2Nombre: 'Pedro',
+      referencia2Telefono: '5550002',
+    };
+
+    const expectedResult = {
+      id: 'uuid-123',
+      ...dto,
+      seccionCompletada: 0,
+      aceptaTerminos: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockRepository.findOne.mockResolvedValue(null);
+    mockRepository.create.mockReturnValue(expectedResult);
+    mockRepository.save.mockResolvedValue(expectedResult);
+
+    const result = await service.createForSolicitante(dto);
+
+    expect(result.solicitanteId).toBe('sol-1');
+    expect(result.curp).toBe('LOPA900101');
+    expect(result.id).toBeTruthy();
+  });
+});

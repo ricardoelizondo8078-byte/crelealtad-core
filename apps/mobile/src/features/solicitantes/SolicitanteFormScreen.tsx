@@ -130,6 +130,9 @@ export const SolicitanteFormScreen: React.FC<SolicitanteFormScreenProps> = ({ ex
         body: JSON.stringify({
           expedienteId,
           nombre: fullName,
+          nombres: nombres.trim(),
+          apellidoPaterno: apellidoPaterno.trim(),
+          apellidoMaterno: apellidoMaterno.trim(),
           telefono: normalizePhone(telefono),
           montoSolicitado: Number(montoSolicitado),
         }),

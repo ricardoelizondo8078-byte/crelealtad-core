@@ -1,0 +1,250 @@
+================================================================================
+PLAN DE TRABAJO: OPCIÓN B - MVP ITERATIVO
+CRELEALTAD CORE - Módulo Documentación
+Fecha: 2026-07-10
+================================================================================
+
+🎯 OPCIÓN B CONFIRMADA: MVP Iterativo - Módulo Documentación
+================================================================================
+
+Prioridad: Hacer que el flujo sea **cómodo, rápido e intuitivo** para la asesora en campo.
+
+Enfoque:
+--------
+✅ La UX es lo primero
+✅ Datos falsos están bien por ahora (solo probamos flujo)
+✅ Lo importante es que sea fácil de usar en campo
+✅ Validar con Expo Go en móvil real
+
+
+================================================================================
+📱 SITUACIÓN ACTUAL DETECTADA
+================================================================================
+
+Tienes actualmente:
+-------------------
+✅ Repositorio en GitHub
+✅ App funcionando vía Expo Go en el móvil
+✅ Módulo de Documentación parcial (45%)
+✅ Datos falsos para pruebas (correcto para esta etapa)
+✅ Backend API con NestJS
+✅ Base de datos PostgreSQL (schema definido)
+✅ Design System documentado
+
+
+================================================================================
+❓ NECESITO QUE ME DIGAS (3 PREGUNTAS)
+================================================================================
+
+PREGUNTA 1: ¿Cuál es el repositorio de GitHub?
+-----------------------------------------------
+
+Dame el link o el nombre del repo para:
+- Ver qué tienen actualmente en GitHub
+- Entender la estructura del proyecto
+- Saber desde dónde partir
+- Ver el historial de commits
+
+Ejemplo: https://github.com/tuusuario/crelealtad-core
+
+
+PREGUNTA 2: ¿Dónde quieres que trabaje?
+----------------------------------------
+
+Tengo 3 opciones:
+
+OPCIÓN A: Trabajar en este repositorio local
+(C:\Users\Admin\Desktop\CRELEALTAD CORE)
+
+Ventajas:
+✅ Ya está aquí en tu computadora
+✅ Puedo modificar directamente
+✅ Empezamos inmediatamente
+
+Desventajas:
+⚠️ Necesitarías hacer push a GitHub después manualmente
+⚠️ Puede que no sea la versión más actualizada
+
+
+OPCIÓN B: Clonar el repositorio de GitHub aquí
+
+Ventajas:
+✅ Trabajamos sobre la versión más actualizada
+✅ Control de versiones automático
+✅ Puedo hacer commits y push directamente
+
+Desventajas:
+⚠️ Necesito el link del repo
+⚠️ Tardaría 5-10 minutos en clonar
+
+
+OPCIÓN C: Trabajar directamente conectado a GitHub
+
+Ventajas:
+✅ Todo sincronizado automáticamente
+✅ Puedo ver el historial completo
+✅ Branches, PRs, etc.
+
+Desventajas:
+⚠️ Necesitas darme acceso al repo
+
+
+PREGUNTA 3: ¿Qué falta específicamente en el módulo de Documentación?
+----------------------------------------------------------------------
+
+Dime qué YA FUNCIONA vía Expo Go:
+----------------------------------
+¿Ya puedes crear grupos? ✅ / ❌
+¿Ya puedes crear expedientes? ✅ / ❌
+¿Ya puedes agregar solicitantes? ✅ / ❌
+¿Ya puedes capturar datos de solicitantes? ✅ / ❌
+¿Ya puedes capturar documentos? ✅ / ❌
+¿Ya puedes tomar fotos? ✅ / ❌
+¿Ya puedes ver lista de expedientes? ✅ / ❌
+¿Ya puedes buscar expedientes? ✅ / ❌
+¿Ya puedes ver KPIs (solicitantes completas/pendientes)? ✅ / ❌
+
+Y qué NO FUNCIONA o qué FALTA:
+-------------------------------
+¿Faltan validaciones en tiempo real?
+¿Falta el cálculo de completitud automática?
+¿Falta cambio automático de estados?
+¿Falta el botón "Enviar a Verificación"?
+¿Falta captura de solicitud digital?
+¿Faltan alertas de pendientes?
+¿Falta guardado automático?
+¿Falta manejo de solicitantes retiradas?
+
+
+================================================================================
+🚀 MI PROPUESTA DE TRABAJO
+================================================================================
+
+Una vez que me digas lo anterior, puedo:
+
+PASO 1: Revisar lo que ya tienes
+---------------------------------
+- Ver código actual en Expo
+- Ver pantallas implementadas
+- Ver componentes UI existentes
+- Ver servicios del backend
+
+PASO 2: Identificar qué falta
+------------------------------
+- Hacer checklist de funcionalidades pendientes
+- Priorizar según impacto en UX
+- Estimar tiempo de cada una
+
+PASO 3: Completar el módulo
+----------------------------
+Implementar:
+✅ Guardado automático (sin botón "Guardar")
+✅ Validaciones en tiempo real
+✅ Estados automáticos (En Documentación → Listo para Verificación)
+✅ Cálculo de completitud (¿cuántas solicitantes completas?)
+✅ Indicadores de pendientes (¿qué falta?)
+✅ Flujo completo hasta "Listo para Verificación"
+
+PASO 4: Probar en Expo Go
+--------------------------
+- Pruebas inmediatas en tu móvil
+- Ajustes de UX en tiempo real
+- Validar que sea intuitivo
+
+PASO 5: Iterar
+--------------
+- Según tu feedback
+- Según pruebas en campo
+- Hasta que sea 100% cómodo de usar
+
+
+================================================================================
+⚡ MIENTRAS ME RESPONDES
+================================================================================
+
+¿Quieres que revise el código actual que tienes aquí?
+(C:\Users\Admin\Desktop\CRELEALTAD CORE)
+
+Puedo hacer un análisis de:
+----------------------------
+✅ Qué pantallas ya están hechas
+✅ Qué componentes UI ya existen
+✅ Qué servicios de backend están implementados
+✅ Qué falta implementar
+✅ Checklist de tareas pendientes
+
+Esto te ayudaría a:
+-------------------
+- Saber exactamente dónde estamos parados
+- Ver cuánto falta para completar Documentación
+- Priorizar qué hacer primero
+
+¿ARRANCO CON ESO MIENTRAS ME PASAS EL LINK DE GITHUB?
+
+
+================================================================================
+📋 CHECKLIST DE INFORMACIÓN QUE NECESITO
+================================================================================
+
+[ ] Link del repositorio de GitHub
+[ ] ¿Dónde trabajo? (Opción A, B o C)
+[ ] ¿Qué funciona actualmente en Expo Go?
+[ ] ¿Qué NO funciona o falta?
+
+
+================================================================================
+🎯 OBJETIVO FINAL DE ESTA FASE
+================================================================================
+
+Al terminar esta fase (Opción B), tendrás:
+
+✅ Módulo de Documentación 100% funcional
+✅ Flujo completo: Crear Grupo → Expediente → Solicitantes → Documentos → Listo para Verificación
+✅ Estados automáticos
+✅ Guardado automático
+✅ Validaciones en tiempo real
+✅ UX optimizada para campo (fácil, rápida, intuitiva)
+✅ Probado en móvil real con Expo Go
+✅ Listo para probar con asesora real
+
+Lo que NO tendrás todavía (y está bien):
+-----------------------------------------
+⏰ Módulos de Verificación, Análisis, Desembolso (vienen después)
+⏰ Autenticación completa (por ahora puede ser básica)
+⏰ Offline first (si hay internet funciona)
+⏰ Base de datos productiva (datos falsos están bien)
+
+
+================================================================================
+💡 RECOMENDACIÓN ADICIONAL
+================================================================================
+
+Mientras implemento, podemos:
+-----------------------------
+1. Ir probando cada pantalla en Expo Go
+2. Ajustar en tiempo real según tu feedback
+3. Validar que cumpla el Design System
+4. Asegurar que sea fácil de usar con una mano
+5. Probar con sol (alto contraste)
+
+Iteraciones rápidas:
+--------------------
+Implemento → Pruebas en Expo Go → Feedback → Ajustes → Repetir
+
+Así garantizamos que sea realmente cómodo de usar en campo.
+
+
+================================================================================
+🚀 SIGUIENTE PASO INMEDIATO
+================================================================================
+
+Dime:
+-----
+1. Link de GitHub (o "usa el local")
+2. ¿Reviso el código actual mientras tanto? (Sí/No)
+3. ¿Qué es lo que más te preocupa de la UX actual?
+
+
+================================================================================
+FIN DE NOTAS
+================================================================================

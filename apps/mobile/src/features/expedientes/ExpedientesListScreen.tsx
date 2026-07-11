@@ -23,7 +23,7 @@ export const ExpedientesListScreen: React.FC<ExpedientesListScreenProps> = ({ on
   useEffect(() => {
     const loadExpedientes = async () => {
       try {
-        const response = await fetch(apiUrl('/expedientes/group/group-1'));
+        const response = await fetch(apiUrl('/expedientes'));
         if (!response.ok) {
           throw new Error('Failed to load expedientes');
         }

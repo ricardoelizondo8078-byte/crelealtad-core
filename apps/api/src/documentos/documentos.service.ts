@@ -1,93 +1,136 @@
-import { Injectable } from '@nestjs/common';
-import { DocumentoClave, DocumentoEntity, DocumentoEstado } from './documentos.entity';
-
-const DOCUMENTOS_BASE: Array<Pick<DocumentoEntity, 'clave' | 'nombre' | 'requerido'>> = [
-  { clave: 'solicitud_fisica', nombre: 'Solicitud fisica', requerido: true },
-  { clave: 'ine', nombre: 'INE', requerido: true },
-  { clave: 'comprobante_domicilio', nombre: 'Comprobante domicilio', requerido: true },
-  { clave: 'comprobante_credito_externo', nombre: 'Comprobante credito externo', requerido: false },
-];
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { DocumentoEntity, DocumentoTipo, DocumentoEstado } from './documento.entity';
+import { SolicitantesService } from '../solicitantes/solicitantes.service';
 
 @Injectable()
 export class DocumentosService {
-  private documentos: DocumentoEntity[] = [
-    {
-      id: 'doc-sol-demo-completa-solicitud_fisica',
-      solicitanteId: 'sol-demo-completa',
-      clave: 'solicitud_fisica',
-      nombre: 'Solicitud fisica',
-      requerido: true,
-      estado: 'Capturado',
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'doc-sol-demo-completa-ine',
-      solicitanteId: 'sol-demo-completa',
-      clave: 'ine',
-      nombre: 'INE',
-      requerido: true,
-      estado: 'Capturado',
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'doc-sol-demo-completa-comprobante_domicilio',
-      solicitanteId: 'sol-demo-completa',
-      clave: 'comprobante_domicilio',
-      nombre: 'Comprobante domicilio',
-      requerido: true,
-      estado: 'Capturado',
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'doc-sol-demo-completa-comprobante_credito_externo',
-      solicitanteId: 'sol-demo-completa',
-      clave: 'comprobante_credito_externo',
-      nombre: 'Comprobante credito externo',
-      requerido: false,
-      estado: 'Pendiente',
-      updatedAt: new Date().toISOString(),
-    },
-  ];
+  constructor(
+    @InjectRepository(DocumentoEntity)
+    private readonly documentoRepository: Repository<DocumentoEntity>,
+    @Inject(forwardRef(() => SolicitantesService))
+    private readonly solicitantesService: SolicitantesService,
+  ) {}
 
-  listBySolicitante(solicitanteId: string): DocumentoEntity[] {
-    this.ensureDefaults(solicitanteId);
+  async listBySolicitante(solicitanteId: string): Promise<DocumentoEntity[]> {
+    const documentos = await this.documentoRepository.find({
+      where: { solicitanteId },
+    });
 
-    return this.documentos.filter((documento) => documento.solicitanteId === solicitanteId);
+    // Si no hay documentos, retornar los 4 tipos base como PENDIENTE
+    // (NO los creamos en BD todavía)
+    if (documentos.length === 0) {
+      return Object.values(DocumentoTipo).map((tipo) => ({
+        id: '', // Temporal, no guardado
+        solicitanteId,
+        tipo,
+        estado: DocumentoEstado.PENDIENTE,
+        archivoBase64: null,
+        archivoNombre: null,
+        fechaCarga: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })) as DocumentoEntity[];
+    }
+
+    // Retornar los que existen + llenar los faltantes como PENDIENTE
+    const tiposExistentes = new Set(documentos.map((d) => d.tipo));
+    const faltantes = Object.values(DocumentoTipo)
+      .filter((tipo) => !tiposExistentes.has(tipo))
+      .map((tipo) => ({
+        id: '', // Temporal
+        solicitanteId,
+        tipo,
+        estado: DocumentoEstado.PENDIENTE,
+        archivoBase64: null,
+        archivoNombre: null,
+        fechaCarga: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })) as DocumentoEntity[];
+
+    return [...documentos, ...faltantes];
   }
 
-  updateStatus(solicitanteId: string, clave: DocumentoClave, estado: DocumentoEstado): DocumentoEntity | undefined {
-    this.ensureDefaults(solicitanteId);
+  async updateStatus(
+    solicitanteId: string,
+    tipo: DocumentoTipo,
+    estado: DocumentoEstado,
+  ): Promise<DocumentoEntity> {
+    const existing = await this.documentoRepository.findOne({
+      where: { solicitanteId, tipo },
+    });
 
-    const documento = this.documentos.find(
-      (currentDocumento) => currentDocumento.solicitanteId === solicitanteId && currentDocumento.clave === clave,
-    );
+    if (existing) {
+      existing.estado = estado;
+      existing.updatedAt = new Date();
+      return this.documentoRepository.save(existing);
+    }
+
+    // Crear nuevo documento
+    const documento = this.documentoRepository.create({
+      solicitanteId,
+      tipo,
+      estado,
+    });
+
+    return this.documentoRepository.save(documento);
+  }
+
+  async cargarDocumento(
+    solicitanteId: string,
+    tipo: DocumentoTipo,
+    archivoBase64: string,
+    archivoNombre: string,
+  ): Promise<DocumentoEntity> {
+    // Buscar si ya existe un documento de este tipo
+    const existing = await this.documentoRepository.findOne({
+      where: { solicitanteId, tipo },
+    });
+
+    if (existing) {
+      // Actualizar el existente
+      existing.archivoBase64 = archivoBase64;
+      existing.archivoNombre = archivoNombre;
+      existing.estado = DocumentoEstado.CARGADO;
+      existing.fechaCarga = new Date();
+      const savedDoc = await this.documentoRepository.save(existing);
+
+      // Recalcular estado del solicitante
+      await this.solicitantesService.recalcularEstado(solicitanteId);
+
+      return savedDoc;
+    }
+
+    // Crear nuevo documento
+    const documento = this.documentoRepository.create({
+      solicitanteId,
+      tipo,
+      archivoBase64,
+      archivoNombre,
+      estado: DocumentoEstado.CARGADO,
+      fechaCarga: new Date(),
+    });
+
+    const savedDoc = await this.documentoRepository.save(documento);
+
+    // Recalcular estado del solicitante
+    await this.solicitantesService.recalcularEstado(solicitanteId);
+
+    return savedDoc;
+  }
+
+  async verificarDocumento(documentoId: string): Promise<DocumentoEntity> {
+    const documento = await this.documentoRepository.findOne({
+      where: { id: documentoId },
+    });
 
     if (!documento) {
-      return undefined;
+      throw new Error(`Documento con ID ${documentoId} no encontrado`);
     }
 
-    documento.estado = estado;
-    documento.updatedAt = new Date().toISOString();
-    return documento;
-  }
-
-  private ensureDefaults(solicitanteId: string) {
-    const existing = this.documentos.filter((documento) => documento.solicitanteId === solicitanteId);
-    if (existing.length > 0) {
-      return;
-    }
-
-    const now = new Date().toISOString();
-    this.documentos.push(
-      ...DOCUMENTOS_BASE.map((documentoBase) => ({
-        id: `doc-${solicitanteId}-${documentoBase.clave}`,
-        solicitanteId,
-        clave: documentoBase.clave,
-        nombre: documentoBase.nombre,
-        requerido: documentoBase.requerido,
-        estado: 'Pendiente' as DocumentoEstado,
-        updatedAt: now,
-      })),
-    );
+    documento.estado = DocumentoEstado.VERIFICADO;
+    return this.documentoRepository.save(documento);
   }
 }

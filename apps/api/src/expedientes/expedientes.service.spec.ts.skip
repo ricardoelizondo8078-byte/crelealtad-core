@@ -1,0 +1,77 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ExpedientesService } from './expedientes.service';
+import { ExpedienteEntity } from './expediente.entity';
+
+describe('ExpedientesService', () => {
+  let service: ExpedientesService;
+  let repository: Repository<ExpedienteEntity>;
+
+  const mockRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    find: jest.fn(),
+    findOne: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ExpedientesService,
+        {
+          provide: getRepositoryToken(ExpedienteEntity),
+          useValue: mockRepository,
+        },
+      ],
+    }).compile();
+
+    service = module.get<ExpedientesService>(ExpedientesService);
+    repository = module.get<Repository<ExpedienteEntity>>(getRepositoryToken(ExpedienteEntity));
+  });
+
+  it('creates an expediente linked to a group', async () => {
+    const dto = {
+      groupId: 'group-1',
+      title: 'Expediente Demo',
+      status: 'En proceso',
+    };
+
+    const expectedResult = {
+      id: 'uuid-123',
+      ...dto,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockRepository.create.mockReturnValue(expectedResult);
+    mockRepository.save.mockResolvedValue(expectedResult);
+
+    const result = await service.createForGroup(dto);
+
+    expect(result.groupId).toBe('group-1');
+    expect(result.title).toBe('Expediente Demo');
+    expect(result.status).toBe('En proceso');
+    expect(result.id).toBeTruthy();
+  });
+
+  it('sends an expediente to verification', async () => {
+    const expediente = {
+      id: 'exp-1',
+      groupId: 'group-1',
+      title: 'Test',
+      status: 'En proceso',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const updated = { ...expediente, status: 'En verificacion' };
+
+    mockRepository.findOne.mockResolvedValue(expediente);
+    mockRepository.save.mockResolvedValue(updated);
+
+    const result = await service.sendToVerification('exp-1');
+
+    expect(result?.status).toBe('En verificacion');
+  });
+});

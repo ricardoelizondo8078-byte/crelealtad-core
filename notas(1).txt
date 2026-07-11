@@ -1,0 +1,386 @@
+================================================================================
+EXPLICACIÓN DETALLADA DE LAS PREGUNTAS
+CRELEALTAD CORE - Guía para decidir el siguiente paso
+Fecha: 2026-07-10
+================================================================================
+
+📌 PREGUNTA 1: ¿Cuál camino prefieres?
+================================================================================
+
+OPCIÓN A: Consolidar Fundación
+--------------------------------
+
+¿Qué significa?
+---------------
+Arreglar los "cimientos" del sistema antes de construir más pisos.
+
+¿Qué haríamos?
+--------------
+1. Conectar el backend con PostgreSQL (ahora solo guarda en memoria, cuando reinicias el servidor se pierde todo)
+2. Implementar login y seguridad (roles: Asesora, Verificador, etc.)
+3. Implementar la máquina de estados correctamente
+4. Hacer que el móvil funcione sin internet (offline first)
+
+Ejemplo práctico:
+-----------------
+Imagina que una asesora captura 10 expedientes, pero el servidor se reinicia → **se pierde todo**. Con esta opción, primero arreglamos eso.
+
+Ventajas:
+---------
+✅ Todo lo que construyamos después será sólido
+✅ No tendrás que "rehacer" cosas más adelante
+✅ El sistema será productivo desde el inicio
+
+Desventajas:
+------------
+⏰ Tomará más tiempo antes de ver nuevos módulos (Verificación, Análisis, etc.)
+⏰ No tendrás funcionalidad completa de Documentación hasta que terminemos la base
+
+¿Cuándo elegir esta opción?
+----------------------------
+- Si prefieres un sistema robusto aunque tome más tiempo
+- Si vas a empezar a usar el sistema en producción pronto
+- Si necesitas seguridad y no perder datos
+
+
+OPCIÓN B: MVP Iterativo
+-----------------------
+
+¿Qué significa?
+---------------
+Terminar el módulo de Documentación completo (del inicio al fin) pero solo ese módulo.
+
+¿Qué haríamos?
+--------------
+1. Completar **solo** Documentación con persistencia real
+2. Completar **solo** Documentación con estados reales
+3. Probar con una asesora en campo
+4. Ver qué funciona y qué no
+5. **Después** replicar ese patrón a los otros 11 módulos
+
+Ejemplo práctico:
+-----------------
+La asesora puede:
+- Crear grupo ✅
+- Crear expediente ✅
+- Agregar solicitantes ✅
+- Capturar documentos ✅
+- Ver que cambia a "Listo para Verificación" ✅
+- **Pero NO puede hacer Verificación ni Análisis todavía**
+
+Ventajas:
+---------
+✅ Feedback operativo rápido (puedes probar en campo YA)
+✅ Sabes si el flujo funciona en la vida real
+✅ Detectas problemas antes de construir todo
+
+Desventajas:
+------------
+⚠️ Puede que después tengamos que refactorizar (cambiar código ya hecho)
+⚠️ Solo tendrás 1 módulo completo, los otros 11 siguen en 0%
+
+¿Cuándo elegir esta opción?
+----------------------------
+- Si necesitas validar el flujo con usuarios reales YA
+- Si prefieres ver resultados rápido
+- Si puedes esperar para los otros módulos
+
+
+================================================================================
+📌 PREGUNTA 2: ¿Cuál es la prioridad máxima?
+================================================================================
+
+PRIORIDAD 1: Persistencia
+--------------------------
+
+¿Qué es?
+--------
+Guardar los datos en la base de datos PostgreSQL (ahora se guardan en memoria RAM)
+
+¿Por qué es importante?
+-----------------------
+Si reinicias el servidor, **se pierde todo**. No puedes usar el sistema en producción así.
+
+¿Qué implica arreglarlo?
+------------------------
+- Instalar un ORM (Prisma recomendado)
+- Conectar NestJS con PostgreSQL
+- Crear repositorios para Grupo, Expediente, Solicitante, etc.
+- Resolver la brecha de la entidad "Solicitud" (no tiene tabla)
+
+Ejemplo real:
+-------------
+❌ SIN PERSISTENCIA:
+Asesora captura 5 expedientes → Apaga la computadora → Vuelve al día siguiente → TODO DESAPARECIÓ
+
+✅ CON PERSISTENCIA:
+Asesora captura 5 expedientes → Apaga la computadora → Vuelve al día siguiente → TODO SIGUE AHÍ
+
+Tiempo estimado: 3-5 días
+
+
+PRIORIDAD 2: Autenticación
+---------------------------
+
+¿Qué es?
+--------
+Login, contraseñas, roles, permisos
+
+¿Por qué es importante?
+-----------------------
+Sin esto, **cualquiera** puede entrar al sistema y ver/modificar expedientes.
+
+¿Qué implica arreglarlo?
+------------------------
+- Implementar login con usuario/contraseña
+- JWT tokens para sesiones
+- Roles: Asesora, Verificador, Analista, Admin
+- Guards en NestJS (solo las asesoras pueden crear expedientes, solo los verificadores pueden verificar, etc.)
+
+Ejemplo real:
+-------------
+❌ SIN AUTENTICACIÓN:
+Cualquiera abre el app → Ve todos los expedientes de todas las asesoras → Puede borrar todo
+
+✅ CON AUTENTICACIÓN:
+Solo María (asesora) ve sus expedientes → Juan (verificador) solo ve expedientes en verificación
+
+Tiempo estimado: 4-6 días
+
+
+PRIORIDAD 3: Estados
+---------------------
+
+¿Qué es?
+--------
+La máquina de estados que determina automáticamente en qué fase está cada expediente
+
+¿Por qué es importante?
+-----------------------
+Es uno de los principios del proyecto: **los estados se calculan automáticamente**, no los elige el usuario.
+
+¿Qué implica arreglarlo?
+------------------------
+- Crear tabla de configuración de estados
+- Crear servicio que evalúe reglas automáticas
+- Mapear estados técnicos (draft, active) a estados funcionales (En Documentación, Listo para Verificación)
+
+Ejemplo real:
+-------------
+❌ ESTADO MANUAL (incorrecto):
+Asesora termina de capturar → Asesora tiene que marcar "Listo para Verificación" manualmente
+
+✅ ESTADO AUTOMÁTICO (correcto):
+Asesora termina de capturar → Sistema detecta que ya no hay pendientes → Cambia a "Listo para Verificación" SOLO
+
+Tiempo estimado: 3-4 días
+
+
+PRIORIDAD 4: Offline First
+---------------------------
+
+¿Qué es?
+--------
+Que el móvil funcione **sin internet** y sincronice después
+
+¿Por qué es importante?
+-----------------------
+Las asesoras trabajan en campo, a veces **no hay señal**. Si el app no funciona sin internet, no pueden trabajar.
+
+¿Qué implica arreglarlo?
+------------------------
+- Guardar datos localmente en el móvil (AsyncStorage o SQLite)
+- Cola de operaciones pendientes (crear expediente, subir documento)
+- Sincronizar automáticamente cuando haya internet
+
+Ejemplo real:
+-------------
+❌ SIN OFFLINE:
+Asesora va a campo → No hay señal → No puede capturar nada → Pierde el día
+
+✅ CON OFFLINE:
+Asesora va a campo → No hay señal → Captura 5 expedientes → Llega a oficina → Se sincroniza automáticamente
+
+Tiempo estimado: 5-7 días
+
+
+PRIORIDAD 5: Completar Documentación
+-------------------------------------
+
+¿Qué es?
+--------
+Terminar el módulo de Documentación al 100% (ahora está al 45%)
+
+¿Por qué es importante?
+-----------------------
+Es el módulo más importante, es el punto de entrada de todo el flujo.
+
+¿Qué falta?
+-----------
+- Captura completa de solicitudes
+- Captura completa de documentos
+- Validaciones automáticas
+- Cálculo de completitud
+- Envío a verificación
+
+Ejemplo real:
+-------------
+Ahora (45%):
+✅ Crear grupo
+✅ Crear expediente
+⚠️ Capturar solicitantes (parcial)
+❌ Validar documentos
+
+Completo (100%):
+✅ Todo lo anterior
+✅ Validaciones
+✅ Estados automáticos
+✅ Envío a verificación
+
+Tiempo estimado: 4-6 días (dependiendo de si primero se hace Persistencia)
+
+
+================================================================================
+📌 PREGUNTA 3: ¿Hay algo específico que quieras que revise con más detalle?
+================================================================================
+
+Esta es más abierta. Te pregunto si hay algo que quieras que yo **profundice** antes de empezar a programar.
+
+Ejemplos de cosas que puedo revisar:
+-------------------------------------
+- "Revisa el schema de la base de datos y dime si está bien diseñado"
+- "Revisa el código del backend y dime qué cambiarías"
+- "Revisa los componentes de UI y dime si cumplen el Design System"
+- "Explícame cómo debería funcionar la máquina de estados"
+- "Muéstrame un diagrama de la arquitectura"
+- "Revisa las reglas de negocio y asegúrate que el código las cumple"
+- "Explícame qué significa cada estado del expediente"
+
+
+================================================================================
+🎯 MI RECOMENDACIÓN PERSONAL
+================================================================================
+
+Si tuviera que elegir yo, haría esto:
+
+FASE 1: Base sólida (2 semanas)
+--------------------------------
+1. Persistencia ← **Más crítico** (sin esto no hay sistema productivo)
+2. Estados ← **Segundo más crítico** (es el corazón del sistema)
+3. Autenticación básica (sin roles complejos todavía)
+
+¿Por qué en este orden?
+- Sin persistencia, cualquier reinicio borra todo
+- Sin estados automáticos, no cumplimos los principios del proyecto
+- Sin autenticación, no es seguro pero al menos funciona para pruebas internas
+
+FASE 2: Documentación completo (1 semana)
+------------------------------------------
+4. Completar módulo de Documentación al 100%
+5. Probar con una asesora
+
+¿Por qué ahora?
+- Ya tenemos base sólida
+- Podemos validar el flujo completo
+- Detectamos problemas reales antes de construir más módulos
+
+FASE 3: Offline (1 semana)
+---------------------------
+6. Implementar offline first
+
+¿Por qué al final de estas 3 fases?
+- Ya sabemos que el flujo funciona
+- Ya tenemos persistencia
+- Ahora hacemos que funcione sin internet
+
+FASE 4: Resto de módulos (4-6 semanas)
+---------------------------------------
+7. Verificación
+8. Análisis
+9. Desembolsos
+10. Cobranza
+11. Recolección
+12. Mora
+13. Convenios
+14. Reportes
+15. Parámetros
+16. Administración
+
+¿Por qué hasta el final?
+- Ya tenemos el patrón funcionando
+- Solo replicamos la misma estructura
+- Menor riesgo de refactorización
+
+
+================================================================================
+COMPARACIÓN RÁPIDA: Opción A vs Opción B
+================================================================================
+
+                        OPCIÓN A              OPCIÓN B
+                     (Consolidar)          (MVP Iterativo)
+------------------------------------------------------------------------
+Tiempo inicial          2-3 semanas           1 semana
+Módulo completo         NO (solo base)        SÍ (Documentación)
+Persistencia            ✅ SÍ                 ✅ SÍ (solo Doc)
+Autenticación           ✅ SÍ                 ⚠️ Después
+Estados                 ✅ SÍ                 ✅ SÍ (solo Doc)
+Offline                 ✅ SÍ                 ⚠️ Después
+Probar en campo         ⏰ Después            ✅ YA
+Riesgo refactor         ✅ BAJO               ⚠️ MEDIO
+Sistema productivo      ✅ SÍ                 ⚠️ Parcial
+Feedback rápido         ⏰ NO                 ✅ SÍ
+
+
+================================================================================
+MATRIZ DE DECISIÓN
+================================================================================
+
+Elige OPCIÓN A si:
+------------------
+✅ Vas a poner el sistema en producción pronto
+✅ Prefieres no tener que rehacer código
+✅ Necesitas seguridad desde el inicio
+✅ Puedes esperar 2-3 semanas para probar
+✅ Quieres un sistema robusto
+
+Elige OPCIÓN B si:
+------------------
+✅ Necesitas validar el flujo con usuarios YA
+✅ Prefieres ver resultados en 1 semana
+✅ Puedes aceptar refactorizar después
+✅ Solo necesitas Documentación por ahora
+✅ Los otros módulos pueden esperar
+
+
+================================================================================
+❓ ¿QUÉ NECESITO QUE ME DIGAS?
+================================================================================
+
+1. ¿Opción A (consolidar todo) u Opción B (MVP rápido)?
+
+2. De las 5 prioridades, ¿cuál es LA MÁS IMPORTANTE para ti?
+   a) Persistencia (guardar datos reales)
+   b) Autenticación (seguridad y roles)
+   c) Estados (automáticos)
+   d) Offline first (funcionar sin internet)
+   e) Completar Documentación (módulo al 100%)
+
+3. ¿Quieres que revise algo en detalle antes de empezar?
+   (Si no estás seguro, di "nada por ahora")
+
+
+================================================================================
+💡 OPCIÓN ALTERNATIVA: "Recomiéndame tú"
+================================================================================
+
+Si no estás seguro de qué elegir, puedo darte un plan específico basado en:
+- Riesgo operativo
+- Dependencias técnicas
+- Mejor retorno de inversión
+
+Solo dime "recomiéndame tú" y te doy un plan de acción paso por paso.
+
+
+================================================================================
+FIN DE LA EXPLICACIÓN
+================================================================================

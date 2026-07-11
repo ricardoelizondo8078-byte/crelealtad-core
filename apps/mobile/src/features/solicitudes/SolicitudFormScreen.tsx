@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
+  Linking,
   NativeSyntheticEvent,
   NativeScrollEvent,
   Platform,
@@ -9,9 +10,10 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
-import { AppHeader, Card, FormField, PrimaryButton, ScreenContainer, ScreenTitleBar, SelectorField, StickySectionHeader } from '../../components/ui';
+import { AppHeader, Card, FormField, PrimaryButton, ScreenContainer, ScreenTitleBar, SecondaryButton, SelectorField, StickySectionHeader } from '../../components/ui';
 import { apiUrl } from '../../config/api';
 import {
   ANTIGUEDAD_NEGOCIO_OPTIONS,
@@ -26,7 +28,7 @@ import {
   findPostalCodeEntry,
   getColoniasByPostalCode,
 } from '../../catalogs';
-import { colors, radius, spacing, typography } from '../../theme/tokens';
+import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
 import {
   formatDateDDMMYYYY,
@@ -35,11 +37,13 @@ import {
   formatPhone,
   normalizeDigits,
   normalizePhone,
+  normalizeUppercaseLettersOnly,
   normalizeUppercaseText,
   toISODateFromDDMMYYYY,
   validatePhone10,
   validateRealDate,
 } from '../../utils/input';
+import { MAX_SOLICITUD_AMOUNT } from '../../config/parameters';
 import { validateCURP } from '../../utils/validation';
 
 type SelectValue = string;
@@ -64,7 +68,11 @@ type SelectorFieldKey =
 interface SolicitudFormScreenProps {
   solicitanteId: string;
   solicitanteNombre?: string;
+  groupName?: string;
+  integrantePosition?: number;
+  integrantesTotal?: number;
   onSaved?: () => void;
+  onSavedGoToDocumentos?: () => void;
   onBack?: () => void;
 }
 
@@ -99,8 +107,26 @@ const yesNoOptions = ['SI', 'NO'] as const;
 
 const normalizeCurpInput = (value: string): string => value.replace(/\s+/g, '').toUpperCase().slice(0, 18);
 
-export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solicitanteId, solicitanteNombre, onSaved, onBack }) => {
+export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
+  solicitanteId,
+  solicitanteNombre,
+  groupName,
+  integrantePosition,
+  integrantesTotal,
+  onSaved,
+  onSavedGoToDocumentos,
+  onBack,
+}) => {
+  const documentationTheme = moduleThemes.documentation;
   const [form, setForm] = useState({
+    // Datos iniciales (pre-cargados del solicitante)
+    nombres: '',
+    apellidoPaterno: '',
+    apellidoMaterno: '',
+    telefonoInicial: '',
+    telefonoSecundario: '',
+    montoSolicitado: '',
+
     fechaNacimiento: '',
     curp: '',
     nacionalidad: '',
@@ -162,6 +188,163 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
   const [fechaNacimientoInput, setFechaNacimientoInput] = useState('');
   const [sectionOffsets, setSectionOffsets] = useState<Partial<Record<StickySectionKey, number>>>({});
   const [currentSectionTitle, setCurrentSectionTitle] = useState(stickySections[0].title);
+  const [isLoadingSolicitud, setIsLoadingSolicitud] = useState(true);
+  const [solicitante, setSolicitante] = useState<{ nombre: string; telefono: string; montoSolicitado: number } | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const scrollViewRef = React.useRef<ScrollView>(null);
+
+  // Cargar solicitud existente si ya fue guardada
+  useEffect(() => {
+    const loadExistingSolicitud = async () => {
+      let solicitanteData: any = null;
+
+      try {
+        // Cargar datos del solicitante
+        const solicitanteResponse = await fetch(apiUrl(`/solicitantes/${solicitanteId}`));
+        if (solicitanteResponse.ok) {
+          solicitanteData = await solicitanteResponse.json();
+          setSolicitante(solicitanteData);
+
+          // Pre-cargar datos iniciales del solicitante en el formulario
+          // Si no tiene nombres separados, intentar parsear del nombre completo
+          let nombres = solicitanteData.nombres || '';
+          let apellidoPaterno = solicitanteData.apellidoPaterno || '';
+          let apellidoMaterno = solicitanteData.apellidoMaterno || '';
+
+          // Fallback: si no hay nombres separados, intentar extraer del nombre completo
+          if (!nombres && !apellidoPaterno && !apellidoMaterno && solicitanteData.nombre) {
+            const parts = solicitanteData.nombre.trim().split(/\s+/);
+            if (parts.length >= 3) {
+              // Asumir formato: Nombre(s) ApellidoPaterno ApellidoMaterno
+              apellidoMaterno = parts.pop() || '';
+              apellidoPaterno = parts.pop() || '';
+              nombres = parts.join(' ');
+            } else if (parts.length === 2) {
+              // Solo tiene 2 partes: Nombre ApellidoPaterno
+              apellidoPaterno = parts[1] || '';
+              nombres = parts[0] || '';
+            } else if (parts.length === 1) {
+              // Solo tiene nombre
+              nombres = parts[0] || '';
+            }
+          }
+
+          setForm((current) => ({
+            ...current,
+            nombres: nombres,
+            apellidoPaterno: apellidoPaterno,
+            apellidoMaterno: apellidoMaterno,
+            telefonoInicial: solicitanteData.telefono || '',
+            telefonoSecundario: solicitanteData.telefonoSecundario || '',
+            montoSolicitado: String(solicitanteData.montoSolicitado || ''),
+          }));
+        }
+
+        const response = await fetch(apiUrl(`/solicitudes/solicitante/${solicitanteId}`));
+        if (response.ok) {
+          const text = await response.text();
+          if (!text) {
+            // No hay solicitud guardada, mantener datos iniciales del solicitante
+            setIsLoadingSolicitud(false);
+            return;
+          }
+
+          const data = JSON.parse(text);
+          if (data) {
+            // Parsear la fecha de nacimiento de ISO a DD/MM/YYYY
+            const fechaNacimiento = data.fechaNacimiento ? formatISODateToDDMMYYYY(data.fechaNacimiento) : '';
+
+            setForm({
+              // Datos iniciales (mantener los pre-cargados del solicitante, o sobreescribir si vienen del servidor)
+              nombres: data.nombres || solicitanteData?.nombres || '',
+              apellidoPaterno: data.apellidoPaterno || solicitanteData?.apellidoPaterno || '',
+              apellidoMaterno: data.apellidoMaterno || solicitanteData?.apellidoMaterno || '',
+              telefonoInicial: data.telefonoInicial || solicitanteData?.telefono || '',
+              telefonoSecundario: data.telefonoSecundario || '',
+              montoSolicitado: data.montoSolicitado || String(solicitanteData?.montoSolicitado || ''),
+
+              fechaNacimiento: fechaNacimiento,
+              curp: data.curp || '',
+              nacionalidad: data.nacionalidad || '',
+              estadoNacimiento: data.estadoNacimiento || '',
+              genero: data.genero || '',
+              estadoCivil: data.estadoCivil || '',
+              ocupacion: data.ocupacion || '',
+              nivelEstudio: data.nivelEstudio || '',
+
+              calle: data.calle || '',
+              numeroExterior: data.numeroExterior || '',
+              numeroInterior: data.numeroInterior || '',
+              colonia: data.colonia || '',
+              municipio: data.municipio || '',
+              estado: data.estado || DEFAULT_STATE,
+              codigoPostal: data.codigoPostal || '',
+              entreCalles: data.entreCalles || '',
+              telefono: data.telefono || '',
+
+              referencia1NombreCompleto: data.referencia1NombreCompleto || '',
+              referencia1Parentesco: data.referencia1Parentesco || '',
+              referencia1Telefono: data.referencia1Telefono || '',
+              referencia1Direccion: data.referencia1Direccion || '',
+              referencia2NombreCompleto: data.referencia2NombreCompleto || '',
+              referencia2Parentesco: data.referencia2Parentesco || '',
+              referencia2Telefono: data.referencia2Telefono || '',
+              referencia2Direccion: data.referencia2Direccion || '',
+
+              parejaNombreCompleto: data.parejaNombreCompleto || '',
+              parejaActividadEconomica: data.parejaActividadEconomica || '',
+              parejaIngresoSemanal: data.parejaIngresoSemanal || '',
+
+              negocioCalle: data.negocioCalle || '',
+              negocioNumeroExterior: data.negocioNumeroExterior || '',
+              negocioNumeroInterior: data.negocioNumeroInterior || '',
+              negocioColonia: data.negocioColonia || '',
+              negocioMunicipio: data.negocioMunicipio || '',
+              negocioEstado: data.negocioEstado || DEFAULT_STATE,
+              negocioCodigoPostal: data.negocioCodigoPostal || '',
+              negocioDesdeCuando: data.negocioDesdeCuando || '',
+              negocioIngresoSemanal: data.negocioIngresoSemanal || '',
+              negocioOtrosIngresos: data.negocioOtrosIngresos || '',
+              negocioGastos: data.negocioGastos || '',
+              negocioTotal: data.negocioTotal || '',
+              negocioGiro: data.negocioGiro || '',
+
+              beneficiarioNombreCompleto: data.beneficiarioNombreCompleto || '',
+              beneficiarioParentesco: data.beneficiarioParentesco || '',
+              beneficiarioTelefono: data.beneficiarioTelefono || '',
+              beneficiarioDireccion: data.beneficiarioDireccion || '',
+
+              tieneMedidorLuzSinAdeudo: data.tieneMedidorLuzSinAdeudo || '',
+              viveMaximo5KmTesorera: data.viveMaximo5KmTesorera || '',
+              tieneMenos70Anios: data.tieneMenos70Anios || '',
+            });
+
+            setFechaNacimientoInput(fechaNacimiento);
+
+            // Navegar a la sección completada si existe
+            if (data.seccionCompletada && data.seccionCompletada > 0) {
+              // Pequeño delay para esperar a que se rendericen las secciones
+              setTimeout(() => {
+                const seccionKey = stickySections[data.seccionCompletada]?.key;
+                if (seccionKey && sectionOffsets[seccionKey]) {
+                  scrollViewRef.current?.scrollTo({
+                    y: sectionOffsets[seccionKey],
+                    animated: true,
+                  });
+                }
+              }, 300);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando solicitud:', error);
+      } finally {
+        setIsLoadingSolicitud(false);
+      }
+    };
+
+    loadExistingSolicitud();
+  }, [solicitanteId]);
 
   const domicilioPostalEntry = findPostalCodeEntry(form.codigoPostal);
   const negocioPostalEntry = findPostalCodeEntry(form.negocioCodigoPostal);
@@ -284,6 +467,36 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
     });
   }, [form.negocioIngresoSemanal, form.negocioOtrosIngresos, form.negocioGastos]);
 
+  // Actualizar el monto en la tarjeta superior cuando cambie en el formulario
+  useEffect(() => {
+    if (solicitante && form.montoSolicitado) {
+      const nuevoMonto = Number(form.montoSolicitado);
+      if (nuevoMonto !== solicitante.montoSolicitado) {
+        setSolicitante({
+          ...solicitante,
+          montoSolicitado: nuevoMonto,
+        });
+      }
+    }
+  }, [form.montoSolicitado]);
+
+  // Actualizar nombre y teléfono en la tarjeta superior cuando cambien en el formulario
+  useEffect(() => {
+    if (solicitante) {
+      const nombreCompleto = `${form.nombres} ${form.apellidoPaterno} ${form.apellidoMaterno}`.trim();
+      const cambioNombre = nombreCompleto !== solicitante.nombre;
+      const cambioTelefono = form.telefonoInicial !== solicitante.telefono;
+
+      if (cambioNombre || cambioTelefono) {
+        setSolicitante({
+          ...solicitante,
+          nombre: nombreCompleto || solicitante.nombre,
+          telefono: form.telefonoInicial || solicitante.telefono,
+        });
+      }
+    }
+  }, [form.nombres, form.apellidoPaterno, form.apellidoMaterno, form.telefonoInicial]);
+
   const updateField = (field: string, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
     if (errors[field]) {
@@ -397,6 +610,88 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
       ...current,
       [field]: undefined,
     }));
+  };
+
+  const handleSiguienteSeccion = (seccionIndex: number, datosSeccion: object) => {
+    // Llamar a autoSave y luego navegar a la siguiente sección
+    autoSave(seccionIndex, datosSeccion);
+
+    // Navegar a la siguiente sección si existe
+    const nextIndex = seccionIndex + 1;
+    if (nextIndex < stickySections.length) {
+      const nextSectionKey = stickySections[nextIndex].key;
+      const nextOffset = sectionOffsets[nextSectionKey];
+
+      if (nextOffset !== undefined) {
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({
+            y: nextOffset,
+            animated: true,
+          });
+        }, 100);
+      }
+    }
+  };
+
+  const autoSave = async (seccion: number, datos: object) => {
+    setAutoSaveStatus('saving');
+
+    const payload = {
+      seccionCompletada: seccion,
+      ...datos,
+    };
+
+    try {
+      const response = await fetch(apiUrl(`/solicitudes/${solicitanteId}`), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to autosave');
+      }
+
+      setAutoSaveStatus('saved');
+
+      // Limpiar el mensaje "Guardado ✓" después de 2 segundos
+      setTimeout(() => {
+        setAutoSaveStatus('idle');
+      }, 2000);
+    } catch (error) {
+      console.error('Error en autosave:', error);
+      setAutoSaveStatus('error');
+
+      // Reintentar 1 vez
+      setTimeout(async () => {
+        try {
+          setAutoSaveStatus('saving');
+          const retryResponse = await fetch(apiUrl(`/solicitudes/${solicitanteId}`), {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          if (retryResponse.ok) {
+            setAutoSaveStatus('saved');
+            setTimeout(() => {
+              setAutoSaveStatus('idle');
+            }, 2000);
+          } else {
+            setAutoSaveStatus('error');
+            setTimeout(() => {
+              setAutoSaveStatus('idle');
+            }, 2000);
+          }
+        } catch (retryError) {
+          console.error('Error en retry autosave:', retryError);
+          setAutoSaveStatus('error');
+          setTimeout(() => {
+            setAutoSaveStatus('idle');
+          }, 2000);
+        }
+      }, 1000);
+    }
   };
 
   const validateForm = (): SolicitudErrors => {
@@ -517,7 +812,6 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
     !form.municipio.trim() ||
     !form.codigoPostal.trim() ||
     !form.entreCalles.trim() ||
-    !form.telefono.trim() ||
     !form.referencia1NombreCompleto.trim() ||
     !form.referencia1Parentesco.trim() ||
     !form.referencia1Telefono.trim() ||
@@ -547,7 +841,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
   const hasBlockingValidation =
     Boolean(validateFechaNacimientoField(form.fechaNacimiento)) ||
     Boolean(validateCurpField(form.curp)) ||
-    !validatePhone10(form.telefono) ||
+    !validatePhone10(form.telefonoInicial) ||
     !validatePhone10(form.referencia1Telefono) ||
     !validatePhone10(form.referencia2Telefono) ||
     !validatePhone10(form.beneficiarioTelefono) ||
@@ -568,6 +862,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
     const payload = {
       solicitanteId,
       ...form,
+      telefono: form.telefonoInicial, // Usar el teléfono inicial como teléfono de contacto
       domicilio: `${form.calle} ${form.numeroExterior}${form.numeroInterior ? ` INT ${form.numeroInterior}` : ''}, ${form.colonia}, ${form.municipio}, ${form.estado}, CP ${form.codigoPostal}`,
       negocioDomicilio: `${form.negocioCalle} ${form.negocioNumeroExterior}${form.negocioNumeroInterior ? ` INT ${form.negocioNumeroInterior}` : ''}, ${form.negocioColonia}, ${form.negocioMunicipio}, ${form.negocioEstado}, CP ${form.negocioCodigoPostal}`,
     };
@@ -641,6 +936,27 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
     });
   };
 
+  const handleLlamarSolicitante = (telefono: string, nombre: string) => {
+    Alert.alert(
+      'Realizar llamada',
+      `¿Deseas llamar a ${nombre}?\n\n${formatPhone(telefono)}`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: '📞 Llamar',
+          onPress: () => {
+            const cleanPhone = telefono.replace(/\D/g, '');
+            Linking.openURL(`tel:${cleanPhone}`);
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const currentY = event.nativeEvent.contentOffset.y + spacing.lg;
     let nextTitle = stickySections[0].title;
@@ -676,25 +992,83 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
     </FormField>
   );
 
+  const integrantePositionLabel = typeof integrantePosition === 'number' && integrantePosition > 0 ? String(integrantePosition) : '—';
+  const integrantesTotalLabel = typeof integrantesTotal === 'number' && integrantesTotal > 0 ? String(integrantesTotal) : '—';
+  const groupNameLabel = groupName?.trim() || '—';
+
   return (
     <ScreenContainer>
       <AppHeader showBackButton onBackPress={onBack} moduleTheme="documentation" />
       <ScreenTitleBar title="Capturar Solicitud" moduleTheme="documentation" />
+
+      {/* Banner del grupo */}
+      <View style={styles.grupoBanner}>
+        <Text style={styles.grupoBannerText}>{groupName || 'Cargando grupo...'}</Text>
+      </View>
+
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
       >
-        <View style={styles.fixedSolicitanteWrap}>
-          <Card style={styles.fixedSolicitanteCard}>
-            <Text style={styles.fixedSolicitanteLabel}>SOLICITANTE:</Text>
-            <Text style={styles.fixedSolicitanteValue}>{solicitanteNombre ?? 'SIN NOMBRE REGISTRADO'}</Text>
+        {/* Tarjeta del solicitante - Mismo diseño que Documentos */}
+        <View style={styles.fixedSolicitanteContainer}>
+          <Card style={styles.solicitanteCard}>
+            <View style={styles.solicitanteHeader}>
+              {/* Nombre a la izquierda */}
+              <Text style={styles.solicitanteName}>
+                {solicitanteNombre || 'Sin nombre'}
+              </Text>
+
+              {/* Número a la derecha */}
+              {integrantePosition && integrantesTotal && (
+                <Text style={styles.positionText}>
+                  {integrantePosition}/{integrantesTotal}
+                </Text>
+              )}
+            </View>
+
+            {/* Teléfono y Monto */}
+            {solicitante && (
+              <View style={styles.contactInfoRow}>
+                {/* Teléfono con ícono - CLICKEABLE */}
+                <TouchableOpacity
+                  style={styles.phoneButton}
+                  onPress={() => handleLlamarSolicitante(solicitante.telefono, solicitante.nombre)}
+                >
+                  <Text style={styles.phoneIcon}>📞</Text>
+                  <Text style={styles.phoneText}>{formatPhone(solicitante.telefono)}</Text>
+                </TouchableOpacity>
+
+                {/* Monto */}
+                <View style={styles.montoContainer}>
+                  <Text style={styles.montoIcon}>💰</Text>
+                  <Text style={styles.montoText}>{formatCurrency(solicitante.montoSolicitado)}</Text>
+                </View>
+              </View>
+            )}
           </Card>
         </View>
 
         <StickySectionHeader title={currentSectionTitle} />
 
+        {/* Indicador de autosave */}
+        {autoSaveStatus !== 'idle' && (
+          <View style={styles.autoSaveIndicator}>
+            {autoSaveStatus === 'saving' && (
+              <Text style={styles.autoSaveTextSaving}>Guardando...</Text>
+            )}
+            {autoSaveStatus === 'saved' && (
+              <Text style={styles.autoSaveTextSaved}>Guardado ✓</Text>
+            )}
+            {autoSaveStatus === 'error' && (
+              <Text style={styles.autoSaveTextError}>Reintentando...</Text>
+            )}
+          </View>
+        )}
+
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={styles.form}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
@@ -706,6 +1080,70 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
             <View onLayout={(event) => onSectionLayout('informacionPersonal', event.nativeEvent.layout.y)}>
               {renderSectionRow('INFORMACIÓN PERSONAL')}
             </View>
+
+            {/* Campos iniciales del solicitante */}
+            <FormField label="Nombre(s)" required helperText="Solo letras, en mayúsculas">
+              <TextInput
+                style={styles.input}
+                placeholder="Nombre(s)"
+                value={form.nombres}
+                onChangeText={(value) => updateField('nombres', normalizeUppercaseLettersOnly(value))}
+                autoCapitalize="characters"
+              />
+            </FormField>
+
+            <FormField label="Apellido paterno" required helperText="Solo letras, en mayúsculas">
+              <TextInput
+                style={styles.input}
+                placeholder="Apellido paterno"
+                value={form.apellidoPaterno}
+                onChangeText={(value) => updateField('apellidoPaterno', normalizeUppercaseLettersOnly(value))}
+                autoCapitalize="characters"
+              />
+            </FormField>
+
+            <FormField label="Apellido materno" required helperText="Solo letras, en mayúsculas">
+              <TextInput
+                style={styles.input}
+                placeholder="Apellido materno"
+                value={form.apellidoMaterno}
+                onChangeText={(value) => updateField('apellidoMaterno', normalizeUppercaseLettersOnly(value))}
+                autoCapitalize="characters"
+              />
+            </FormField>
+
+            <FormField label="Teléfono" required helperText="10 dígitos">
+              <TextInput
+                style={styles.input}
+                placeholder="Teléfono"
+                value={formatPhone(form.telefonoInicial)}
+                onChangeText={(value) => updateField('telefonoInicial', normalizePhone(value))}
+                keyboardType="numeric"
+                maxLength={14}
+              />
+            </FormField>
+
+            <FormField label="Teléfono secundario" helperText="Opcional, 10 dígitos">
+              <TextInput
+                style={styles.input}
+                placeholder="Teléfono secundario"
+                value={formatPhone(form.telefonoSecundario)}
+                onChangeText={(value) => updateField('telefonoSecundario', normalizePhone(value))}
+                keyboardType="numeric"
+                maxLength={14}
+              />
+            </FormField>
+
+            <FormField label="Monto solicitado" required helperText={`Máximo ${formatCurrency(MAX_SOLICITUD_AMOUNT)}`}>
+              <TextInput
+                style={styles.input}
+                placeholder="Monto solicitado"
+                value={form.montoSolicitado ? formatCurrency(form.montoSolicitado) : ''}
+                onChangeText={(value) => updateField('montoSolicitado', normalizeDigits(value))}
+                keyboardType="numeric"
+              />
+            </FormField>
+
             <FormField
               label="Fecha de nacimiento"
               required
@@ -750,16 +1188,31 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
             <FormField label="Ocupación" required errorText={errors.ocupacion}>
               <TextInput style={styles.input} placeholder="Ocupación" value={form.ocupacion} onChangeText={(value) => updateField('ocupacion', normalizeUppercaseText(value))} autoCapitalize="characters" />
             </FormField>
-            <FormField label="Teléfono" required helperText="10 dígitos" errorText={errors.telefono}>
-              <TextInput
-                style={styles.input}
-                placeholder="Teléfono"
-                value={formatPhone(form.telefono)}
-                onChangeText={(value) => updatePhoneField('telefono', value)}
-                keyboardType="numeric"
-                maxLength={14}
+
+            <View style={{ marginTop: spacing.md }}>
+              <PrimaryButton
+                title="Siguiente →"
+                onPress={() =>
+                  handleSiguienteSeccion(0, {
+                    nombres: form.nombres,
+                    apellidoPaterno: form.apellidoPaterno,
+                    apellidoMaterno: form.apellidoMaterno,
+                    telefonoInicial: form.telefonoInicial,
+                    telefonoSecundario: form.telefonoSecundario,
+                    montoSolicitado: form.montoSolicitado,
+                    fechaNacimiento: form.fechaNacimiento,
+                    curp: form.curp,
+                    nacionalidad: form.nacionalidad,
+                    estadoNacimiento: form.estadoNacimiento,
+                    genero: form.genero,
+                    estadoCivil: form.estadoCivil,
+                    ocupacion: form.ocupacion,
+                    nivelEstudio: form.nivelEstudio,
+                  })
+                }
+                moduleTheme="documentation"
               />
-            </FormField>
+            </View>
 
             <View onLayout={(event) => onSectionLayout('domicilioParticular', event.nativeEvent.layout.y)}>
               {renderSectionRow('DOMICILIO PARTICULAR')}
@@ -795,6 +1248,26 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
             <FormField label="Entre calles" required errorText={errors.entreCalles}>
               <TextInput style={styles.input} placeholder="Entre calles" value={form.entreCalles} onChangeText={(value) => updateField('entreCalles', normalizeUppercaseText(value))} autoCapitalize="characters" />
             </FormField>
+
+            <View style={{ marginTop: spacing.md }}>
+              <PrimaryButton
+                title="Siguiente →"
+                onPress={() =>
+                  handleSiguienteSeccion(1, {
+                    calle: form.calle,
+                    numeroExterior: form.numeroExterior,
+                    numeroInterior: form.numeroInterior,
+                    colonia: form.colonia,
+                    municipio: form.municipio,
+                    estado: form.estado,
+                    codigoPostal: form.codigoPostal,
+                    entreCalles: form.entreCalles,
+                    telefono: form.telefono,
+                  })
+                }
+                moduleTheme="documentation"
+              />
+            </View>
 
             <View onLayout={(event) => onSectionLayout('referencias', event.nativeEvent.layout.y)}>
               {renderSectionRow('REFERENCIAS')}
@@ -842,6 +1315,25 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
               <TextInput style={styles.input} placeholder="Dirección" value={form.referencia2Direccion} onChangeText={(value) => updateField('referencia2Direccion', normalizeUppercaseText(value))} autoCapitalize="characters" />
             </FormField>
 
+            <View style={{ marginTop: spacing.md }}>
+              <PrimaryButton
+                title="Siguiente →"
+                onPress={() =>
+                  handleSiguienteSeccion(4, {
+                    referencia1NombreCompleto: form.referencia1NombreCompleto,
+                    referencia1Parentesco: form.referencia1Parentesco,
+                    referencia1Telefono: form.referencia1Telefono,
+                    referencia1Direccion: form.referencia1Direccion,
+                    referencia2NombreCompleto: form.referencia2NombreCompleto,
+                    referencia2Parentesco: form.referencia2Parentesco,
+                    referencia2Telefono: form.referencia2Telefono,
+                    referencia2Direccion: form.referencia2Direccion,
+                  })
+                }
+                moduleTheme="documentation"
+              />
+            </View>
+
             <View onLayout={(event) => onSectionLayout('datosPareja', event.nativeEvent.layout.y)}>
               {renderSectionRow('DATOS DE SU PAREJA')}
             </View>
@@ -860,6 +1352,20 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
                 keyboardType="numeric"
               />
             </FormField>
+
+            <View style={{ marginTop: spacing.md }}>
+              <PrimaryButton
+                title="Siguiente →"
+                onPress={() =>
+                  handleSiguienteSeccion(5, {
+                    parejaNombreCompleto: form.parejaNombreCompleto,
+                    parejaActividadEconomica: form.parejaActividadEconomica,
+                    parejaIngresoSemanal: form.parejaIngresoSemanal,
+                  })
+                }
+                moduleTheme="documentation"
+              />
+            </View>
 
             <View onLayout={(event) => onSectionLayout('datosNegocio', event.nativeEvent.layout.y)}>
               {renderSectionRow('DATOS DEL NEGOCIO O TRABAJO')}
@@ -937,6 +1443,30 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
               <TextInput style={styles.input} placeholder="Giro" value={form.negocioGiro} onChangeText={(value) => updateField('negocioGiro', normalizeUppercaseText(value))} autoCapitalize="characters" />
             </FormField>
 
+            <View style={{ marginTop: spacing.md }}>
+              <PrimaryButton
+                title="Siguiente →"
+                onPress={() =>
+                  handleSiguienteSeccion(6, {
+                    negocioCalle: form.negocioCalle,
+                    negocioNumeroExterior: form.negocioNumeroExterior,
+                    negocioNumeroInterior: form.negocioNumeroInterior,
+                    negocioColonia: form.negocioColonia,
+                    negocioMunicipio: form.negocioMunicipio,
+                    negocioEstado: form.negocioEstado,
+                    negocioCodigoPostal: form.negocioCodigoPostal,
+                    negocioDesdeCuando: form.negocioDesdeCuando,
+                    negocioIngresoSemanal: form.negocioIngresoSemanal,
+                    negocioOtrosIngresos: form.negocioOtrosIngresos,
+                    negocioGastos: form.negocioGastos,
+                    negocioTotal: form.negocioTotal,
+                    negocioGiro: form.negocioGiro,
+                  })
+                }
+                moduleTheme="documentation"
+              />
+            </View>
+
             <View onLayout={(event) => onSectionLayout('beneficiario', event.nativeEvent.layout.y)}>
               {renderSectionRow('BENEFICIARIO')}
             </View>
@@ -958,6 +1488,21 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
               <TextInput style={styles.input} placeholder="Dirección" value={form.beneficiarioDireccion} onChangeText={(value) => updateField('beneficiarioDireccion', normalizeUppercaseText(value))} autoCapitalize="characters" />
             </FormField>
 
+            <View style={{ marginTop: spacing.md }}>
+              <PrimaryButton
+                title="Siguiente →"
+                onPress={() =>
+                  handleSiguienteSeccion(7, {
+                    beneficiarioNombreCompleto: form.beneficiarioNombreCompleto,
+                    beneficiarioParentesco: form.beneficiarioParentesco,
+                    beneficiarioTelefono: form.beneficiarioTelefono,
+                    beneficiarioDireccion: form.beneficiarioDireccion,
+                  })
+                }
+                moduleTheme="documentation"
+              />
+            </View>
+
             <View onLayout={(event) => onSectionLayout('validacionesFinales', event.nativeEvent.layout.y)}>
               {renderSectionRow('VALIDACIONES FINALES')}
             </View>
@@ -966,6 +1511,12 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
             {renderSelectCard('tieneMenos70Anios', '¿La integrante tiene menos de 70 años?', form.tieneMenos70Anios, yesNoOptions, errors.tieneMenos70Anios)}
 
             <PrimaryButton title={isSubmitting ? 'Guardando...' : 'Guardar solicitud'} onPress={handleSubmit} disabled={isSubmitting || isRequiredEmpty || hasBlockingValidation} moduleTheme="documentation" />
+
+            {onSavedGoToDocumentos && (
+              <View style={{ marginTop: spacing.md }}>
+                <SecondaryButton title="Ir a Documentos →" onPress={onSavedGoToDocumentos} />
+              </View>
+            )}
           </Card>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -976,6 +1527,128 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({ solici
 const styles = StyleSheet.create({
   keyboardContainer: { flex: 1 },
   form: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl * 2 },
+  grupoBanner: {
+    backgroundColor: moduleThemes.documentation.headerBg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: moduleThemes.documentation.titleBarBg,
+  },
+  grupoBannerText: {
+    color: '#FDE047',
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  contextBar: {
+    minHeight: 44,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  contextGroupBlock: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+  },
+  contextLabel: {
+    ...typography.caption,
+    fontWeight: '700',
+    marginRight: spacing.xs,
+  },
+  contextGroupName: {
+    ...typography.caption,
+    fontWeight: '700',
+    flexShrink: 1,
+  },
+  contextIntegrante: {
+    ...typography.caption,
+    fontWeight: '700',
+    flexShrink: 0,
+  },
+  fixedSolicitanteContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    backgroundColor: colors.background,
+  },
+  solicitanteCard: {
+    padding: spacing.md,
+    borderWidth: 2,
+    borderColor: '#000000',
+    marginBottom: 0,
+  },
+  solicitanteHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  solicitanteName: {
+    ...typography.bodyStrong,
+    color: colors.textPrimary,
+    fontSize: 18,
+    flex: 1,
+    textAlign: 'left',
+  },
+  positionText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#666',
+    textAlign: 'right',
+  },
+  contactInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    gap: spacing.sm,
+  },
+  phoneButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    flex: 1,
+    gap: spacing.xs,
+  },
+  phoneIcon: {
+    fontSize: 16,
+  },
+  phoneText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E40AF',
+  },
+  montoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    gap: spacing.xs,
+  },
+  montoIcon: {
+    fontSize: 16,
+  },
+  montoText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#15803D',
+  },
   fixedSolicitanteWrap: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
@@ -1101,5 +1774,25 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     padding: spacing.md,
     backgroundColor: colors.borderSoft,
+  },
+  autoSaveIndicator: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+    alignItems: 'center',
+  },
+  autoSaveTextSaving: {
+    ...typography.caption,
+    color: '#666',
+    fontWeight: '600',
+  },
+  autoSaveTextSaved: {
+    ...typography.caption,
+    color: '#15803D',
+    fontWeight: '700',
+  },
+  autoSaveTextError: {
+    ...typography.caption,
+    color: '#DC2626',
+    fontWeight: '600',
   },
 });

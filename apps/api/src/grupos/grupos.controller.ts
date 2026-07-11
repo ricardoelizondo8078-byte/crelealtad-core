@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { GruposService } from './grupos.service';
 
 export class CreateGrupoDto {
@@ -14,5 +14,10 @@ export class GruposController {
   @Post()
   create(@Body() dto: CreateGrupoDto) {
     return this.gruposService.create(dto);
+  }
+
+  @Get(':id')
+  getById(@Param('id') id: string) {
+    return this.gruposService.getById(id);
   }
 }

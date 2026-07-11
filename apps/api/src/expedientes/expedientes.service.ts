@@ -1,58 +1,54 @@
 import { Injectable } from '@nestjs/common';
-import { ExpedienteEntity } from './expedientes.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ExpedienteEntity } from './expediente.entity';
 
 @Injectable()
 export class ExpedientesService {
-  private expedientes: ExpedienteEntity[] = [
-    {
-      id: 'exp-1',
-      groupId: 'demo-group',
-      title: 'Expediente inicial',
-      status: 'En proceso',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'exp-2',
-      groupId: 'demo-group',
-      title: 'Expediente complementario',
-      status: 'Pendiente',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
+  constructor(
+    @InjectRepository(ExpedienteEntity)
+    private readonly expedienteRepository: Repository<ExpedienteEntity>,
+  ) {}
 
-  listByGroup(groupId: string): ExpedienteEntity[] {
-    return this.expedientes.filter((expediente) => expediente.groupId === groupId);
+  async listAll(): Promise<ExpedienteEntity[]> {
+    return this.expedienteRepository.find();
   }
 
-  getById(id: string): ExpedienteEntity | undefined {
-    return this.expedientes.find((expediente) => expediente.id === id);
+  async listByGroup(groupId: string): Promise<ExpedienteEntity[]> {
+    return this.expedienteRepository.find({
+      where: { groupId },
+    });
   }
 
-  sendToVerification(id: string): ExpedienteEntity | undefined {
-    const expediente = this.expedientes.find((currentExpediente) => currentExpediente.id === id);
+  async getById(id: string): Promise<ExpedienteEntity | null> {
+    return this.expedienteRepository.findOne({
+      where: { id },
+      relations: {
+        solicitantes: true,
+      },
+    });
+  }
+
+  async sendToVerification(id: string): Promise<ExpedienteEntity | null> {
+    const expediente = await this.expedienteRepository.findOne({
+      where: { id },
+    });
 
     if (!expediente) {
-      return undefined;
+      return null;
     }
 
     expediente.status = 'En verificacion';
-    expediente.updatedAt = new Date().toISOString();
-    return expediente;
+    return this.expedienteRepository.save(expediente);
   }
 
-  createForGroup(dto: { groupId: string; title: string; status: string }): ExpedienteEntity {
-    const created: ExpedienteEntity = {
-      id: `exp-${Math.random().toString(36).slice(2)}`,
+  async createForGroup(dto: { groupId: string; title: string; status: string }): Promise<ExpedienteEntity> {
+    const expediente = this.expedienteRepository.create({
       groupId: dto.groupId,
       title: dto.title,
       status: dto.status,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    });
 
-    this.expedientes.push(created);
-    return created;
+    return this.expedienteRepository.save(expediente);
   }
 }

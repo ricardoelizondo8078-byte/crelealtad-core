@@ -1,0 +1,60 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { SolicitantesService } from './solicitantes.service';
+import { SolicitanteEntity, SolicitanteEstado } from './solicitante.entity';
+
+describe('SolicitantesService', () => {
+  let service: SolicitantesService;
+  let repository: Repository<SolicitanteEntity>;
+
+  const mockRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    find: jest.fn(),
+    findOne: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        SolicitantesService,
+        {
+          provide: getRepositoryToken(SolicitanteEntity),
+          useValue: mockRepository,
+        },
+      ],
+    }).compile();
+
+    service = module.get<SolicitantesService>(SolicitantesService);
+    repository = module.get<Repository<SolicitanteEntity>>(getRepositoryToken(SolicitanteEntity));
+  });
+
+  it('creates a solicitante linked to an expediente', async () => {
+    const dto = {
+      expedienteId: 'exp-1',
+      nombre: 'Ana López',
+      telefono: '5551234',
+      montoSolicitado: 5000,
+    };
+
+    const expectedResult = {
+      id: 'uuid-123',
+      ...dto,
+      estado: SolicitanteEstado.DOCUMENTANDO,
+      seccionActual: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockRepository.create.mockReturnValue(expectedResult);
+    mockRepository.save.mockResolvedValue(expectedResult);
+
+    const result = await service.createForExpediente(dto);
+
+    expect(result.expedienteId).toBe('exp-1');
+    expect(result.nombre).toBe('Ana López');
+    expect(result.montoSolicitado).toBe(5000);
+    expect(result.id).toBeTruthy();
+  });
+});

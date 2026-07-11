@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { SolicitudesService } from './solicitudes.service';
+import { SolicitudEntity } from './solicitud.entity';
 
 type CreateSolicitudDto = {
   solicitanteId: string;
-  [key: string]: string | boolean | undefined;
+  [key: string]: string | boolean | number | undefined;
 };
 
 @Controller('solicitudes')
@@ -17,6 +18,19 @@ export class SolicitudesController {
 
   @Post()
   create(@Body() dto: CreateSolicitudDto) {
-    return this.solicitudesService.createForSolicitante(dto);
+    return this.solicitudesService.createOrUpdateForSolicitante(dto);
+  }
+
+  @Put('solicitante/:solicitanteId')
+  update(@Param('solicitanteId') solicitanteId: string, @Body() dto: CreateSolicitudDto) {
+    return this.solicitudesService.createOrUpdateForSolicitante({ ...dto, solicitanteId });
+  }
+
+  @Patch(':solicitanteId')
+  async partialUpdate(
+    @Param('solicitanteId') solicitanteId: string,
+    @Body() data: Partial<SolicitudEntity>,
+  ) {
+    return this.solicitudesService.partialUpdate(solicitanteId, data);
   }
 }

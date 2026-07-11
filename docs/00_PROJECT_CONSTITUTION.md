@@ -1268,7 +1268,8 @@ Lista de invariantes críticos que no pueden romperse bajo ninguna circunstancia
 
 ## 20.1 Referencias de negocio
 
-- docs/business/BUSINESS_RULES.md
+- docs/project/02_BUSINESS_RULES.md
+- docs/archive/BUSINESS_RULES_INITIAL_DRAFT.md
 - README.md
 
 ## 20.2 Referencias de producto y alcance
@@ -1278,7 +1279,8 @@ Lista de invariantes críticos que no pueden romperse bajo ninguna circunstancia
 
 ## 20.3 Referencias de arquitectura
 
-- docs/architecture/ARCHITECTURE.md
+- docs/project/08_ARCHITECTURE_GUIDE.md
+- docs/archive/ARCHITECTURE_INITIAL_PROPOSAL.md
 - docs/architecture/DOMAIN_MODEL.md
 - docs/architecture/ERD_V2_PROPOSAL.md
 

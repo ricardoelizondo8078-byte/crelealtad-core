@@ -5,6 +5,11 @@ import { ExpedientesService } from './expedientes.service';
 export class ExpedientesController {
   constructor(private readonly expedientesService: ExpedientesService) {}
 
+  @Get()
+  listAll() {
+    return this.expedientesService.listAll();
+  }
+
   @Get('group/:groupId')
   listByGroup(@Param('groupId') groupId: string) {
     return this.expedientesService.listByGroup(groupId);

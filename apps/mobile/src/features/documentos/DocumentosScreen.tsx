@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { AppHeader, Card, PrimaryButton, ScreenContainer, ScreenTitleBar } from '../../components/ui';
+import { ActivityIndicator, Alert, StyleSheet, Text, View, ScrollView, Modal, TouchableOpacity, Linking } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { AppHeader, Card, PrimaryButton, ScreenContainer, ScreenTitleBar, SecondaryButton } from '../../components/ui';
 import { apiUrl } from '../../config/api';
-import { colors, radius, spacing, typography } from '../../theme/tokens';
+import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
+import { formatCurrency } from '../../utils/currency';
+import { formatPhone } from '../../utils/input';
 
 type DocumentoClave =
   | 'solicitud_fisica'
@@ -20,15 +23,44 @@ interface DocumentoItem {
   estado: DocumentoEstado;
 }
 
+interface SolicitanteInfo {
+  id: string;
+  nombre: string;
+  telefono: string;
+  montoSolicitado: number;
+  expedienteId?: string;
+}
+
+interface GrupoInfo {
+  id: string;
+  name: string;
+}
+
 interface DocumentosScreenProps {
   solicitanteId: string;
+  solicitanteNombre?: string;
+  integrantePosition?: number;
+  integrantesTotal?: number;
+  groupName?: string;
   onSaved?: () => void;
   onBack?: () => void;
 }
 
-export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({ solicitanteId, onSaved, onBack }) => {
+export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
+  solicitanteId,
+  solicitanteNombre,
+  integrantePosition,
+  integrantesTotal,
+  groupName,
+  onSaved,
+  onBack,
+}) => {
   const [documentos, setDocumentos] = useState<DocumentoItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [solicitante, setSolicitante] = useState<SolicitanteInfo | null>(null);
+  const [grupo, setGrupo] = useState<GrupoInfo | null>(null);
+  const [viewingDocumento, setViewingDocumento] = useState<DocumentoItem | null>(null);
+  const [showViewer, setShowViewer] = useState(false);
 
   const loadDocumentos = async () => {
     try {
@@ -46,18 +78,132 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({ solicitanteI
     }
   };
 
+  const loadSolicitante = async () => {
+    try {
+      console.log('📱 Cargando solicitante:', solicitanteId);
+      const response = await fetch(apiUrl(`/solicitantes/${solicitanteId}`));
+      console.log('📱 Respuesta solicitante:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📱 Datos solicitante:', data);
+        setSolicitante(data);
+
+        // Cargar expediente para obtener el groupId
+        if (data.expedienteId) {
+          console.log('📱 Cargando expediente:', data.expedienteId);
+          const expResponse = await fetch(apiUrl(`/expedientes/${data.expedienteId}`));
+          if (expResponse.ok) {
+            const expData = await expResponse.json();
+            console.log('📱 Datos expediente:', expData);
+
+            // Cargar grupo
+            if (expData.groupId) {
+              console.log('📱 Cargando grupo:', expData.groupId);
+              const grupoResponse = await fetch(apiUrl(`/grupos/${expData.groupId}`));
+              if (grupoResponse.ok) {
+                const grupoData = await grupoResponse.json();
+                console.log('📱 Datos grupo:', grupoData);
+                setGrupo(grupoData);
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error loading solicitante:', error);
+    }
+  };
+
   useEffect(() => {
     loadDocumentos();
+    loadSolicitante();
   }, [solicitanteId]);
 
-  const handleToggle = async (documento: DocumentoItem) => {
-    const nextEstado: DocumentoEstado = documento.estado === 'Pendiente' ? 'Capturado' : 'Pendiente';
+  const handleLlamarSolicitante = (telefono: string, nombre: string) => {
+    Alert.alert(
+      'Realizar llamada',
+      `¿Deseas llamar a ${nombre}?\n\n${formatPhone(telefono)}`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: '📞 Llamar',
+          onPress: () => {
+            const cleanPhone = telefono.replace(/\D/g, '');
+            Linking.openURL(`tel:${cleanPhone}`);
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
+  const handleCapturarDocumento = async (documento: DocumentoItem) => {
+    // Solicitar permisos de cámara
+    const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (cameraStatus !== 'granted') {
+      Alert.alert('Permiso requerido', 'Se necesita acceso a la cámara para capturar documentos.');
+      return;
+    }
+
+    // Si es INE, capturar frente y reverso
+    if (documento.clave === 'ine') {
+      await capturarINE(documento);
+      return;
+    }
+
+    // Para otros documentos, captura simple
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.9,
+      base64: false,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      // TODO: Convertir a PDF aquí en el futuro
+      await actualizarDocumento(documento, 'Capturado');
+    }
+  };
+
+  const capturarINE = async (documento: DocumentoItem) => {
+    // Capturar frente del INE
+    Alert.alert('INE - Frente', 'Centra el frente de tu INE en el recuadro');
+
+    const frenteResult = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.9,
+      aspect: [1.6, 1], // Proporción de INE
+    });
+
+    if (frenteResult.canceled) {
+      return;
+    }
+
+    // Capturar reverso del INE
+    Alert.alert('INE - Reverso', 'Ahora centra el reverso de tu INE');
+
+    const reversoResult = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.9,
+      aspect: [1.6, 1], // Proporción de INE
+    });
+
+    if (!reversoResult.canceled && reversoResult.assets[0]) {
+      // TODO: Guardar ambas imágenes y convertir a PDF
+      await actualizarDocumento(documento, 'Capturado');
+    }
+  };
+
+  const actualizarDocumento = async (documento: DocumentoItem, estado: DocumentoEstado) => {
     try {
       const response = await fetch(apiUrl(`/documentos/solicitante/${solicitanteId}/${documento.clave}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: nextEstado }),
+        body: JSON.stringify({ estado }),
       });
 
       if (!response.ok) {
@@ -74,51 +220,400 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({ solicitanteI
     <ScreenContainer>
       <AppHeader showBackButton onBackPress={onBack} moduleTheme="documentation" />
       <ScreenTitleBar title="Documentos" moduleTheme="documentation" />
+
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" />
       ) : (
-        <View style={styles.content}>
-          <Text style={styles.subtitle}>Toca cada documento para alternar entre Pendiente y Capturado.</Text>
-          {documentos.map((documento) => (
-            <Pressable key={documento.id} style={styles.cardPressable} onPress={() => handleToggle(documento)}>
-              <Card>
+        <>
+          {/* Banner del grupo - FIJO */}
+          <View style={styles.grupoBanner}>
+            <Text style={styles.grupoBannerText}>
+              {grupo?.name || groupName || 'Cargando grupo...'}
+            </Text>
+          </View>
+
+          {/* Tarjeta del solicitante - FIJA */}
+          <View style={styles.fixedSolicitanteContainer}>
+            <Card style={styles.solicitanteCard}>
+              <View style={styles.solicitanteHeader}>
+                {/* Nombre a la izquierda */}
+                <Text style={styles.solicitanteName}>
+                  {solicitante?.nombre || solicitanteNombre || 'Cargando...'}
+                </Text>
+
+                {/* Número a la derecha */}
+                {integrantePosition && integrantesTotal && (
+                  <Text style={styles.positionText}>
+                    {integrantePosition}/{integrantesTotal}
+                  </Text>
+                )}
+              </View>
+
+              {/* Teléfono y Monto */}
+              {solicitante && (
+                <View style={styles.contactInfoRow}>
+                  {/* Teléfono con ícono - CLICKEABLE */}
+                  <TouchableOpacity
+                    style={styles.phoneButton}
+                    onPress={() => handleLlamarSolicitante(solicitante.telefono, solicitante.nombre)}
+                  >
+                    <Text style={styles.phoneIcon}>📞</Text>
+                    <Text style={styles.phoneText}>{formatPhone(solicitante.telefono)}</Text>
+                  </TouchableOpacity>
+
+                  {/* Monto */}
+                  <View style={styles.montoContainer}>
+                    <Text style={styles.montoIcon}>💰</Text>
+                    <Text style={styles.montoText}>{formatCurrency(solicitante.montoSolicitado)}</Text>
+                  </View>
+                </View>
+              )}
+            </Card>
+          </View>
+
+          {/* Lista de documentos - SCROLLABLE */}
+          <ScrollView style={styles.scroll}>
+            <View style={styles.content}>
+              <Text style={styles.sectionTitle}>Documentos requeridos</Text>
+
+            {documentos.map((documento) => (
+              <Card key={documento.id} style={styles.documentoCard}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.name}>{documento.nombre}</Text>
-                  <View style={[styles.badge, documento.estado === 'Capturado' ? styles.badgeCaptured : styles.badgePending]}>
+                  <View style={styles.documentInfo}>
+                    <Text style={styles.name}>{documento.nombre}</Text>
+                    <Text style={styles.meta}>{documento.requerido ? 'Requerido' : 'Opcional'}</Text>
+                    {documento.clave === 'ine' && (
+                      <Text style={styles.ineNote}>📸 Frente y reverso</Text>
+                    )}
+                  </View>
+                  <View
+                    style={[
+                      styles.badge,
+                      documento.estado === 'Capturado' ? styles.badgeCaptured : styles.badgePending,
+                    ]}
+                  >
                     <Text style={styles.badgeText}>{documento.estado}</Text>
                   </View>
                 </View>
-                <Text style={styles.meta}>{documento.requerido ? 'Requerido' : 'Opcional'}</Text>
-              </Card>
-            </Pressable>
-          ))}
 
-          <PrimaryButton title="Volver al expediente" onPress={onSaved} moduleTheme="documentation" />
-        </View>
+                {/* Botones según estado */}
+                {documento.estado === 'Capturado' ? (
+                  <View style={styles.actionsRow}>
+                    <View style={styles.actionButton}>
+                      <SecondaryButton
+                        title="👁️ Ver"
+                        onPress={() => {
+                          setViewingDocumento(documento);
+                          setShowViewer(true);
+                        }}
+                      />
+                    </View>
+                    <View style={styles.actionButton}>
+                      <SecondaryButton
+                        title="📷 Recapturar"
+                        onPress={() => handleCapturarDocumento(documento)}
+                      />
+                    </View>
+                  </View>
+                ) : (
+                  <View style={{ marginTop: spacing.sm }}>
+                    <PrimaryButton
+                      title="📷 Capturar"
+                      onPress={() => handleCapturarDocumento(documento)}
+                      moduleTheme="documentation"
+                    />
+                  </View>
+                )}
+              </Card>
+            ))}
+
+              <PrimaryButton title="Volver al expediente" onPress={onSaved} moduleTheme="documentation" />
+            </View>
+          </ScrollView>
+        </>
       )}
+
+      {/* Modal para ver documento */}
+      <Modal visible={showViewer} transparent animationType="fade" onRequestClose={() => setShowViewer(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{viewingDocumento?.nombre}</Text>
+              <TouchableOpacity onPress={() => setShowViewer(false)} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.imageContainer}>
+              {/* TODO: Aquí irán las imágenes cuando se implementeel almacenamiento */}
+              <View style={styles.placeholder}>
+                <Text style={styles.placeholderText}>📄</Text>
+                <Text style={styles.placeholderSubtext}>
+                  Documento capturado{'\n'}
+                  {viewingDocumento?.clave === 'ine' ? '(Frente y Reverso)' : ''}
+                </Text>
+                <Text style={styles.placeholderNote}>
+                  💡 Próximamente podrás ver las imágenes guardadas aquí
+                </Text>
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <PrimaryButton title="Cerrar" onPress={() => setShowViewer(false)} moduleTheme="documentation" />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1 },
   loader: { marginTop: spacing.xl },
-  content: { padding: spacing.lg, gap: spacing.md },
-  subtitle: { color: colors.textSecondary, marginBottom: spacing.xs, ...typography.body },
-  cardPressable: { marginBottom: spacing.xs },
+  content: {
+    padding: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+  },
+  grupoBanner: {
+    backgroundColor: moduleThemes.documentation.headerBg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: moduleThemes.documentation.titleBarBg,
+  },
+  grupoBannerText: {
+    color: '#FDE047',
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  fixedSolicitanteContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    backgroundColor: colors.background,
+  },
+  solicitanteCard: {
+    padding: spacing.md,
+    borderWidth: 2,
+    borderColor: '#000000',
+    marginBottom: 0,
+  },
+  solicitanteHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  solicitanteName: {
+    ...typography.bodyStrong,
+    color: colors.textPrimary,
+    fontSize: 18,
+    flex: 1,
+    textAlign: 'left',
+  },
+  positionText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#666',
+    textAlign: 'right',
+  },
+  contactInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    gap: spacing.sm,
+  },
+  phoneButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    flex: 1,
+    gap: spacing.xs,
+  },
+  phoneIcon: {
+    fontSize: 16,
+  },
+  phoneText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E40AF',
+  },
+  montoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    gap: spacing.xs,
+  },
+  montoIcon: {
+    fontSize: 16,
+  },
+  montoText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#15803D',
+  },
+  statusPill: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+  },
+  statusPillComplete: {
+    backgroundColor: colors.successSoft,
+    borderWidth: 2,
+    borderColor: '#10B981',
+  },
+  statusPillPending: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+  },
+  statusPillText: { ...typography.caption, fontWeight: '700', color: colors.textPrimary },
+  sectionTitle: {
+    ...typography.sectionTitle,
+    color: colors.textPrimary,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  subtitle: { color: colors.textSecondary, marginBottom: spacing.md, ...typography.body },
+  cardPressable: { marginBottom: spacing.sm },
+  documentoCard: {
+    borderWidth: 2,
+    borderColor: '#000000',
+  },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
   },
-  name: { flex: 1, ...typography.bodyStrong, color: colors.textPrimary },
-  meta: { marginTop: spacing.sm, color: colors.textSecondary, ...typography.body },
+  documentInfo: {
+    flex: 1,
+  },
+  name: { ...typography.bodyStrong, color: colors.textPrimary },
+  meta: { marginTop: spacing.xs, color: colors.textSecondary, ...typography.caption },
+  ineNote: {
+    marginTop: spacing.xs,
+    color: moduleThemes.documentation.headerBg,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  capturedNote: {
+    marginTop: spacing.sm,
+    color: '#10B981',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   badge: {
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
   },
-  badgeCaptured: { backgroundColor: colors.successSoft },
-  badgePending: { backgroundColor: colors.dangerSoft },
+  badgeCaptured: {
+    backgroundColor: colors.successSoft,
+    borderWidth: 2,
+    borderColor: '#10B981',
+  },
+  badgePending: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+  },
   badgeText: { color: colors.textPrimary, ...typography.caption, fontWeight: '700' },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  actionButton: {
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: radius.lg,
+    width: '100%',
+    maxHeight: '90%',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+    backgroundColor: moduleThemes.documentation.headerBg,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+  },
+  modalTitle: {
+    ...typography.sectionTitle,
+    color: 'white',
+    flex: 1,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 16,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  imageContainer: {
+    flex: 1,
+    padding: spacing.lg,
+  },
+  placeholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl * 2,
+  },
+  placeholderText: {
+    fontSize: 80,
+    marginBottom: spacing.md,
+  },
+  placeholderSubtext: {
+    ...typography.bodyStrong,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  placeholderNote: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  modalFooter: {
+    padding: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
 });
