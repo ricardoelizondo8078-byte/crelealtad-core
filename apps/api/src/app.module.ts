@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
 import { DocumentosModule } from './documentos/documentos.module';
 import { ExpedientesModule } from './expedientes/expedientes.module';
 import { GruposModule } from './grupos/grupos.module';
 import { HealthController } from './health.controller';
-import { SolicitantesModule } from './solicitantes/solicitantes.module';
+import { IntegrantesModule } from './integrantes/integrantes.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
 
 @Module({
@@ -12,25 +13,22 @@ import { SolicitudesModule } from './solicitudes/solicitudes.module';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST || 'db.cjpvpxnnjpnbkmemdpqy.supabase.co',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME || 'postgres',
-      ssl: { rejectUnauthorized: false },
-      synchronize: true,
+      host: 'localhost',
+      port: 5432,
+      username: 'postgres',
+      password: process.env.DB_PASSWORD || process.env.DB_PASS,
+      database: 'crelealtad',
+      ssl: false,
+      synchronize: false, // ⚠️ DESACTIVADO - Schema se gestiona con migraciones SQL
       autoLoadEntities: true,
       logging: true,
       retryAttempts: 3,
       retryDelay: 3000,
-      extra: {
-        max: 10,
-        connectionTimeoutMillis: 5000,
-      },
     }),
+    AuthModule,
     GruposModule,
     ExpedientesModule,
-    SolicitantesModule,
+    IntegrantesModule,
     SolicitudesModule,
     DocumentosModule,
   ],

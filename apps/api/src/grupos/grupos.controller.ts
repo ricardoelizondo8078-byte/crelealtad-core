@@ -16,6 +16,11 @@ export class GruposController {
     return this.gruposService.create(dto);
   }
 
+  @Get()
+  listAll() {
+    return this.gruposService.listAll();
+  }
+
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.gruposService.getById(id);

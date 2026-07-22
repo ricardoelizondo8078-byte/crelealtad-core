@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-const DEFAULT_DEV_API_BASE_URL = 'http://192.168.1.83:3000';
+const DEFAULT_DEV_API_BASE_URL = 'http://172.20.9.186:3000';
 const HEALTH_PATH = '/health';
 const API_NOT_FOUND_MESSAGE = 'No se encontró el servidor de CRELEALTAD en esta red.';
 const COMMON_LAN_HOST_SUFFIXES = ['1', '2', '10', '20', '50', '83', '100', '101', '200', '254'];

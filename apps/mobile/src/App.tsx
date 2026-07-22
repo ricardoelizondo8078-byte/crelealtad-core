@@ -2,13 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { Card, PrimaryButton, ScreenContainer, SecondaryButton, SectionTitle } from './components/ui';
 import { ensureApiBaseUrlDiscovered, getApiDiscoveryErrorMessage } from './config/api';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { LoginScreen } from './features/auth';
 import { ExpedienteDetailScreen, ExpedientesListScreen } from './features/expedientes';
 import { CreateGroupScreen } from './features/grupos';
 import { colors, spacing, typography } from './theme/tokens';
 
 type AppScreen = 'home' | 'create-group' | 'expedientes';
 
-export default function App() {
+function AppContent() {
+  const { usuario, loading: authLoading } = useAuth();
   const [apiReady, setApiReady] = useState(false);
   const [apiDiscoveryError, setApiDiscoveryError] = useState<string | null>(null);
   const [screen, setScreen] = useState<AppScreen>('home');
@@ -40,6 +43,11 @@ export default function App() {
     setSelectedExpedienteId(null);
     setScreen('home');
   };
+
+  // Mostrar login si no hay usuario autenticado
+  if (!authLoading && !usuario) {
+    return <LoginScreen />;
+  }
 
   if (!apiReady && !apiDiscoveryError) {
     return (
@@ -100,13 +108,21 @@ export default function App() {
         <Text style={styles.checklistItem}>1. Crear grupo</Text>
         <Text style={styles.checklistItem}>2. Mis expedientes</Text>
         <Text style={styles.checklistItem}>3. Abrir expediente</Text>
-        <Text style={styles.checklistItem}>4. Agregar solicitante</Text>
+        <Text style={styles.checklistItem}>4. Agregar integrante</Text>
         <Text style={styles.checklistItem}>5. Capturar solicitud</Text>
         <Text style={styles.checklistItem}>6. Capturar documentos</Text>
         <Text style={styles.checklistItem}>7. Ver estado del expediente</Text>
         <Text style={styles.checklistItem}>8. Enviar a verificacion</Text>
       </Card>
     </ScreenContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

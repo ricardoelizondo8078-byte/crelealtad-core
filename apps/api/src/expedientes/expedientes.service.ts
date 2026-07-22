@@ -16,16 +16,13 @@ export class ExpedientesService {
 
   async listByGroup(groupId: string): Promise<ExpedienteEntity[]> {
     return this.expedienteRepository.find({
-      where: { groupId },
+      where: { grupo_id: groupId },
     });
   }
 
   async getById(id: string): Promise<ExpedienteEntity | null> {
     return this.expedienteRepository.findOne({
       where: { id },
-      relations: {
-        solicitantes: true,
-      },
     });
   }
 
@@ -38,17 +35,17 @@ export class ExpedientesService {
       return null;
     }
 
-    expediente.status = 'En verificacion';
+    expediente.estado = 'EN_REVISION';
     return this.expedienteRepository.save(expediente);
   }
 
-  async createForGroup(dto: { groupId: string; title: string; status: string }): Promise<ExpedienteEntity> {
+  async createForGroup(dto: { grupo_id: string }): Promise<ExpedienteEntity> {
     const expediente = this.expedienteRepository.create({
-      groupId: dto.groupId,
-      title: dto.title,
-      status: dto.status,
-    });
+      grupo_id: dto.grupo_id,
+      estado: 'EN_DOCUMENTACION',
+    } as any);
 
-    return this.expedienteRepository.save(expediente);
+    const saved = await this.expedienteRepository.save(expediente);
+    return Array.isArray(saved) ? saved[0] : saved;
   }
 }

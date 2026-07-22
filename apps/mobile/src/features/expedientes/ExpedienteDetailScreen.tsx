@@ -1,27 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+﻿import React, { useEffect, useState, useCallback } from 'react';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AppHeader, Card, PrimaryButton, ScreenContainer, ScreenTitleBar, SectionTitle } from '../../components/ui';
 import { apiUrl } from '../../config/api';
 import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
 import { formatPhone } from '../../utils/input';
+import { llamar } from '../../utils/phone';
 import { DocumentosScreen } from '../documentos';
-import { SolicitanteFormScreen } from '../solicitantes';
+import { IntegranteFormScreen } from '../integrantes';
 import { SolicitudFormScreen } from '../solicitudes';
 
 export interface ExpedienteDetail {
   id: string;
-  title: string;
-  status: string;
-  groupId: string;
+  nombre?: string;
+  estado: string;
+  grupo_id: string;
 }
 
 interface GrupoInfo {
   id: string;
-  name: string;
+  nombre: string;
 }
 
-interface SolicitanteStatusViewModel {
+interface IntegranteStatusViewModel {
   id: string;
   nombre: string;
   telefono: string;
@@ -39,11 +40,11 @@ interface ExpedienteDetailScreenProps {
 export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ expedienteId, onBack }) => {
   const [expediente, setExpediente] = useState<ExpedienteDetail | null>(null);
   const [grupo, setGrupo] = useState<GrupoInfo | null>(null);
-  const [solicitantes, setSolicitantes] = useState<SolicitanteStatusViewModel[]>([]);
+  const [integrantes, setIntegrantes] = useState<IntegranteStatusViewModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [selectedSolicitanteId, setSelectedSolicitanteId] = useState<string | null>(null);
-  const [selectedSolicitanteNombre, setSelectedSolicitanteNombre] = useState<string | null>(null);
+  const [selectedintegranteId, setSelectedintegranteId] = useState<string | null>(null);
+  const [selectedintegranteNombre, setSelectedintegranteNombre] = useState<string | null>(null);
   const [selectedSolicitantePosition, setSelectedSolicitantePosition] = useState<number | null>(null);
   const [activeSolicitanteView, setActiveSolicitanteView] = useState<'solicitud' | 'documentos' | null>(null);
 
@@ -55,14 +56,17 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
       }
 
       const data = await response.json();
+      console.log('Expediente data:', JSON.stringify(data));
       setExpediente(data);
 
       // Cargar información del grupo
-      if (data.groupId) {
+      if (data.grupo_id) {
+        console.log('Cargando grupo con ID:', data.grupo_id);
         try {
-          const grupoResponse = await fetch(apiUrl(`/grupos/${data.groupId}`));
+          const grupoResponse = await fetch(apiUrl(`/grupos/${data.grupo_id}`));
           if (grupoResponse.ok) {
             const grupoData = await grupoResponse.json();
+            console.log('Grupo data:', JSON.stringify(grupoData));
             setGrupo(grupoData);
           }
         } catch {
@@ -76,16 +80,16 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
 
   const loadSolicitantes = async () => {
     try {
-      const response = await fetch(apiUrl(`/solicitantes/expediente/${expedienteId}`));
+      const response = await fetch(apiUrl(`/integrantes/expediente/${expedienteId}`));
       if (!response.ok) {
-        throw new Error('Failed to load solicitantes');
+        throw new Error('Failed to load integrantes');
       }
 
       const data = await response.json();
       const enriched = await Promise.all(
-        data.map(async (solicitante: any) => {
+        data.map(async (integrante: any) => {
           try {
-            const solicitudResponse = await fetch(apiUrl(`/solicitudes/solicitante/${solicitante.id}`));
+            const solicitudResponse = await fetch(apiUrl(`/solicitudes/integrante/${integrante.id}`));
             let solicitud = null;
             if (solicitudResponse.ok) {
               const text = await solicitudResponse.text();
@@ -94,7 +98,7 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
               }
             }
             const hasSolicitud = Boolean(solicitud);
-            const documentosResponse = await fetch(apiUrl(`/documentos/solicitante/${solicitante.id}`));
+            const documentosResponse = await fetch(apiUrl(`/documentos/integrante/${integrante.id}`));
             let documentos = [];
             if (documentosResponse.ok) {
               const text = await documentosResponse.text();
@@ -107,24 +111,27 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
               documentosRequeridos.length > 0 &&
               documentosRequeridos.every((documento: any) => documento.estado === 'Capturado');
 
+            // BUG 2 FIX: Solo marcar como "Capturada" si el estado es SUJETA_CREDITO
+            const solicitudCapturada = integrante.estado === 'SUJETA_CREDITO';
+
             return {
-              ...solicitante,
-              solicitudStatus: hasSolicitud ? 'Capturada' : 'Pendiente',
+              ...integrante,
+              solicitudStatus: solicitudCapturada ? 'Capturada' : 'Pendiente',
               documentosStatus: requiredDocumentsCaptured ? 'Capturados' : 'Pendientes',
-              overallStatus: hasSolicitud && requiredDocumentsCaptured ? 'Completa' : 'Pendiente',
-            } as SolicitanteStatusViewModel;
+              overallStatus: solicitudCapturada && requiredDocumentsCaptured ? 'Completa' : 'Pendiente',
+            } as IntegranteStatusViewModel;
           } catch {
             return {
-              ...solicitante,
+              ...integrante,
               solicitudStatus: 'Pendiente',
               documentosStatus: 'Pendientes',
               overallStatus: 'Pendiente',
-            } as SolicitanteStatusViewModel;
+            } as IntegranteStatusViewModel;
           }
         }),
       );
 
-      setSolicitantes(enriched);
+      setIntegrantes(enriched);
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Unexpected error');
     }
@@ -142,24 +149,40 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
 
   const handleSaved = async () => {
     setShowForm(false);
-    setSelectedSolicitanteId(null);
-    setSelectedSolicitanteNombre(null);
+    setSelectedintegranteId(null);
+    setSelectedintegranteNombre(null);
     setSelectedSolicitantePosition(null);
     setActiveSolicitanteView(null);
-    await Promise.all([loadExpediente(), loadSolicitantes()]);
+    await loadSolicitantes();
   };
 
+  // BUG 1 FIX: Actualización inmediata mientras edita
+  const handleDataChange = useCallback((integranteId: string, data: { nombre?: string; telefono?: string; montoSolicitado?: number }) => {
+    setIntegrantes((prev) =>
+      prev.map((s) =>
+        s.id === integranteId
+          ? {
+              ...s,
+              ...(data.nombre !== undefined && { nombre: data.nombre }),
+              ...(data.telefono !== undefined && { telefono: data.telefono }),
+              ...(data.montoSolicitado !== undefined && { montoSolicitado: data.montoSolicitado }),
+            }
+          : s
+      )
+    );
+  }, []);
+
   const handleSendToVerification = async () => {
-    const completadas = solicitantes.filter((solicitante) => solicitante.overallStatus === 'Completa').length;
-    const pendientes = solicitantes.filter((solicitante) => solicitante.overallStatus === 'Pendiente').length;
+    const completadas = integrantes.filter((integrante) => integrante.overallStatus === 'Completa').length;
+    const pendientes = integrantes.filter((integrante) => integrante.overallStatus === 'Pendiente').length;
     const missingMessages: string[] = [];
 
     if (completadas < 1) {
-      missingMessages.push('Se requiere al menos 1 solicitante completa.');
+      missingMessages.push('Se requiere Al menos 1 integrante completa.');
     }
 
     if (pendientes > 0) {
-      missingMessages.push(`Hay ${pendientes} solicitante(s) pendiente(s).`);
+      missingMessages.push(`Hay ${pendientes} integrante(s) pendiente(s).`);
     }
 
     if (missingMessages.length > 0) {
@@ -184,31 +207,32 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
     }
   };
 
-  if (selectedSolicitanteId && activeSolicitanteView === 'solicitud') {
+  if (selectedintegranteId && activeSolicitanteView === 'solicitud') {
     return (
       <SolicitudFormScreen
-        solicitanteId={selectedSolicitanteId}
-        solicitanteNombre={selectedSolicitanteNombre ?? undefined}
-        groupName={grupo?.name}
+        integranteId={selectedintegranteId}
+        integranteNombre={selectedintegranteNombre ?? undefined}
+        groupName={grupo?.nombre}
         integrantePosition={selectedSolicitantePosition ?? undefined}
-        integrantesTotal={solicitantes.length || undefined}
+        integrantesTotal={integrantes.length || undefined}
         onSaved={handleSaved}
         onSavedGoToDocumentos={() => {
           setActiveSolicitanteView('documentos');
         }}
         onBack={handleSaved}
+        onDataChange={(data) => handleDataChange(selectedintegranteId, data)}
       />
     );
   }
 
-  if (selectedSolicitanteId && activeSolicitanteView === 'documentos') {
+  if (selectedintegranteId && activeSolicitanteView === 'documentos') {
     return (
       <DocumentosScreen
-        solicitanteId={selectedSolicitanteId}
-        solicitanteNombre={selectedSolicitanteNombre ?? undefined}
+        integranteId={selectedintegranteId}
+        integranteNombre={selectedintegranteNombre ?? undefined}
         integrantePosition={selectedSolicitantePosition ?? undefined}
-        integrantesTotal={solicitantes.length || undefined}
-        groupName={grupo?.name}
+        integrantesTotal={integrantes.length || undefined}
+        groupName={grupo?.nombre}
         onSaved={handleSaved}
         onBack={handleSaved}
       />
@@ -216,11 +240,11 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
   }
 
   if (showForm) {
-    return <SolicitanteFormScreen expedienteId={expedienteId} onSaved={handleSaved} onBack={handleSaved} />;
+    return <IntegranteFormScreen expedienteId={expedienteId} onSaved={handleSaved} onBack={handleSaved} />;
   }
 
-  const completadas = solicitantes.filter((solicitante) => solicitante.overallStatus === 'Completa').length;
-  const pendientes = solicitantes.length - completadas;
+  const completadas = integrantes.filter((integrante) => integrante.overallStatus === 'Completa').length;
+  const pendientes = integrantes.length - completadas;
   const retiradas = 0;
 
   return (
@@ -230,7 +254,7 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
 
       {/* Banner del grupo */}
       <View style={styles.grupoBanner}>
-        <Text style={styles.grupoBannerText}>{grupo?.name || 'Cargando grupo...'}</Text>
+        <Text style={styles.grupoBannerText}>{grupo?.nombre || 'Cargando grupo...'}</Text>
       </View>
 
       {loading ? (
@@ -241,7 +265,7 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
             {/* Botones en la parte superior */}
             <View style={styles.buttonsRow}>
               <View style={styles.buttonHalf}>
-                <PrimaryButton title="Agregar solicitante" onPress={() => setShowForm(true)} moduleTheme="documentation" />
+                <PrimaryButton title="Agregar integrante" onPress={() => setShowForm(true)} moduleTheme="documentation" />
               </View>
               <View style={styles.buttonHalf}>
                 <PrimaryButton title="Enviar a verificación" onPress={handleSendToVerification} moduleTheme="documentation" />
@@ -249,12 +273,12 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
             </View>
 
             {/* Estado del expediente */}
-            <Text style={styles.status}>Estado: {expediente.status}</Text>
+            <Text style={styles.status}>Estado: {expediente.estado}</Text>
 
             {/* KPIs en burbujas */}
             <View style={styles.kpisRow}>
               <View style={styles.kpiBubble}>
-                <Text style={styles.kpiValue}>{solicitantes.length}</Text>
+                <Text style={styles.kpiValue}>{integrantes.length}</Text>
                 <Text style={styles.kpiLabel}>Total</Text>
               </View>
               <View style={[styles.kpiBubble, styles.kpiBubbleSuccess]}>
@@ -273,39 +297,44 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
           </Card>
 
           <View style={styles.section}>
-            <SectionTitle title="Solicitantes" />
-            {solicitantes.length === 0 ? (
-              <Text style={styles.empty}>Aún no hay solicitantes para este expediente.</Text>
+            <SectionTitle title="integrantes" />
+            {integrantes.length === 0 ? (
+              <Text style={styles.empty}>Aún no hay integrantes para este expediente.</Text>
             ) : (
-              solicitantes.map((solicitante, index) => (
+              integrantes.map((integrante, index) => (
                 <Pressable
-                  key={solicitante.id}
+                  key={integrante.id}
                   onPress={() => {
-                    setSelectedSolicitanteId(solicitante.id);
-                    setSelectedSolicitanteNombre(solicitante.nombre);
+                    setSelectedintegranteId(integrante.id);
+                    setSelectedintegranteNombre(integrante.nombre);
                     setSelectedSolicitantePosition(index + 1);
                     setActiveSolicitanteView('solicitud');
                   }}
                 >
-                  <Card style={styles.solicitanteCard}>
+                  <Card style={styles.integranteCard}>
                     {/* Número de posición en esquina superior derecha */}
                     <View style={styles.positionBadge}>
-                      <Text style={styles.positionBadgeText}>{index + 1}/{solicitantes.length}</Text>
+                      <Text style={styles.positionBadgeText}>{index + 1}/{integrantes.length}</Text>
                     </View>
 
-                    <Text style={styles.solicitanteName}>{solicitante.nombre}</Text>
-                    <Text style={styles.solicitanteMeta}>Teléfono: {formatPhone(solicitante.telefono)}</Text>
-                    <Text style={styles.solicitanteMeta}>Monto: {formatCurrency(solicitante.montoSolicitado)}</Text>
-                    <Text style={styles.solicitanteMeta}>
-                      Solicitud: {solicitante.solicitudStatus}{' '}
-                      {solicitante.solicitudStatus === 'Capturada' && <Text style={styles.checkmark}>✓</Text>}
+                    <Text style={styles.integranteName}>{integrante.nombre}</Text>
+                    <TouchableOpacity
+                      onPress={() => llamar(integrante.telefono, integrante.nombre)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.integranteMeta}>📞 Teléfono: {formatPhone(integrante.telefono ?? '')}</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.integranteMeta}>Monto: {formatCurrency(integrante.montoSolicitado ?? 0)}</Text>
+                    <Text style={styles.integranteMeta}>
+                      Solicitud: {integrante.solicitudStatus}{' '}
+                      {integrante.solicitudStatus === 'Capturada' && <Text style={styles.checkmark}>✓</Text>}
                     </Text>
-                    <Text style={styles.solicitanteMeta}>
-                      Documentos: {solicitante.documentosStatus}{' '}
-                      {solicitante.documentosStatus === 'Capturados' && <Text style={styles.checkmark}>✓</Text>}
+                    <Text style={styles.integranteMeta}>
+                      Documentos: {integrante.documentosStatus}{' '}
+                      {integrante.documentosStatus === 'Capturados' && <Text style={styles.checkmark}>✓</Text>}
                     </Text>
-                    <View style={[styles.statusPill, solicitante.overallStatus === 'Completa' ? styles.statusPillComplete : styles.statusPillPending]}>
-                      <Text style={styles.statusPillText}>{solicitante.overallStatus}</Text>
+                    <View style={[styles.statusPill, integrante.overallStatus === 'Completa' ? styles.statusPillComplete : styles.statusPillPending]}>
+                      <Text style={styles.statusPillText}>{integrante.overallStatus}</Text>
                     </View>
                   </Card>
                 </Pressable>
@@ -405,14 +434,14 @@ const styles = StyleSheet.create({
   },
   section: { marginTop: spacing.sm },
   empty: { color: colors.textSecondary, ...typography.body },
-  solicitanteCard: {
+  integranteCard: {
     marginBottom: spacing.sm,
     padding: spacing.md,
     borderWidth: 2,
     borderColor: '#000000',
   },
-  solicitanteName: { ...typography.bodyStrong, color: colors.textPrimary },
-  solicitanteMeta: { marginTop: spacing.xs, color: colors.textSecondary, ...typography.body },
+  integranteName: { ...typography.bodyStrong, color: colors.textPrimary },
+  integranteMeta: { marginTop: spacing.xs, color: colors.textSecondary, ...typography.body },
   statusPill: {
     alignSelf: 'flex-start',
     marginTop: spacing.sm,

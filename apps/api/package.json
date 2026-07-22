@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "nest start",
+    "start:dev": "nest start --watch",
     "build": "nest build",
     "start:prod": "node dist/main.js",
     "test": "jest"
@@ -13,6 +14,9 @@
     "@nestjs/core": "^10.4.22",
     "@nestjs/platform-express": "^10.4.22",
     "@nestjs/typeorm": "^11.0.3",
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
+    "node-fetch": "^2.7.0",
     "pg": "^8.22.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.0.0",

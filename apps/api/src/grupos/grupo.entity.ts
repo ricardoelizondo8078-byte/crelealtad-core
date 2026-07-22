@@ -1,11 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { ExpedienteEntity } from '../expedientes/expediente.entity';
 
-export enum GrupoStatus {
+export enum GrupoEstado {
   FORMANDO = 'FORMANDO',
-  LISTO_PARA_REVISION = 'LISTO_PARA_REVISION',
-  EN_REVISION = 'EN_REVISION',
-  AUTORIZADO = 'AUTORIZADO',
+  ACTIVO = 'ACTIVO',
+  EN_RENOVACION = 'EN_RENOVACION',
+  LIQUIDADO = 'LIQUIDADO',
+  INACTIVO = 'INACTIVO',
 }
 
 @Entity('grupos')
@@ -13,31 +14,37 @@ export class GrupoEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ type: 'varchar', unique: true, nullable: true })
+  folio: string;
+
   @Column({ type: 'varchar', nullable: false })
-  name: string;
+  nombre: string; // antes: name
+
+  @Column({ type: 'uuid', nullable: true })
+  zona_id: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  sucursal_id: string;
+
+  @Column({ type: 'date', nullable: false })
+  fecha_inicio: Date;
+
+  @Column({ type: 'varchar', nullable: false, default: GrupoEstado.FORMANDO })
+  estado: GrupoEstado; // antes: status
 
   @Column({ type: 'varchar', nullable: true })
-  advisorName: string;
-
-  @Column({ type: 'varchar', nullable: true })
-  createdBy: string;
-
-  @Column({
-    type: 'enum',
-    enum: GrupoStatus,
-    default: GrupoStatus.FORMANDO,
-  })
-  status: GrupoStatus;
+  created_by: string; // antes: createdBy
 
   @CreateDateColumn({ type: 'timestamptz' })
-  createdAt: Date;
+  created_at: Date; // antes: createdAt
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt: Date;
+  updated_at: Date; // antes: updatedAt
 
   @DeleteDateColumn({ type: 'timestamptz', nullable: true })
-  deletedAt: Date;
+  deleted_at: Date; // antes: deletedAt
 
+  // Relaciones
   @OneToMany(() => ExpedienteEntity, (expediente) => expediente.grupo)
   expedientes: ExpedienteEntity[];
 }

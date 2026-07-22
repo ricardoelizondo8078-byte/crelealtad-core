@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { SolicitanteEntity } from '../solicitantes/solicitante.entity';
+import { IntegranteEntity } from '../integrantes/integrante.entity';
 
 export enum DocumentoTipo {
   INE = 'INE',
@@ -50,7 +50,7 @@ export class DocumentoEntity {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
-  @ManyToOne(() => SolicitanteEntity, (solicitante) => solicitante.documentos)
+  @ManyToOne(() => IntegranteEntity, (integrante) => integrante.documentos)
   @JoinColumn({ name: 'solicitanteId' })
-  solicitante: SolicitanteEntity;
+  integrante: IntegranteEntity;
 }

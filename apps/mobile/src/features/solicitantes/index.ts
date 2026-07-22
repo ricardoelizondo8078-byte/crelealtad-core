@@ -1,1 +1,1 @@
-export { SolicitanteFormScreen } from './SolicitanteFormScreen';
+﻿export { IntegranteFormScreen } from './SolicitanteFormScreen';

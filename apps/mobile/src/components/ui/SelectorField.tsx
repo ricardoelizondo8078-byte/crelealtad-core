@@ -38,7 +38,8 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
         {useChips ? (
           <View style={styles.chipGroup}>
             {options.map((option) => {
-              const isSelected = value === option;
+              // Solo marcar como seleccionado si value no está vacío Y coincide con la opción
+              const isSelected = value && value === option;
 
               return (
                 <Pressable

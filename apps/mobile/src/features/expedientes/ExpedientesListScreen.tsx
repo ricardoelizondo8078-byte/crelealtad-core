@@ -6,8 +6,9 @@ import { colors, spacing, typography } from '../../theme/tokens';
 
 export interface ExpedienteSummary {
   id: string;
-  title: string;
-  status: string;
+  nombre: string;
+  estado: string;
+  expedienteId?: string;
 }
 
 interface ExpedientesListScreenProps {
@@ -22,8 +23,9 @@ export const ExpedientesListScreen: React.FC<ExpedientesListScreenProps> = ({ on
 
   useEffect(() => {
     const loadExpedientes = async () => {
+      setLoading(true);
       try {
-        const response = await fetch(apiUrl('/expedientes'));
+        const response = await fetch(apiUrl('/grupos'));
         if (!response.ok) {
           throw new Error('Failed to load expedientes');
         }
@@ -52,11 +54,14 @@ export const ExpedientesListScreen: React.FC<ExpedientesListScreenProps> = ({ on
           {expedientes.map((expediente) => (
             <Pressable
               key={expediente.id}
-              onPress={() => onSelectExpediente?.(expediente.id)}
+              onPress={() => {
+                console.log('ID seleccionado:', expediente.expedienteId ?? expediente.id);
+                onSelectExpediente?.(expediente.expedienteId ?? expediente.id);
+              }}
             >
               <Card style={styles.card}>
-                <Text style={styles.title}>{expediente.title}</Text>
-                <Text style={styles.status}>{expediente.status}</Text>
+                <Text style={styles.title}>{expediente.nombre}</Text>
+                <Text style={styles.status}>{expediente.estado}</Text>
               </Card>
             </Pressable>
           ))}

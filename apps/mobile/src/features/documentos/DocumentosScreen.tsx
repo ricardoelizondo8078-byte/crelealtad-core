@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View, ScrollView, Modal, TouchableOpacity, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { AppHeader, Card, PrimaryButton, ScreenContainer, ScreenTitleBar, SecondaryButton } from '../../components/ui';
@@ -10,7 +10,10 @@ import { formatPhone } from '../../utils/input';
 type DocumentoClave =
   | 'solicitud_fisica'
   | 'ine'
+  | 'comprobante'
   | 'comprobante_domicilio'
+  | 'ine_beneficiario'
+  | 'solicitud_firmada'
   | 'comprobante_credito_externo';
 
 type DocumentoEstado = 'Pendiente' | 'Capturado';
@@ -23,7 +26,7 @@ interface DocumentoItem {
   estado: DocumentoEstado;
 }
 
-interface SolicitanteInfo {
+interface IntegranteInfo {
   id: string;
   nombre: string;
   telefono: string;
@@ -37,8 +40,8 @@ interface GrupoInfo {
 }
 
 interface DocumentosScreenProps {
-  solicitanteId: string;
-  solicitanteNombre?: string;
+  integranteId: string;
+  integranteNombre?: string;
   integrantePosition?: number;
   integrantesTotal?: number;
   groupName?: string;
@@ -47,8 +50,8 @@ interface DocumentosScreenProps {
 }
 
 export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
-  solicitanteId,
-  solicitanteNombre,
+  integranteId,
+  integranteNombre,
   integrantePosition,
   integrantesTotal,
   groupName,
@@ -57,20 +60,55 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
 }) => {
   const [documentos, setDocumentos] = useState<DocumentoItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [solicitante, setSolicitante] = useState<SolicitanteInfo | null>(null);
+  const [integrante, setIntegrante] = useState<IntegranteInfo | null>(null);
   const [grupo, setGrupo] = useState<GrupoInfo | null>(null);
   const [viewingDocumento, setViewingDocumento] = useState<DocumentoItem | null>(null);
   const [showViewer, setShowViewer] = useState(false);
 
   const loadDocumentos = async () => {
+    setLoading(true);
     try {
-      const response = await fetch(apiUrl(`/documentos/solicitante/${solicitanteId}`));
+      // Los documentos ahora son campos en la tabla solicitudes
+      const response = await fetch(apiUrl(`/solicitudes/integrante/${integranteId}`));
       if (!response.ok) {
-        throw new Error('Failed to load documentos');
+        throw new Error('Failed to load solicitud');
       }
 
       const data = await response.json();
-      setDocumentos(data);
+
+      // Mapear campos doc_*_ruta a formato de documentos
+      const docs: DocumentoItem[] = [
+        {
+          id: `${integranteId}-ine`,
+          clave: 'ine',
+          nombre: 'INE',
+          requerido: true,
+          estado: (data.doc_ine_ruta ? 'Capturado' : 'Pendiente') as DocumentoEstado,
+        },
+        {
+          id: `${integranteId}-comprobante`,
+          clave: 'comprobante',
+          nombre: 'Comprobante de domicilio',
+          requerido: true,
+          estado: (data.doc_comprobante_ruta ? 'Capturado' : 'Pendiente') as DocumentoEstado,
+        },
+        {
+          id: `${integranteId}-ine_beneficiario`,
+          clave: 'ine_beneficiario',
+          nombre: 'INE Beneficiario',
+          requerido: true,
+          estado: (data.doc_ine_beneficiario_ruta ? 'Capturado' : 'Pendiente') as DocumentoEstado,
+        },
+        {
+          id: `${integranteId}-solicitud_firmada`,
+          clave: 'solicitud_firmada',
+          nombre: 'Solicitud firmada',
+          requerido: true,
+          estado: (data.doc_solicitud_firmada_ruta ? 'Capturado' : 'Pendiente') as DocumentoEstado,
+        },
+      ];
+
+      setDocumentos(docs);
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Unexpected error');
     } finally {
@@ -78,16 +116,16 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
     }
   };
 
-  const loadSolicitante = async () => {
+  const loadIntegranteInfo = async () => {
     try {
-      console.log('📱 Cargando solicitante:', solicitanteId);
-      const response = await fetch(apiUrl(`/solicitantes/${solicitanteId}`));
-      console.log('📱 Respuesta solicitante:', response.status);
+      console.log('📱 Cargando integrante:', integranteId);
+      const response = await fetch(apiUrl(`/integrantes/${integranteId}`));
+      console.log('📱 Respuesta integrante:', response.status);
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📱 Datos solicitante:', data);
-        setSolicitante(data);
+        console.log('📱 Datos integrante:', data);
+        setIntegrante(data);
 
         // Cargar expediente para obtener el groupId
         if (data.expedienteId) {
@@ -111,16 +149,33 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
         }
       }
     } catch (error) {
-      console.error('❌ Error loading solicitante:', error);
+      console.error('❌ Error loading integrante:', error);
     }
   };
 
   useEffect(() => {
-    loadDocumentos();
-    loadSolicitante();
-  }, [solicitanteId]);
+    const loadData = async () => {
+      console.log('📱 Cargando integrante:', integranteId);
+      const response = await fetch(apiUrl(`/integrantes/${integranteId}`));
+      console.log('📱 Respuesta integrante:', response.status);
 
-  const handleLlamarSolicitante = (telefono: string, nombre: string) => {
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📱 Datos integrante:', data);
+        setIntegrante({
+          id: data.id,
+          nombre: data.nombre,
+          telefono: data.telefono,
+          montoSolicitado: data.montoSolicitado,
+        });
+      }
+    };
+
+    loadData();
+    loadDocumentos();
+  }, [integranteId, loadDocumentos]);
+
+  const handleLlamarIntegrante = (telefono: string, nombre: string) => {
     Alert.alert(
       'Realizar llamada',
       `¿Deseas llamar a ${nombre}?\n\n${formatPhone(telefono)}`,
@@ -200,10 +255,34 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
 
   const actualizarDocumento = async (documento: DocumentoItem, estado: DocumentoEstado) => {
     try {
-      const response = await fetch(apiUrl(`/documentos/solicitante/${solicitanteId}/${documento.clave}`), {
+      // Mapear clave del documento a campos en solicitudes
+      const fieldMap: Record<string, { ruta: string; fecha: string }> = {
+        'ine': { ruta: 'doc_ine_ruta', fecha: 'doc_ine_fecha' },
+        'INE': { ruta: 'doc_ine_ruta', fecha: 'doc_ine_fecha' },
+        'comprobante': { ruta: 'doc_comprobante_ruta', fecha: 'doc_comprobante_fecha' },
+        'COMPROBANTE': { ruta: 'doc_comprobante_ruta', fecha: 'doc_comprobante_fecha' },
+        'ine_beneficiario': { ruta: 'doc_ine_beneficiario_ruta', fecha: 'doc_ine_beneficiario_fecha' },
+        'INE_BENEFICIARIO': { ruta: 'doc_ine_beneficiario_ruta', fecha: 'doc_ine_beneficiario_fecha' },
+        'solicitud_firmada': { ruta: 'doc_solicitud_firmada_ruta', fecha: 'doc_solicitud_firmada_fecha' },
+        'SOLICITUD_FIRMADA': { ruta: 'doc_solicitud_firmada_ruta', fecha: 'doc_solicitud_firmada_fecha' },
+      };
+
+      const fields = fieldMap[documento.clave];
+      if (!fields) {
+        throw new Error(`Documento desconocido: ${documento.clave}`);
+      }
+
+      const rutaTemporal = `mobile-temp:documento-${documento.clave}-${Date.now()}`;
+      const fechaCaptura = new Date().toISOString().split('T')[0];
+
+      // Actualizar campos en solicitudes
+      const response = await fetch(apiUrl(`/solicitudes/${integranteId}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado }),
+        body: JSON.stringify({
+          [fields.ruta]: rutaTemporal,
+          [fields.fecha]: fechaCaptura,
+        }),
       });
 
       if (!response.ok) {
@@ -232,13 +311,13 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
             </Text>
           </View>
 
-          {/* Tarjeta del solicitante - FIJA */}
+          {/* Tarjeta del integrante - FIJA */}
           <View style={styles.fixedSolicitanteContainer}>
-            <Card style={styles.solicitanteCard}>
-              <View style={styles.solicitanteHeader}>
+            <Card style={styles.integranteCard}>
+              <View style={styles.integranteHeader}>
                 {/* Nombre a la izquierda */}
-                <Text style={styles.solicitanteName}>
-                  {solicitante?.nombre || solicitanteNombre || 'Cargando...'}
+                <Text style={styles.integranteName}>
+                  {integrante?.nombre || integranteNombre || 'Cargando...'}
                 </Text>
 
                 {/* Número a la derecha */}
@@ -250,21 +329,21 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
               </View>
 
               {/* Teléfono y Monto */}
-              {solicitante && (
+              {integrante && (
                 <View style={styles.contactInfoRow}>
                   {/* Teléfono con ícono - CLICKEABLE */}
                   <TouchableOpacity
                     style={styles.phoneButton}
-                    onPress={() => handleLlamarSolicitante(solicitante.telefono, solicitante.nombre)}
+                    onPress={() => handleLlamarIntegrante(integrante.telefono, integrante.nombre)}
                   >
                     <Text style={styles.phoneIcon}>📞</Text>
-                    <Text style={styles.phoneText}>{formatPhone(solicitante.telefono)}</Text>
+                    <Text style={styles.phoneText}>{formatPhone(integrante.telefono)}</Text>
                   </TouchableOpacity>
 
                   {/* Monto */}
                   <View style={styles.montoContainer}>
                     <Text style={styles.montoIcon}>💰</Text>
-                    <Text style={styles.montoText}>{formatCurrency(solicitante.montoSolicitado)}</Text>
+                    <Text style={styles.montoText}>{formatCurrency(integrante.montoSolicitado)}</Text>
                   </View>
                 </View>
               )}
@@ -398,19 +477,19 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     backgroundColor: colors.background,
   },
-  solicitanteCard: {
+  integranteCard: {
     padding: spacing.md,
     borderWidth: 2,
     borderColor: '#000000',
     marginBottom: 0,
   },
-  solicitanteHeader: {
+  integranteHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  solicitanteName: {
+  integranteName: {
     ...typography.bodyStrong,
     color: colors.textPrimary,
     fontSize: 18,

@@ -4,10 +4,11 @@ import { ExpedientesModule } from '../expedientes/expedientes.module';
 import { GrupoEntity } from './grupo.entity';
 import { GruposController } from './grupos.controller';
 import { GruposService } from './grupos.service';
+import { ExpedienteEntity } from '../expedientes/expediente.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([GrupoEntity]),
+    TypeOrmModule.forFeature([GrupoEntity, ExpedienteEntity]),
     ExpedientesModule,
   ],
   controllers: [GruposController],

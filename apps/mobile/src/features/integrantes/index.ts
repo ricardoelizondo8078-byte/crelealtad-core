@@ -1,0 +1,1 @@
+export { IntegranteFormScreen } from './IntegranteFormScreen';

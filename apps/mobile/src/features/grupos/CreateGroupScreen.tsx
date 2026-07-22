@@ -32,15 +32,32 @@ export const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ onBack, on
         }),
       });
 
+      console.log('Status:', response.status);
+      console.log('Ok:', response.ok);
+
       if (!response.ok) {
         throw new Error('Failed to create group');
       }
 
       const data = await response.json();
-      Alert.alert('Success', `Group created: ${data.name}`);
-      setName('');
-      onCreated?.();
+      console.log('Respuesta del backend:', JSON.stringify(data));
+
+      // Mensaje de confirmación mejorado
+      Alert.alert(
+        'Grupo Creado',
+        `El grupo se ha creado correctamente.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              setName('');
+              onCreated?.();
+            }
+          }
+        ]
+      );
     } catch (error) {
+      console.log('Error completo:', error);
       Alert.alert('Error', error instanceof Error ? error.message : 'Unexpected error');
     } finally {
       setIsSubmitting(false);

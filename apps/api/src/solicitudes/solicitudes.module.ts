@@ -3,12 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SolicitudEntity } from './solicitud.entity';
 import { SolicitudesController } from './solicitudes.controller';
 import { SolicitudesService } from './solicitudes.service';
-import { SolicitantesModule } from '../solicitantes/solicitantes.module';
+import { IntegrantesModule } from '../integrantes/integrantes.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([SolicitudEntity]),
-    forwardRef(() => SolicitantesModule),
+    forwardRef(() => IntegrantesModule),
   ],
   controllers: [SolicitudesController],
   providers: [SolicitudesService],

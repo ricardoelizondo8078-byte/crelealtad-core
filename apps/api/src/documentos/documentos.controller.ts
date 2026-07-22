@@ -16,18 +16,18 @@ class CargarDocumentoDto {
 export class DocumentosController {
   constructor(private readonly documentosService: DocumentosService) {}
 
-  @Get('solicitante/:solicitanteId')
-  listBySolicitante(@Param('solicitanteId') solicitanteId: string) {
-    return this.documentosService.listBySolicitante(solicitanteId);
+  @Get('integrante/:integranteId')
+  listByIntegrante(@Param('integranteId') integranteId: string) {
+    return this.documentosService.listBySolicitante(integranteId);
   }
 
-  @Post('solicitante/:solicitanteId')
-  cargarDocumento(
-    @Param('solicitanteId') solicitanteId: string,
+  @Post('integrante/:integranteId')
+  async cargarDocumento(
+    @Param('integranteId') integranteId: string,
     @Body() dto: CargarDocumentoDto,
   ) {
     return this.documentosService.cargarDocumento(
-      solicitanteId,
+      integranteId,
       dto.tipo,
       dto.archivoBase64,
       dto.archivoNombre,
@@ -39,12 +39,12 @@ export class DocumentosController {
     return this.documentosService.verificarDocumento(id);
   }
 
-  @Patch('solicitante/:solicitanteId/:tipo')
-  updateStatus(
-    @Param('solicitanteId') solicitanteId: string,
+  @Patch('integrante/:integranteId/:tipo')
+  async updateStatus(
+    @Param('integranteId') integranteId: string,
     @Param('tipo') tipo: DocumentoTipo,
     @Body() dto: UpdateDocumentoEstadoDto,
   ) {
-    return this.documentosService.updateStatus(solicitanteId, tipo, dto.estado);
+    return this.documentosService.updateStatus(integranteId, tipo, dto.estado);
   }
 }

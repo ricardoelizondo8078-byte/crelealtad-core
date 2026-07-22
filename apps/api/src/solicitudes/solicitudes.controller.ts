@@ -3,7 +3,8 @@ import { SolicitudesService } from './solicitudes.service';
 import { SolicitudEntity } from './solicitud.entity';
 
 type CreateSolicitudDto = {
-  solicitanteId: string;
+  solicitanteId?: string;  // Legacy
+  integrante_id?: string;  // Schema v2 (campo correcto)
   [key: string]: string | boolean | number | undefined;
 };
 
@@ -32,5 +33,13 @@ export class SolicitudesController {
     @Body() data: Partial<SolicitudEntity>,
   ) {
     return this.solicitudesService.partialUpdate(solicitanteId, data);
+  }
+
+  @Patch('integrante/:integranteId')
+  async partialUpdateByIntegrante(
+    @Param('integranteId') integranteId: string,
+    @Body() data: Partial<SolicitudEntity>,
+  ) {
+    return this.solicitudesService.partialUpdate(integranteId, data);
   }
 }
