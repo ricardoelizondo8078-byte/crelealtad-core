@@ -10,6 +10,7 @@ import { HealthController } from './health.controller';
 import { IntegrantesModule } from './integrantes/integrantes.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { CodigosPostalesModule } from './codigos-postales/codigos-postales.module';
+import { LoggerModule } from './common/logger/logger.module';
 
 @Module({
   controllers: [HealthController],
@@ -24,6 +25,7 @@ import { CodigosPostalesModule } from './codigos-postales/codigos-postales.modul
     },
   ],
   imports: [
+    LoggerModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 60 segundos
