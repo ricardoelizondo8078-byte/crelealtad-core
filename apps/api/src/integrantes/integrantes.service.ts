@@ -15,45 +15,36 @@ export class IntegrantesService {
 
   async listByExpediente(expedienteId: string): Promise<any[]> {
     try {
-      // Consulta simple sin relations ni JOIN
-      const integrantes = await this.integranteRepository.find({
-        where: { expediente_id: expedienteId },
+      // Usar LEFT JOIN para evitar N+1 query problem
+      // Antes: 10 integrantes = 11 queries (1 + 10)
+      // Ahora: 10 integrantes = 1 query (90% improvement)
+      const integrantes = await this.integranteRepository
+        .createQueryBuilder('integrante')
+        .leftJoinAndSelect('integrante.persona', 'persona')
+        .where('integrante.expediente_id = :expedienteId', { expedienteId })
+        .orderBy('integrante.created_at', 'ASC')
+        .getMany();
+
+      return integrantes.map((integrante) => {
+        const persona = integrante.persona;
+        const nombre = persona
+          ? `${persona.primer_nombre} ${persona.apellido_pat} ${persona.apellido_mat || ''}`.trim()
+          : '';
+        const telefono = persona?.telefono ?? null;
+        const montoSolicitado = persona?.monto_solicitado ?? 0;
+
+        return {
+          id: integrante.id,
+          expediente_id: integrante.expediente_id,
+          persona_id: integrante.persona_id,
+          estado: integrante.estado,
+          created_at: integrante.created_at,
+          updated_at: integrante.updated_at,
+          nombre,
+          telefono,
+          montoSolicitado,
+        };
       });
-
-      const result = await Promise.all(
-        integrantes.map(async (integrante) => {
-          let nombre = '';
-          let telefono = null;
-          let montoSolicitado = 0;
-
-          // Buscar persona asociada para obtener el nombre, telefono y monto
-          if (integrante.persona_id) {
-            const persona = await this.personaRepository.findOne({
-              where: { id: integrante.persona_id },
-            });
-
-            if (persona) {
-              nombre = `${persona.primer_nombre} ${persona.apellido_pat} ${persona.apellido_mat || ''}`.trim();
-              telefono = persona.telefono ?? null;
-              montoSolicitado = persona.monto_solicitado ?? 0;
-            }
-          }
-
-          return {
-            id: integrante.id,
-            expediente_id: integrante.expediente_id,
-            persona_id: integrante.persona_id,
-            estado: integrante.estado,
-            created_at: integrante.created_at,
-            updated_at: integrante.updated_at,
-            nombre,
-            telefono,
-            montoSolicitado,
-          };
-        })
-      );
-
-      return result;
     } catch (error) {
       console.error('Error en listByExpediente:', error);
       // Devuelve array vacío en lugar de 500

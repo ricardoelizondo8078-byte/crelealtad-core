@@ -1,6 +1,7 @@
 ﻿import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { ExpedientesModule } from './expedientes/expedientes.module';
@@ -17,8 +18,18 @@ import { CodigosPostalesModule } from './codigos-postales/codigos-postales.modul
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 60 segundos
+        limit: 100, // 100 requests por minuto (general)
+      },
+    ]),
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,

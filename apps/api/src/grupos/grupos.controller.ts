@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { GruposService } from './grupos.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 export class CreateGrupoDto {
   name: string;
@@ -17,8 +18,8 @@ export class GruposController {
   }
 
   @Get()
-  listAll() {
-    return this.gruposService.listAll();
+  listAll(@Query() paginationDto: PaginationDto) {
+    return this.gruposService.listAll(paginationDto);
   }
 
   @Get(':id')
