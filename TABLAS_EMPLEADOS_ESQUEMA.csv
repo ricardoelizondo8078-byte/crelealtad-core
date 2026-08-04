@@ -1,0 +1,70 @@
+TABLA,COLUMNA,TIPO_DATO,NULLABLE,DEFAULT,RELACION_FK,REGISTROS_EN_TABLA
+usuarios,id,uuid,NO,"uuid_generate_v4()",,6
+usuarios,folio,character varying(20),YES,"",,6
+usuarios,nombre,character varying(100),YES,"",,6
+usuarios,apellido_paterno,character varying(100),YES,"",,6
+usuarios,apellido_materno,character varying(100),YES,"",,6
+usuarios,email,character varying(100),NO,"",,6
+usuarios,password_hash,character varying(255),NO,"",,6
+usuarios,rol_id,uuid,NO,"",FK → roles.id,6
+usuarios,sucursal_id,uuid,NO,"",FK → sucursales.id,6
+usuarios,estado,character varying(20),NO,"'ACTIVO'::character varying",,6
+usuarios,ultimo_login,timestamp with time zone,YES,"",,6
+usuarios,created_at,timestamp without time zone,NO,"now()",,6
+usuarios,updated_at,timestamp without time zone,NO,"now()",,6
+empleados,id,uuid,NO,"uuid_generate_v4()",,5
+empleados,folio,character varying(20),YES,"",,5
+empleados,usuario_id,uuid,NO,"",FK → usuarios.id,5
+empleados,zona_id,uuid,YES,"",FK → zonas.id,5
+empleados,created_at,timestamp without time zone,NO,"now()",,5
+empleados,updated_at,timestamp without time zone,NO,"now()",,5
+empleados,fecha_nacimiento,date,YES,"",,5
+empleados,genero,character varying(10),YES,"",,5
+empleados,curp,character varying(18),YES,"",,5
+empleados,rfc,character varying(13),YES,"",,5
+empleados,fecha_ingreso,date,YES,"",,5
+empleados,tipo_empleado,character varying(50),NO,"",,5
+empleados_contacto,id,uuid,NO,"uuid_generate_v4()",,5
+empleados_contacto,empleado_id,uuid,NO,"",FK → empleados.id,5
+empleados_contacto,telefono_celular,character varying(20),NO,"",,5
+empleados_contacto,telefono_casa,character varying(20),YES,"",,5
+empleados_contacto,telefono_emergencia,character varying(20),YES,"",,5
+empleados_contacto,emergencia_nombre,character varying(100),YES,"",,5
+empleados_contacto,emergencia_parentesco,character varying(50),YES,"",,5
+empleados_contacto,created_at,timestamp without time zone,NO,"now()",,5
+empleados_contacto,updated_at,timestamp without time zone,NO,"now()",,5
+empleados_domicilios,id,uuid,NO,"uuid_generate_v4()",,5
+empleados_domicilios,empleado_id,uuid,NO,"",FK → empleados.id,5
+empleados_domicilios,calle,character varying(200),YES,"",,5
+empleados_domicilios,numero_ext,character varying(20),YES,"",,5
+empleados_domicilios,numero_int,character varying(20),YES,"",,5
+empleados_domicilios,colonia,character varying(100),YES,"",,5
+empleados_domicilios,municipio,character varying(100),YES,"",,5
+empleados_domicilios,estado,character varying(100),YES,"",,5
+empleados_domicilios,codigo_postal,character varying(10),YES,"",,5
+empleados_domicilios,referencias,text,YES,"",,5
+empleados_domicilios,latitud,numeric,YES,"",,5
+empleados_domicilios,longitud,numeric,YES,"",,5
+empleados_domicilios,geolocalizacion_fecha,timestamp without time zone,YES,"",,5
+empleados_domicilios,created_at,timestamp without time zone,NO,"now()",,5
+empleados_domicilios,updated_at,timestamp without time zone,NO,"now()",,5
+empleados_domicilios,coordenadas_google_maps,text,YES,"",,5
+empleados_documentos,id,uuid,NO,"uuid_generate_v4()",,0
+empleados_documentos,empleado_id,uuid,NO,"",FK → empleados.id,0
+empleados_documentos,tipo_documento,character varying(50),NO,"",,0
+empleados_documentos,ruta_archivo,character varying(500),NO,"",,0
+empleados_documentos,fecha_captura,timestamp without time zone,NO,"now()",,0
+empleados_documentos,estado,character varying(20),NO,"'VIGENTE'::character varying",,0
+empleados_documentos,created_at,timestamp without time zone,NO,"now()",,0
+empleados_documentos,updated_at,timestamp without time zone,NO,"now()",,0
+empleados_datos_laborales,id,uuid,NO,"uuid_generate_v4()",,5
+empleados_datos_laborales,empleado_id,uuid,NO,"",FK → empleados.id,5
+empleados_datos_laborales,sucursal_id,uuid,YES,"",FK → sucursales.id,5
+empleados_datos_laborales,jefe_inmediato_id,uuid,YES,"",FK → usuarios.id,5
+empleados_datos_laborales,tipo_contrato,character varying(50),YES,"",,5
+empleados_datos_laborales,nivel,character varying(50),YES,"",,5
+empleados_datos_laborales,meta_mensual_grupos,integer,YES,"",,5
+empleados_datos_laborales,meta_mensual_monto,numeric,YES,"",,5
+empleados_datos_laborales,observaciones,text,YES,"",,5
+empleados_datos_laborales,created_at,timestamp without time zone,NO,"now()",,5
+empleados_datos_laborales,updated_at,timestamp without time zone,NO,"now()",,5

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing, typography } from '../../theme/tokens';
+import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { FormField } from './FormField';
+
+type ModuleThemeKey = 'documentation' | 'verification' | 'disbursement';
 
 interface SelectorFieldProps {
   label: string;
@@ -12,6 +14,7 @@ interface SelectorFieldProps {
   options: readonly string[];
   errorText?: string;
   onSelect: (value: string) => void;
+  moduleTheme?: ModuleThemeKey;
 }
 
 export const SelectorField: React.FC<SelectorFieldProps> = ({
@@ -23,9 +26,14 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
   options,
   errorText,
   onSelect,
+  moduleTheme = 'documentation',
 }) => {
   const [open, setOpen] = useState(false);
-  const useChips = options.length <= 7;
+  // Siempre usar scroll para colonias, el resto según la cantidad (7 o menos = chips)
+  const useChips = label === 'Colonia' ? false : options.length <= 7;
+
+  // Obtener colores del módulo
+  const themeColors = moduleThemes[moduleTheme];
 
   return (
     <View style={styles.container}>
@@ -38,16 +46,33 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
         {useChips ? (
           <View style={styles.chipGroup}>
             {options.map((option) => {
-              // Solo marcar como seleccionado si value no está vacío Y coincide con la opción
-              const isSelected = value && value === option;
+              // Normalizar para comparación (sin acentos, lowercase)
+              const normalizeText = (text: string) =>
+                text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+              // Comparar de forma normalizada
+              const isSelected = value && normalizeText(value) === normalizeText(option);
 
               return (
                 <Pressable
                   key={option}
-                  style={[styles.chip, isSelected ? styles.chipSelected : styles.chipUnselected]}
+                  style={[
+                    styles.chip,
+                    isSelected
+                      ? { backgroundColor: `${themeColors.primary}20`, borderColor: themeColors.primary }
+                      : styles.chipUnselected
+                  ]}
                   onPress={() => onSelect(option)}
                 >
-                  <Text style={[styles.chipText, isSelected ? styles.chipTextSelected : styles.chipTextUnselected]}>
+                  <Text
+                    allowFontScaling={false}
+                    style={[
+                      styles.chipText,
+                      isSelected
+                        ? { color: themeColors.primary }
+                        : styles.chipTextUnselected
+                    ]}
+                  >
                     {option}
                   </Text>
                 </Pressable>
@@ -56,7 +81,7 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
           </View>
         ) : (
           <Pressable style={styles.trigger} onPress={() => setOpen(true)}>
-            <Text style={value ? styles.valueText : styles.placeholderText}>{value || placeholder}</Text>
+            <Text allowFontScaling={false} style={value ? styles.valueText : styles.placeholderText}>{value || placeholder}</Text>
           </Pressable>
         )}
       </FormField>
@@ -65,8 +90,8 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
         <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
           <Pressable style={styles.modalBackdrop} onPress={() => setOpen(false)}>
             <Pressable style={styles.modalSheet} onPress={() => undefined}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{label}</Text>
+              <View style={[styles.modalHeader, { backgroundColor: themeColors.primary }]}>
+                <Text allowFontScaling={false} style={styles.modalTitle}>{label}</Text>
               </View>
               <ScrollView showsVerticalScrollIndicator={false}>
                 {options.map((option) => (
@@ -78,7 +103,7 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
                       setOpen(false);
                     }}
                   >
-                    <Text style={styles.modalOptionText}>{option}</Text>
+                    <Text allowFontScaling={false} style={styles.modalOptionText}>{option}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -116,16 +141,12 @@ const styles = StyleSheet.create({
   },
   chip: {
     minHeight: 40,
-    borderWidth: 1,
+    borderWidth: 2,
     borderRadius: 999,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  chipSelected: {
-    backgroundColor: colors.successSoft,
-    borderColor: '#0F5A35',
   },
   chipUnselected: {
     backgroundColor: colors.surface,
@@ -135,27 +156,23 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontWeight: '700',
   },
-  chipTextSelected: {
-    color: '#0F5A35',
-  },
   chipTextUnselected: {
     color: colors.textPrimary,
   },
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.28)',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
+    paddingTop: 60,
   },
   modalSheet: {
-    maxHeight: '72%',
+    maxHeight: '85%',
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.md,
-    borderTopRightRadius: radius.md,
+    borderRadius: radius.md,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xl,
   },
   modalHeader: {
-    backgroundColor: '#0F5A35',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     marginBottom: spacing.md,

@@ -70,11 +70,11 @@ export const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ onBack, on
       <ScreenTitleBar title="Crear Grupo" moduleTheme="documentation" />
       <View style={styles.content}>
         <Card>
-          <Text style={styles.subtitle}>
-            <Text style={styles.subtitleEmphasis}>Registra</Text> el nombre del grupo para iniciar la documentación.
+          <Text allowFontScaling={false} style={styles.subtitle}>
+            <Text allowFontScaling={false} style={styles.subtitleEmphasis}>Registra</Text> el nombre del grupo para iniciar la documentación.
           </Text>
           <FormField label="Nombre del grupo" required helperText="Se guardará en mayúsculas" errorText={nameError}>
-            <TextInput
+            <TextInput allowFontScaling={false}
               style={styles.input}
               placeholder="Nombre del grupo"
               value={name}

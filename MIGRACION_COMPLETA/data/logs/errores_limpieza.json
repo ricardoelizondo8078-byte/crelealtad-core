@@ -1,0 +1,3893 @@
+[
+  {
+    "fila": 4,
+    "error": "CURP_INVALIDO",
+    "curp": "LEVB90315MNLDZR01",
+    "nombre": "BRENDA JANETT LEDEZMA VAZQUEZ"
+  },
+  {
+    "fila": 14,
+    "error": "CURP_INVALIDO",
+    "curp": "VAPN74107MTSLSR03",
+    "nombre": "NORMA ELISA VALERO PASTRONA"
+  },
+  {
+    "fila": 20,
+    "error": "CURP_INVALIDO",
+    "curp": "RORL20915MNLDSR02",
+    "nombre": "LAURA ALICA ROGRIGUEZ ROSALES"
+  },
+  {
+    "fila": 31,
+    "error": "CURP_INVALIDO",
+    "curp": "SOMJ7700412MNLLNN06",
+    "nombre": "JUANA MARIA SOLIS MENDEZ"
+  },
+  {
+    "fila": 70,
+    "error": "CURP_INVALIDO",
+    "curp": "GOAY8000314MNLMRD07",
+    "nombre": "YADIRA GOMEZ ARGUELLES "
+  },
+  {
+    "fila": 116,
+    "error": "CURP_INVALIDO",
+    "curp": "AAEC760813NNLLSNOZ",
+    "nombre": "MANA CONCEPCION ALMANZA ESQUIVEL"
+  },
+  {
+    "fila": 117,
+    "error": "CURP_INVALIDO",
+    "curp": "SAGL641130MNLNN200",
+    "nombre": "MARIA DE LA LUZ SANCHEZ GONZALEZ "
+  },
+  {
+    "fila": 118,
+    "error": "CURP_INVALIDO",
+    "curp": "PUCT990819HNLNR00",
+    "nombre": "JORGE IVAN PUENTE CUEELLAR"
+  },
+  {
+    "fila": 119,
+    "error": "CURP_INVALIDO",
+    "curp": "NIRM800918MNLYC12",
+    "nombre": "MARTHA PATRICIA NIÑO ROCHA"
+  },
+  {
+    "fila": 120,
+    "error": "CURP_INVALIDO",
+    "curp": "NICTO1O508MNLXSRAS",
+    "nombre": "TRACY LUISANA NIÑO CASTILLO"
+  },
+  {
+    "fila": 121,
+    "error": "CURP_INVALIDO",
+    "curp": "NIRD850724MNLXC509",
+    "nombre": "DEISY NIÑO ROCHA"
+  },
+  {
+    "fila": 125,
+    "error": "CURP_INVALIDO",
+    "curp": "AUSH730501HNLRN602",
+    "nombre": "HUGO CESAR ARREYO SANDOVAL"
+  },
+  {
+    "fila": 128,
+    "error": "CURP_INVALIDO",
+    "curp": "TORL490312MTSRMRZZ",
+    "nombre": "MA DE LOURDES TORRES ROMERO"
+  },
+  {
+    "fila": 130,
+    "error": "CURP_INVALIDO",
+    "curp": "FOMR650415MNLLR508",
+    "nombre": "ROSA MANA FLORES MARTINEZ"
+  },
+  {
+    "fila": 132,
+    "error": "CURP_INVALIDO",
+    "curp": "GATF72CMNNLRR102",
+    "nombre": "FLOR GRACELA GARCIA TRISTAN"
+  },
+  {
+    "fila": 134,
+    "error": "CURP_INVALIDO",
+    "curp": "TUCE6671120MNLRSL01",
+    "nombre": "ELISA TRUJILLO CASTILLO "
+  },
+  {
+    "fila": 136,
+    "error": "CURP_INVALIDO",
+    "curp": "CAHA711117MNLB2N06",
+    "nombre": "ANA ELSA CABRAL HERNANDEZ "
+  },
+  {
+    "fila": 137,
+    "error": "CURP_INVALIDO",
+    "curp": "DICK930224MNL2BT08",
+    "nombre": "KATIA LIZETH DIAZ CABRAL"
+  },
+  {
+    "fila": 138,
+    "error": "CURP_INVALIDO",
+    "curp": "CAVN700712MNLRL03",
+    "nombre": "NORMA ALICIA CARDONA VALDES "
+  },
+  {
+    "fila": 142,
+    "error": "CURP_INVALIDO",
+    "curp": "RERM57919MTSXDRO6",
+    "nombre": "MARTHA REYNA RODRIGUEZ"
+  },
+  {
+    "fila": 143,
+    "error": "CURP_INVALIDO",
+    "curp": "CAVJ590726HCLRN00",
+    "nombre": "JUAN FRANCISCO CORDONA VALDES"
+  },
+  {
+    "fila": 144,
+    "error": "CURP_INVALIDO",
+    "curp": "HESD981012MSNN06",
+    "nombre": "DANIELA HERNANDEZ SANCHEZ"
+  },
+  {
+    "fila": 145,
+    "error": "CURP_INVALIDO",
+    "curp": "ROCM62101MV20MN0F",
+    "nombre": "MINERVA RODRIGUEZ CAMACHO"
+  },
+  {
+    "fila": 146,
+    "error": "CURP_INVALIDO",
+    "curp": "CARC791017MV25DR09",
+    "nombre": "MAN DEL CARMEN CASTILLO RODRIGUEZ"
+  },
+  {
+    "fila": 147,
+    "error": "CURP_INVALIDO",
+    "curp": "GOH69101111MVZMRD06",
+    "nombre": "GUADALUPE GOMEZ HERNANDEZ"
+  },
+  {
+    "fila": 148,
+    "error": "CURP_INVALIDO",
+    "curp": "RATE 7631015MNLYUL03",
+    "nombre": "ELSA NICOLOSA RAYAS TOVAR"
+  },
+  {
+    "fila": 149,
+    "error": "CURP_INVALIDO",
+    "curp": "RCRJ740506MNLDDNOO",
+    "nombre": "JUANITA IDALIA RODRIGUEZ RODRIGUEZ"
+  },
+  {
+    "fila": 152,
+    "error": "CURP_INVALIDO",
+    "curp": "SASR20829MNLN5506",
+    "nombre": "ROSALVA EVANGELINA SANTANA ROSA"
+  },
+  {
+    "fila": 154,
+    "error": "CURP_INVALIDO",
+    "curp": "ROEM770319MN435Y05",
+    "nombre": "MAYRA JOSEFINA ROBLES ESPINOZA"
+  },
+  {
+    "fila": 158,
+    "error": "CURP_INVALIDO",
+    "curp": "HEVM691119MNLRL604",
+    "nombre": "MAGDALENA HERNANDEZ VILLANUEVA"
+  },
+  {
+    "fila": 159,
+    "error": "CURP_INVALIDO",
+    "curp": "MERS780921VNLDVN16",
+    "nombre": "SANJUANA SELENE MEDINA RIVERA"
+  },
+  {
+    "fila": 160,
+    "error": "CURP_INVALIDO",
+    "curp": "BEHS920926NNLNRN08",
+    "nombre": "ANAHLY BENAVIDES HERNANDEZ"
+  },
+  {
+    "fila": 162,
+    "error": "CURP_INVALIDO",
+    "curp": "BASR690828M6TRT502",
+    "nombre": "MA ROSARIO BARRON SOTO"
+  },
+  {
+    "fila": 163,
+    "error": "CURP_INVALIDO",
+    "curp": "CEHS577090519M400",
+    "nombre": "SILVIA CEPEDA HERRERA"
+  },
+  {
+    "fila": 164,
+    "error": "CURP_INVALIDO",
+    "curp": "RACJ970503MIVLNPN09",
+    "nombre": "JENIFER CRUZ RANGEL CEPEDA"
+  },
+  {
+    "fila": 167,
+    "error": "CURP_INVALIDO",
+    "curp": "FONL52G212MVZLMR03",
+    "nombre": "LOURDES FLORES NAMORADO"
+  },
+  {
+    "fila": 170,
+    "error": "CURP_INVALIDO",
+    "curp": "LAGB98061MNLRRV02",
+    "nombre": "BERVERLY MICHELLE LARA GRIMALDO"
+  },
+  {
+    "fila": 172,
+    "error": "CURP_INVALIDO",
+    "curp": "PGB810624MNLRNL03",
+    "nombre": "BLANCA ASUCENA PEREZ GONZALEZ"
+  },
+  {
+    "fila": 173,
+    "error": "CURP_INVALIDO",
+    "curp": "RIRF79011MNLCVT00",
+    "nombre": "FAIT RIVERA RICO"
+  },
+  {
+    "fila": 175,
+    "error": "CURP_INVALIDO",
+    "curp": "OITC720310MLRRL09",
+    "nombre": "CLAUDIA PATRICIA ORTIZ TREJO"
+  },
+  {
+    "fila": 176,
+    "error": "CURP_INVALIDO",
+    "curp": "RIRR680813HNLVMG0",
+    "nombre": "RIGOBERTO RIVERA ROMERO"
+  },
+  {
+    "fila": 177,
+    "error": "CURP_INVALIDO",
+    "curp": "CUMJ74110219M500",
+    "nombre": "MARIA DE JESUS CRUZ MARTINEZ"
+  },
+  {
+    "fila": 182,
+    "error": "CURP_INVALIDO",
+    "curp": "HEPB910704MVZRR01",
+    "nombre": "BERENICE HERNANDEZ PEREZ"
+  },
+  {
+    "fila": 184,
+    "error": "CURP_INVALIDO",
+    "curp": "OARO760812NMCLMM04",
+    "nombre": "OMAR ALARTE ROMAN"
+  },
+  {
+    "fila": 185,
+    "error": "CURP_INVALIDO",
+    "curp": "ROGN85110MVZDRM05",
+    "nombre": "NOEMI JANET RODRIGUEZ CARVAJAL"
+  },
+  {
+    "fila": 190,
+    "error": "CURP_INVALIDO",
+    "curp": "HEIM63041119M800",
+    "nombre": "MAGDALENA HERNANDEZ IBARRA"
+  },
+  {
+    "fila": 192,
+    "error": "CURP_INVALIDO",
+    "curp": "HEICB780503MNLRRL07",
+    "nombre": "BLANCA ALICIA HERNANDEZ CARRIZALES"
+  },
+  {
+    "fila": 193,
+    "error": "CURP_INVALIDO",
+    "curp": "MAZ6721206MNLRXD08",
+    "nombre": "MARIA GUADALUPE MARTINEZ ZUÑIGA"
+  },
+  {
+    "fila": 195,
+    "error": "CURP_INVALIDO",
+    "curp": "MAC6761221MNLYSB06",
+    "nombre": "GABRIELA MAYA CASTAÑON"
+  },
+  {
+    "fila": 199,
+    "error": "CURP_INVALIDO",
+    "curp": "MOIM651065MNLL13R09",
+    "nombre": "MARGOTH MOLINA IBARRA"
+  },
+  {
+    "fila": 200,
+    "error": "CURP_INVALIDO",
+    "curp": "BEMA890808HNNLLLB08",
+    "nombre": "ABRAHAM BELTRAN MOLINA"
+  },
+  {
+    "fila": 203,
+    "error": "CURP_INVALIDO",
+    "curp": "LOPR621211MZSPN507",
+    "nombre": "ROSA MARIA CARMINA LOPEZ PINALES"
+  },
+  {
+    "fila": 204,
+    "error": "CURP_INVALIDO",
+    "curp": "MACM630404NLRRLA5",
+    "nombre": "MELANIE YAMILETH MARTINEZ"
+  },
+  {
+    "fila": 207,
+    "error": "CURP_INVALIDO",
+    "curp": "VIC13560321MSPLRN00",
+    "nombre": "BENITA VILLEGAS CARRIZALEZ"
+  },
+  {
+    "fila": 208,
+    "error": "CURP_INVALIDO",
+    "curp": "MAGJ720127MNLRMIV05",
+    "nombre": "JUANA LAURA MARTINEZ GOMEZ"
+  },
+  {
+    "fila": 209,
+    "error": "CURP_INVALIDO",
+    "curp": "FOCE92092MNLLSN07",
+    "nombre": "ENEDELIA CAROLINA FLRES CISNEROS"
+  },
+  {
+    "fila": 211,
+    "error": "CURP_INVALIDO",
+    "curp": "BAHL68213MNLXRR09",
+    "nombre": "LAURA ELENA BAÑUELUS HERNANDEZ"
+  },
+  {
+    "fila": 212,
+    "error": "CURP_INVALIDO",
+    "curp": "GEBA916681MNLRXD14",
+    "nombre": "ADRIANA BERENICE GERVACIO BAÑUELOS"
+  },
+  {
+    "fila": 214,
+    "error": "CURP_INVALIDO",
+    "curp": "DUGY460324MNGLN01",
+    "nombre": "JHENIFER SANCHEZ TORRES"
+  },
+  {
+    "fila": 215,
+    "error": "CURP_INVALIDO",
+    "curp": "VIS654021MNLLND06",
+    "nombre": "GUADALUPE MARGARITA VILLAFUERTE SANCHEZ"
+  },
+  {
+    "fila": 216,
+    "error": "CURP_INVALIDO",
+    "curp": "BEML700903MMNRZ05",
+    "nombre": "LUZ MARIA BENITEZ MARTINEZ"
+  },
+  {
+    "fila": 218,
+    "error": "CURP_INVALIDO",
+    "curp": "LU05511MCLGSR09",
+    "nombre": "SARA LUGO OSORIO"
+  },
+  {
+    "fila": 219,
+    "error": "CURP_INVALIDO",
+    "curp": "BARI70126MNLLNR04",
+    "nombre": "IRMA NANCY BALDERAS RANGEL"
+  },
+  {
+    "fila": 220,
+    "error": "CURP_INVALIDO",
+    "curp": "RABN990814MNLMD02",
+    "nombre": "NIDIA CITLALLI RAMIREZ BALDERAS"
+  },
+  {
+    "fila": 223,
+    "error": "CURP_INVALIDO",
+    "curp": "VARD900890MCLRMB09",
+    "nombre": "DUBELSA QUEREN VARELA RAMIREZ"
+  },
+  {
+    "fila": 228,
+    "error": "CURP_INVALIDO",
+    "curp": "GUBP02083MNLNRLA4",
+    "nombre": "PAOLA VALERIA GONZALEZ BERNAL"
+  },
+  {
+    "fila": 247,
+    "error": "CURP_INVALIDO",
+    "curp": "KOHL900417MNLSRZ207",
+    "nombre": "LIZBETH NARELY DE KOSTER"
+  },
+  {
+    "fila": 264,
+    "error": "CURP_INVALIDO",
+    "curp": "AAF1690909MNLLL500",
+    "nombre": "MARIA ISABEL ALMANZA FLORES"
+  },
+  {
+    "fila": 284,
+    "error": "CURP_INVALIDO",
+    "curp": "MORS820303MNLNM02",
+    "nombre": "SUEM MARGARITA MONRREAL RENTERIA"
+  },
+  {
+    "fila": 293,
+    "error": "CURP_INVALIDO",
+    "curp": "EIJCGB 8VV11023MNLSML05",
+    "nombre": "CALUDIA JANETH ESPINOZA JIMEMEZ"
+  },
+  {
+    "fila": 302,
+    "error": "CURP_INVALIDO",
+    "curp": "RISA001107HNLCLA4",
+    "nombre": "ANGEL FRANCISCO RICO SALINAS"
+  },
+  {
+    "fila": 304,
+    "error": "CURP_INVALIDO",
+    "curp": "RIAM700929",
+    "nombre": "MIGUEL ANGEL RICO ACOSTO"
+  },
+  {
+    "fila": 326,
+    "error": "CURP_INVALIDO",
+    "curp": "YAOM861122MNLDJ400",
+    "nombre": "MAYRA CECILIA YADO OJEDA"
+  },
+  {
+    "fila": 327,
+    "error": "CURP_INVALIDO",
+    "curp": "GAZL720222",
+    "nombre": "MARIA DE LOURDES GARCIA ZAVALA"
+  },
+  {
+    "fila": 328,
+    "error": "CURP_INVALIDO",
+    "curp": "MEGS620308MNLIVNN01",
+    "nombre": "SAN JUANA MENA GONZALEZ"
+  },
+  {
+    "fila": 329,
+    "error": "CURP_INVALIDO",
+    "curp": "HETA290613M3DRDN06",
+    "nombre": "ANTONIA HERRERA TAPIA"
+  },
+  {
+    "fila": 337,
+    "error": "CURP_INVALIDO",
+    "curp": "GARI630909MNLRC505",
+    "nombre": "MARIA ISABEL GARCIA ROCHA"
+  },
+  {
+    "fila": 338,
+    "error": "CURP_INVALIDO",
+    "curp": "PARHS71225MNL50R05",
+    "nombre": "HORTENSIA PASILLAS RODRIGUEZ"
+  },
+  {
+    "fila": 339,
+    "error": "CURP_INVALIDO",
+    "curp": "MOBE590810MNLNR009",
+    "nombre": "MARIA EDEN MONCADO BRIONES"
+  },
+  {
+    "fila": 367,
+    "error": "CURP_INVALIDO",
+    "curp": "HEOV010823",
+    "nombre": "VALERIA HERNANDEZ OYERVIDES"
+  },
+  {
+    "fila": 368,
+    "error": "CURP_INVALIDO",
+    "curp": "CATM841016",
+    "nombre": "MYRNA CASAS TOVAR "
+  },
+  {
+    "fila": 369,
+    "error": "CURP_INVALIDO",
+    "curp": "BASL940417",
+    "nombre": "LISSBETH DEL SOCORRO"
+  },
+  {
+    "fila": 370,
+    "error": "CURP_INVALIDO",
+    "curp": "SACS696709",
+    "nombre": "MA DEL SOCORRO SALAZAR CABRIALES"
+  },
+  {
+    "fila": 371,
+    "error": "CURP_INVALIDO",
+    "curp": "CAML620120MTSMR07",
+    "nombre": "MARIA LUISA CAMARILLO MARTINEZ"
+  },
+  {
+    "fila": 372,
+    "error": "CURP_INVALIDO",
+    "curp": "CUOS5941214",
+    "nombre": "SUSANA GUADALUPE DE LA CRUZ OLAYO"
+  },
+  {
+    "fila": 373,
+    "error": "CURP_INVALIDO",
+    "curp": "PIER770101",
+    "nombre": "RAFAEL PIÑA ESPINOZA"
+  },
+  {
+    "fila": 374,
+    "error": "CURP_INVALIDO",
+    "curp": "PIMS640624",
+    "nombre": "JUANA MARIA PIÑON MARTINEZ"
+  },
+  {
+    "fila": 375,
+    "error": "CURP_INVALIDO",
+    "curp": "AESN660107",
+    "nombre": "NORA ALEJANDRO SILVA"
+  },
+  {
+    "fila": 376,
+    "error": "CURP_INVALIDO",
+    "curp": "ROLV810612",
+    "nombre": "YOLANDA ROBLES LIMON"
+  },
+  {
+    "fila": 377,
+    "error": "CURP_INVALIDO",
+    "curp": "CAMJ880516",
+    "nombre": "JAVIERA ROSELIA CARDONA MORALES"
+  },
+  {
+    "fila": 383,
+    "error": "CURP_INVALIDO",
+    "curp": "PAGAS610910MDGLNN01",
+    "nombre": "MA DE LOS ANGELES PALACIOS GONZALES"
+  },
+  {
+    "fila": 384,
+    "error": "CURP_INVALIDO",
+    "curp": "MOCG01822MNLLNSA1",
+    "nombre": "GISELA JUDITH MOLINA CANIZALES"
+  },
+  {
+    "fila": 386,
+    "error": "CURP_INVALIDO",
+    "curp": "PUM1910614MZSNRL00",
+    "nombre": "ILIANA PUENTE MARTINEZ"
+  },
+  {
+    "fila": 390,
+    "error": "CURP_INVALIDO",
+    "curp": "OEGS901103MNLBRL",
+    "nombre": "SILVIA PATRICIA OBREGON GARCIA"
+  },
+  {
+    "fila": 403,
+    "error": "CURP_INVALIDO",
+    "curp": "AADM61002MNLRLR00",
+    "nombre": "MARTHA GUADALUPE ARANDA DELGADO"
+  },
+  {
+    "fila": 410,
+    "error": "CURP_INVALIDO",
+    "curp": "RAGM900124",
+    "nombre": "MONICA ALEJANDRA RAMOS GONZALEZ"
+  },
+  {
+    "fila": 411,
+    "error": "CURP_INVALIDO",
+    "curp": "CAAT79115",
+    "nombre": "THELMA AIDE CASTAÑEDA AGUILA"
+  },
+  {
+    "fila": 412,
+    "error": "CURP_INVALIDO",
+    "curp": "LOGP861116MULPYM005",
+    "nombre": "PAMELA MARISOL GAYTAN LOPEZ"
+  },
+  {
+    "fila": 413,
+    "error": "CURP_INVALIDO",
+    "curp": "HEAR840716MVZNG508",
+    "nombre": "ROSAURA AGUILAR HERNANDEZ"
+  },
+  {
+    "fila": 414,
+    "error": "CURP_INVALIDO",
+    "curp": "BARA781009",
+    "nombre": "MARIA DE LOS ANGELES BARAJAR ROJAR"
+  },
+  {
+    "fila": 417,
+    "error": "CURP_INVALIDO",
+    "curp": "GALP681123",
+    "nombre": "PATRICIA GARAN LARA"
+  },
+  {
+    "fila": 418,
+    "error": "CURP_INVALIDO",
+    "curp": "GAVS676428",
+    "nombre": "SILVIA GAYTAN VAZQUEZ"
+  },
+  {
+    "fila": 419,
+    "error": "CURP_INVALIDO",
+    "curp": "CAUF811211",
+    "nombre": "FRANCISCA IDALIA CHARLES VALDEZ"
+  },
+  {
+    "fila": 420,
+    "error": "CURP_INVALIDO",
+    "curp": "MEC5961024MNLIVSR09",
+    "nombre": "SAIRA YARELY MENDOZA CASTILLEJA"
+  },
+  {
+    "fila": 421,
+    "error": "CURP_INVALIDO",
+    "curp": "AGPM750114",
+    "nombre": "MIRNA ELIZABETH ACOSTA PECINA"
+  },
+  {
+    "fila": 435,
+    "error": "CURP_INVALIDO",
+    "curp": "PALM960717",
+    "nombre": "MARTIN ASAEL PALOMARES LOPEZ"
+  },
+  {
+    "fila": 436,
+    "error": "CURP_INVALIDO",
+    "curp": "MAM6860223MNLCRL09",
+    "nombre": "GLORIA ISABEL MACHADO MATINEZ"
+  },
+  {
+    "fila": 437,
+    "error": "CURP_INVALIDO",
+    "curp": "GUAS660127",
+    "nombre": "JUAN JOSE GONZALEZ ARREDONDO"
+  },
+  {
+    "fila": 438,
+    "error": "CURP_INVALIDO",
+    "curp": "GOU3651222",
+    "nombre": "BRENDA ALICIA GUADALUPE GONZALEZ CORPUS"
+  },
+  {
+    "fila": 439,
+    "error": "CURP_INVALIDO",
+    "curp": "COMC670118",
+    "nombre": "LUCINDA CORPUS MORALES"
+  },
+  {
+    "fila": 440,
+    "error": "CURP_INVALIDO",
+    "curp": "GOCK880827",
+    "nombre": "KARLA MARIA DE JESUS GONZALEZ CORPUS"
+  },
+  {
+    "fila": 441,
+    "error": "CURP_INVALIDO",
+    "curp": "MAEJ860611",
+    "nombre": "JESUS EDUARDO MENDOZA AGUILAR"
+  },
+  {
+    "fila": 442,
+    "error": "CURP_INVALIDO",
+    "curp": "CACE570511",
+    "nombre": "MARIA ESTHELA CARRIZALES CHAVEZ"
+  },
+  {
+    "fila": 443,
+    "error": "CURP_INVALIDO",
+    "curp": "MISC771020",
+    "nombre": "LAURA IRENE MILLAN SAUCEDO"
+  },
+  {
+    "fila": 444,
+    "error": "CURP_INVALIDO",
+    "curp": "CUGU721109",
+    "nombre": "VERONICA GUADALUPE CRUZ GUARDADO"
+  },
+  {
+    "fila": 445,
+    "error": "CURP_INVALIDO",
+    "curp": "FUAS720312",
+    "nombre": "SILVIA FUENTE ARIAS"
+  },
+  {
+    "fila": 455,
+    "error": "CURP_INVALIDO",
+    "curp": "MORS820303MNLNM02",
+    "nombre": "SUEM MARGARITA MONRREAL RENTERIA"
+  },
+  {
+    "fila": 466,
+    "error": "CURP_INVALIDO",
+    "curp": "OEGS901103MNLBRL",
+    "nombre": "SILVIA PATRICIA OBREGON GARCIA"
+  },
+  {
+    "fila": 469,
+    "error": "CURP_INVALIDO",
+    "curp": "PAGAS610910MDGLNN01",
+    "nombre": "MARIA DE LOS ANGELES PALACIOS"
+  },
+  {
+    "fila": 473,
+    "error": "CURP_INVALIDO",
+    "curp": "MOCG01822MNLLNSA1",
+    "nombre": "GISELA JUDITH MOLINA CANIZALES"
+  },
+  {
+    "fila": 474,
+    "error": "CURP_INVALIDO",
+    "curp": "PUM1910614MZSNRL00",
+    "nombre": "ILIANA PUENTE MARTINEZ"
+  },
+  {
+    "fila": 496,
+    "error": "CURP_INVALIDO",
+    "curp": "COGG460417JMSPSRR06 ",
+    "nombre": "GRACIELA COSTILLA GARCIA"
+  },
+  {
+    "fila": 497,
+    "error": "CURP_INVALIDO",
+    "curp": "DAUR67016MHGMRY02",
+    "nombre": "REYNA DAMIAN URAZANDA"
+  },
+  {
+    "fila": 499,
+    "error": "CURP_INVALIDO",
+    "curp": "PEPE470205",
+    "nombre": "MARIA ELVIA PEÑA PRADO"
+  },
+  {
+    "fila": 500,
+    "error": "CURP_INVALIDO",
+    "curp": "RODS6R0914",
+    "nombre": "SONIA ANGELICA RODRIGUEZ DAVILA"
+  },
+  {
+    "fila": 501,
+    "error": "CURP_INVALIDO",
+    "curp": "SAPE650504",
+    "nombre": "MARIA ELVA SAN MISCEL PEÑA"
+  },
+  {
+    "fila": 502,
+    "error": "CURP_INVALIDO",
+    "curp": "SAPM620430",
+    "nombre": "MARGARITA SAN MIGUEL PEÑA"
+  },
+  {
+    "fila": 503,
+    "error": "CURP_INVALIDO",
+    "curp": "MOAB680520",
+    "nombre": "BERNARDA MONTALVO AGUILAR"
+  },
+  {
+    "fila": 509,
+    "error": "CURP_INVALIDO",
+    "curp": "YAOM861122MNLDJ400",
+    "nombre": "MAYRA CECILIA YADO OJEDA"
+  },
+  {
+    "fila": 510,
+    "error": "CURP_INVALIDO",
+    "curp": "GAZL720222",
+    "nombre": "MARIA DE LOURDES GARCIA ZAVALA"
+  },
+  {
+    "fila": 511,
+    "error": "CURP_INVALIDO",
+    "curp": "HETA290613M3DRDN06",
+    "nombre": "ANTONIA HERRERA TAPIA"
+  },
+  {
+    "fila": 523,
+    "error": "CURP_INVALIDO",
+    "curp": "AUVR900917MLGLY01",
+    "nombre": "REYNA ALEJANDRA AGUILAR VALDEZ"
+  },
+  {
+    "fila": 526,
+    "error": "CURP_INVALIDO",
+    "curp": "RAJC720914MNMML06",
+    "nombre": "CLAUDIA ELIZABETH RAMIREZ JIMENEZ"
+  },
+  {
+    "fila": 533,
+    "error": "CURP_INVALIDO",
+    "curp": "GARI630909MNLRC505",
+    "nombre": "MARIA ISABEL GARCIA ROCHA"
+  },
+  {
+    "fila": 536,
+    "error": "CURP_INVALIDO",
+    "curp": "PARHS71225MNL50R05",
+    "nombre": "HORTENSIA PASILLAS RODRIGUEZ"
+  },
+  {
+    "fila": 537,
+    "error": "CURP_INVALIDO",
+    "curp": "MOBE590810MNLNR009",
+    "nombre": "MARIA EDEN MONCADO BRIONES"
+  },
+  {
+    "fila": 542,
+    "error": "CURP_INVALIDO",
+    "curp": "SACM000124HNLLRRA",
+    "nombre": "MARCO ANTONIO SALAZAR CARRIZALES"
+  },
+  {
+    "fila": 547,
+    "error": "CURP_INVALIDO",
+    "curp": "CUVA66106MVZRZL04",
+    "nombre": "ALMA ANTONIA CRUZ VAZQUEZ"
+  },
+  {
+    "fila": 554,
+    "error": "CURP_INVALIDO",
+    "curp": "LOHH8607730MNLZRY11",
+    "nombre": "HOYUKY LOZA HERNANDEZ"
+  },
+  {
+    "fila": 561,
+    "error": "CURP_INVALIDO",
+    "curp": "MOED 840331MNLRSY00",
+    "nombre": "DEYANIRA ELIZABETH MORENO ESCOBEDO"
+  },
+  {
+    "fila": 565,
+    "error": "CURP_INVALIDO",
+    "curp": "COGR821221MNLSY07",
+    "nombre": "ROSA MARIA COSTILLA GAYTAN "
+  },
+  {
+    "fila": 567,
+    "error": "CURP_INVALIDO",
+    "curp": "GARM630615 MSPTMD08",
+    "nombre": "MODESTA GAITAN RAMIREZ"
+  },
+  {
+    "fila": 573,
+    "error": "CURP_INVALIDO",
+    "curp": "COGG460417JMSPSRR06 ",
+    "nombre": "GRACIELA COSTILLA GARCIA"
+  },
+  {
+    "fila": 575,
+    "error": "CURP_INVALIDO",
+    "curp": "DAUR67016MHGMRY02",
+    "nombre": "REYNA DAMIAN URAZANDA"
+  },
+  {
+    "fila": 604,
+    "error": "CURP_INVALIDO",
+    "curp": "GAME710708MNLRRRL02",
+    "nombre": "ELSY CRISTINA GARCIA MARTINEZ"
+  },
+  {
+    "fila": 614,
+    "error": "CURP_INVALIDO",
+    "curp": "MAC4710602",
+    "nombre": "MARCELINO MARTINEZ CASTILLO"
+  },
+  {
+    "fila": 615,
+    "error": "CURP_INVALIDO",
+    "curp": "MIRK820518",
+    "nombre": "KARLA KARMA MIRELER RIVERA"
+  },
+  {
+    "fila": 616,
+    "error": "CURP_INVALIDO",
+    "curp": "CAVV870611",
+    "nombre": "VERONICA JUDITH CANIZALES VALLEJO"
+  },
+  {
+    "fila": 618,
+    "error": "CURP_INVALIDO",
+    "curp": "ROHC950330HNLLDRR01",
+    "nombre": "CARLOS ALBERTO RODRIGUEZ HERNANDEZ"
+  },
+  {
+    "fila": 619,
+    "error": "CURP_INVALIDO",
+    "curp": "GOMA890125",
+    "nombre": "AMALIA BERENICE GONZALEZ MARTINEZ"
+  },
+  {
+    "fila": 620,
+    "error": "CURP_INVALIDO",
+    "curp": "CACE570511",
+    "nombre": "MARIA ESTHELA CARRIZALES CHAVEZ"
+  },
+  {
+    "fila": 621,
+    "error": "CURP_INVALIDO",
+    "curp": "SARM740421MNLDR03",
+    "nombre": "MARIANA SANCHEZ RODRIGUEZ"
+  },
+  {
+    "fila": 622,
+    "error": "CURP_INVALIDO",
+    "curp": "AECD98052MHNLLRV08",
+    "nombre": "DAVID ALEMAN CORONADO"
+  },
+  {
+    "fila": 636,
+    "error": "CURP_INVALIDO",
+    "curp": "CUVA66106MVZRZL04",
+    "nombre": "ALMA ANTONIA CRUZ VAZQUEZ"
+  },
+  {
+    "fila": 643,
+    "error": "CURP_INVALIDO",
+    "curp": "RAJC720914MNMML06",
+    "nombre": "CLAUDIA ELIZABETH RAMIREZ JIMENEZ"
+  },
+  {
+    "fila": 654,
+    "error": "CURP_INVALIDO",
+    "curp": "AASS660721MTYNN07",
+    "nombre": "SAN JUANA AYALA SANTIAGO"
+  },
+  {
+    "fila": 671,
+    "error": "CURP_INVALIDO",
+    "curp": "CACR621025MNLR5509",
+    "nombre": "MARIA DEL ROSRIO CARDONA CASTRO"
+  },
+  {
+    "fila": 672,
+    "error": "CURP_INVALIDO",
+    "curp": "CACB641226MNLRS0D",
+    "nombre": "BERTHA CARDENA CARDENA CASTRO"
+  },
+  {
+    "fila": 676,
+    "error": "CURP_INVALIDO",
+    "curp": "EOCR750320MZS82S09",
+    "nombre": "ROSA ESCOBEDO CAREAGA"
+  },
+  {
+    "fila": 677,
+    "error": "CURP_INVALIDO",
+    "curp": "HESM801103MNERR03",
+    "nombre": "MARTHA ELENA HERNANDEZ JUAREZ"
+  },
+  {
+    "fila": 682,
+    "error": "CURP_INVALIDO",
+    "curp": "MOED 840331MNLRSY00",
+    "nombre": "DEYANIRA ELIZABETH MORENO ESCOBEDO"
+  },
+  {
+    "fila": 683,
+    "error": "CURP_INVALIDO",
+    "curp": "LOHH8607730MNLZRY11",
+    "nombre": "HOYUKY LOZA HERNANDEZ"
+  },
+  {
+    "fila": 694,
+    "error": "CURP_INVALIDO",
+    "curp": "CARPA31129MSPZOS00",
+    "nombre": "PATRICIA VIRIDIANA CAZRES RODRIGUEZ"
+  },
+  {
+    "fila": 697,
+    "error": "CURP_INVALIDO",
+    "curp": "RURA630519MLZMN06",
+    "nombre": "MARIA DE LOS ANGELES RUIZ RAMIREZ"
+  },
+  {
+    "fila": 705,
+    "error": "CURP_INVALIDO",
+    "curp": "SACM000124HNLLRRA",
+    "nombre": "MARCO ANTONIO SALAZAR CARRIZALES"
+  },
+  {
+    "fila": 716,
+    "error": "CURP_INVALIDO",
+    "curp": "EIJCGB 8VV11023MNLSML05",
+    "nombre": "CALUDIA JANETH ESPINOZA JIMEMEZ"
+  },
+  {
+    "fila": 719,
+    "error": "CURP_INVALIDO",
+    "nombre": "ROBERTO URIEL ZEFERINO RAMOS"
+  },
+  {
+    "fila": 721,
+    "error": "CURP_INVALIDO",
+    "curp": "RIMI630226MNLND502",
+    "nombre": "MARIA ISABEL RINCON MEDRANO"
+  },
+  {
+    "fila": 723,
+    "error": "CURP_INVALIDO",
+    "curp": "RACE771018MNLNH508",
+    "nombre": "MARIA ESTHER RANGEL CHAVEZ"
+  },
+  {
+    "fila": 726,
+    "error": "CURP_INVALIDO",
+    "curp": "MARE761219MNLRYV06MRRYEV7619",
+    "nombre": "EVA MARGARITA MARTINEZ REYNA"
+  },
+  {
+    "fila": 728,
+    "error": "CURP_INVALIDO",
+    "curp": "CAZP770111MNLMX06",
+    "nombre": "PERLA CECILIA CAMACHO ZUÑIGA"
+  },
+  {
+    "fila": 733,
+    "error": "CURP_INVALIDO",
+    "curp": "VAW700817MNLRRR04",
+    "nombre": "VIRGINIA VARELA VERASTEGUI"
+  },
+  {
+    "fila": 735,
+    "error": "CURP_INVALIDO",
+    "curp": "GAJI1700622MNLRSN08",
+    "nombre": "MARIA INOSENCIA GARCIA DE JESUS"
+  },
+  {
+    "fila": 737,
+    "error": "CURP_INVALIDO",
+    "curp": "DIGL601119MDGZZCZ08",
+    "nombre": "LUZ MARIA DIAZ OGHOA"
+  },
+  {
+    "fila": 741,
+    "error": "CURP_INVALIDO",
+    "curp": "CAAL66091MNLSLZ09",
+    "nombre": "MARIA DE LA LUZ CASTILLO ALFANO"
+  },
+  {
+    "fila": 742,
+    "error": "CURP_INVALIDO",
+    "curp": "VAMY490106MCLLR03",
+    "nombre": "YOLANDA IRENE VALDEZ MORIN"
+  },
+  {
+    "fila": 748,
+    "error": "CURP_INVALIDO",
+    "curp": "TORJ692211HNLRMS02",
+    "nombre": "JESUS ALEJANDRO TORRES RAMIREZ"
+  },
+  {
+    "fila": 749,
+    "error": "CURP_INVALIDO",
+    "curp": "MOIA020904",
+    "nombre": "ANLLELA GERALYD MORENO LUGO"
+  },
+  {
+    "fila": 750,
+    "error": "CURP_INVALIDO",
+    "curp": "LUEK821214",
+    "nombre": "KARLA YANET LUGO ENRIQUE"
+  },
+  {
+    "fila": 751,
+    "error": "CURP_INVALIDO",
+    "curp": "MOQA771204",
+    "nombre": "ALEJANDRO MORENO QUIURON"
+  },
+  {
+    "fila": 753,
+    "error": "CURP_INVALIDO",
+    "curp": "CACB870729",
+    "nombre": "BLANCA ALEJANDRA CASAS CASTEÑO"
+  },
+  {
+    "fila": 754,
+    "error": "CURP_INVALIDO",
+    "curp": "SAAS831217",
+    "nombre": "SILVIA ADRIANA SANCHEZ AGULAR "
+  },
+  {
+    "fila": 757,
+    "error": "CURP_INVALIDO",
+    "nombre": "KAREN MARLENE GARCIA SOLIS"
+  },
+  {
+    "fila": 776,
+    "error": "CURP_INVALIDO",
+    "curp": "VAMY490106MCLLR03",
+    "nombre": "YOLANDA IRENE VALDEZ MORIN"
+  },
+  {
+    "fila": 778,
+    "error": "CURP_INVALIDO",
+    "curp": "CAAL66091MNLSLZ09",
+    "nombre": "MARIA DE LA LUZ CASTILLO ALFANO"
+  },
+  {
+    "fila": 786,
+    "error": "CURP_INVALIDO",
+    "curp": "SACM01115MNLLLRA3",
+    "nombre": "MIRIAM SARAHI SALDIVAR CALDERON"
+  },
+  {
+    "fila": 791,
+    "error": "CURP_INVALIDO",
+    "curp": "ROGS700106MNLMM07",
+    "nombre": "MARIA SANTOS REYES ROMERO GOMEZ"
+  },
+  {
+    "fila": 810,
+    "error": "CURP_INVALIDO",
+    "curp": "KOHL900417MNLSRZ207",
+    "nombre": "LIZBETH NORELY DE KOSTER HERNANDEZ"
+  },
+  {
+    "fila": 811,
+    "error": "CURP_INVALIDO",
+    "curp": "HEAN701010MNLRL00",
+    "nombre": "NORMA HERNANDEZ ALVARADO"
+  },
+  {
+    "fila": 841,
+    "error": "CURP_INVALIDO",
+    "nombre": "BLANCA ISABEL IPIÑA SANCHEZ"
+  },
+  {
+    "fila": 845,
+    "error": "CURP_INVALIDO",
+    "nombre": "ANDREA VALERO VILLEGAS"
+  },
+  {
+    "fila": 846,
+    "error": "CURP_INVALIDO",
+    "nombre": "PAOLA VALERIA GONZALEZ BERNAL"
+  },
+  {
+    "fila": 857,
+    "error": "CURP_INVALIDO",
+    "curp": "AARB80907MDGLVR03",
+    "nombre": "BRENDA LAURA ALAVARDO RIVERA "
+  },
+  {
+    "fila": 903,
+    "error": "CURP_INVALIDO",
+    "curp": "AAERL020524MNLLDSA3",
+    "nombre": "LESLIE JOANA ALVAREZ RODRIGUEZ"
+  },
+  {
+    "fila": 906,
+    "error": "CURP_INVALIDO",
+    "curp": "LURJ771112HNLNM103",
+    "nombre": "JULIO CESAR LUNA RAMIREZ"
+  },
+  {
+    "fila": 918,
+    "error": "CURP_INVALIDO",
+    "curp": "CARC791017MV25DR09",
+    "nombre": "MARIA DEL CARMEN CASTILLO RODRIGUEZ"
+  },
+  {
+    "fila": 922,
+    "error": "CURP_INVALIDO",
+    "nombre": "YANETH ABIGAIL ARAIZA RODRIGUEZ"
+  },
+  {
+    "fila": 939,
+    "error": "CURP_INVALIDO",
+    "curp": "CCN781118MNLRRR03",
+    "nombre": "NORMA ALICIA CERDA CORONADO"
+  },
+  {
+    "fila": 942,
+    "error": "CURP_INVALIDO",
+    "curp": "PEGA660717MSPRRRL06",
+    "nombre": "MA ALEJOS PEREZ GRIMLADO"
+  },
+  {
+    "fila": 960,
+    "error": "CURP_INVALIDO",
+    "curp": "LUPG68120MNLNRD09",
+    "nombre": "MARIA GUADALUPE LUNA PERES"
+  },
+  {
+    "fila": 971,
+    "error": "CURP_INVALIDO",
+    "curp": "CAVN700712MNLRL03",
+    "nombre": "NORMA ALICIA CARDONA VALDEZ"
+  },
+  {
+    "fila": 989,
+    "error": "CURP_INVALIDO",
+    "curp": "GAJI1700622MNLRSN08",
+    "nombre": "MARIA INOSENCIA GARCIA DE JESUS"
+  },
+  {
+    "fila": 997,
+    "error": "CURP_INVALIDO",
+    "curp": "RIAM700929HNLCCG0",
+    "nombre": "MIGUEL ANGEL RICO ACOSTA"
+  },
+  {
+    "fila": 1022,
+    "error": "CURP_INVALIDO",
+    "curp": "NIRD790108MNLCY03",
+    "nombre": "DEYANIRA ELIZABETH NIÑO ROCHA"
+  },
+  {
+    "fila": 1023,
+    "error": "CURP_INVALIDO",
+    "nombre": "KAREN GUADALUPE CADENA RIVERA"
+  },
+  {
+    "fila": 1040,
+    "error": "CURP_INVALIDO",
+    "curp": "LOHH8607730MNLZRY11",
+    "nombre": "HOYUKY LOZA HERNANDEZ"
+  },
+  {
+    "fila": 1053,
+    "error": "CURP_INVALIDO",
+    "curp": "MOAP040616MNLRA06",
+    "nombre": "PERLA MARIELA MORALES ALVAREZ"
+  },
+  {
+    "fila": 1058,
+    "error": "CURP_INVALIDO",
+    "curp": "RAZL720522GMNLMXR09",
+    "nombre": "LIRIO KUZAC RAMIREZ ZUÑIGA"
+  },
+  {
+    "fila": 1068,
+    "error": "CURP_INVALIDO",
+    "curp": "AASS660721MTYNN07",
+    "nombre": "SAN JUANA AYALA SANTIAGO"
+  },
+  {
+    "fila": 1073,
+    "error": "CURP_INVALIDO",
+    "curp": "CUVA66106MVZRZL04",
+    "nombre": "ALMA ANTONIA CRUZ VAZQUEZ"
+  },
+  {
+    "fila": 1075,
+    "error": "CURP_INVALIDO",
+    "curp": "GAAA800307MDFL205",
+    "nombre": "AZUCENA GARCIA ALVAREZ"
+  },
+  {
+    "fila": 1091,
+    "error": "CURP_INVALIDO",
+    "nombre": "SONIA LAURA VALDEZ MENDOZA"
+  },
+  {
+    "fila": 1093,
+    "error": "CURP_INVALIDO",
+    "curp": "BAHL681215MNLRR09",
+    "nombre": "LAURA ELENA BAÑUELOS HERNANDEZ"
+  },
+  {
+    "fila": 1116,
+    "error": "CURP_INVALIDO",
+    "curp": "GUBC881125MNLTR04",
+    "nombre": "GRISEL GUADALUPE GUTIERREZ BALDERAS"
+  },
+  {
+    "fila": 1117,
+    "error": "CURP_INVALIDO",
+    "curp": "SAHG741025MSPNRB",
+    "nombre": "GABRIELA SANCHEZ HERNANDEZ"
+  },
+  {
+    "fila": 1119,
+    "error": "CURP_INVALIDO",
+    "curp": "TORL490312MTSR22",
+    "nombre": "MA DE LOURDES TORRES ROMERO"
+  },
+  {
+    "fila": 1132,
+    "error": "CURP_INVALIDO",
+    "nombre": "IRMA NANCY BALDERAS RANGEL"
+  },
+  {
+    "fila": 1133,
+    "error": "CURP_INVALIDO",
+    "nombre": "NIDYA CITLALLI RAMIREZ BALDERAS"
+  },
+  {
+    "fila": 1134,
+    "error": "CURP_INVALIDO",
+    "nombre": "ARLETH ALESSANDRA RAMIREZ BALDERAS"
+  },
+  {
+    "fila": 1135,
+    "error": "CURP_INVALIDO",
+    "nombre": "NARIA TERESA CAMARILLO"
+  },
+  {
+    "fila": 1136,
+    "error": "CURP_INVALIDO",
+    "nombre": "SARA LUGO OSORIO"
+  },
+  {
+    "fila": 1143,
+    "error": "CURP_INVALIDO",
+    "curp": "COGG460417JMSPSRR06 ",
+    "nombre": "GRACIELA COSTILLA GARCIA"
+  },
+  {
+    "fila": 1144,
+    "error": "CURP_INVALIDO",
+    "curp": "GOCS5801013MNLNSN06",
+    "nombre": "SANDRA GONZALEZ COSTILLA"
+  },
+  {
+    "fila": 1146,
+    "error": "CURP_INVALIDO",
+    "curp": "GAGO0040819HNLRIVSA8",
+    "nombre": "OSCAR GARIBAY GONZALEZ"
+  },
+  {
+    "fila": 1156,
+    "error": "CURP_INVALIDO",
+    "nombre": "JESSICA VIRIDIANA BETSAVE REYES ZENTENO"
+  },
+  {
+    "fila": 1157,
+    "error": "CURP_INVALIDO",
+    "nombre": "BERENICE HERNANDEZ PEREZ"
+  },
+  {
+    "fila": 1158,
+    "error": "CURP_INVALIDO",
+    "nombre": "OMAR OLARTE ROMAN"
+  },
+  {
+    "fila": 1159,
+    "error": "CURP_INVALIDO",
+    "nombre": "ANGELICA MARIA LEON RUIZ"
+  },
+  {
+    "fila": 1160,
+    "error": "CURP_INVALIDO",
+    "nombre": "GLORIA SALAS SALAZAR"
+  },
+  {
+    "fila": 1179,
+    "error": "CURP_INVALIDO",
+    "curp": "VAMY490106MCLLR03",
+    "nombre": "YOLANDA IRENE VALDEZ MORIN"
+  },
+  {
+    "fila": 1185,
+    "error": "CURP_INVALIDO",
+    "curp": "MAGA70053MNLRRN01",
+    "nombre": "MARIA ANGELICA MARQUEZ GARCIA"
+  },
+  {
+    "fila": 1191,
+    "error": "CURP_INVALIDO",
+    "curp": "MOCL9900531MNLNNN06",
+    "nombre": "LINDA LIZBETH MONTOYA CANIZALES"
+  },
+  {
+    "fila": 1198,
+    "error": "CURP_INVALIDO",
+    "curp": "EOCR750320MZSSR509",
+    "nombre": "ROSA ESCOBEDO CAREAGA"
+  },
+  {
+    "fila": 1216,
+    "error": "CURP_INVALIDO",
+    "curp": "MORS820303MNLNM02",
+    "nombre": "SUEM MARGARITA MONRREAL RENTERIA"
+  },
+  {
+    "fila": 1235,
+    "error": "CURP_INVALIDO",
+    "curp": "COLE610909MSPRRR510",
+    "nombre": "MARIA ESTELA CORTES LARA"
+  },
+  {
+    "fila": 1245,
+    "error": "CURP_INVALIDO",
+    "curp": "MEFR720426MNLNL505",
+    "nombre": "ROSA IDALIA MENDEZ FLORES"
+  },
+  {
+    "fila": 1257,
+    "error": "CURP_INVALIDO",
+    "curp": "AACS50415MNLLL5N08",
+    "nombre": "SAN JUANA ALVAREZ CASTRO"
+  },
+  {
+    "fila": 1258,
+    "error": "CURP_INVALIDO",
+    "curp": "MARR780716MNLRV506",
+    "nombre": "ROSALVA DE JESS MARTINEZ RIVERA"
+  },
+  {
+    "fila": 1259,
+    "error": "CURP_INVALIDO",
+    "curp": "OEGS901103MNLBRL",
+    "nombre": "SILVIA PATRICIA OBREGON GARCIA"
+  },
+  {
+    "fila": 1273,
+    "error": "CURP_INVALIDO",
+    "curp": "AARJ711012MNLXN05",
+    "nombre": "JUANA MARIA GUADALUPE ALANIS PEÑA"
+  },
+  {
+    "fila": 1278,
+    "error": "CURP_INVALIDO",
+    "curp": "QUAE881022MNLRR509",
+    "nombre": "ESMERALDA JUDITH QUIROZ ARRIAGA"
+  },
+  {
+    "fila": 1280,
+    "error": "CURP_INVALIDO",
+    "curp": "AIAE71117MNLRNLRNL09",
+    "nombre": "ELVIRA ARRIAGA ANDRADE"
+  },
+  {
+    "fila": 1281,
+    "error": "CURP_INVALIDO",
+    "nombre": "LEYDA VICTORIA QUIROZ ARRIAGA"
+  },
+  {
+    "fila": 1287,
+    "error": "CURP_INVALIDO",
+    "curp": "CACR621025MNLR5509",
+    "nombre": "MARIA DEL ROSARIO CARDONA CASTRO"
+  },
+  {
+    "fila": 1304,
+    "error": "CURP_INVALIDO",
+    "curp": "MOBE590810MNLNR009",
+    "nombre": "MA EDEN MONCADA BRIONES"
+  },
+  {
+    "fila": 1322,
+    "error": "CURP_INVALIDO",
+    "nombre": "NANCY BALDERAS SILVA"
+  },
+  {
+    "fila": 1323,
+    "error": "CURP_INVALIDO",
+    "nombre": "NORMA ELISA VALERO PASTRANA"
+  },
+  {
+    "fila": 1327,
+    "error": "CURP_INVALIDO",
+    "curp": "MEVB850305MV2NLT09",
+    "nombre": "BEATRIZ ADRIANA MENDIOLA VALDEZ"
+  },
+  {
+    "fila": 1344,
+    "error": "CURP_INVALIDO",
+    "curp": "LURJ771112HNLNM103",
+    "nombre": "MARIA DE LOS ANGELES GONZALEZ PLATAS"
+  },
+  {
+    "fila": 1348,
+    "error": "CURP_INVALIDO",
+    "curp": "MASJ051203MNLRSA2",
+    "nombre": "JOSELYN ABIGAIL MANDUJANO SUAREZ"
+  },
+  {
+    "fila": 1380,
+    "error": "CURP_INVALIDO",
+    "curp": "GAUB771204MNLPRLR05",
+    "nombre": "BARBARA ADRIANA GARCIA VELAZQUEZ"
+  },
+  {
+    "fila": 1386,
+    "error": "CURP_INVALIDO",
+    "curp": "HEAN701010MNLRL00",
+    "nombre": "NORMA HERNANDEZ ALVARADO"
+  },
+  {
+    "fila": 1387,
+    "error": "CURP_INVALIDO",
+    "curp": "KOHL900417MNLSRZ207",
+    "nombre": "LIZBETH NORELY DE KOSTER HERNANDEZ"
+  },
+  {
+    "fila": 1392,
+    "error": "CURP_INVALIDO",
+    "curp": "CARC791017MV25DR09",
+    "nombre": "MARIA DEL CARMEN CASTILLO RODRIGUEZ"
+  },
+  {
+    "fila": 1414,
+    "error": "CURP_INVALIDO",
+    "curp": "CAVN700712MNLRL03",
+    "nombre": "NORMA ALICIA CARDONA VALDEZ"
+  },
+  {
+    "fila": 1431,
+    "error": "CURP_INVALIDO",
+    "curp": "NIRD790108MNLCY03",
+    "nombre": "DEYANIRA ELIZABETH NIÑO ROCHA"
+  },
+  {
+    "fila": 1441,
+    "error": "CURP_INVALIDO",
+    "curp": "GOSJ8126HNLNLN00",
+    "nombre": "JUAN ABIMAEL RODRIGUEZ SALDAÑA"
+  },
+  {
+    "fila": 1457,
+    "error": "CURP_INVALIDO",
+    "curp": "VAMS58071MNLLRL00",
+    "nombre": "MARIA SILVIA VALDEZ MARTINEZ"
+  },
+  {
+    "fila": 1458,
+    "error": "CURP_INVALIDO",
+    "curp": "AASS660721MTYNN07",
+    "nombre": "SAN JUANA AYALA SANTIAGO"
+  },
+  {
+    "fila": 1511,
+    "error": "CURP_INVALIDO",
+    "curp": "CUVA66106MVZRZL04",
+    "nombre": "ALMA ANTONIA CRUZ VAZQUEZ"
+  },
+  {
+    "fila": 1513,
+    "error": "CURP_INVALIDO",
+    "curp": "VAMK941110MNLZRN074",
+    "nombre": "KENIA YALITZAVAZQUEZ MARTINEZ"
+  },
+  {
+    "fila": 1555,
+    "error": "CURP_INVALIDO",
+    "nombre": "DIANA SUSANA JARA CARRIZALES"
+  },
+  {
+    "fila": 1562,
+    "error": "CURP_INVALIDO",
+    "curp": "SEGM990507MNLRN04",
+    "nombre": "MARIANA ITZEL SERNA GONZALEZ"
+  },
+  {
+    "fila": 1564,
+    "error": "CURP_INVALIDO",
+    "curp": "BAHL681215MNLRR09",
+    "nombre": "LAURA ELENA BAÑUELOS HERNANDEZ"
+  },
+  {
+    "fila": 1577,
+    "error": "CURP_INVALIDO",
+    "curp": "MEOM650705HNLDJ07",
+    "nombre": "MARTIN MEDINA OJEDA"
+  },
+  {
+    "fila": 1589,
+    "error": "CURP_INVALIDO",
+    "curp": "ROSO490414MNLDSLL12",
+    "nombre": "OLGA DE LA ROSA SOLIS"
+  },
+  {
+    "fila": 1616,
+    "error": "CURP_INVALIDO",
+    "curp": "COGG460417JMSPSRR06 ",
+    "nombre": "GRACIELA COSTILLA GARCIA"
+  },
+  {
+    "fila": 1644,
+    "error": "CURP_INVALIDO",
+    "curp": "MECA881103MNLJN07",
+    "nombre": "ANA KAREN MEJIA CUELLO"
+  },
+  {
+    "fila": 1686,
+    "error": "CURP_INVALIDO",
+    "curp": "PEMS730316MNLRX",
+    "nombre": "SAMARA PEREZ MUÑOZ"
+  },
+  {
+    "fila": 1701,
+    "error": "CURP_INVALIDO",
+    "curp": "MAGO660228MNLRR109",
+    "nombre": "MARIA DOLORES MARTINEZ "
+  },
+  {
+    "fila": 1708,
+    "error": "CURP_INVALIDO",
+    "curp": "SARG690203MNLNDD9",
+    "nombre": "GUADALUPE SANDOVAL RODRIGUEZ"
+  },
+  {
+    "fila": 1712,
+    "error": "CURP_INVALIDO",
+    "curp": "LIAL710709MNLMG207",
+    "nombre": "MARIA DE LA LUZ LIMON AGUILAR"
+  },
+  {
+    "fila": 1739,
+    "error": "CURP_INVALIDO",
+    "curp": "MORS820303MNLNM02",
+    "nombre": "SUEM MARGARITA MONRREAL RENTERIA"
+  },
+  {
+    "fila": 1753,
+    "error": "CURP_INVALIDO",
+    "curp": "MEFR720426MNLNL505",
+    "nombre": "ROSA IDALIA MENDEZ FLORES"
+  },
+  {
+    "fila": 1768,
+    "error": "CURP_INVALIDO",
+    "curp": "TORL490312MTSR22",
+    "nombre": "MA DE LOURDES TORRES ROMERO"
+  },
+  {
+    "fila": 1805,
+    "error": "CURP_INVALIDO",
+    "curp": "MOHM650208HNL000",
+    "nombre": "MIGUEL ANGEL MORALES HERNANDEZ"
+  },
+  {
+    "fila": 1829,
+    "error": "CURP_INVALIDO",
+    "curp": "AECT661003MVZLRFR01",
+    "nombre": "TEOFILA ALLENDE DE LA CRUZ"
+  },
+  {
+    "fila": 1842,
+    "error": "CURP_INVALIDO",
+    "curp": "AUVJ98123MNLRLC00",
+    "nombre": "JAQUELIN DAMARIS ARGUELLO VELAZQUEZ"
+  },
+  {
+    "fila": 1870,
+    "error": "CURP_INVALIDO",
+    "curp": "QUAE881022MNLRR509",
+    "nombre": "ESMERALDA JUDITH QUIROZ ARRIAGA"
+  },
+  {
+    "fila": 1884,
+    "error": "CURP_INVALIDO",
+    "curp": "FOSC700216MNLLLLR01",
+    "nombre": "MARIA DEL CARMEN FLORES SALAZAR"
+  },
+  {
+    "fila": 1933,
+    "error": "CURP_INVALIDO",
+    "curp": "PARM630910MNLNYER00",
+    "nombre": "MARTHA LAURA PANTOJA REYES"
+  },
+  {
+    "fila": 1940,
+    "error": "CURP_INVALIDO",
+    "nombre": "MARTHA PEREZ BAUTISTA"
+  },
+  {
+    "fila": 1948,
+    "error": "CURP_INVALIDO",
+    "curp": "GAHM791012MNLLRYR00",
+    "nombre": "MAYRA PILAR GALLEGOS HERNANDEZ"
+  },
+  {
+    "fila": 1956,
+    "error": "CURP_INVALIDO",
+    "curp": "AASS660721MTYNN07",
+    "nombre": "SAN JUANA AYALA SANTIAGO"
+  },
+  {
+    "fila": 1972,
+    "error": "CURP_INVALIDO",
+    "curp": "MEVB850305MV2NLT09",
+    "nombre": "BEATRIZ ADRIANA MENDIOLA VALDEZ"
+  },
+  {
+    "fila": 1988,
+    "error": "CURP_INVALIDO",
+    "curp": "LURJ771112HNLNM103",
+    "nombre": "JULIO CESAR LUNA RAMIREZ"
+  },
+  {
+    "fila": 1989,
+    "error": "CURP_INVALIDO",
+    "curp": "MASJ051203MNLRSA2",
+    "nombre": "JOSELYN ABIGAIL MANDUJANO SUAREZ"
+  },
+  {
+    "fila": 1999,
+    "error": "CURP_INVALIDO",
+    "curp": "COLE610909MSPRRR510",
+    "nombre": "MA ESTHELA CORTEZ LARA"
+  },
+  {
+    "fila": 2005,
+    "error": "CURP_INVALIDO",
+    "curp": "CAVN700712MNLRL03",
+    "nombre": "NORMA ALICIA CARDONA VALDEZ"
+  },
+  {
+    "fila": 2035,
+    "error": "CURP_INVALIDO",
+    "curp": "MOBE590810MNLNR009",
+    "nombre": "MARIA EDEN MONCADA BRIONES"
+  },
+  {
+    "fila": 2084,
+    "error": "CURP_INVALIDO",
+    "curp": "SEGM990507MNLRN04",
+    "nombre": "MARIANA ITZEL SERNA GONZALEZ"
+  },
+  {
+    "fila": 2086,
+    "error": "CURP_INVALIDO",
+    "curp": "GEBE000714HNLRXLA",
+    "nombre": "ELIAN ALEJANDRO GERVACIO BAÑUELOS"
+  },
+  {
+    "fila": 2087,
+    "error": "CURP_INVALIDO",
+    "curp": "BAHL681215MNLRR09",
+    "nombre": "LAURA ELENA BAÑUELOS HERNANDEZ"
+  },
+  {
+    "fila": 2095,
+    "error": "CURP_INVALIDO",
+    "curp": "HEAN701010MNLRL00",
+    "nombre": "NORMA HERNANDEZ ALVARADO"
+  },
+  {
+    "fila": 2121,
+    "error": "CURP_INVALIDO",
+    "curp": "ROSO490414MNLDSLL12",
+    "nombre": "OLGA DE LA ROSA SOLIS"
+  },
+  {
+    "fila": 2127,
+    "error": "CURP_INVALIDO",
+    "curp": "DUHM860411HNLRR05",
+    "nombre": "MARIO ALBERTO DURAN HERNANDEZ"
+  },
+  {
+    "fila": 2138,
+    "error": "CURP_INVALIDO",
+    "curp": "CUVA66106MVZRZL04",
+    "nombre": "ALMA ANTONIA CRUZ VAZQUEZ"
+  },
+  {
+    "fila": 2140,
+    "error": "CURP_INVALIDO",
+    "curp": "VAMK941110MNLZRN074",
+    "nombre": "KENIA YALITZAVAZQUEZ MARTINEZ"
+  },
+  {
+    "fila": 2146,
+    "error": "CURP_INVALIDO",
+    "nombre": "GRACIELA DIAZ GONZALEZ"
+  },
+  {
+    "fila": 2193,
+    "error": "CURP_INVALIDO",
+    "curp": "MECA881103MNLJN07",
+    "nombre": "ANA KAREN MEJIA CUELLO"
+  },
+  {
+    "fila": 2272,
+    "error": "CURP_INVALIDO",
+    "curp": "MOHM650208HNL000",
+    "nombre": "MIGUEL ANGEL MORALES HERNANDEZ"
+  },
+  {
+    "fila": 2290,
+    "error": "CURP_INVALIDO",
+    "curp": "GOND780531MNLVN03",
+    "nombre": "DIANA CELESTE GONZALEZ NOVOA"
+  },
+  {
+    "fila": 2294,
+    "error": "CURP_INVALIDO",
+    "curp": "SARG690203MNLNDD9",
+    "nombre": "GUADALUPE SANDOVAL RODRIGUEZ"
+  },
+  {
+    "fila": 2298,
+    "error": "CURP_INVALIDO",
+    "curp": "LIAL710709MNLMG207",
+    "nombre": "MARIA DE LA LUZ LIMON AGUILAR"
+  },
+  {
+    "fila": 2300,
+    "error": "CURP_INVALIDO",
+    "curp": "SAVC871112MNLLLZR06",
+    "nombre": "CRISTINA SARAHI SALZAR VAZQUEZ"
+  },
+  {
+    "fila": 2310,
+    "error": "CURP_INVALIDO",
+    "curp": "COGG460417JMSPSRR06 ",
+    "nombre": "GRACIELA COSTILLA GARCIA"
+  },
+  {
+    "fila": 2329,
+    "error": "CURP_INVALIDO",
+    "curp": "AARJ711012MNLXN05",
+    "nombre": "JUANA MARIA GUADALUPE ALANIS PEÑA"
+  },
+  {
+    "fila": 2333,
+    "error": "CURP_INVALIDO",
+    "curp": "MEOM650705HNLDJ07",
+    "nombre": "MARTIN MEDINA OJEDA"
+  },
+  {
+    "fila": 2338,
+    "error": "CURP_INVALIDO",
+    "nombre": "JUANITA ELIZABETH CARRIZALEZ MEDRANO"
+  },
+  {
+    "fila": 2345,
+    "error": "CURP_INVALIDO",
+    "curp": "AAFR10582MNLRLS03",
+    "nombre": "ROSA ISELA ARAUJO FLORES"
+  },
+  {
+    "fila": 2405,
+    "error": "CURP_INVALIDO",
+    "curp": "MEFR720426MNLNL505",
+    "nombre": "ROSA IDALIA MENDEZ FLORES"
+  },
+  {
+    "fila": 2417,
+    "error": "CURP_INVALIDO",
+    "nombre": "MARIA DE LOURDES URESTI MORALES"
+  },
+  {
+    "fila": 2435,
+    "error": "CURP_INVALIDO",
+    "curp": "BURM770814MDFMR00",
+    "nombre": "MARIBEL BUSTOS RAMIREZ"
+  },
+  {
+    "fila": 2445,
+    "error": "CURP_INVALIDO",
+    "curp": "TORL490312MTSR22",
+    "nombre": "MA DE LOURDES TORRES ROMERO"
+  },
+  {
+    "fila": 2447,
+    "error": "CURP_INVALIDO",
+    "curp": "MASA040814MNLA6",
+    "nombre": "ALONDRA MARTINEZ SANCHEZ"
+  },
+  {
+    "fila": 2448,
+    "error": "CURP_INVALIDO",
+    "curp": "VARF871013MVALV07",
+    "nombre": "FILOMENA VALENZUELA RIVERA"
+  },
+  {
+    "fila": 2467,
+    "error": "CURP_INVALIDO",
+    "curp": "LIML801128MNLRRZ098",
+    "nombre": "LIZETH IRASEMA LIRA MARTINEZ"
+  },
+  {
+    "fila": 2468,
+    "error": "CURP_INVALIDO",
+    "curp": "MEAG06117MNLDLNA3",
+    "nombre": "GENESIS BELEN MEDINA ALONSO"
+  },
+  {
+    "fila": 2475,
+    "error": "CURP_INVALIDO",
+    "curp": "QUAE881022MNLRR509",
+    "nombre": "ESMERALDA JUDITH QUIROZ ARRIAGA"
+  },
+  {
+    "fila": 2485,
+    "error": "CURP_INVALIDO",
+    "curp": "MORS820303MNLNM02",
+    "nombre": "SUEM MARGARITA MONRREAL RENTERIA"
+  },
+  {
+    "fila": 2492,
+    "error": "CURP_INVALIDO",
+    "curp": "LOFN7711113MSPPLR00",
+    "nombre": "NORMA DELIA LOPEZ FLORES"
+  },
+  {
+    "fila": 2500,
+    "error": "CURP_INVALIDO",
+    "nombre": "MARIBEL JANETH RAIGOZA SALAZAR"
+  },
+  {
+    "fila": 2526,
+    "error": "CURP_INVALIDO",
+    "curp": "FOSC700216MNLLLLR01",
+    "nombre": "MARIA DEL CARMEN FLORES SALAZAR"
+  },
+  {
+    "fila": 2534,
+    "error": "CURP_INVALIDO",
+    "curp": "PARM630910MNLNYER00",
+    "nombre": "MARTHA LAURA PANTOJA REYES"
+  },
+  {
+    "fila": 2547,
+    "error": "CURP_INVALIDO",
+    "curp": "AASS660721MTYNN07",
+    "nombre": "SAN JUANA AYALA SANTIAGO"
+  },
+  {
+    "fila": 2554,
+    "error": "CURP_INVALIDO",
+    "curp": "COLE610909MSPRRR510",
+    "nombre": "MA ESTHELA CORTEZ LARA"
+  },
+  {
+    "fila": 2615,
+    "error": "CURP_INVALIDO",
+    "curp": "FASA011204MNLRNA7",
+    "nombre": "ANGELES YAZMIN FRANCO SALINAS"
+  },
+  {
+    "fila": 2640,
+    "error": "CURP_INVALIDO",
+    "curp": "MOGL930627MNLND05",
+    "nombre": "LUDY ISAMARA MONSIVAIS GONZALEZ"
+  },
+  {
+    "fila": 2644,
+    "error": "CURP_INVALIDO",
+    "curp": "SAGF611910MNLLL",
+    "nombre": "FLORINDA IMELDA SANCHEZ GARCIA"
+  },
+  {
+    "fila": 2660,
+    "error": "CURP_INVALIDO",
+    "curp": "MOBE590810MNLNR009",
+    "nombre": "MARIA EDEN MONCADA BRIONES"
+  },
+  {
+    "fila": 2683,
+    "error": "CURP_INVALIDO",
+    "curp": "AERE800818ARCR07",
+    "nombre": "ERICKA MARIA ARENAS ROCHA"
+  },
+  {
+    "fila": 2710,
+    "error": "CURP_INVALIDO",
+    "nombre": "GRACIELA DIAZ GONZALEZ"
+  },
+  {
+    "fila": 2721,
+    "error": "CURP_INVALIDO",
+    "curp": "FORA770512MNLVM07",
+    "nombre": "ANTONIA FLORES RIVERA"
+  },
+  {
+    "fila": 2727,
+    "error": "CURP_INVALIDO",
+    "curp": "COMM850124MNLY06",
+    "nombre": "MAYRA MARICELA CONTRERAS MALDONADO"
+  },
+  {
+    "fila": 2728,
+    "error": "CURP_INVALIDO",
+    "curp": "BORF71109MNLCSL06",
+    "nombre": "FELICITAS BOCARDO DE LA ROSA"
+  },
+  {
+    "fila": 2735,
+    "error": "CURP_INVALIDO",
+    "curp": "CAEA940718MNHSN00",
+    "nombre": "ANA PATRICIA CHAVEZ ESPINOZA"
+  },
+  {
+    "fila": 2736,
+    "error": "CURP_INVALIDO",
+    "curp": "CAMA75081MSPHLZ09",
+    "nombre": "AZUCENA CHAVEZ MALDONADO "
+  },
+  {
+    "fila": 2762,
+    "error": "CURP_INVALIDO",
+    "curp": "ROSO490414MNLDSLL12",
+    "nombre": "OLGA DE LA ROSA SOLIS"
+  },
+  {
+    "fila": 2767,
+    "error": "CURP_INVALIDO",
+    "curp": "DUHM860411HNLRR05",
+    "nombre": "MARIO ALBERTO DURAN HERNANDEZ"
+  },
+  {
+    "fila": 2783,
+    "error": "CURP_INVALIDO",
+    "curp": "MECA881103MNLJN07",
+    "nombre": "ANA KAREN MEJIA CUELLO"
+  },
+  {
+    "fila": 2850,
+    "error": "CURP_INVALIDO",
+    "curp": "LOSO088101HNLPLS07",
+    "nombre": "OSVALDO LOPEZ SOLIS"
+  },
+  {
+    "fila": 2872,
+    "error": "CURP_INVALIDO",
+    "curp": "MOHM650208HNL000",
+    "nombre": "MIGUEL ANGEL MORALES HERNANDEZ"
+  },
+  {
+    "fila": 2892,
+    "error": "CURP_INVALIDO",
+    "curp": "EIVG850110MOCNLTR06",
+    "nombre": "GRISELDA ENRIQUEZ VALENCIA"
+  },
+  {
+    "fila": 2903,
+    "error": "CURP_INVALIDO",
+    "curp": "RETM640112MNLYRR096",
+    "nombre": "MARTINA REYNA TORRES"
+  },
+  {
+    "fila": 2919,
+    "error": "CURP_INVALIDO",
+    "curp": "GOND780531MNLVN03",
+    "nombre": "DIANA CELESTE GONZALEZ NOVOA"
+  },
+  {
+    "fila": 2937,
+    "error": "CURP_INVALIDO",
+    "curp": "MEFR720426MNLNL505",
+    "nombre": "ROSA IDALIA MENDEZ FLORES"
+  },
+  {
+    "fila": 2946,
+    "error": "CURP_INVALIDO",
+    "curp": "IAAE82.228MNLRLS00",
+    "nombre": "MARIA ESTER IRACHETA ALVARADO"
+  },
+  {
+    "fila": 2975,
+    "error": "CURP_INVALIDO",
+    "curp": "LIAL710709MNLMG207",
+    "nombre": "MARIA DE LA LUZ LIMON AGUILAR"
+  },
+  {
+    "fila": 2976,
+    "error": "CURP_INVALIDO",
+    "curp": "SARG690203MNLNDD9",
+    "nombre": "GUADALUPE SANDOVAL RODRIGUEZ"
+  },
+  {
+    "fila": 2980,
+    "error": "CURP_INVALIDO",
+    "curp": "COGG460417JMSPSRR06 ",
+    "nombre": "GRACIELA COSTILLA GARCIA"
+  },
+  {
+    "fila": 2990,
+    "error": "CURP_INVALIDO",
+    "curp": "MASA040814MNLA6",
+    "nombre": "ALONDRA MARTINEZ SANCHEZ"
+  },
+  {
+    "fila": 2991,
+    "error": "CURP_INVALIDO",
+    "curp": "TORL490312MTSR22",
+    "nombre": "MA DE LOURDES TORRES ROMERO"
+  },
+  {
+    "fila": 2993,
+    "error": "CURP_INVALIDO",
+    "curp": "VARF871013MVALV07",
+    "nombre": "FILOMENA VALENZUELA RIVERA"
+  },
+  {
+    "fila": 3045,
+    "error": "CURP_INVALIDO",
+    "curp": "rojd820813mnldml00",
+    "nombre": "DELIA ERIKA RODRIGUEZ JIMENEZ"
+  },
+  {
+    "fila": 3046,
+    "error": "CURP_INVALIDO",
+    "curp": "ROJA781005mnldmn03",
+    "nombre": "ANA LILIA RODRIGUEZ JIMENEZ"
+  },
+  {
+    "fila": 3047,
+    "error": "CURP_INVALIDO",
+    "curp": "SATP850629MNLRL01",
+    "nombre": "PAOLA SANCHEZ TORRES"
+  },
+  {
+    "fila": 3051,
+    "error": "CURP_INVALIDO",
+    "curp": "QUAE881022MNLRR509",
+    "nombre": "ESMERALDA JUDITH QUIROZ ARRIAGA"
+  },
+  {
+    "fila": 3079,
+    "error": "CURP_INVALIDO",
+    "curp": "LOFN7711113MSPPLR00",
+    "nombre": "NORMA DELIA LOPEZ FLORES"
+  },
+  {
+    "fila": 3091,
+    "error": "CURP_INVALIDO",
+    "curp": "MEAG06117MNLDLNA3",
+    "nombre": "GENESIS BELEN MEDINA ALONSO"
+  },
+  {
+    "fila": 3104,
+    "error": "CURP_INVALIDO",
+    "curp": "GOGB880709MNLL07",
+    "nombre": "BLANCA IDALIA GONZALEZ GALLEGOS"
+  },
+  {
+    "fila": 3105,
+    "error": "CURP_INVALIDO",
+    "curp": "HEOV010823MNLRYA2",
+    "nombre": "VALERIA HERNANDEZ OYERVIDES"
+  },
+  {
+    "fila": 3109,
+    "error": "CURP_INVALIDO",
+    "curp": "ROMA061004MNLMTSA363",
+    "nombre": "ASHLEY DAYANA ROMAN MATA"
+  },
+  {
+    "fila": 3123,
+    "error": "CURP_INVALIDO",
+    "curp": "MADL860913MNLRN09",
+    "nombre": "LINDA ALEJANDRA MARTINEZ DELGADO"
+  },
+  {
+    "fila": 3127,
+    "error": "CURP_INVALIDO",
+    "curp": "BURM770814MDFMR00",
+    "nombre": "MARIBEL BUSTOS RAMIREZ"
+  },
+  {
+    "fila": 3140,
+    "error": "CURP_INVALIDO",
+    "curp": "MORS820303MNLNM02",
+    "nombre": "SUEM MARGARITA MONRREAL RENTERIA"
+  },
+  {
+    "fila": 3194,
+    "error": "CURP_INVALIDO",
+    "curp": "OC940811MNLRSP02",
+    "nombre": "KARLA LIZETH ORNELAS CASTILLO"
+  },
+  {
+    "fila": 3217,
+    "error": "CURP_INVALIDO",
+    "curp": "AASS660721MTYNN07",
+    "nombre": "SAN JUANA AYALA SANTIAGO"
+  },
+  {
+    "fila": 3246,
+    "error": "CURP_INVALIDO",
+    "curp": "CAGJ631221MNLMN02",
+    "nombre": "JUANA ANGELICA CANTU GOMEZ"
+  },
+  {
+    "fila": 3257,
+    "error": "CURP_INVALIDO",
+    "curp": "COLE610909MSPRRR510",
+    "nombre": "MA ESTHELA CORTEZ LARA"
+  },
+  {
+    "fila": 3347,
+    "error": "CURP_INVALIDO",
+    "curp": "FASA011204MNLRNA7",
+    "nombre": "ANGELES YAZMIN FRANCO SALINAS"
+  },
+  {
+    "fila": 3354,
+    "error": "CURP_INVALIDO",
+    "curp": "OIRI881112MNLLD06",
+    "nombre": "ILCE ANAHI OLIVARES RODRIGUEZ"
+  },
+  {
+    "fila": 3376,
+    "error": "CURP_INVALIDO",
+    "curp": "CUML750207MNLRNR",
+    "nombre": "LAURA CRUZ MENDOZA"
+  },
+  {
+    "fila": 3393,
+    "error": "CURP_INVALIDO",
+    "curp": "SAGF611910MNLLL",
+    "nombre": "FLORINDA IMELDA SANCHEZ GARCIA"
+  },
+  {
+    "fila": 3405,
+    "error": "CURP_INVALIDO",
+    "curp": "GARP900401MNLRL05",
+    "nombre": "PAULINA GARCIA RUIZ"
+  },
+  {
+    "fila": 3427,
+    "error": "CURP_INVALIDO",
+    "curp": "MOBE590810MNLNR009",
+    "nombre": "MARIA EDEN MONCADA BRIONES"
+  },
+  {
+    "fila": 3486,
+    "error": "CURP_INVALIDO",
+    "curp": "GOSN860811MNLRGL3",
+    "nombre": "NANCY GONZALEZ SANCHEZ"
+  },
+  {
+    "fila": 3491,
+    "error": "CURP_INVALIDO",
+    "curp": "COTGS810402MNLNR809",
+    "nombre": "GABRIELA PATRICIA CONTRERAS TORRES"
+  },
+  {
+    "fila": 3534,
+    "error": "CURP_INVALIDO",
+    "curp": "LOSO088101HNLPLS07",
+    "nombre": "OSVALDO LOPEZ SOLIS"
+  },
+  {
+    "fila": 3571,
+    "error": "CURP_INVALIDO",
+    "curp": "MOHM650208HNL000",
+    "nombre": "MIGUEL ANGEL MORALES HERNANDEZ"
+  },
+  {
+    "fila": 3580,
+    "error": "CURP_INVALIDO",
+    "curp": "ROSO490414MNLDSLL12",
+    "nombre": "OLGA DE LA ROSA SOLIS"
+  },
+  {
+    "fila": 3585,
+    "error": "CURP_INVALIDO",
+    "curp": "DUHM860411HNLRR05",
+    "nombre": "MARIO ALBERTO DURAN HERNANDEZ"
+  },
+  {
+    "fila": 3647,
+    "error": "CURP_INVALIDO",
+    "curp": "RETM640112MNLYRR096",
+    "nombre": "MARTINA REYNA TORRES"
+  },
+  {
+    "fila": 3660,
+    "error": "CURP_INVALIDO",
+    "curp": "CUVI620516MVZTRTS03",
+    "nombre": "MA ISABEL VRUZ VITE"
+  },
+  {
+    "fila": 3666,
+    "error": "CURP_INVALIDO",
+    "curp": "PEGE951203MNLRL902",
+    "nombre": "ESTEFANI MONSERRAT PEREZ GLORIA"
+  },
+  {
+    "fila": 3692,
+    "error": "CURP_INVALIDO",
+    "curp": "MASA040814MNLA6",
+    "nombre": "ALONDRA MARTINEZ SANCHEZ"
+  },
+  {
+    "fila": 3694,
+    "error": "CURP_INVALIDO",
+    "curp": "TORL490312MTSR22",
+    "nombre": "MA DE LOURDES TORRES ROMERO"
+  },
+  {
+    "fila": 3713,
+    "error": "CURP_INVALIDO",
+    "curp": "COGG460417JMSPSRR06 ",
+    "nombre": "GRACIELA COSTILLA GARCIA"
+  },
+  {
+    "fila": 3718,
+    "error": "CURP_INVALIDO",
+    "curp": "COCJ681106MNLNP06",
+    "nombre": "JUANA MARIA CONTRERAS CEPEDA"
+  },
+  {
+    "fila": 3730,
+    "error": "CURP_INVALIDO",
+    "curp": "ROBM910917MDGRY09",
+    "nombre": "MAYELA RODRIGUEZ BARRON"
+  },
+  {
+    "fila": 3732,
+    "error": "CURP_INVALIDO",
+    "curp": "AEAT011204MVZNNA7",
+    "nombre": "TANIA DEL ANGEL ANIMAS"
+  },
+  {
+    "fila": 3741,
+    "error": "CURP_INVALIDO",
+    "curp": "MADL860913MNLRN09",
+    "nombre": "LINDA ALEJANDRA MARTINEZ DELGADO"
+  },
+  {
+    "fila": 3759,
+    "error": "CURP_INVALIDO",
+    "curp": "IAAE82.228MNLRLS00",
+    "nombre": "MARIA ESTER IRACHETA ALVARADO"
+  },
+  {
+    "fila": 3767,
+    "error": "CURP_INVALIDO",
+    "curp": "AOPE72067MTSLNS02",
+    "nombre": "EUSTOLIA ALONSO PONCE"
+  },
+  {
+    "fila": 3773,
+    "error": "CURP_INVALIDO",
+    "curp": "FORA770512MNLVM07",
+    "nombre": "ANTONIA FLORES RIVERA"
+  },
+  {
+    "fila": 3784,
+    "error": "CURP_INVALIDO",
+    "curp": "TOHD760400MNLRRL09",
+    "nombre": "DOLORES GUADALUPE TORRES HERNANDEZ"
+  },
+  {
+    "fila": 3798,
+    "error": "CURP_INVALIDO",
+    "curp": "MEAG06117MNLDLNA3",
+    "nombre": "GENESIS BELEN MEDINA ALONSO"
+  },
+  {
+    "fila": 3807,
+    "error": "CURP_INVALIDO",
+    "curp": "QUAE881022MNLRR509",
+    "nombre": "ESMERALDA JUDITH QUIROZ ARRIAGA"
+  },
+  {
+    "fila": 3828,
+    "error": "CURP_INVALIDO",
+    "nombre": "CARLOS GARIBAY NAVARRO"
+  },
+  {
+    "fila": 3836,
+    "error": "CURP_INVALIDO",
+    "curp": "LOFN7711113MSPPLR00",
+    "nombre": "NORMA DELIA LOPEZ FLORES"
+  },
+  {
+    "fila": 3871,
+    "error": "CURP_INVALIDO",
+    "curp": "CARS710610566MNLRJn06",
+    "nombre": "SONIA MARGARITA CARDENAS ROJAS"
+  },
+  {
+    "fila": 3895,
+    "error": "CURP_INVALIDO",
+    "curp": "ZESH710111MNLPRRR05",
+    "nombre": "HORTENCIA GUADALUPE ZERMEÑO SERNA"
+  },
+  {
+    "fila": 3905,
+    "error": "CURP_INVALIDO",
+    "curp": "BURM770814MDFMR00",
+    "nombre": "MARIBEL BUSTOS RAMIREZ"
+  },
+  {
+    "fila": 3934,
+    "error": "CURP_INVALIDO",
+    "nombre": "LAURA ANGELICA HERNANDEZ RIOS"
+  },
+  {
+    "fila": 3957,
+    "error": "CURP_INVALIDO",
+    "curp": "ROPD9602033MNLDNL04",
+    "nombre": "DULCE MARIA RODRIGUEZ PUENTES"
+  },
+  {
+    "fila": 3998,
+    "error": "CURP_INVALIDO",
+    "nombre": "JUAN FRANCISCO CRUZ LOPEZ"
+  },
+  {
+    "fila": 3999,
+    "error": "CURP_INVALIDO",
+    "curp": "ROJA781005mnldmn03",
+    "nombre": "ANA LILIA RODRIGUEZ JIMENEZ"
+  },
+  {
+    "fila": 4000,
+    "error": "CURP_INVALIDO",
+    "curp": "rojd820813mnldml00",
+    "nombre": "DELIA ERIKA RODRIGUEZ JIMENEZ"
+  },
+  {
+    "fila": 4010,
+    "error": "CURP_INVALIDO",
+    "curp": "AASS660721MTYNN07",
+    "nombre": "SAN JUANA AYALA SANTIAGO"
+  },
+  {
+    "fila": 4014,
+    "error": "CURP_INVALIDO",
+    "curp": "CAGJ631221MNLMN02",
+    "nombre": "JUANA ANGELICA CANTU GOMEZ"
+  },
+  {
+    "fila": 4046,
+    "error": "CURP_INVALIDO",
+    "curp": "UIAR690814MNLRS07",
+    "nombre": "ROSA MARIA URIBE ALFARO"
+  },
+  {
+    "fila": 4049,
+    "error": "CURP_INVALIDO",
+    "curp": "MOGA960621MDPFNZL03",
+    "nombre": "ALONDRA PAMEELA MONTOYA GUZMAN"
+  },
+  {
+    "fila": 4052,
+    "error": "CURP_INVALIDO",
+    "curp": "GUMG690405MBCRL03",
+    "nombre": "GLORIA ESTHER GUZMAN MARTINEZ"
+  },
+  {
+    "fila": 4081,
+    "error": "CURP_INVALIDO",
+    "curp": "FASA011204MNLRNA7",
+    "nombre": "ANGELES YAZMIN FRANCO SALINAS"
+  },
+  {
+    "fila": 4163,
+    "error": "CURP_INVALIDO",
+    "curp": "CUML750207MNLRNR",
+    "nombre": "LAURA CRUZ MENDOZA"
+  },
+  {
+    "fila": 4189,
+    "error": "CURP_INVALIDO",
+    "curp": "LUXP560317MTSMXT014",
+    "nombre": "PATRICIA LUMBRERAS ALONSO"
+  },
+  {
+    "fila": 4273,
+    "error": "CURP_INVALIDO",
+    "curp": "MOHM650208HNL000",
+    "nombre": "MIGUEL ANGEL MORALES HERNANDEZ"
+  },
+  {
+    "fila": 4292,
+    "error": "CURP_INVALIDO",
+    "curp": "LOSO088101HNLPLS07",
+    "nombre": "OSVALDO LOPEZ SOLIS"
+  },
+  {
+    "fila": 4328,
+    "error": "CURP_INVALIDO",
+    "curp": "SAGF611910MNLLL",
+    "nombre": "FLORINDA IMELDA SANCHEZ GARCIA"
+  },
+  {
+    "fila": 4335,
+    "error": "CURP_INVALIDO",
+    "curp": "MOBE590810MNLNR009",
+    "nombre": "MARIA EDEN MONCADA BRIONES"
+  },
+  {
+    "fila": 4367,
+    "error": "CURP_INVALIDO",
+    "nombre": "MAYRA JUDITH SAUCEDO CASTILLO"
+  },
+  {
+    "fila": 4395,
+    "error": "CURP_INVALIDO",
+    "curp": "PEGE951203MNLRL902",
+    "nombre": "ESTEFANI MONSERRAT PEREZ GLORIA"
+  },
+  {
+    "fila": 4397,
+    "error": "CURP_INVALIDO",
+    "curp": "GOSN860811MNLRGL3",
+    "nombre": "NANCY GONZALEZ SANCHEZ"
+  },
+  {
+    "fila": 4426,
+    "error": "CURP_INVALIDO",
+    "curp": "COGG460417JMSPSRR06 ",
+    "nombre": "GRACIELA COSTILLA GARCIA"
+  },
+  {
+    "fila": 4451,
+    "error": "CURP_INVALIDO",
+    "curp": "ROSO490414MNLDSLL12",
+    "nombre": "OLGA DE LA ROSA SOLIS"
+  },
+  {
+    "fila": 4468,
+    "error": "CURP_INVALIDO",
+    "curp": "GARP900401MNLRL05",
+    "nombre": "PAULINA GARCIA RUIZ"
+  },
+  {
+    "fila": 4470,
+    "error": "CURP_INVALIDO",
+    "curp": "MASA040814MNLA6",
+    "nombre": "ALONDRA MARTINEZ SANCHEZ"
+  },
+  {
+    "fila": 4472,
+    "error": "CURP_INVALIDO",
+    "curp": "TORL490312MTSR22",
+    "nombre": "MA DE LOURDES TORRES ROMERO"
+  },
+  {
+    "fila": 4484,
+    "error": "CURP_INVALIDO",
+    "curp": "SUDD0705612MNLSQYA2",
+    "nombre": "DAYRA JAQUELIN SUSTAITA DUQUE"
+  },
+  {
+    "fila": 4497,
+    "error": "CURP_INVALIDO",
+    "curp": "RIRM8606924MNLVMR02",
+    "nombre": "MARIA MERCEDES RIVERA RAMIREZ"
+  },
+  {
+    "fila": 4542,
+    "error": "CURP_INVALIDO",
+    "curp": "FORA770512MNLVM07",
+    "nombre": "ANTONIA FLORES RIVERA"
+  },
+  {
+    "fila": 4549,
+    "error": "CURP_INVALIDO",
+    "curp": "PELR81119MNLXNS07",
+    "nombre": "ROSA MARIA PEÑA LUNA"
+  },
+  {
+    "fila": 4576,
+    "error": "CURP_INVALIDO",
+    "curp": "CUVI620516MVZTRTS03",
+    "nombre": "MA ISABEL VRUZ VITE"
+  },
+  {
+    "fila": 4598,
+    "error": "CURP_INVALIDO",
+    "curp": "RETM640112MNLYRR096",
+    "nombre": "MARTINA REYNA TORRES"
+  },
+  {
+    "fila": 4621,
+    "error": "CURP_INVALIDO",
+    "curp": "AOPE72067MTSLNS02",
+    "nombre": "EUSTOLIA ALONSO PONCE"
+  },
+  {
+    "fila": 4644,
+    "error": "CURP_INVALIDO",
+    "curp": "LOFN7711113MSPPLR00",
+    "nombre": "NORMA DELIA LOPEZ FLORES"
+  },
+  {
+    "fila": 4658,
+    "error": "CURP_INVALIDO",
+    "curp": "QUAE881022MNLRR509",
+    "nombre": "ESMERALDA JUDITH QUIROZ ARRIAGA"
+  },
+  {
+    "fila": 4682,
+    "error": "CURP_INVALIDO",
+    "curp": "MEAG06117MNLDLNA3",
+    "nombre": "GENESIS BELEN MEDINA ALONSO"
+  },
+  {
+    "fila": 4724,
+    "error": "CURP_INVALIDO",
+    "curp": "ZESH710111MNLPRRR05",
+    "nombre": "HORTENCIA GUADALUPE ZERMEÑO SERNA"
+  },
+  {
+    "fila": 4749,
+    "error": "CURP_INVALIDO",
+    "curp": "MOGA960621MDPFNZL03",
+    "nombre": "ALONDRA PAMEELA MONTOYA GUZMAN"
+  },
+  {
+    "fila": 4753,
+    "error": "CURP_INVALIDO",
+    "curp": "GUMG690405MBCRL03",
+    "nombre": "GLORIA ESTHER GUZMAN MARTINEZ"
+  },
+  {
+    "fila": 4754,
+    "error": "CURP_INVALIDO",
+    "nombre": "ADRIANA GUADALUPE ACOSTA CAMACHO"
+  },
+  {
+    "fila": 4755,
+    "error": "CURP_INVALIDO",
+    "curp": "BURM770814MDFMR00",
+    "nombre": "MARIBEL BUSTOS RAMIREZ"
+  },
+  {
+    "fila": 4769,
+    "error": "CURP_INVALIDO",
+    "curp": "ROJA781005mnldmn03",
+    "nombre": "ANA LILIA RODRIGUEZ JIMENEZ"
+  },
+  {
+    "fila": 4770,
+    "error": "CURP_INVALIDO",
+    "curp": "rojd820813mnldml00",
+    "nombre": "DELIA ERIKA RODRIGUEZ JIMENEZ"
+  },
+  {
+    "fila": 4774,
+    "error": "CURP_INVALIDO",
+    "curp": "UIAR690814MNLRS07",
+    "nombre": "ROSA MARIA URIBE ALFARO"
+  },
+  {
+    "fila": 4782,
+    "error": "CURP_INVALIDO",
+    "curp": "HERMR620418MNLRRB00",
+    "nombre": "MARIA DEL ROBLE HERNANDEZ MARTINEZ "
+  },
+  {
+    "fila": 4818,
+    "error": "CURP_INVALIDO",
+    "curp": "AASS660721MTYNN07",
+    "nombre": "SAN JUANA AYALA SANTIAGO"
+  },
+  {
+    "fila": 4834,
+    "error": "CURP_INVALIDO",
+    "curp": "ROGR",
+    "nombre": "ROSAURA RODRIGUEZ GUEVARA"
+  },
+  {
+    "fila": 4879,
+    "error": "CURP_INVALIDO",
+    "curp": "CAGJ631221MNLMN02",
+    "nombre": "JUANA ANGELICA CANTU GOMEZ"
+  },
+  {
+    "fila": 4901,
+    "error": "CURP_INVALIDO",
+    "curp": "VIQA6309MTSSNL06",
+    "nombre": "ALMA ROSA VIZCAINO QUINTERO"
+  },
+  {
+    "fila": 4916,
+    "error": "CURP_INVALIDO",
+    "curp": "GUBP90322MNLZRR03",
+    "nombre": "PERLA JUDITH GUZMAN BERMUDEZ"
+  },
+  {
+    "fila": 5057,
+    "error": "CURP_INVALIDO",
+    "curp": "LUXP560317MTSMXT014",
+    "nombre": "PATRICIA LUMBRERAS ALONSO"
+  },
+  {
+    "fila": 5061,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 5062,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 5063,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 5077,
+    "error": "CURP_INVALIDO",
+    "curp": "LOSO088101HNLPLS07",
+    "nombre": "OSVALDO LOPEZ SOLIS"
+  },
+  {
+    "fila": 5102,
+    "error": "CURP_INVALIDO",
+    "curp": "VIRE9501098MNLLZV09",
+    "nombre": "EVELYN JAZMIN VILLARREAL RUIZ"
+  },
+  {
+    "fila": 5116,
+    "error": "CURP_INVALIDO",
+    "curp": "ZACE760827MNLVR02",
+    "nombre": "EVA MARIA ZAVALA CARRIZALEZ"
+  },
+  {
+    "fila": 5119,
+    "error": "CURP_INVALIDO",
+    "curp": "COSC8506906MVZRMR00",
+    "nombre": "CRISTINA MIRIAM CORTES SIMBRON"
+  },
+  {
+    "fila": 5142,
+    "error": "CURP_INVALIDO",
+    "curp": "MOHM650208HNL000",
+    "nombre": "MIGUEL ANGEL MORALES HERNANDEZ"
+  },
+  {
+    "fila": 5183,
+    "error": "CURP_INVALIDO",
+    "curp": "MASA040814MNLA6",
+    "nombre": "ALONDRA MARTINEZ SANCHEZ"
+  },
+  {
+    "fila": 5186,
+    "error": "CURP_INVALIDO",
+    "curp": "TORL490312MTSR22",
+    "nombre": "MA DE LOURDES TORRES ROMERO"
+  },
+  {
+    "fila": 5200,
+    "error": "CURP_INVALIDO",
+    "curp": "EUME810203MNLG01",
+    "nombre": "ELIA MARISOL EGUIA MARTINEZ"
+  },
+  {
+    "fila": 5204,
+    "error": "CURP_INVALIDO",
+    "curp": "AUSA900925MNLMH23",
+    "nombre": "AYLIN ALEJANDRA AGUIRRE SIFUENTES"
+  },
+  {
+    "fila": 5205,
+    "error": "CURP_INVALIDO",
+    "curp": "SABA680106MNLJB05",
+    "nombre": "ADRIANA MA SANTOS BERMUDEZ"
+  },
+  {
+    "fila": 5226,
+    "error": "CURP_INVALIDO",
+    "curp": "RIRM8606924MNLVMR02",
+    "nombre": "MARIA MERCEDES RIVERA RAMIREZ"
+  },
+  {
+    "fila": 5266,
+    "error": "CURP_INVALIDO",
+    "curp": "MOBE590810MNLNR009",
+    "nombre": "MARIA EDEN MONCADA BRIONES"
+  },
+  {
+    "fila": 5271,
+    "error": "CURP_INVALIDO",
+    "curp": "SAGF611910MNLLL",
+    "nombre": "FLORINDA IMELDA SANCHEZ GARCIA"
+  },
+  {
+    "fila": 5277,
+    "error": "CURP_INVALIDO",
+    "curp": "PEGE951203MNLRL902",
+    "nombre": "ESTEFANI MONSERRAT PEREZ GLORIA"
+  },
+  {
+    "fila": 5284,
+    "error": "CURP_INVALIDO",
+    "curp": "COGG460417JMSPSRR06 ",
+    "nombre": "GRACIELA COSTILLA GARCIA"
+  },
+  {
+    "fila": 5287,
+    "error": "CURP_INVALIDO",
+    "curp": "SAME89805HNLCNM03",
+    "nombre": "EMILIO EDGARDO SAUCEDA MENDEZ"
+  },
+  {
+    "fila": 5302,
+    "error": "CURP_INVALIDO",
+    "nombre": "PAULA CRISTAL NILO CASTELLANOS"
+  },
+  {
+    "fila": 5305,
+    "error": "CURP_INVALIDO",
+    "curp": "FORA770512MNLVM07",
+    "nombre": "ANTONIA FLORES RIVERA"
+  },
+  {
+    "fila": 5309,
+    "error": "CURP_INVALIDO",
+    "curp": "RETM640112MNLYRR096",
+    "nombre": "MARTINA REYNA TORRES"
+  },
+  {
+    "fila": 5312,
+    "error": "CURP_INVALIDO",
+    "nombre": "MARIA DE LA LUZ CARDONA CERDA"
+  },
+  {
+    "fila": 5313,
+    "error": "CURP_INVALIDO",
+    "nombre": "KAREN ZULEMA RIVERA CARDONA"
+  },
+  {
+    "fila": 5328,
+    "error": "CURP_INVALIDO",
+    "nombre": "JUANA ELIZABETH GALLEGOS HERRER"
+  },
+  {
+    "fila": 5364,
+    "error": "CURP_INVALIDO",
+    "curp": "PELR81119MNLXNS07",
+    "nombre": "ROSA MARIA PEÑA LUNA"
+  },
+  {
+    "fila": 5406,
+    "error": "CURP_INVALIDO",
+    "curp": "GOSN860811MNLRGL3",
+    "nombre": "NANCY GONZALEZ SANCHEZ"
+  },
+  {
+    "fila": 5424,
+    "error": "CURP_INVALIDO",
+    "curp": "MEMA9409011MNLDRL05",
+    "nombre": "ALONDRA ABIGAIL MEDRANO MARTINEZ"
+  },
+  {
+    "fila": 5467,
+    "error": "CURP_INVALIDO",
+    "curp": "CARR680728MTSRS08",
+    "nombre": "ROSA JOSEFINA CARTAGENA RUIZ"
+  },
+  {
+    "fila": 5498,
+    "error": "CURP_INVALIDO",
+    "curp": "ROSO490414MNLDSLL12",
+    "nombre": "OLGA DE LA ROSA SOLIS"
+  },
+  {
+    "fila": 5532,
+    "error": "CURP_INVALIDO",
+    "curp": "QUAE881022MNLRR509",
+    "nombre": "ESMERALDA JUDITH QUIROZ ARRIAGA"
+  },
+  {
+    "fila": 5582,
+    "error": "CURP_INVALIDO",
+    "curp": "SAMM760119MNLNR04",
+    "nombre": "MARTHA VERONICA SANCHEZ MONTELONGO"
+  },
+  {
+    "fila": 5588,
+    "error": "CURP_INVALIDO",
+    "curp": "PURD830815MNLNDR12{",
+    "nombre": "DORA ELIA PUENTE RODRIGUEZ"
+  },
+  {
+    "fila": 5636,
+    "error": "CURP_INVALIDO",
+    "curp": "GOSD8703618MNLNNN01",
+    "nombre": "DIANA MARIBEL GONZALEZ SANCHEZ"
+  },
+  {
+    "fila": 5641,
+    "error": "CURP_INVALIDO",
+    "curp": "GALM7901104MNLRGR01",
+    "nombre": "MARISELA GARZA LUGO"
+  },
+  {
+    "fila": 5650,
+    "error": "CURP_INVALIDO",
+    "curp": "COV930516MVZRLR04",
+    "nombre": "BRENDA CORDOVA VELAZQUEZ "
+  },
+  {
+    "fila": 5656,
+    "error": "CURP_INVALIDO",
+    "curp": "RIRO702002MNLSNL02",
+    "nombre": "OLGA PATRICIA RIOS RODRIGUEZ"
+  },
+  {
+    "fila": 5696,
+    "error": "CURP_INVALIDO",
+    "curp": "MEAG06117MNLDLNA3",
+    "nombre": "GENESIS BELEN MEDINA ALONSO"
+  },
+  {
+    "fila": 5702,
+    "error": "CURP_INVALIDO",
+    "curp": "UIAR690814MNLRS07",
+    "nombre": "ROSA MARIA URIBE ALFARO"
+  },
+  {
+    "fila": 5706,
+    "error": "CURP_INVALIDO",
+    "curp": "UIAR690814MNLRS07",
+    "nombre": "ROSA MARIA URIBE ALFARO"
+  },
+  {
+    "fila": 5713,
+    "error": "CURP_INVALIDO",
+    "nombre": "MARIA ESTHER CHAIRES"
+  },
+  {
+    "fila": 5732,
+    "error": "CURP_INVALIDO",
+    "curp": "BURM770814MDFMR00",
+    "nombre": "MARIBEL BUSTOS RAMIREZ"
+  },
+  {
+    "fila": 5743,
+    "error": "CURP_INVALIDO",
+    "curp": "GUBP90322MNLZRR03",
+    "nombre": "PERLA JUDITH GUZMAN BERMUDEZ"
+  },
+  {
+    "fila": 5761,
+    "error": "CURP_INVALIDO",
+    "curp": "GARV040725MNLRLRJLAS8",
+    "nombre": "VALERIA ISABEL GARCIA ROJAS"
+  },
+  {
+    "fila": 5775,
+    "error": "CURP_INVALIDO",
+    "curp": "AASS660721MTYNN07",
+    "nombre": "SAN JUANA AYALA SANTIAGO"
+  },
+  {
+    "fila": 5804,
+    "error": "CURP_INVALIDO",
+    "curp": "GUMG690405MBCRL03",
+    "nombre": "GLORIA ESTHER GUZMAN MARTINEZ"
+  },
+  {
+    "fila": 5811,
+    "error": "CURP_INVALIDO",
+    "curp": "LOFN7711113MSPPLR00",
+    "nombre": "NORMA DELIA LOPEZ FLORES"
+  },
+  {
+    "fila": 5826,
+    "error": "CURP_INVALIDO",
+    "curp": "MAJA800619MDRMN01",
+    "nombre": "ANA LILIA MANCILLA JIMENEZ"
+  },
+  {
+    "fila": 5828,
+    "error": "CURP_INVALIDO",
+    "curp": "PUAL711122MNLPL04",
+    "nombre": "ALAMA DELIA PUENTE LOPEZ"
+  },
+  {
+    "fila": 5842,
+    "error": "CURP_INVALIDO",
+    "curp": "RAAP5707430MNLMVT07",
+    "nombre": "PATRICIA RAMOS AVILA"
+  },
+  {
+    "fila": 5843,
+    "error": "CURP_INVALIDO",
+    "curp": "CAGN8411229MNLRNN00",
+    "nombre": "NANCY MARGARITA CARDONA GONZALEZ"
+  },
+  {
+    "fila": 5850,
+    "error": "CURP_INVALIDO",
+    "nombre": "BLANCA ALICIA SAENZ GARZA"
+  },
+  {
+    "fila": 5851,
+    "error": "CURP_INVALIDO",
+    "curp": "ROJA781005mnldmn03",
+    "nombre": "ANA LILIA RODRIGUEZ JIMENEZ"
+  },
+  {
+    "fila": 5852,
+    "error": "CURP_INVALIDO",
+    "curp": "rojd820813mnldml00",
+    "nombre": "DELIA ERIKA RODRIGUEZ JIMENEZ"
+  },
+  {
+    "fila": 5875,
+    "error": "CURP_INVALIDO",
+    "curp": "CAGJ631221MNLMN02",
+    "nombre": "JUANA ANGELICA CANTU GOMEZ"
+  },
+  {
+    "fila": 5909,
+    "error": "CURP_INVALIDO",
+    "curp": "HEAS871129MNLRNLN08",
+    "nombre": "SANJUANA ELIZABETH HERNANDEZ ALVAREZ"
+  },
+  {
+    "fila": 5934,
+    "error": "CURP_INVALIDO",
+    "nombre": "MARIA DE JESUS ACOSTA VAZQUEZ"
+  },
+  {
+    "fila": 5940,
+    "error": "CURP_INVALIDO",
+    "curp": "VIRE9501098MNLLZV09",
+    "nombre": "EVELYN JAZMIN VILLARREAL RUIZ"
+  },
+  {
+    "fila": 6018,
+    "error": "CURP_INVALIDO",
+    "curp": "HEVA780926MCLRNLN00",
+    "nombre": "MARIA DE LOS ANGELES HERNANDEZ VILLAR"
+  },
+  {
+    "fila": 6091,
+    "error": "CURP_INVALIDO",
+    "nombre": "MARELYN YARELI GLORIA FERNANDEZ"
+  },
+  {
+    "fila": 6107,
+    "error": "CURP_INVALIDO",
+    "curp": "LOSO088101HNLPLS07",
+    "nombre": "OSVALDO LOPEZ SOLIS"
+  },
+  {
+    "fila": 6141,
+    "error": "CURP_INVALIDO",
+    "curp": "COBR720305MSPSH01",
+    "nombre": "ROSA MARIA CASTILLO BAHENA"
+  },
+  {
+    "fila": 6151,
+    "error": "CURP_INVALIDO",
+    "curp": "GACS620427MNLRRT0",
+    "nombre": "MARIA SITA GARCIA CARRIZALEZ"
+  },
+  {
+    "fila": 6153,
+    "error": "CURP_INVALIDO",
+    "curp": "RERBN940818MNLYSM07",
+    "nombre": "NAOMI GUADALUPE REYNA DE LA ROSA"
+  },
+  {
+    "fila": 6156,
+    "error": "CURP_INVALIDO",
+    "curp": "MERL050609MNLMDA6",
+    "nombre": "LEIDY MENDOZA RAMOS"
+  },
+  {
+    "fila": 6200,
+    "error": "CURP_INVALIDO",
+    "curp": "RALS930304MNLMPS017",
+    "nombre": "SUSANA RAMIREZ LOPEZ"
+  },
+  {
+    "fila": 6234,
+    "error": "CURP_INVALIDO",
+    "curp": "GAPG560154MNLP5028",
+    "nombre": "MARIA GUADALUPE GARCIA PUEBLA"
+  },
+  {
+    "fila": 6260,
+    "error": "CURP_INVALIDO",
+    "curp": "MASA040814MNLA6",
+    "nombre": "ALONDRA MARTINEZ SANCHEZ"
+  },
+  {
+    "fila": 6262,
+    "error": "CURP_INVALIDO",
+    "curp": "TORL490312MTSR22",
+    "nombre": "MA DE LOURDES TORRES ROMERO"
+  },
+  {
+    "fila": 6268,
+    "error": "CURP_INVALIDO",
+    "curp": "COSC8506906MVZRMR00",
+    "nombre": "CRISTINA MIRIAM CORTES SIMBRON"
+  },
+  {
+    "fila": 6269,
+    "error": "CURP_INVALIDO",
+    "nombre": "BERTHA ALICIA CRISPIN IBARRA "
+  },
+  {
+    "fila": 6276,
+    "error": "CURP_INVALIDO",
+    "curp": "LUXP560317MTSMXT014",
+    "nombre": "PATRICIA LUMBRERAS ALONSO"
+  },
+  {
+    "fila": 6351,
+    "error": "CURP_INVALIDO",
+    "curp": "COGR821221MNLSY07",
+    "nombre": "ROSA MARIA COSTILLA GAYTAN "
+  },
+  {
+    "fila": 6354,
+    "error": "CURP_INVALIDO",
+    "curp": "COGG460417JMSPSRR06 ",
+    "nombre": "GRACIELA COSTILLA GARCIA"
+  },
+  {
+    "fila": 6357,
+    "error": "CURP_INVALIDO",
+    "curp": "RETM640112MNLYRR096",
+    "nombre": "MARTINA REYNA TORRES"
+  },
+  {
+    "fila": 6371,
+    "error": "CURP_INVALIDO",
+    "curp": "RIRM8606924MNLVMR02",
+    "nombre": "MARIA MERCEDES RIVERA RAMIREZ"
+  },
+  {
+    "fila": 6407,
+    "error": "CURP_INVALIDO",
+    "curp": "MOBE590810MNLNR009",
+    "nombre": "MARIA EDEN MONCADA BRIONES"
+  },
+  {
+    "fila": 6433,
+    "error": "CURP_INVALIDO",
+    "curp": "CAPJ670605MZSN09",
+    "nombre": "JUANA CANIZALEZ PEREZ"
+  },
+  {
+    "fila": 6434,
+    "error": "CURP_INVALIDO",
+    "curp": "SAFA050812MNLLNA6",
+    "nombre": "ANA KAREN SANCHEZ FLORES"
+  },
+  {
+    "fila": 6518,
+    "error": "CURP_INVALIDO",
+    "curp": "MEMA9409011MNLDRL05",
+    "nombre": "ALONDRA ABIGAIL MEDRANO MARTINEZ"
+  },
+  {
+    "fila": 6527,
+    "error": "CURP_INVALIDO",
+    "curp": "GOSN860811MNLRGL3",
+    "nombre": "NANCY GONZALEZ SANCHEZ"
+  },
+  {
+    "fila": 6546,
+    "error": "CURP_INVALIDO",
+    "curp": "SABA680106MNLJB05",
+    "nombre": "ADRIANA MA SANTOS BERMUDEZ"
+  },
+  {
+    "fila": 6548,
+    "error": "CURP_INVALIDO",
+    "curp": "AUSA900925MNLMH23",
+    "nombre": "AYLIN ALEJANDRA AGUIRRE SIFUENTES"
+  },
+  {
+    "fila": 6551,
+    "error": "CURP_INVALIDO",
+    "curp": "EUME810203MNLG01",
+    "nombre": "ELIA MARISOL EGUIA MARTINEZ"
+  },
+  {
+    "fila": 6568,
+    "error": "CURP_INVALIDO",
+    "nombre": "MARISELA SANCHEZ MALDONADO"
+  },
+  {
+    "fila": 6612,
+    "error": "CURP_INVALIDO",
+    "curp": "LUEJ604224MNLNSS09",
+    "nombre": "JESSIKA LUNA ESPINOZA"
+  },
+  {
+    "fila": 6633,
+    "error": "CURP_INVALIDO",
+    "curp": "CARR680728MTSRS08",
+    "nombre": "ROSA JOSEFINA CARTAGENA RUIZ"
+  },
+  {
+    "fila": 6652,
+    "error": "CURP_INVALIDO",
+    "curp": "AUEA981204HNLGSL074",
+    "nombre": "ALDO FRANCISCO AGUIÑAGA ESCAMILLA"
+  },
+  {
+    "fila": 6690,
+    "error": "CURP_INVALIDO",
+    "curp": "QUAE881022MNLRR509",
+    "nombre": "ESMERALDA JUDITH QUIROZ ARRIAGA"
+  },
+  {
+    "fila": 6695,
+    "error": "CURP_INVALIDO",
+    "curp": "}",
+    "nombre": "ALMA MARICELA CAVAZOS MARTINEZ"
+  },
+  {
+    "fila": 6729,
+    "error": "CURP_INVALIDO",
+    "curp": "PURD830815MNLNDR12{",
+    "nombre": "DORA ELIA PUENTE RODRIGUEZ"
+  },
+  {
+    "fila": 6760,
+    "error": "CURP_INVALIDO",
+    "curp": "ROLY920008MTSBNS00",
+    "nombre": "YESENIA YULIZETH ROBLES DE LEON "
+  },
+  {
+    "fila": 6796,
+    "error": "CURP_INVALIDO",
+    "curp": "RIRO702002MNLSNL02",
+    "nombre": "OLGA PATRICIA RIOS RODRIGUEZ"
+  },
+  {
+    "fila": 6811,
+    "error": "CURP_INVALIDO",
+    "curp": "GOSD8703618MNLNNN01",
+    "nombre": "DIANA MARIBEL GONZALEZ SANCHEZ"
+  },
+  {
+    "fila": 6850,
+    "error": "CURP_INVALIDO",
+    "curp": "DOLA860802mvzmpn00",
+    "nombre": "MARIA DE LOS ANGELES DOMINGUEZ LOPEZ"
+  },
+  {
+    "fila": 6873,
+    "error": "CURP_INVALIDO",
+    "curp": "SAMM760119MNLNR04",
+    "nombre": "MARTHA VERONICA SANCHEZ MONTELONGO"
+  },
+  {
+    "fila": 6932,
+    "error": "CURP_INVALIDO",
+    "curp": "RAAP5707430MNLMVT07",
+    "nombre": "PATRICIA RAMOS AVILA"
+  },
+  {
+    "fila": 6933,
+    "error": "CURP_INVALIDO",
+    "curp": "CAGN8411229MNLRNN00",
+    "nombre": "NANCY MARGARITA CARDONA GONZALEZ"
+  },
+  {
+    "fila": 6947,
+    "error": "CURP_INVALIDO",
+    "curp": "MEAG06117MNLDLNA3",
+    "nombre": "GENESIS BELEN MEDINA ALONSO"
+  },
+  {
+    "fila": 6983,
+    "error": "CURP_INVALIDO",
+    "curp": "GALM7901104MNLRGR01",
+    "nombre": "MARISELA GARZA LUGO"
+  },
+  {
+    "fila": 6987,
+    "error": "CURP_INVALIDO",
+    "curp": "GUMG690405MBCRL03",
+    "nombre": "GLORIA ESTHER GUZMAN MARTINEZ"
+  },
+  {
+    "fila": 6993,
+    "error": "CURP_INVALIDO",
+    "curp": "PUAL711122MNLPL04",
+    "nombre": "ALAMA DELIA PUENTE LOPEZ"
+  },
+  {
+    "fila": 7015,
+    "error": "CURP_INVALIDO",
+    "curp": "PEMT654028MNLRRR00",
+    "nombre": "MARIA TERESA PEREZ MARTINEZ"
+  },
+  {
+    "fila": 7048,
+    "error": "CURP_INVALIDO",
+    "curp": "LOFN7711113MSPPLR00",
+    "nombre": "NORMA DELIA LOPEZ FLORES"
+  },
+  {
+    "fila": 7079,
+    "error": "CURP_INVALIDO",
+    "curp": "RIRK770627MNLWR09",
+    "nombre": "KARLA ELIZABETH RIVERA RIVERA"
+  },
+  {
+    "fila": 7080,
+    "error": "CURP_INVALIDO",
+    "curp": "COSS80823MNLRLN07",
+    "nombre": "SANJUANITA IMELDA CORTES SALZAR"
+  },
+  {
+    "fila": 7098,
+    "error": "CURP_INVALIDO",
+    "curp": "BURM770814MDFMR00",
+    "nombre": "MARIBEL BUSTOS RAMIREZ"
+  },
+  {
+    "fila": 7106,
+    "error": "CURP_INVALIDO",
+    "curp": "UIAR690814MNLRS07",
+    "nombre": "ROSA MARIA URIBE ALFARO"
+  },
+  {
+    "fila": 7110,
+    "error": "CURP_INVALIDO",
+    "curp": "UIAR690814MNLRS07",
+    "nombre": "ROSA MARIA URIBE ALFARO"
+  },
+  {
+    "fila": 7157,
+    "error": "CURP_INVALIDO",
+    "curp": "AASS660721MTYNN07",
+    "nombre": "SAN JUANA AYALA SANTIAGO"
+  },
+  {
+    "fila": 7164,
+    "error": "CURP_INVALIDO",
+    "curp": "ROJA781005mnldmn03",
+    "nombre": "ANA LILIA RODRIGUEZ JIMENEZ"
+  },
+  {
+    "fila": 7166,
+    "error": "CURP_INVALIDO",
+    "curp": "rojd820813mnldml00",
+    "nombre": "DELIA ERIKA RODRIGUEZ JIMENEZ"
+  },
+  {
+    "fila": 7168,
+    "error": "CURP_INVALIDO",
+    "curp": "GUBP90322MNLZRR03",
+    "nombre": "PERLA JUDITH GUZMAN BERMUDEZ"
+  },
+  {
+    "fila": 7188,
+    "error": "CURP_INVALIDO",
+    "curp": "GAPG560154MNLP5028",
+    "nombre": "MARIA GUADALUPE GARCIA PUEBLA"
+  },
+  {
+    "fila": 7198,
+    "error": "CURP_INVALIDO",
+    "curp": "COV930516MVZRLR04",
+    "nombre": "BRENDA CORDOVA VELAZQUEZ "
+  },
+  {
+    "fila": 7247,
+    "error": "CURP_INVALIDO",
+    "nombre": "MARTHA LETICIA NUÑEZ ARREDONDO"
+  },
+  {
+    "fila": 7253,
+    "error": "CURP_INVALIDO",
+    "nombre": "ALEXIS EMANUEL SALINAS ALANIS"
+  },
+  {
+    "fila": 7265,
+    "error": "CURP_INVALIDO",
+    "curp": "CAGJ631221MNLMN02",
+    "nombre": "JUANA ANGELICA CANTU GOMEZ"
+  },
+  {
+    "fila": 7284,
+    "error": "CURP_INVALIDO",
+    "curp": "HEAS871129MNLRNLN08",
+    "nombre": "SANJUANA ELIZABETH HERNANDEZ ALVAREZ"
+  },
+  {
+    "fila": 7344,
+    "error": "CURP_INVALIDO",
+    "curp": "COBR720305MSPSH01",
+    "nombre": "ROSA MARIA CASTILLO BAHENA"
+  },
+  {
+    "fila": 7349,
+    "error": "CURP_INVALIDO",
+    "curp": "DIRR640830MSPMS02",
+    "nombre": "ROSA DIMAS ROBLEDO"
+  },
+  {
+    "fila": 7379,
+    "error": "CURP_INVALIDO",
+    "nombre": "PAMELA ESTEFANIA GAMEZ SOTO"
+  },
+  {
+    "fila": 7380,
+    "error": "CURP_INVALIDO",
+    "nombre": "JOSE HORACIO GAMEZ VILLELA"
+  },
+  {
+    "fila": 7382,
+    "error": "CURP_INVALIDO",
+    "nombre": "ARYL CAROLINA PADILLA PARTIDA"
+  },
+  {
+    "fila": 7393,
+    "error": "CURP_INVALIDO",
+    "curp": "LOSO088101HNLPLS07",
+    "nombre": "OSVALDO LOPEZ SOLIS"
+  },
+  {
+    "fila": 7411,
+    "error": "CURP_INVALIDO",
+    "curp": "NUHB00057MTSXRRA8",
+    "nombre": "BRENDA XIMENA NUÑEZ HERNANDEZ"
+  },
+  {
+    "fila": 7413,
+    "error": "CURP_INVALIDO",
+    "curp": "LArc780428mzsr06",
+    "nombre": "MARIA CRISTINA LARA RUIZ"
+  },
+  {
+    "fila": 7422,
+    "error": "CURP_INVALIDO",
+    "curp": "RALS930304MNLMPS017",
+    "nombre": "SUSANA RAMIREZ LOPEZ"
+  },
+  {
+    "fila": 7461,
+    "error": "CURP_INVALIDO",
+    "curp": "HEGM020125MCLRR8A",
+    "nombre": "MARTHA SORAIMA HERNANDEZ GARCIA "
+  },
+  {
+    "fila": 7463,
+    "error": "CURP_INVALIDO",
+    "curp": "MOM1020421MNLRNRA9",
+    "nombre": "IRENE CECILIA MORALES MONSIVAIS "
+  },
+  {
+    "fila": 7464,
+    "error": "CURP_INVALIDO",
+    "nombre": "MELISSA YAMILETH AGUILAR GARZA"
+  },
+  {
+    "fila": 7540,
+    "error": "CURP_INVALIDO",
+    "curp": "AUOD020416MTCLLRAA3",
+    "nombre": "DORIS DEL ROSARIO ALCUDIA OLIVA"
+  },
+  {
+    "fila": 7571,
+    "error": "CURP_INVALIDO",
+    "curp": "TORL490312MTSR22",
+    "nombre": "MA DE LOURDES TORRES ROMERO"
+  },
+  {
+    "fila": 7572,
+    "error": "CURP_INVALIDO",
+    "curp": "MASA040814MNLA6",
+    "nombre": "ALONDRA MARTINEZ SANCHEZ"
+  },
+  {
+    "fila": 7613,
+    "error": "CURP_INVALIDO",
+    "curp": "RETM640112MNLYRR096",
+    "nombre": "MARTINA REYNA TORRES"
+  },
+  {
+    "fila": 7621,
+    "error": "CURP_INVALIDO",
+    "curp": "COGR821221MNLSY07",
+    "nombre": "ROSA MARIA COSTILLA GAYTAN "
+  },
+  {
+    "fila": 7624,
+    "error": "CURP_INVALIDO",
+    "curp": "COGG460417JMSPSRR06 ",
+    "nombre": "GRACIELA COSTILLA GARCIA"
+  },
+  {
+    "fila": 7656,
+    "error": "CURP_INVALIDO",
+    "curp": "GACS620427MNLRRT0",
+    "nombre": "MARIA SITA GARCIA CARRIZALEZ"
+  },
+  {
+    "fila": 7675,
+    "error": "CURP_INVALIDO",
+    "curp": "CULF8803604MNLRPB19",
+    "nombre": "FABIOLA ELIZABETH CRUZ LOPEZ"
+  },
+  {
+    "fila": 7770,
+    "error": "CURP_INVALIDO",
+    "curp": "MARR730521MNCLCMS07",
+    "nombre": "ROSA MARIA MACIAS RAMIREZ"
+  },
+  {
+    "fila": 7781,
+    "error": "CURP_INVALIDO",
+    "curp": "COSC8506906MVZRMR00",
+    "nombre": "CRISTINA MIRIAM CORTES SIMBRON"
+  },
+  {
+    "fila": 7792,
+    "error": "CURP_INVALIDO",
+    "curp": "RERBN940818MNLYSM07",
+    "nombre": "NAOMI GUADALUPE REYNA DE LA ROSA"
+  },
+  {
+    "fila": 7794,
+    "error": "CURP_INVALIDO",
+    "curp": "MERL050609MNLMDA6",
+    "nombre": "LEIDY MENDOZA RAMOS"
+  },
+  {
+    "fila": 7815,
+    "error": "CURP_INVALIDO",
+    "curp": "MOBE590810MNLNR009",
+    "nombre": "MARIA EDEN MONCADA BRIONES"
+  },
+  {
+    "fila": 7827,
+    "error": "CURP_INVALIDO",
+    "curp": "CARR680728MTSRS08",
+    "nombre": "ROSA JOSEFINA CARTAGENA RUIZ"
+  },
+  {
+    "fila": 7831,
+    "error": "CURP_INVALIDO",
+    "nombre": "JANETH HERNANDEZ SANCHEZ"
+  },
+  {
+    "fila": 7858,
+    "error": "CURP_INVALIDO",
+    "curp": "SAFA050812MNLLNA6",
+    "nombre": "ANA KAREN SANCHEZ FLORES"
+  },
+  {
+    "fila": 7861,
+    "error": "CURP_INVALIDO",
+    "curp": "CAPJ670605MZSN09",
+    "nombre": "JUANA CANIZALEZ PEREZ"
+  },
+  {
+    "fila": 7965,
+    "error": "CURP_INVALIDO",
+    "curp": "MEMA9409011MNLDRL05",
+    "nombre": "ALONDRA ABIGAIL MEDRANO MARTINEZ"
+  },
+  {
+    "fila": 8010,
+    "error": "CURP_INVALIDO",
+    "curp": "SABA680106MNLJB05",
+    "nombre": "ADRIANA MA SANTOS BERMUDEZ"
+  },
+  {
+    "fila": 8014,
+    "error": "CURP_INVALIDO",
+    "curp": "EUME810203MNLG01",
+    "nombre": "ELIA MARISOL EGUIA MARTINEZ"
+  },
+  {
+    "fila": 8018,
+    "error": "CURP_INVALIDO",
+    "curp": "AUEA981204HNLGSL074",
+    "nombre": "ALDO FRANCISCO AGUIÑAGA ESCAMILLA"
+  },
+  {
+    "fila": 8031,
+    "error": "CURP_INVALIDO",
+    "curp": "GOSN860811MNLRGL3",
+    "nombre": "NANCY GONZALEZ SANCHEZ"
+  },
+  {
+    "fila": 8034,
+    "error": "CURP_INVALIDO",
+    "curp": "LUEJ604224MNLNSS09",
+    "nombre": "JESSIKA LUNA ESPINOZA"
+  },
+  {
+    "fila": 8079,
+    "error": "CURP_INVALIDO",
+    "curp": "VED740601MNLNVR11",
+    "nombre": "VERONICA VENTURA DAVIDA"
+  },
+  {
+    "fila": 8122,
+    "error": "CURP_INVALIDO",
+    "curp": "PURD830815MNLNDR12{",
+    "nombre": "DORA ELIA PUENTE RODRIGUEZ"
+  },
+  {
+    "fila": 8141,
+    "error": "CURP_INVALIDO",
+    "curp": "DOLA860802mvzmpn00",
+    "nombre": "MARIA DE LOS ANGELES DOMINGUEZ LOPEZ"
+  },
+  {
+    "fila": 8155,
+    "error": "CURP_INVALIDO",
+    "nombre": "JANETH SAUCEDO AGUIRRE"
+  },
+  {
+    "fila": 8170,
+    "error": "CURP_INVALIDO",
+    "curp": "RIRO702002MNLSNL02",
+    "nombre": "OLGA PATRICIA RIOS RODRIGUEZ"
+  },
+  {
+    "fila": 8174,
+    "error": "CURP_INVALIDO",
+    "curp": "IRF970830HSPGDR09",
+    "nombre": "FRANCO ALEXIZ IGLESIAS RODRIGUEZ"
+  },
+  {
+    "fila": 8179,
+    "error": "CURP_INVALIDO",
+    "curp": "MEAG06117MNLDLNA3",
+    "nombre": "GENESIS BELEN MEDINA ALONSO"
+  },
+  {
+    "fila": 8206,
+    "error": "CURP_INVALIDO",
+    "curp": "PUAL711122MNLPL04",
+    "nombre": "ALAMA DELIA PUENTE LOPEZ"
+  },
+  {
+    "fila": 8227,
+    "error": "CURP_INVALIDO",
+    "nombre": "KEILA ELIZABETH VAZQUEZ HERNANDEZ"
+  },
+  {
+    "fila": 8231,
+    "error": "CURP_INVALIDO",
+    "curp": "PEMT654028MNLRRR00",
+    "nombre": "MARIA TERESA PEREZ MARTINEZ"
+  },
+  {
+    "fila": 8255,
+    "error": "CURP_INVALIDO",
+    "curp": "RAAP5707430MNLMVT07",
+    "nombre": "PATRICIA RAMOS AVILA"
+  },
+  {
+    "fila": 8256,
+    "error": "CURP_INVALIDO",
+    "curp": "CAGN8411229MNLRNN00",
+    "nombre": "NANCY MARGARITA CARDONA GONZALEZ"
+  },
+  {
+    "fila": 8269,
+    "error": "CURP_INVALIDO",
+    "nombre": "JOSEFINA HERRERA LARA"
+  },
+  {
+    "fila": 8270,
+    "error": "CURP_INVALIDO",
+    "curp": "GOSD8703618MNLNNN01",
+    "nombre": "DIANA MARIBEL GONZALEZ SANCHEZ"
+  },
+  {
+    "fila": 8271,
+    "error": "CURP_INVALIDO",
+    "nombre": "CLAUDIA SEGOVIA MONTELONGO"
+  },
+  {
+    "fila": 8276,
+    "error": "CURP_INVALIDO",
+    "nombre": "BRANDON MIZAEL LOZANO CASTAÑEDA"
+  },
+  {
+    "fila": 8311,
+    "error": "CURP_INVALIDO",
+    "curp": "SAMM760119MNLNR04",
+    "nombre": "MARTHA VERONICA SANCHEZ MONTELONGO"
+  },
+  {
+    "fila": 8315,
+    "error": "CURP_INVALIDO",
+    "curp": "CASR572212MTSSLS01",
+    "nombre": "ROSA MA.CASTILLO SILVA"
+  },
+  {
+    "fila": 8322,
+    "error": "CURP_INVALIDO",
+    "curp": "GALM7901104MNLRGR01",
+    "nombre": "MARISELA GARZA LUGO"
+  },
+  {
+    "fila": 8337,
+    "error": "CURP_INVALIDO",
+    "curp": "GUMG690405MBCRL03",
+    "nombre": "GLORIA ESTHER GUZMAN MARTINEZ"
+  },
+  {
+    "fila": 8340,
+    "error": "CURP_INVALIDO",
+    "curp": "MOGA960621MDPFNZL03",
+    "nombre": "ALONDRA PAMEELA MONTOYA GUZMAN"
+  },
+  {
+    "fila": 8360,
+    "error": "CURP_INVALIDO",
+    "curp": "MATL941025HNLRL500",
+    "nombre": "LUIS CARLOS MARTINEZ TALAVERA"
+  },
+  {
+    "fila": 8362,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8363,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8364,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8365,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8366,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8367,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8368,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8369,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8370,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8371,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8372,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8373,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8374,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8375,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8376,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8377,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8378,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8379,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8380,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8381,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8382,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8383,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8384,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8385,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8386,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8387,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8388,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8389,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8390,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8391,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8392,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8393,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8394,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8395,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8396,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8397,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8398,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8399,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8400,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8401,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8402,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8403,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8404,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8405,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8406,
+    "error": "CURP_INVALIDO"
+  },
+  {
+    "fila": 8407,
+    "error": "CURP_INVALIDO"
+  }
+]

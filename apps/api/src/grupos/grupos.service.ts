@@ -72,9 +72,11 @@ export class GruposService {
           where: { grupo_id: grupo.id },
         });
         return {
-          ...grupo,
-          name: grupo.nombre,
+          id: grupo.id,
+          nombre: grupo.nombre,
+          estado: expediente?.estado ?? 'EN_DOCUMENTACION', // Usar estado del expediente
           expedienteId: expediente?.id ?? null,
+          estado_fecha: expediente?.estado_fecha ?? expediente?.created_at ?? null, // Agregar fecha de estado
         };
       })
     );

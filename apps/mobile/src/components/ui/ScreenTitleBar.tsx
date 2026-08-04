@@ -14,8 +14,8 @@ export const ScreenTitleBar: React.FC<ScreenTitleBarProps> = ({
   const theme = moduleThemes[moduleTheme];
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.titleBarBg }]}> 
-      <Text style={styles.title}>{title}</Text>
+    <View style={[styles.container, { backgroundColor: theme.titleBarBg }]}>
+      <Text allowFontScaling={false} style={styles.title}>{title || ''}</Text>
     </View>
   );
 };
@@ -23,7 +23,7 @@ export const ScreenTitleBar: React.FC<ScreenTitleBarProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    paddingVertical: spacing.sm,
+    paddingVertical: 6,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',

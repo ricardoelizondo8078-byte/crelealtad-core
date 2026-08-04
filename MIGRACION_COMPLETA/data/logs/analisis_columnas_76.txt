@@ -1,0 +1,402 @@
+﻿
+═══════════════════════════════════════════════════════
+  ANÁLISIS PROFUNDO: TODAS LAS COLUMNAS DE BASE 76
+═══════════════════════════════════════════════════════
+
+Total de filas: 24580
+
+TODAS LAS 275 COLUMNAS:
+
+[  0] (sin nombre)
+[  1] BASE DE DATOS 
+      Valores: SEM | 214
+[  2] (sin nombre)
+[  3] (sin nombre)
+[  4] (sin nombre)
+[  5] 365
+      Valores: 0.6046773661581955 | GRUPO Y CICLO | GASTONAS ( 15 ) 
+[  6] 366
+      Valores: SRAS | 4
+[  7] (sin nombre)
+[  8] (sin nombre)
+[  9] (sin nombre)
+[ 10] (sin nombre)
+[ 11] (sin nombre)
+[ 12] (sin nombre)
+[ 13] COBRANZA CAPTURA SEM 365
+      Valores: COBRANZA CAPTURA SEM 366 | C:\Users\Admin\Desktop\76 CREL | DESCARGA ALTA GRUPOS SEM 365 | C:\Users\Admin\Desktop\76 CREL | APERTURA
+[ 14] (sin nombre)
+[ 15] (sin nombre)
+[ 16] (sin nombre)
+[ 17] (sin nombre)
+[ 18] (sin nombre)
+[ 19] (sin nombre)
+[ 20] (sin nombre)
+[ 21] (sin nombre)
+[ 22] (sin nombre)
+[ 23] (sin nombre)
+[ 24] (sin nombre)
+[ 25] (sin nombre)
+[ 26] (sin nombre)
+[ 27] (sin nombre)
+[ 28] (sin nombre)
+[ 29] (sin nombre)
+[ 30] (sin nombre)
+[ 31] (sin nombre)
+[ 32] (sin nombre)
+[ 33] (sin nombre)
+[ 34] (sin nombre)
+[ 35] (sin nombre)
+[ 36] (sin nombre)
+[ 37] (sin nombre)
+[ 38] (sin nombre)
+[ 39] (sin nombre)
+[ 40] (sin nombre)
+[ 41] (sin nombre)
+[ 42] (sin nombre)
+[ 43] (sin nombre)
+[ 44] (sin nombre)
+[ 45] (sin nombre)
+[ 46] (sin nombre)
+[ 47] (sin nombre)
+[ 48] (sin nombre)
+[ 49] (sin nombre)
+[ 50] (sin nombre)
+[ 51] (sin nombre)
+[ 52] (sin nombre)
+[ 53] (sin nombre)
+[ 54] (sin nombre)
+[ 55] (sin nombre)
+[ 56] (sin nombre)
+[ 57] (sin nombre)
+[ 58] (sin nombre)
+[ 59] (sin nombre)
+[ 60] (sin nombre)
+[ 61] (sin nombre)
+[ 62] (sin nombre)
+[ 63] (sin nombre)
+[ 64] (sin nombre)
+[ 65] (sin nombre)
+[ 66] (sin nombre)
+[ 67] (sin nombre)
+[ 68] (sin nombre)
+[ 69] (sin nombre)
+[ 70] FILTRADO SIGUIENTE FICHA X PAGAR
+      Valores: ARCHIVO :   | # | 288-017-(0050-05-34) | 292-007-(0110-04-34) | 292-008-(0120-03-19)
+[ 71] (sin nombre)
+[ 72] (sin nombre)
+[ 73] (sin nombre)
+[ 74] (sin nombre)
+[ 75] (sin nombre)
+[ 76] (sin nombre)
+[ 77] (sin nombre)
+[ 78] (sin nombre)
+[ 79] (sin nombre)
+[ 80] (sin nombre)
+[ 81] (sin nombre)
+[ 82] (sin nombre)
+[ 83] (sin nombre)
+[ 84] (sin nombre)
+[ 85] (sin nombre)
+[ 86] (sin nombre)
+[ 87] (sin nombre)
+[ 88] (sin nombre)
+[ 89] (sin nombre)
+[ 90] (sin nombre)
+[ 91] (sin nombre)
+[ 92] (sin nombre)
+[ 93] (sin nombre)
+[ 94] (sin nombre)
+[ 95] (sin nombre)
+[ 96] (sin nombre)
+[ 97] (sin nombre)
+[ 98] (sin nombre)
+[ 99] (sin nombre)
+[100] (sin nombre)
+[101] (sin nombre)
+[102] (sin nombre)
+[103] (sin nombre)
+[104] (sin nombre)
+[105] (sin nombre)
+[106] (sin nombre)
+[107] (sin nombre)
+[108] (sin nombre)
+[109] (sin nombre)
+[110] (sin nombre)
+[111] (sin nombre)
+[112] (sin nombre)
+[113] (sin nombre)
+[114] (sin nombre)
+[115] (sin nombre)
+[116] (sin nombre)
+[117] (sin nombre)
+[118] (sin nombre)
+[119] (sin nombre)
+[120] (sin nombre)
+[121] (sin nombre)
+[122] (sin nombre)
+[123] (sin nombre)
+[124] (sin nombre)
+[125] (sin nombre)
+[126] (sin nombre)
+[127] (sin nombre)
+[128] (sin nombre)
+[129] (sin nombre)
+[130] (sin nombre)
+[131] (sin nombre)
+[132] (sin nombre)
+[133] (sin nombre)
+[134] (sin nombre)
+[135] (sin nombre)
+[136] (sin nombre)
+[137] (sin nombre)
+[138] (sin nombre)
+[139] FILTRADO 1° FICHA 60%
+      Valores: BASE DE GRUPOS HISTORICA | #
+[140] (sin nombre)
+[141] (sin nombre)
+[142] (sin nombre)
+[143] (sin nombre)
+[144] (sin nombre)
+[145] (sin nombre)
+[146] (sin nombre)
+[147] (sin nombre)
+[148] (sin nombre)
+[149] (sin nombre)
+[150] (sin nombre)
+[151] (sin nombre)
+[152] (sin nombre)
+[153] (sin nombre)
+[154] (sin nombre)
+[155] (sin nombre)
+[156] (sin nombre)
+[157] (sin nombre)
+[158] (sin nombre)
+[159] (sin nombre)
+[160] (sin nombre)
+[161] (sin nombre)
+[162] (sin nombre)
+[163] (sin nombre)
+[164] (sin nombre)
+[165] (sin nombre)
+[166] (sin nombre)
+[167] (sin nombre)
+[168] (sin nombre)
+[169] (sin nombre)
+[170] (sin nombre)
+[171] (sin nombre)
+[172] (sin nombre)
+[173] (sin nombre)
+[174] (sin nombre)
+[175] (sin nombre)
+[176] (sin nombre)
+[177] (sin nombre)
+[178] (sin nombre)
+[179] (sin nombre)
+[180] (sin nombre)
+[181] (sin nombre)
+[182] (sin nombre)
+[183] (sin nombre)
+[184] (sin nombre)
+[185] (sin nombre)
+[186] (sin nombre)
+[187] (sin nombre)
+[188] (sin nombre)
+[189] (sin nombre)
+[190] (sin nombre)
+[191] (sin nombre)
+[192] (sin nombre)
+[193] (sin nombre)
+[194] (sin nombre)
+[195] (sin nombre)
+[196] (sin nombre)
+[197] (sin nombre)
+[198] (sin nombre)
+[199] (sin nombre)
+[200] (sin nombre)
+[201] (sin nombre)
+[202] (sin nombre)
+[203] (sin nombre)
+[204] (sin nombre)
+[205] (sin nombre)
+[206] (sin nombre)
+[207] (sin nombre)
+[208] FILTRADO GRUPOS VIGENTES
+      Valores: BASE DE GRUPOS HISTORICA | #
+[209] (sin nombre)
+[210] (sin nombre)
+[211] (sin nombre)
+[212] (sin nombre)
+[213] (sin nombre)
+[214] (sin nombre)
+[215] (sin nombre)
+[216] (sin nombre)
+[217] (sin nombre)
+[218] (sin nombre)
+[219] (sin nombre)
+[220] (sin nombre)
+[221] (sin nombre)
+[222] (sin nombre)
+[223] (sin nombre)
+[224] (sin nombre)
+[225] (sin nombre)
+[226] (sin nombre)
+[227] (sin nombre)
+[228] (sin nombre)
+[229] (sin nombre)
+[230] (sin nombre)
+[231] (sin nombre)
+[232] (sin nombre)
+[233] (sin nombre)
+[234] (sin nombre)
+[235] (sin nombre)
+[236] (sin nombre)
+[237] (sin nombre)
+[238] (sin nombre)
+[239] (sin nombre)
+[240] (sin nombre)
+[241] (sin nombre)
+[242] (sin nombre)
+[243] (sin nombre)
+[244] (sin nombre)
+[245] (sin nombre)
+[246] (sin nombre)
+[247] (sin nombre)
+[248] (sin nombre)
+[249] (sin nombre)
+[250] (sin nombre)
+[251] (sin nombre)
+[252] (sin nombre)
+[253] (sin nombre)
+[254] (sin nombre)
+[255] (sin nombre)
+[256] (sin nombre)
+[257] (sin nombre)
+[258] (sin nombre)
+[259] (sin nombre)
+[260] (sin nombre)
+[261] (sin nombre)
+[262] (sin nombre)
+[263] (sin nombre)
+[264] (sin nombre)
+[265] (sin nombre)
+[266] (sin nombre)
+[267] (sin nombre)
+[268] (sin nombre)
+[269] (sin nombre)
+[270] (sin nombre)
+[271] (sin nombre)
+[272] (sin nombre)
+[273] (sin nombre)
+[274] (sin nombre)
+
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+
+═
+BÚSQUEDA ESPECÍFICA DE COLUMNAS IMPORTANTES:
+════════════════════════════════════════
+
+🔍 Buscando: DÍA DE PAGO
+   ❌ No encontrado
+
+🔍 Buscando: DÍA DE VISITA
+   ❌ No encontrado
+
+🔍 Buscando: FECHA DESEMBOLSO
+   ❌ No encontrado
+
+🔍 Buscando: FECHA INICIO
+   ❌ No encontrado
+
+🔍 Buscando: DÍA SEMANA
+   ❌ No encontrado
+
+🔍 Buscando: GRUPO
+   ✅ [208] FILTRADO GRUPOS VIGENTES
+      Valores: BASE DE GRUPOS HISTORICA
+
+🔍 Buscando: CICLO
+   ❌ No encontrado
+
+🔍 Buscando: NOMBRE
+   ❌ No encontrado
+
+═══════════════════════════════════════════════════════
+

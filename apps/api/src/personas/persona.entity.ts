@@ -35,6 +35,9 @@ export class PersonaEntity {
   @Column({ type: 'varchar', nullable: true })
   telefono: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  telefono_secundario: string;
+
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   monto_solicitado: number;
 

@@ -1,0 +1,68 @@
+TABLA,COLUMNA,TIPO_DATO,NULLABLE,DEFAULT,RELACION_FK,REGISTROS_EN_TABLA
+grupos,id,uuid,NO,"uuid_generate_v4()",,9
+grupos,nombre,character varying,NO,"",,9
+grupos,created_by,character varying,YES,"",,9
+grupos,estado,USER-DEFINED,NO,"'FORMANDO'::grupos_status_enum",,9
+grupos,created_at,timestamp with time zone,NO,"now()",,9
+grupos,updated_at,timestamp with time zone,NO,"now()",,9
+grupos,deleted_at,timestamp with time zone,YES,"",,9
+grupos,folio,character varying(20),YES,"",,9
+grupos,zona_id,uuid,YES,"",FK → zonas.id,9
+grupos,sucursal_id,uuid,YES,"",FK → sucursales.id,9
+grupos,fecha_inicio,date,NO,"CURRENT_DATE",,9
+ciclos,id,uuid,NO,"uuid_generate_v4()",,0
+ciclos,folio,character varying(20),YES,"",,0
+ciclos,grupo_id,uuid,NO,"",FK → grupos.id,0
+ciclos,numero_ciclo,numeric(32),NO,"",,0
+ciclos,expediente_id,uuid,YES,"",FK → expedientes.id,0
+ciclos,asesora_id,uuid,NO,"",FK → empleados.id,0
+ciclos,tesorera_id,uuid,NO,"",FK → personas.id,0
+ciclos,fecha_inicio,date,NO,"",,0
+ciclos,fecha_fin,date,YES,"",,0
+ciclos,dia_pago,character varying(15),NO,"",,0
+ciclos,estado,character varying(20),NO,"'ACTIVO'::character varying",,0
+ciclos,created_at,timestamp without time zone,NO,"now()",,0
+ciclos,updated_at,timestamp without time zone,NO,"now()",,0
+expedientes,id,uuid,NO,"uuid_generate_v4()",,9
+expedientes,grupo_id,uuid,NO,"",FK → grupos.id,9
+expedientes,estado,character varying,NO,"'En proceso'::character varying",,9
+expedientes,created_at,timestamp with time zone,NO,"now()",,9
+expedientes,updated_at,timestamp with time zone,NO,"now()",,9
+expedientes,folio,character varying(20),YES,"",,9
+expedientes,producto_id,uuid,YES,"",FK → productos_credito.id,9
+expedientes,asesora_id,uuid,YES,"",FK → empleados.id,9
+expedientes,horario_visita,character varying(20),YES,"",,9
+expedientes,dias_visita,character varying(50),YES,"",,9
+expedientes,semana_cobro,date,YES,"",,9
+expedientes,observaciones,text,YES,"",,9
+personas,id,uuid,NO,"uuid_generate_v4()",,10
+personas,folio,character varying(20),YES,"",,10
+personas,curp,character varying(18),YES,"",,10
+personas,primer_nombre,character varying(50),NO,"",,10
+personas,segundo_nombre,character varying(50),YES,"",,10
+personas,apellido_pat,character varying(50),NO,"",,10
+personas,apellido_mat,character varying(50),YES,"",,10
+personas,fecha_nac,date,YES,"",,10
+personas,genero,character varying(15),YES,"",,10
+personas,estado,character varying(20),NO,"'ACTIVA'::character varying",,10
+personas,created_at,timestamp without time zone,NO,"now()",,10
+personas,updated_at,timestamp without time zone,NO,"now()",,10
+personas,telefono,character varying(20),YES,"",,10
+personas,monto_solicitado,numeric(10,2),YES,"",,10
+personas,telefono_secundario,character varying,YES,"",,10
+integrantes,id,uuid,NO,"uuid_generate_v4()",,10
+integrantes,expediente_id,uuid,NO,"",FK → expedientes.id,10
+integrantes,estado,USER-DEFINED,NO,"'DOCUMENTANDO'::solicitantes_estado_enum",,10
+integrantes,created_at,timestamp with time zone,NO,"now()",,10
+integrantes,updated_at,timestamp with time zone,NO,"now()",,10
+integrantes,folio,character varying(20),YES,"",,10
+integrantes,persona_id,uuid,YES,"",FK → personas.id,10
+documentos,id,uuid,NO,"uuid_generate_v4()",,0
+documentos,solicitanteId,uuid,YES,"",,0
+documentos,tipo,character varying(50),YES,"",,0
+documentos,estado,character varying(50),YES,"'PENDIENTE'::character varying",,0
+documentos,archivoBase64,text,YES,"",,0
+documentos,archivoNombre,character varying(255),YES,"",,0
+documentos,fechaCarga,timestamp without time zone,YES,"",,0
+documentos,createdAt,timestamp without time zone,YES,"now()",,0
+documentos,updatedAt,timestamp without time zone,YES,"now()",,0

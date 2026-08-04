@@ -88,6 +88,7 @@ export class IntegrantesService {
             apellido_mat: persona.apellido_mat,
             nombre: `${persona.primer_nombre} ${persona.apellido_pat} ${persona.apellido_mat ?? ''}`.trim(),
             telefono: persona.telefono ?? null,
+            telefonoSecundario: persona.telefono_secundario ?? null,
             montoSolicitado: persona.monto_solicitado ?? 0,
           };
         }
@@ -202,8 +203,11 @@ export class IntegrantesService {
     }
   }
 
-  async update(id: string, data: Partial<IntegranteEntity>): Promise<IntegranteEntity> {
+  async update(id: string, data: any): Promise<IntegranteEntity> {
     try {
+      console.log('🔧 IntegrantesService.update() - ID:', id);
+      console.log('🔧 Datos recibidos:', JSON.stringify(data, null, 2));
+
       const integrante = await this.integranteRepository.findOne({
         where: { id },
       });
@@ -212,8 +216,45 @@ export class IntegrantesService {
         throw new Error(`Integrante con ID ${id} no encontrado`);
       }
 
-      const camposPermitidos = ['persona_id'];
+      // Si vienen datos de persona, actualizar la tabla personas
+      const camposPersona = ['nombres', 'apellido_pat', 'apellido_mat', 'telefono', 'telefonoSecundario', 'telefono_secundario', 'montoSolicitado'];
+      const datosPersona: any = {};
+      let hayDatosPersona = false;
 
+      camposPersona.forEach((campo) => {
+        if (data[campo] !== undefined) {
+          hayDatosPersona = true;
+          // Mapear campos del frontend a BD
+          if (campo === 'telefonoSecundario') {
+            datosPersona.telefono_secundario = data[campo];
+            console.log('✅ Mapeando telefonoSecundario:', data[campo], '→ telefono_secundario');
+          } else if (campo === 'telefono_secundario') {
+            datosPersona.telefono_secundario = data[campo];
+            console.log('✅ Mapeando telefono_secundario:', data[campo]);
+          } else if (campo === 'montoSolicitado') {
+            datosPersona.monto_solicitado = data[campo];
+          } else if (campo === 'nombres') {
+            datosPersona.primer_nombre = data[campo];
+          } else {
+            datosPersona[campo] = data[campo];
+          }
+        }
+      });
+
+      // ELIMINAR campo 'nombre' si existe (no es una columna de la tabla personas)
+      delete datosPersona.nombre;
+
+      console.log('🔧 Datos a actualizar en persona:', JSON.stringify(datosPersona, null, 2));
+      console.log('🔧 persona_id:', integrante.persona_id);
+
+      // Actualizar persona si hay datos
+      if (hayDatosPersona && integrante.persona_id) {
+        await this.personaRepository.update(integrante.persona_id, datosPersona);
+        console.log('✅ Persona actualizada');
+      }
+
+      // Actualizar campos de integrante
+      const camposPermitidos = ['persona_id'];
       camposPermitidos.forEach((campo) => {
         if (data[campo as keyof IntegranteEntity] !== undefined) {
           (integrante as any)[campo] = data[campo as keyof IntegranteEntity];

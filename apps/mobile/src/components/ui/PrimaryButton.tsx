@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
 import { moduleThemes, ModuleThemeKey, radius, spacing, typography } from '../../theme/tokens';
 
 interface PrimaryButtonProps {
@@ -7,6 +7,7 @@ interface PrimaryButtonProps {
   onPress?: () => void;
   disabled?: boolean;
   moduleTheme?: ModuleThemeKey;
+  style?: ViewStyle;
 }
 
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
@@ -14,6 +15,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   onPress,
   disabled = false,
   moduleTheme = 'documentation',
+  style,
 }) => {
   const theme = moduleThemes[moduleTheme];
 
@@ -25,15 +27,17 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       style={({ pressed }) => [
         styles.button,
         { backgroundColor: theme.primary, opacity: disabled ? 0.5 : pressed ? 0.9 : 1 },
+        style,
       ]}
     >
-      <Text style={[styles.text, { color: theme.primaryText }]}>{title}</Text>
+      <Text allowFontScaling={false} style={[styles.text, { color: theme.primaryText }]}>{title || ''}</Text>
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   button: {
+    flex: 1,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     alignItems: 'center',

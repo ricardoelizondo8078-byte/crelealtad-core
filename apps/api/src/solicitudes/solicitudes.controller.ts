@@ -17,6 +17,11 @@ export class SolicitudesController {
     return this.solicitudesService.getBySolicitante(solicitanteId);
   }
 
+  @Get('integrante/:integranteId')
+  getByIntegrante(@Param('integranteId') integranteId: string) {
+    return this.solicitudesService.getBySolicitante(integranteId);
+  }
+
   @Post()
   create(@Body() dto: CreateSolicitudDto) {
     return this.solicitudesService.createOrUpdateForSolicitante(dto);

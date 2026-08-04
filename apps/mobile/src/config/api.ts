@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-const DEFAULT_DEV_API_BASE_URL = 'http://172.20.9.186:3000';
+const DEFAULT_DEV_API_BASE_URL = 'http://192.168.1.83:3100';
 const HEALTH_PATH = '/health';
 const API_NOT_FOUND_MESSAGE = 'No se encontró el servidor de CRELEALTAD en esta red.';
 const COMMON_LAN_HOST_SUFFIXES = ['1', '2', '10', '20', '50', '83', '100', '101', '200', '254'];
@@ -72,29 +72,29 @@ const getDiscoveryCandidates = (): string[] => {
   // 3) Try Expo debug host and its local subnet variations.
   const expoHostIp = getExpoDebugHostIp();
   if (expoHostIp) {
-    addCandidate(candidates, `http://${expoHostIp}:3000`);
+    addCandidate(candidates, `http://${expoHostIp}:3100`);
 
     const subnet = getLanSubnetFromIp(expoHostIp);
     if (subnet) {
-      COMMON_LAN_HOST_SUFFIXES.forEach((suffix) => addCandidate(candidates, `http://${subnet}.${suffix}:3000`));
+      COMMON_LAN_HOST_SUFFIXES.forEach((suffix) => addCandidate(candidates, `http://${subnet}.${suffix}:3100`));
     }
   }
 
   // 4) Web-specific convenience candidates.
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.hostname) {
     const webHost = window.location.hostname;
-    addCandidate(candidates, `http://${webHost}:3000`);
+    addCandidate(candidates, `http://${webHost}:3100`);
   }
 
-  addCandidate(candidates, 'http://localhost:3000');
-  addCandidate(candidates, 'http://127.0.0.1:3000');
+  addCandidate(candidates, 'http://localhost:3100');
+  addCandidate(candidates, 'http://127.0.0.1:3100');
 
   return candidates;
 };
 
 const probeHealth = async (baseUrl: string): Promise<boolean> => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 1200);
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
 
   try {
     const response = await fetch(`${baseUrl}${HEALTH_PATH}`, {
@@ -149,10 +149,16 @@ export const ensureApiBaseUrlDiscovered = async (): Promise<string> => {
   }
 };
 
-export const API_BASE_URL = (): string =>
-  discoveredApiBaseUrl ?? normalizeBaseUrl(envApiBaseUrl || DEFAULT_DEV_API_BASE_URL);
+export const API_BASE_URL = (): string => {
+  // SIMPLIFICADO: Usar siempre la variable de entorno o el default, SIN discovery
+  const baseUrl = normalizeBaseUrl(envApiBaseUrl || DEFAULT_DEV_API_BASE_URL);
+  console.log('🔵 API_BASE_URL:', baseUrl);
+  return baseUrl;
+};
 
 export const apiUrl = (path: string) => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return `${API_BASE_URL()}${normalizedPath}`;
+  const fullUrl = `${API_BASE_URL()}${normalizedPath}`;
+  console.log('🔵 apiUrl generada:', fullUrl);
+  return fullUrl;
 };

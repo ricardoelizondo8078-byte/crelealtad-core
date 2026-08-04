@@ -32,7 +32,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <View style={styles.brandBlock}>
           {showBackButton ? (
             <Pressable accessibilityRole="button" onPress={onBackPress} style={styles.backButton}>
-              <Text style={[styles.backButtonText, { color: theme.headerText }]}>{'<'}</Text>
+              <Text allowFontScaling={false} style={[styles.backButtonText, { color: theme.headerText }]}>{'<'}</Text>
             </Pressable>
           ) : null}
 
@@ -41,8 +41,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </View>
 
           <View style={styles.brandTextBlock}>
-            <Text style={[styles.brandLabel, { color: theme.headerText }]}>CRELEALTAD</Text>
-            <Text style={[styles.weekLabel, { color: theme.headerText }]}>{compactWeekLabel}</Text>
+            <Text allowFontScaling={false} style={[styles.brandLabel, { color: theme.headerText }]}>CRELEALTAD</Text>
+            <Text allowFontScaling={false} style={[styles.weekLabel, { color: theme.headerText }]}>{compactWeekLabel}</Text>
           </View>
         </View>
 
@@ -50,11 +50,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         <View style={styles.userBlock}>
           <View style={[styles.avatar, { backgroundColor: theme.headerAccent }]}>
-            <Text style={[styles.avatarText, { color: theme.headerBg }]}>{avatarLabel}</Text>
+            <Text allowFontScaling={false} style={[styles.avatarText, { color: theme.headerBg }]}>{avatarLabel}</Text>
           </View>
           <View style={styles.userTextBlock}>
-            <Text style={[styles.userName, { color: colors.white }]}>{userName}</Text>
-            <Text style={[styles.userRole, { color: theme.headerAccent }]}>{userRole}</Text>
+            <Text allowFontScaling={false} style={[styles.userName, { color: colors.white }]}>{userName}</Text>
+            <Text allowFontScaling={false} style={[styles.userRole, { color: theme.headerAccent }]}>{userRole}</Text>
           </View>
         </View>
       </View>

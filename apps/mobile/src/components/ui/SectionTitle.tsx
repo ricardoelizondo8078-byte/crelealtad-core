@@ -7,7 +7,7 @@ interface SectionTitleProps {
 }
 
 export const SectionTitle: React.FC<SectionTitleProps> = ({ title }) => {
-  return <Text style={styles.title}>{title}</Text>;
+  return <Text allowFontScaling={false} style={styles.title}>{title || ''}</Text>;
 };
 
 const styles = StyleSheet.create({

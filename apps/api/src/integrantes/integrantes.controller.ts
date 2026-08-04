@@ -20,6 +20,15 @@ class UpdateEstadoDto {
 
 class UpdateIntegranteDto {
   persona_id?: string;
+  // Campos de persona que se pueden actualizar
+  nombres?: string;
+  apellido_pat?: string;
+  apellido_mat?: string;
+  nombre?: string;
+  telefono?: string;
+  telefonoSecundario?: string;
+  telefono_secundario?: string;
+  montoSolicitado?: number;
 }
 
 @Controller('integrantes')

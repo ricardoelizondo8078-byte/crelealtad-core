@@ -1,0 +1,4498 @@
+{
+  "fuente": "integrantes_raw.json",
+  "total_grupos": 502,
+  "total_ciclos": 1479,
+  "detalle": [
+    {
+      "grupo": "MARIPOSAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "total": 17
+    },
+    {
+      "grupo": "PRINCESAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "total": 16
+    },
+    {
+      "grupo": "AMERICA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25
+      ],
+      "total": 14
+    },
+    {
+      "grupo": "ECLIPSE",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "total": 13
+    },
+    {
+      "grupo": "VIOLETA",
+      "ciclos": [
+        1,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "total": 13
+    },
+    {
+      "grupo": "SHALOM",
+      "ciclos": [
+        1,
+        2,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "total": 12
+    },
+    {
+      "grupo": "HORMIGUITAS",
+      "ciclos": [
+        7,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "total": 12
+    },
+    {
+      "grupo": "LAS DIVAS",
+      "ciclos": [
+        1,
+        2,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "total": 12
+    },
+    {
+      "grupo": "ROMINA",
+      "ciclos": [
+        1,
+        7,
+        8,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "total": 12
+    },
+    {
+      "grupo": "BILBAO",
+      "ciclos": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "total": 12
+    },
+    {
+      "grupo": "CHICAS RIO",
+      "ciclos": [
+        1,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "total": 11
+    },
+    {
+      "grupo": "VILLAS",
+      "ciclos": [
+        1,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "total": 11
+    },
+    {
+      "grupo": "SOLIDARIAS",
+      "ciclos": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "total": 11
+    },
+    {
+      "grupo": "DURAZNO",
+      "ciclos": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "total": 11
+    },
+    {
+      "grupo": "VALLE",
+      "ciclos": [
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "total": 11
+    },
+    {
+      "grupo": "TERESITAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "total": 10
+    },
+    {
+      "grupo": "MEZQUITAL",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "total": 10
+    },
+    {
+      "grupo": "ESPERANZA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "total": 10
+    },
+    {
+      "grupo": "VILLA BILBAO",
+      "ciclos": [
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "total": 10
+    },
+    {
+      "grupo": "RENOVADAS",
+      "ciclos": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "total": 10
+    },
+    {
+      "grupo": "P.PERSONAL",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        10,
+        11,
+        12,
+        13
+      ],
+      "total": 10
+    },
+    {
+      "grupo": "DEL PRADO",
+      "ciclos": [
+        8,
+        10,
+        11,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "total": 9
+    },
+    {
+      "grupo": "SIENA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "total": 9
+    },
+    {
+      "grupo": "INFINITO",
+      "ciclos": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "total": 9
+    },
+    {
+      "grupo": "VIOLETA VIP",
+      "ciclos": [
+        3,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "total": 9
+    },
+    {
+      "grupo": "PLAYA AZUL",
+      "ciclos": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ],
+      "total": 9
+    },
+    {
+      "grupo": "5 FANTASTICAS",
+      "ciclos": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ],
+      "total": 9
+    },
+    {
+      "grupo": "YONARIS",
+      "ciclos": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "total": 9
+    },
+    {
+      "grupo": "ENCUENTRO",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "total": 8
+    },
+    {
+      "grupo": "RUBI",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        8,
+        9,
+        10
+      ],
+      "total": 8
+    },
+    {
+      "grupo": "PILARES",
+      "ciclos": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "total": 8
+    },
+    {
+      "grupo": "SUPER ACTIVAS",
+      "ciclos": [
+        1,
+        7,
+        8,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "total": 8
+    },
+    {
+      "grupo": "BONFIL",
+      "ciclos": [
+        3,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "total": 8
+    },
+    {
+      "grupo": "HORNABLENDA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "total": 8
+    },
+    {
+      "grupo": "CHICAS DIMAS",
+      "ciclos": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "total": 8
+    },
+    {
+      "grupo": "VALLE SUR",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "total": 8
+    },
+    {
+      "grupo": "ABEDUL",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "ROMINAS",
+      "ciclos": [
+        2,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "GASTONAS",
+      "ciclos": [
+        15,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "COQUETAS SOL",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "DIVAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "BARI",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "DOLLAR",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "BELLAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "MODELO",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "MONARCAS",
+      "ciclos": [
+        5,
+        6,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "COMERCIANTES",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "VERA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "VERA VIP",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "GERMANITA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "ABEJITAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "PROGRESO 2",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "JASSO",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "ERIKA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "FENIX",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 7
+    },
+    {
+      "grupo": "HOLANDESES",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "LADERAS",
+      "ciclos": [
+        1,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "BERLIN",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "SOÑADORAS",
+      "ciclos": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "ESTRELLAS",
+      "ciclos": [
+        "I",
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "COMPROMETIDAS",
+      "ciclos": [
+        8,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "VALLE SAL",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "CHICAS DE SILVIA",
+      "ciclos": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "CELESTE",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "SANTA CLARA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "PRIMAVERA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "TESORO",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "RENACERES",
+      "ciclos": [
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "LA PASADITA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "RIGO",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "DORIS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "GRANDE",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "VITA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "COMADRITAS VIP",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "LAS ALTAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 6
+    },
+    {
+      "grupo": "GABINAS VIP",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "CROC",
+      "ciclos": [
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "INSURGENTES",
+      "ciclos": [
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "ZARZAL",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "PRESTAMO PERSONAL",
+      "ciclos": [
+        1,
+        3,
+        4,
+        5,
+        8
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "TREBOL",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "TAXISTAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "PATRONAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "ALFARERO",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "LILYS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "MOSELA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "VALDIERI",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "BALBAO",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "LA FE",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "LOMELI",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "CANANEAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "LUNA NUEVA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "REYNAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 5
+    },
+    {
+      "grupo": "NOGAL",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "LUNAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "BETTYS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "POPULARES",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "AMORES",
+      "ciclos": [
+        7,
+        8,
+        9,
+        10
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "FE",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "VANIDOSAS",
+      "ciclos": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "SICUS",
+      "ciclos": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "UNICAS",
+      "ciclos": [
+        7,
+        8,
+        9,
+        10
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "NATURAL",
+      "ciclos": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "KIKIN",
+      "ciclos": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "FORTALEZA",
+      "ciclos": [
+        1,
+        2,
+        14,
+        15
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "BARCELONA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "TORRES",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "MISION",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "KENDRA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "MUÑECAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "TEHUACAN",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "ZAFIRO",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "BRIGITTE",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "VERA ",
+      "ciclos": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "VIANEY",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "ILUMINACION",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "PROMESA",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "BALCONES",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "CHICAS UNIDAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "BUENOS AIRES",
+      "ciclos": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "GARDENIA 2",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "CHICAS DE ACERO",
+      "ciclos": [
+        1,
+        2,
+        3,
+        6
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "MUSAS",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "URBI",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "RIO",
+      "ciclos": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total": 4
+    },
+    {
+      "grupo": "RAYITAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "VAZQUEZ",
+      "ciclos": [
+        4,
+        5,
+        6
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "PALMA",
+      "ciclos": [
+        7,
+        8,
+        9
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "MATERIALES",
+      "ciclos": [
+        2,
+        3,
+        4
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "HOLANDA",
+      "ciclos": [
+        6,
+        7,
+        8
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "GENESIS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "BOUQUET",
+      "ciclos": [
+        7,
+        8,
+        9
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "EMILIO PRESTAMO",
+      "ciclos": [
+        1,
+        2,
+        6
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "TRABAJADORAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "MONARCA",
+      "ciclos": [
+        2,
+        4,
+        5
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "VILLA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "CHICAS DE CAÑADA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "DIAMANTE",
+      "ciclos": [
+        1,
+        2,
+        9
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "LAS ESTRELLAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "VALLES",
+      "ciclos": [
+        1,
+        2,
+        4
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "FAISAN",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "CORONAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "FLORENCIA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "KARINAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "ESMERALDA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "CEYLAN",
+      "ciclos": [
+        2,
+        3,
+        4
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "AMMON",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "EMPRENDEDORAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "PRETAMO INDIVIDUAL",
+      "ciclos": [
+        6,
+        8,
+        9
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "LEALES",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "CAROLAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "COMADRES",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "FRESITAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "OMEGA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "VIP",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "DEL VIRREY",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "LINCOLN",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "ZERTUCHE",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "OBOE",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "MONTERREY",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "ROSAS BLANCAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "ALBA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "CENTRAL",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "SAN MIGUEL",
+      "ciclos": [
+        1,
+        2,
+        4
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "OLIMPICAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "LAS REGIAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "CAROLINAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "YESSI",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "LESY",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "CARIBE",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "ELEGANTE",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "DELFINES",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "PALAX",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "PERLA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "ARCOIRIS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "ARRECIFE",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "PASTORA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "LA ZOZA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "ALMAGUER",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "WONDER",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "LIMONITA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "ROSAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "CRISPIN",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "VANESIYAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "LOS ANGELES",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "ARCOS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "KAHORY",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "SERGIT",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "HERA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "PRINSSES VIP",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "ALBORADA",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "MONTEVERDE",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "RANCHO VIEJO",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "PERLITAS",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "PICASSO",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "PACMAN",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "MAGIA VIP",
+      "ciclos": [
+        1,
+        2,
+        3
+      ],
+      "total": 3
+    },
+    {
+      "grupo": "LOS DE LA ARGENTINA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "BUGAMBILIA",
+      "ciclos": [
+        8,
+        11
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MADAGASCAR",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MIRAVISTA",
+      "ciclos": [
+        1,
+        3
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "DEISYS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CRUZITAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CHELYS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "NADADORES",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MONCLOVITA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "BRENDA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LIMON",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "PRESTAMO MIGUEL",
+      "ciclos": [
+        1,
+        8
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "PALOMAS",
+      "ciclos": [
+        1,
+        6
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "PROVIDENCIA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "BUGAMBILIAS",
+      "ciclos": [
+        9,
+        10
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "DE LA PAZ",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ROMERO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "INDIO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "BENDICION VIP",
+      "ciclos": [
+        3,
+        4
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LA VICENTE",
+      "ciclos": [
+        6,
+        7
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "DELFOS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CAMALEON",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LOMAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MARCONI",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MADRE SELVA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ASHLEY",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "BELLOTAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LAS FLORES",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MIEL PTE",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ENCANTO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "JAPON",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ROMA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CUPIDO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "FEDERAL",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "RABANOS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MUJERES DE ACERO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "EUCALIPTO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "PRIVADAS DEL REY",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "AMARILLAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "BREZO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "SOMOS ORO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "BENDECIDAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LAURELES",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "UNIDAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "UMBRIEL",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "RENACER",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "GEMA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CANTERAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "JARDINES",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "AQUILES",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "NOCHE BUENA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ZARAGOZA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "KRYSTAL",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "SIERRA MORENA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MARGARITAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "OCCIDENTAL",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "REGIAS VIP",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "PRINSSES",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MI DESEO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ZAMIA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CAOBA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "COLATELA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CARRILLO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "AVE FENIX",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "EUROPA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MUJERES DE FE",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "DECIDIDAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "SANTOS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CHICAGO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "VERSACE",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "RESIDENTE",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LAS NENIS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CONSTITUYENTES",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MARIPOSAS ",
+      "ciclos": [
+        16,
+        17
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MONACI",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "FLOR DE INVIERNO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "SAN REMO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ATENEA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MONACO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CATRINAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ABETO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "HORIZONTE",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "BEYA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "POWER",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ONCE",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ARRULLO DE ESTRELLAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "TULIPANES ROJOS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "COMETAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "TORNADO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "POEMA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LAS HACIENDAS 2",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "JIRHE",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "PROVILEON",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "TOSCANA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LAS ROSAS ",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "NUEVA CASA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CARMESI",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MAGNOLIAS DE ACERO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LUJIM",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "PRESTAMO  CLAUDIA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "MANZANITAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "CREER EN TI",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LEYES",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "VELVET",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LUMINOSAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "LLAVE DE LUZ",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "EXPLOSIVAS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "OLMOS",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "BASTID",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "INDIGO",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "RINCON",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ORQUIDEA",
+      "ciclos": [
+        1,
+        2
+      ],
+      "total": 2
+    },
+    {
+      "grupo": "ACOTLAN",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "MEMBRILLO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "OLIVA",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "SAN JUDAS",
+      "ciclos": [
+        10
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "MAR AZUL",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BENDICION",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BONSAI",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": " DEISYS ",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": " CRUZITAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LALAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BONFIL ",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BRAVO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CHIHUAHUA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BENDICION VIPS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "MONCLOVITA VIP",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PRESTAMO ELI",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "DEL AGAVE",
+      "ciclos": [
+        4
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LLUVIA",
+      "ciclos": [
+        7
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CREDITO PERSONAL",
+      "ciclos": [
+        6
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "OLAYO",
+      "ciclos": [
+        7
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PRESTAMO VICKY",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAZARO CARDENAS",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PAMELA",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "GUAYABA",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CORPUS",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "SILVIA",
+      "ciclos": [
+        6
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PRESTAMO HILDA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PEPINO",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "DEL BOSQUE",
+      "ciclos": [
+        5
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LUNETAS",
+      "ciclos": [
+        7
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "SAN ANGEL",
+      "ciclos": [
+        6
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "GIRASOL",
+      "ciclos": [
+        4
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "VIOLETA ",
+      "ciclos": [
+        7
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "HIMALAYA",
+      "ciclos": [
+        9
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CHAVEZ",
+      "ciclos": [
+        6
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CEREZA",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "JAMAICA",
+      "ciclos": [
+        12
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "COKISS",
+      "ciclos": [
+        5
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "MORADO",
+      "ciclos": [
+        10
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ORIGINALES",
+      "ciclos": [
+        6
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BICHO",
+      "ciclos": [
+        3
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "URUAPAN",
+      "ciclos": [
+        4
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LUGO",
+      "ciclos": [
+        3
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "GARZA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "VIA LACTEA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "SICUS ",
+      "ciclos": [
+        9
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ANA VAZQUEZ",
+      "ciclos": [
+        7
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BENDCION",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CHICAS DE SILVA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CHIHUHUA",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAREDAS",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "MIRA VISTA",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "JADE",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PRETAMO PERSONAL ANGEL",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BENDCION VIP",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PRETAMO PERSONAL MIGUEL",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS DE LA ARGENTINA",
+      "ciclos": [
+        3
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CEILAN",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS CHICAS DIMAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PRESTAMO INDIVIDUAL HILDA",
+      "ciclos": [
+        5
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PRESTAMO INDIVIDUAL ELI",
+      "ciclos": [
+        3
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "DEYSIS",
+      "ciclos": [
+        3
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CHICAS DE YUYA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "GASCA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "POLLITAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PORVENIR",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "YADE VIP",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "YADE",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ANOCHECER",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "MARAVILLAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "HACIENDA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LUCERO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ZEUZ",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "FRESERA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LA DE LA ARGENTINA",
+      "ciclos": [
+        4
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PECHOCHAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ABEDUL VIP",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "AMIGAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LA ENRAMADA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS BELLAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ARAGON",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "GOLONDRINAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CRISTALES",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "OTOÑO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ESENCIA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "FELIZ",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "HABANA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BRAIS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LUNA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "COMETA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "IVIZA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "FAUNA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CANTORAL",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BALCONES VIP",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ARGELIA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS ANITAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LOMA LINDA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ABUNDACIA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "HACIENDA MITRAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "TIRECIA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "FRESAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "UNIVERSO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "DULCES",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LA AMISTAD",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS GUERRERAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS NARANJITAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CRONOS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "AZULEJERAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ACCION",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ORO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ALEGRIA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS HACIENDAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PRINCESAS VIP",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LOS BABYS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BELLAS VIP",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS MITRAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LOS ALTOS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "AMAYA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "COMERCIANTES ",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "REAL",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "NOBLES",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "COSSIO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "AGUA NUEVA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "MEDITERRANEO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PASEO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "INECITOS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "DECIDIDAS VIP",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "GARZA MELO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ALMAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS BUHO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "EMANUEL",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "TULIPAN ROJO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "P.P GUADALUPE Q",
+      "ciclos": [
+        5
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LUNA NUEVA VIP",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "NAZAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LOMA VERDE ",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "COPAL",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ARCADIA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CREER EN TI VIP",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "MAGENTA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "TRINIDAD",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "INECITAS",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BONNY",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS UNIDAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "NARDO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "FLAMINGOS ",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CAPELLANIAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "FOXALES",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "SAVELETRI",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "DILUVIO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "NIZUC",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "SAN JERONIMO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "BELLEZAS DE JUAREZ",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "POTREROS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LOS LEALES",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ANACUA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "SANTA LUCIA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "TORINO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "GOLOSINAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "ENCINO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "KRISTAL",
+      "ciclos": [
+        3
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "TEPEYAC",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "INVERSIONISTAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "FABRILES",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "HEROES",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CAPELLAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CANDY",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "VAINILLA VIP",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "KARELLY",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "DOMENICO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PRESTAMO PERSONAL LUPITA BARRON",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "NAIROBI",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CARAMELOS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "EMPRENDEDORES",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CONDESA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CHUMACERAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "VALERO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LA HACIENDA",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LA HACIENDA ",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LA HACIENDAS",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS ROSAS VIP",
+      "ciclos": [
+        2
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LILA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PANDORA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CADIZ",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LERMAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LAS FASHION",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "LA CUESTA",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "YOGURT",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "TOKIO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "CALATELA",
+      "ciclos": [
+        3
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "PLANETAS",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "DORADO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    },
+    {
+      "grupo": "MONTE HERMOSO",
+      "ciclos": [
+        1
+      ],
+      "total": 1
+    }
+  ]
+}

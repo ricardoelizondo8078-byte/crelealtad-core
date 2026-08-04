@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Usuario } from '../catalogos/entities/usuario.entity';
+import { Usuario, UsuarioEstado } from '../catalogos/entities/usuario.entity';
 import * as bcrypt from 'bcrypt';
 
 export interface LoginDto {
@@ -27,6 +27,19 @@ export class AuthService {
     @InjectRepository(Usuario)
     private usuariosRepo: Repository<Usuario>,
   ) {}
+
+  async getLoginList(): Promise<{ id: string; nombre: string; email: string }[]> {
+    const usuarios = await this.usuariosRepo
+      .createQueryBuilder('usuario')
+      .select(['usuario.id', 'usuario.nombre', 'usuario.email'])
+      .where('usuario.estado = :estado', { estado: UsuarioEstado.ACTIVO })
+      .andWhere('usuario.nombre IS NOT NULL')
+      .andWhere('usuario.nombre != :empty', { empty: '' })
+      .orderBy('usuario.nombre', 'ASC')
+      .getMany();
+
+    return usuarios;
+  }
 
   async login(dto: LoginDto): Promise<LoginResponse> {
     // Buscar usuario por email

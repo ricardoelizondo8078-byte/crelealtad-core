@@ -1,0 +1,6 @@
+id,asesor_id,telefono_celular,telefono_casa,telefono_emergencia,emergencia_nombre,emergencia_parentesco,created_at,updated_at,asesor_nombre
+2d96e6aa-e27d-4756-a6de-ade38019fd06,ac1c8a21-2446-40eb-a7ed-e00070f210fe,8156789012,,,Pedro Martínez,Padre,Sun Jul 26 2026 14:02:26 GMT-0600 (hora estándar central),Sun Jul 26 2026 14:02:26 GMT-0600 (hora estándar central),Ana Martínez
+f516c604-e52b-442a-bc66-80b320e8d47f,29ff9af5-ba80-4b59-b5ea-8c9f3096f787,8187776655,8112223344,8199998877,Ana Ramírez,Madre,Sun Jul 26 2026 14:02:26 GMT-0600 (hora estándar central),Sun Jul 26 2026 14:02:26 GMT-0600 (hora estándar central),Carlos Ramírez
+f248e869-1877-421c-b228-e393196fe7df,0f933761-3ceb-46e2-a051-8991bc1a1ca7,8112345678,8187654321,8199887766,María Pérez,Hermana,Sun Jul 26 2026 14:02:25 GMT-0600 (hora estándar central),Sun Jul 26 2026 14:02:25 GMT-0600 (hora estándar central),Juan Pérez
+0348c313-ead5-4680-b950-81ea79d5a054,8cc884c3-189a-4bfa-bab7-822ea10bb00f,8145678901,,,Laura Torres,Hermana,Sun Jul 26 2026 14:02:26 GMT-0600 (hora estándar central),Sun Jul 26 2026 14:02:26 GMT-0600 (hora estándar central),Luis Torres
+76aa216e-1f2f-4f7f-88eb-d6a375a67edf,3d8bd071-7041-4e8d-8ac2-83453af09714,8198765432,,,Carlos López,Esposo,Sun Jul 26 2026 14:02:26 GMT-0600 (hora estándar central),Sun Jul 26 2026 14:02:26 GMT-0600 (hora estándar central),María López

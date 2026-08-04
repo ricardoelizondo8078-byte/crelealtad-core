@@ -162,10 +162,10 @@ export const IntegranteFormScreen: React.FC<IntegranteFormScreenProps> = ({ expe
       >
         <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Card>
-            <Text style={styles.subtitle}>Registra los datos básicos de la integrante.</Text>
+            <Text allowFontScaling={false} style={styles.subtitle}>Registra los datos básicos de la integrante.</Text>
 
             <FormField label="Nombre(s)" required errorText={errors.nombres}>
-              <TextInput
+              <TextInput allowFontScaling={false}
                 style={styles.input}
                 placeholder="Nombre(s)"
                 value={nombres}
@@ -175,7 +175,7 @@ export const IntegranteFormScreen: React.FC<IntegranteFormScreenProps> = ({ expe
             </FormField>
 
             <FormField label="Apellido paterno" required errorText={errors.apellidoPaterno}>
-              <TextInput
+              <TextInput allowFontScaling={false}
                 style={styles.input}
                 placeholder="Apellido paterno"
                 value={apellidoPaterno}
@@ -185,7 +185,7 @@ export const IntegranteFormScreen: React.FC<IntegranteFormScreenProps> = ({ expe
             </FormField>
 
             <FormField label="Apellido materno" required errorText={errors.apellidoMaterno}>
-              <TextInput
+              <TextInput allowFontScaling={false}
                 style={styles.input}
                 placeholder="Apellido materno"
                 value={apellidoMaterno}
@@ -195,7 +195,7 @@ export const IntegranteFormScreen: React.FC<IntegranteFormScreenProps> = ({ expe
             </FormField>
 
             <FormField label="Teléfono" required helperText="10 dígitos" errorText={errors.telefono}>
-              <TextInput
+              <TextInput allowFontScaling={false}
                 style={styles.input}
                 placeholder="Teléfono"
                 value={formatPhone(telefono)}
@@ -211,7 +211,7 @@ export const IntegranteFormScreen: React.FC<IntegranteFormScreenProps> = ({ expe
               helperText={`Máximo ${formatCurrency(MAX_SOLICITUD_AMOUNT)}`}
               errorText={errors.montoSolicitado}
             >
-              <TextInput
+              <TextInput allowFontScaling={false}
                 style={styles.input}
                 placeholder="Monto solicitado"
                 value={montoSolicitado ? formatCurrency(montoSolicitado) : ''}

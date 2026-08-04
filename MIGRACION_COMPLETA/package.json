@@ -1,0 +1,43 @@
+{
+  "name": "crelealtad-migracion",
+  "version": "1.0.0",
+  "description": "Scripts de migración de datos desde Excel a PostgreSQL",
+  "main": "index.js",
+  "scripts": {
+    "migration:extract": "ts-node scripts/migration/01_extract_from_excel.ts",
+    "migration:clean": "ts-node scripts/migration/02_clean_and_transform.ts",
+    "migration:validate": "ts-node scripts/migration/03_validate_data.ts",
+    "migration:grupos": "ts-node scripts/migration/04_migrate_grupos.ts",
+    "migration:personas": "ts-node scripts/migration/05_migrate_personas.ts",
+    "migration:expedientes": "ts-node scripts/migration/06_migrate_expedientes.ts",
+    "migration:integrantes": "ts-node scripts/migration/07_migrate_integrantes.ts",
+    "migration:tesoreras": "ts-node scripts/migration/08_mark_tesoreras.ts",
+    "migration:creditos": "ts-node scripts/migration/09_migrate_creditos.ts",
+    "migration:validate-all": "ts-node scripts/migration/10_validate_all.ts",
+    "migration:report": "ts-node scripts/migration/11_generate_report.ts",
+    "migration:all": "npm run migration:extract && npm run migration:clean && npm run migration:validate && npm run migration:grupos && npm run migration:personas && npm run migration:expedientes && npm run migration:integrantes && npm run migration:tesoreras && npm run migration:validate-all && npm run migration:report",
+    "corregir:generar": "ts-node generar_correcciones_para_revision.ts",
+    "corregir:aplicar": "ts-node aplicar_correcciones_v2.ts",
+    "ciclos:generar-plantilla": "ts-node generar_plantilla_ciclos.ts",
+    "ciclos:migrar": "ts-node migrar_ciclos_desde_excel.ts"
+  },
+  "keywords": [
+    "migration",
+    "excel",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "xlsx": "^0.18.5",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "@types/pg": "^8.10.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,1 +1,1 @@
-export { DocumentosScreen } from './DocumentosScreen';
+export { DocumentosScreen } from './DocumentosScreenV2';

@@ -19,13 +19,17 @@ export const FormField: React.FC<FormFieldProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>
+      <Text allowFontScaling={false} style={styles.label}>
         {label}
         {required ? ' *' : ''}
       </Text>
       {children}
-      {helperText ? <Text style={styles.helper}>{helperText}</Text> : null}
-      {errorText ? <Text style={styles.error}>{errorText}</Text> : null}
+      {helperText && typeof helperText === 'string' ? (
+        <Text allowFontScaling={false} style={styles.helper}>{helperText}</Text>
+      ) : null}
+      {errorText && typeof errorText === 'string' ? (
+        <Text allowFontScaling={false} style={styles.error}>{errorText}</Text>
+      ) : null}
     </View>
   );
 };

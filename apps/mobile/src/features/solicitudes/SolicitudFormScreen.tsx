@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   NativeSyntheticEvent,
   NativeScrollEvent,
@@ -11,8 +12,14 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
+  Modal,
+  Image,
+  Dimensions,
 } from 'react-native';
-import { AppHeader, Card, FormField, PrimaryButton, ScreenContainer, ScreenTitleBar, SecondaryButton, SelectorField, StickySectionHeader } from '../../components/ui';
+import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppHeader, Card, DatePickerField, FormField, PrimaryButton, ScreenContainer, ScreenTitleBar, SecondaryButton, SelectorField, StickySectionHeader } from '../../components/ui';
 import { apiUrl } from '../../config/api';
 import {
   ANTIGUEDAD_NEGOCIO_OPTIONS,
@@ -71,6 +78,7 @@ interface SolicitudFormScreenProps {
   groupName?: string;
   integrantePosition?: number;
   integrantesTotal?: number;
+  initialStep?: number;
   onSaved?: () => void;
   onSavedGoToDocumentos?: () => void;
   onBack?: () => void;
@@ -132,6 +140,8 @@ interface DocumentoRequerido {
   nombre: string;
   obligatorio: boolean;
   status: DocumentStatus;
+  uriFrente?: string;  // URI local de la imagen frente
+  uriReverso?: string; // URI local de la imagen reverso (solo para INEs)
 }
 
 const DOCUMENTOS_REQUERIDOS: DocumentoRequerido[] = [
@@ -145,17 +155,21 @@ const DOCUMENTOS_REQUERIDOS: DocumentoRequerido[] = [
 const PhoneFieldWithCall = React.memo(({
   value,
   onChange,
-  placeholder = 'Teléfono'
+  placeholder = 'Teléfono',
+  nombre,
+  relacion
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  nombre?: string;
+  relacion?: string;
 }) => {
   const digitos = value?.replace(/\D/g, '') ?? '';
   const esValido = digitos.length === 10;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <TextInput
+      <TextInput allowFontScaling={false}
         style={[{
           borderWidth: 1,
           borderColor: '#D1D9D5',
@@ -171,14 +185,14 @@ const PhoneFieldWithCall = React.memo(({
       />
       {esValido && (
         <TouchableOpacity
-          onPress={() => llamar(value)}
+          onPress={() => llamar(value, nombre, relacion)}
           style={{
             backgroundColor: '#EFF6FF',
             padding: 10,
             borderRadius: 8,
           }}
         >
-          <Text style={{ fontSize: 20 }}>📞</Text>
+          <Text allowFontScaling={false} style={{ fontSize: 20 }}>📞</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -191,14 +205,18 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
   groupName,
   integrantePosition,
   integrantesTotal,
+  initialStep,
   onSaved,
   onSavedGoToDocumentos,
   onBack,
   onDataChange,
 }) => {
   const documentationTheme = moduleThemes.documentation;
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(initialStep ?? 1);
   const [documentos, setDocumentos] = useState<DocumentoRequerido[]>(DOCUMENTOS_REQUERIDOS);
+  const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
+  const [viewingImage, setViewingImage] = useState<{ uri: string; titulo: string } | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ uri: string; reversoUri?: string; documentoId: string; titulo: string } | null>(null);
   const [form, setForm] = useState({
     // Datos iniciales (pre-cargados del integrante)
     nombres: '',
@@ -274,6 +292,14 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialLoadRef = useRef(true);
 
+  // Estados para colonias del domicilio
+  const [coloniasDisponiblesDomicilio, setColoniasDisponiblesDomicilio] = useState<string[]>([]);
+  const [loadingColoniasDomicilio, setLoadingColoniasDomicilio] = useState(false);
+
+  // Estados para colonias del negocio
+  const [coloniasDisponiblesNegocio, setColoniasDisponiblesNegocio] = useState<string[]>([]);
+  const [loadingColoniasNegocio, setLoadingColoniasNegocio] = useState(false);
+
   // Función de auto-guardado
   const performAutoSave = useCallback(async () => {
     setAutoSaveStatus('saving');
@@ -288,13 +314,24 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         if (camposBasicos.includes(key)) {
           if (key === 'telefonoInicial') {
             datosSolicitante.telefono = value;
+          } else if (key === 'telefonoSecundario') {
+            datosSolicitante.telefonoSecundario = value;
           } else if (key === 'montoSolicitado') {
             datosSolicitante.montoSolicitado = Number(value);
           } else {
             datosSolicitante[key] = value;
           }
         } else {
-          datosSolicitud[key] = value;
+          // Mapear campos de validación directamente como string
+          if (key === 'tieneMedidorLuzSinAdeudo') {
+            datosSolicitud.tiene_medidor_luz = value;
+          } else if (key === 'viveMaximo5KmTesorera') {
+            datosSolicitud.vive_max_5km_tesorera = value;
+          } else if (key === 'tiene_menos_70_anios') {
+            datosSolicitud.tiene_menos_70_anios = value;
+          } else {
+            datosSolicitud[key] = value;
+          }
         }
       }
     });
@@ -308,6 +345,8 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             datosSolicitante.nombre = nombreCompleto;
           }
         }
+
+        console.log('🔄 AUTO-SAVE datos integrante:', JSON.stringify(datosSolicitante, null, 2));
 
         await fetch(apiUrl(`/integrantes/${integranteId}`), {
           method: 'PATCH',
@@ -418,8 +457,8 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
           const data = JSON.parse(text);
           if (data) {
-            // Parsear la fecha de nacimiento de ISO a DD/MM/YYYY para display
-            const fecha_nac_display = data.fecha_nac ? formatISODateToDDMMYYYY(data.fecha_nac) : '';
+            // Parsear la fecha de nacimiento de ISO a DD,MMM,YYYY para display
+            const fecha_nac_display = data.fecha_nac ? formatISODateToDDMMMYYYY(data.fecha_nac) : '';
 
             // BUG 3 FIX: Datos básicos SIEMPRE vienen de integranteData (tabla integrantes)
             // El formulario (data) NO tiene estos campos
@@ -449,7 +488,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
               colonia: data.dom_colonia || data.colonia || '',
               municipio: data.dom_municipio || data.municipio || '',
               estado: data.estado || DEFAULT_STATE,
-              codigoPostal: data.dom_cp_id || data.codigoPostal || '',
+              codigoPostal: data.dom_codigo_postal || data.codigoPostal || '',
               entreCalles: data.dom_entre_calles || data.entreCalles || '',
               telefono: data.telefono || '',
 
@@ -466,31 +505,78 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
               parejaActividadEconomica: data.pareja_actividad || data.parejaActividadEconomica || '',
               pareja_ingreso_semanal: data.pareja_ingreso_semanal ? String(data.pareja_ingreso_semanal) : '',
 
-              negocioCalle: data.negocio_domicilio?.split(' ')[0] || data.negocioCalle || '',
-              negocioNumeroExterior: data.negocioNumeroExterior || '',
-              negocioNumeroInterior: data.negocioNumeroInterior || '',
+              negocioCalle: data.negocio_domicilio || data.negocioCalle || '',
+              negocioNumeroExterior: data.negocio_num_ext || data.negocioNumeroExterior || '',
+              negocioNumeroInterior: data.negocio_num_int || data.negocioNumeroInterior || '',
               negocio_colonia: data.negocio_colonia || '',
               negocio_municipio: data.negocio_municipio || '',
-              negocioEstado: data.negocioEstado || DEFAULT_STATE,
-              negocioCodigoPostal: data.negocioCodigoPostal || '',
-              negocioDesdeCuando: data.negocioDesdeCuando || '',
+              negocioEstado: data.negocio_estado || data.negocioEstado || DEFAULT_STATE,
+              negocioCodigoPostal: data.negocio_codigo_postal || data.negocioCodigoPostal || '',
+              negocioDesdeCuando: data.negocio_desde_cuando || data.negocioDesdeCuando || '',
               negocio_ingreso_semanal: data.negocio_ingreso_semanal ? String(data.negocio_ingreso_semanal) : '',
               negocio_otros_ingresos: data.negocio_otros_ingresos ? String(data.negocio_otros_ingresos) : '',
-              negocio_gastos: data.negocio_gastos_nuevo ? String(data.negocio_gastos_nuevo) : '',
+              negocio_gastos: data.negocio_gastos ? String(data.negocio_gastos) : '',
               negocio_total: data.negocio_total ? String(data.negocio_total) : '',
-              negocio_giro: data.negocio_giro_nuevo || data.negocio_giro || '',
+              negocio_giro: data.negocio_giro || '',
 
               beneficiarioNombreCompleto: data.beneficiario_nombre || '',
               beneficiario_parentesco: data.beneficiario_parentesco || '',
               beneficiario_telefono: data.beneficiario_telefono || '',
               beneficiario_direccion: data.beneficiario_direccion || '',
 
-              tieneMedidorLuzSinAdeudo: data.tiene_medidor_luz === true ? 'SI' : data.tiene_medidor_luz === false ? 'NO' : '',
-              viveMaximo5KmTesorera: data.vive_max_5km_tesorera === true ? 'SI' : data.vive_max_5km_tesorera === false ? 'NO' : '',
-              tiene_menos_70_anios: data.tiene_menos_70_anios === true ? 'SI' : data.tiene_menos_70_anios === false ? 'NO' : '',
+              tieneMedidorLuzSinAdeudo: data.tiene_medidor_luz || '',
+              viveMaximo5KmTesorera: data.vive_max_5km_tesorera || '',
+              tiene_menos_70_anios: data.tiene_menos_70_anios || '',
             });
 
             setFechaNacimientoInput(fecha_nac_display);
+
+            // Actualizar estado de documentos según los campos doc_*_ruta
+            const cargarDocumentosAsync = async () => {
+              const documentosActualizados = await Promise.all(
+                DOCUMENTOS_REQUERIDOS.map(async (doc) => {
+                  let status: DocumentStatus = doc.status;
+                  let uriFrente: string | undefined;
+                  let uriReverso: string | undefined;
+
+                  // Función auxiliar para validar si una ruta es válida (no es mobile-temp)
+                  const esRutaValida = (ruta: string) => ruta && !ruta.startsWith('mobile-temp:');
+
+                  let rutaDB: string | undefined;
+
+                  // Obtener la ruta de la BD según el documento
+                  if (doc.id === 'ine_integrante') rutaDB = data.doc_ine_ruta;
+                  else if (doc.id === 'comprobante_domicilio') rutaDB = data.doc_comprobante_ruta;
+                  else if (doc.id === 'ine_beneficiario') rutaDB = data.doc_ine_beneficiario_ruta;
+                  else if (doc.id === 'solicitud_firmada') rutaDB = data.doc_solicitud_firmada_ruta;
+
+                  // Si la ruta es válida y empieza con "storage:", cargar desde AsyncStorage
+                  if (rutaDB && esRutaValida(rutaDB) && rutaDB.startsWith('storage:')) {
+                    status = 'CARGADO';
+                    const storageKey = rutaDB.split('|')[0].replace('storage:', '');
+                    try {
+                      const stored = await AsyncStorage.getItem(storageKey);
+                      if (stored) {
+                        const documentData = JSON.parse(stored);
+                        uriFrente = documentData.frente;
+                        uriReverso = documentData.reverso;
+                      }
+                    } catch (error) {
+                      console.error('Error cargando documento desde AsyncStorage:', error);
+                    }
+                  } else if (!doc.obligatorio) {
+                    status = 'OPCIONAL';
+                  } else {
+                    status = 'PENDIENTE';
+                  }
+
+                  return { ...doc, status, uriFrente, uriReverso };
+                })
+              );
+              setDocumentos(documentosActualizados);
+            };
+
+            cargarDocumentosAsync();
           }
         }
       } catch (error) {
@@ -507,74 +593,83 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     loadExistingSolicitud();
   }, [integranteId]);
 
-  const domicilioPostalEntry = useMemo(() => findPostalCodeEntry(form.codigoPostal), [form.codigoPostal]);
-  const negocioPostalEntry = useMemo(() => findPostalCodeEntry(form.negocioCodigoPostal), [form.negocioCodigoPostal]);
-  const domicilioColonias = useMemo(() => getColoniasByPostalCode(form.codigoPostal), [form.codigoPostal]);
-  const negocioColonias = useMemo(() => getColoniasByPostalCode(form.negocioCodigoPostal), [form.negocioCodigoPostal]);
-  const domicilioPostalNotFound = useMemo(() => form.codigoPostal.trim().length === 5 && !domicilioPostalEntry, [form.codigoPostal, domicilioPostalEntry]);
-  const negocioPostalNotFound = useMemo(() => form.negocioCodigoPostal.trim().length === 5 && !negocioPostalEntry, [form.negocioCodigoPostal, negocioPostalEntry]);
-
+  // Cargar colonias del DOMICILIO desde el API cuando cambia el código postal
   useEffect(() => {
-    if (!domicilioPostalEntry) {
-      return;
-    }
-
-    setForm((current) => {
-      const colonias = getColoniasByPostalCode(current.codigoPostal);
-      const nextColonia = colonias.includes(current.colonia) ? current.colonia : '';
-
-      if (
-        current.municipio === domicilioPostalEntry.municipio &&
-        current.estado === domicilioPostalEntry.estado &&
-        current.colonia === nextColonia
-      ) {
-        return current;
+    const cargarColoniasDomicilio = async () => {
+      if (form.codigoPostal.length !== 5) {
+        setColoniasDisponiblesDomicilio([]);
+        return;
       }
 
-      return {
-        ...current,
-        colonia: nextColonia,
-        municipio: domicilioPostalEntry.municipio,
-        estado: domicilioPostalEntry.estado,
-      };
-    });
+      setLoadingColoniasDomicilio(true);
+      try {
+        const response = await fetch(apiUrl(`/codigos-postales/colonias?codigo=${form.codigoPostal}`));
+        if (response.ok) {
+          const data = await response.json();
+          setColoniasDisponiblesDomicilio(data.colonias || []);
+          // Llenar automáticamente el municipio
+          if (data.municipio) {
+            setForm((prev) => ({ ...prev, municipio: data.municipio }));
+          }
+        } else {
+          setColoniasDisponiblesDomicilio([]);
+        }
+      } catch (error) {
+        console.error('Error cargando colonias domicilio:', error);
+        setColoniasDisponiblesDomicilio([]);
+      } finally {
+        setLoadingColoniasDomicilio(false);
+      }
+    };
 
-    setErrors((current) => ({
-      ...current,
-      municipio: undefined,
-    }));
-  }, [domicilioPostalEntry]);
+    cargarColoniasDomicilio();
+  }, [form.codigoPostal]);
 
+  // Cargar colonias del NEGOCIO desde el API cuando cambia el código postal
   useEffect(() => {
-    if (!negocioPostalEntry) {
-      return;
-    }
-
-    setForm((current) => {
-      const colonias = getColoniasByPostalCode(current.negocioCodigoPostal);
-      const nextColonia = colonias.includes(current.negocio_colonia) ? current.negocio_colonia : '';
-
-      if (
-        current.negocio_municipio === negocioPostalEntry.municipio &&
-        current.negocioEstado === negocioPostalEntry.estado &&
-        current.negocio_colonia === nextColonia
-      ) {
-        return current;
+    const cargarColoniasNegocio = async () => {
+      if (form.negocioCodigoPostal.length !== 5) {
+        setColoniasDisponiblesNegocio([]);
+        return;
       }
 
-      return {
-        ...current,
-        negocio_colonia: nextColonia,
-        negocio_municipio: negocioPostalEntry.municipio,
-        negocioEstado: negocioPostalEntry.estado,
-      };
-    });
+      setLoadingColoniasNegocio(true);
+      try {
+        const response = await fetch(apiUrl(`/codigos-postales/colonias?codigo=${form.negocioCodigoPostal}`));
+        if (response.ok) {
+          const data = await response.json();
+          setColoniasDisponiblesNegocio(data.colonias || []);
+          // Llenar automáticamente el municipio del negocio
+          if (data.municipio) {
+            setForm((prev) => ({ ...prev, negocio_municipio: data.municipio }));
+          }
+        } else {
+          setColoniasDisponiblesNegocio([]);
+        }
+      } catch (error) {
+        console.error('Error cargando colonias negocio:', error);
+        setColoniasDisponiblesNegocio([]);
+      } finally {
+        setLoadingColoniasNegocio(false);
+      }
+    };
 
-    setErrors((current) => ({
-      ...current,
-      negocio_municipio: undefined,
-    }));
-  }, [negocioPostalEntry]);
+    cargarColoniasNegocio();
+  }, [form.negocioCodigoPostal]);
+
+  // NO validar/limpiar colonias - permitir que se mantengan aunque no estén en la lista actual
+  // Esto evita que se borren colonias ya guardadas cuando se recarga el formulario
+  // useEffect(() => {
+  //   if (coloniasDisponiblesDomicilio.length > 0 && form.colonia && !coloniasDisponiblesDomicilio.includes(form.colonia)) {
+  //     updateField('colonia', '');
+  //   }
+  // }, [coloniasDisponiblesDomicilio]);
+
+  // useEffect(() => {
+  //   if (coloniasDisponiblesNegocio.length > 0 && form.negocio_colonia && !coloniasDisponiblesNegocio.includes(form.negocio_colonia)) {
+  //     updateField('negocio_colonia', '');
+  //   }
+  // }, [coloniasDisponiblesNegocio]);
 
   useEffect(() => {
     if (form.nacionalidad !== 'EXTRANJERA') {
@@ -901,43 +996,63 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
   const saveCurrentStep = useCallback(async () => {
     try {
-      // Guardar datos básicos del integrante (paso 1)
-      if (currentStep === 1) {
-        const nombreCompleto = `${form.nombres} ${form.apellido_pat} ${form.apellido_mat}`.trim();
-        await fetch(apiUrl(`/integrantes/${integranteId}`), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nombres: form.nombres,
-            apellido_pat: form.apellido_pat,
-            apellido_mat: form.apellido_mat,
-            nombre: nombreCompleto,
-            telefono: form.telefonoInicial,
-            montoSolicitado: Number(form.montoSolicitado),
-          }),
-        });
+      // Guardar datos básicos del integrante (siempre)
+      const nombreCompleto = `${form.nombres} ${form.apellido_pat} ${form.apellido_mat}`.trim();
+
+      const integranteData = {
+        nombres: form.nombres,
+        apellido_pat: form.apellido_pat,
+        apellido_mat: form.apellido_mat,
+        nombre: nombreCompleto,
+        telefono: form.telefonoInicial,
+        telefonoSecundario: form.telefonoSecundario,
+        montoSolicitado: Number(form.montoSolicitado),
+      };
+
+      console.log('📤 PATCH /integrantes - Datos a enviar:', JSON.stringify(integranteData, null, 2));
+      console.log('🔍 VERIFICAR telefonoSecundario:', form.telefonoSecundario);
+
+      const integranteResponse = await fetch(apiUrl(`/integrantes/${integranteId}`), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(integranteData),
+      });
+
+      console.log('📥 PATCH /integrantes - Status:', integranteResponse.status);
+      const integranteResponseText = await integranteResponse.text();
+      console.log('📥 PATCH /integrantes - Body:', integranteResponseText);
+
+      if (!integranteResponse.ok) {
+        console.error('❌ Error al guardar integrante:', integranteResponse.status, integranteResponseText);
       }
 
-      // Guardar datos de la solicitud (todos los pasos)
+      // Guardar datos de la solicitud (todos los pasos) - TODOS LOS CAMPOS
       const solicitudData: any = {
+        // PASO 1: Información Personal
         primer_nombre: form.nombres,
         apellido_pat: form.apellido_pat,
         apellido_mat: form.apellido_mat,
-        fechaNacimiento: form.fecha_nac ? toISODateFromDDMMYYYY(form.fecha_nac) : null,
+        fecha_nac: form.fecha_nac || null,
         curp: form.curp,
         genero: form.genero,
         estado_civil: form.estado_civil,
         ocupacion: form.ocupacion,
         nivel_estudio: form.nivel_estudio,
         nacionalidad: form.nacionalidad,
-        estado_nacimiento_nuevo: form.estado_nacimiento,
+        estado_nacimiento: form.estado_nacimiento,
+
+        // PASO 2: Domicilio Particular
         dom_calle: form.calle,
         dom_num_ext: form.numeroExterior,
         dom_num_int: form.numeroInterior,
         dom_entre_calles: form.entreCalles,
         dom_colonia: form.colonia,
         dom_municipio: form.municipio,
+        dom_estado: form.estado,
+        dom_codigo_postal: form.codigoPostal,
         dom_telefono: form.telefonoInicial,
+
+        // PASO 3: Referencias
         ref1_nombre: form.referencia1NombreCompleto,
         ref1_parentesco: form.referencia1Parentesco,
         ref1_telefono: form.referencia1Telefono,
@@ -946,31 +1061,49 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         ref2_parentesco: form.referencia2Parentesco,
         ref2_telefono: form.referencia2Telefono,
         ref2_direccion: form.referencia2Direccion,
+
+        // Pareja (si aplica)
         pareja_nombre: form.parejaNombreCompleto,
         pareja_actividad: form.parejaActividadEconomica,
         pareja_ingreso_semanal: form.pareja_ingreso_semanal ? Number(form.pareja_ingreso_semanal) : null,
-        negocio_domicilio: `${form.negocioCalle} ${form.negocioNumeroExterior}`.trim(),
+
+        // PASO 4: Negocio o Trabajo
+        negocio_domicilio: form.negocioCalle,
+        negocio_num_ext: form.negocioNumeroExterior,
+        negocio_num_int: form.negocioNumeroInterior,
         negocio_colonia: form.negocio_colonia,
         negocio_municipio: form.negocio_municipio,
+        negocio_estado: form.negocioEstado,
+        negocio_codigo_postal: form.negocioCodigoPostal,
         negocio_giro: form.negocio_giro,
+        negocio_desde_cuando: form.negocioDesdeCuando,
         negocio_ingreso_semanal: form.negocio_ingreso_semanal ? Number(form.negocio_ingreso_semanal) : null,
         negocio_otros_ingresos: form.negocio_otros_ingresos ? Number(form.negocio_otros_ingresos) : null,
         negocio_gastos: form.negocio_gastos ? Number(form.negocio_gastos) : null,
         negocio_total: form.negocio_total ? Number(form.negocio_total) : null,
+
+        // PASO 5: Beneficiario
         beneficiario_nombre: form.beneficiarioNombreCompleto,
         beneficiario_parentesco: form.beneficiario_parentesco,
         beneficiario_telefono: form.beneficiario_telefono,
         beneficiario_direccion: form.beneficiario_direccion,
-        tiene_medidor_luz: form.tieneMedidorLuzSinAdeudo === 'SI' ? true : form.tieneMedidorLuzSinAdeudo === 'NO' ? false : null,
-        vive_max_5km_tesorera: form.viveMaximo5KmTesorera === 'SI' ? true : form.viveMaximo5KmTesorera === 'NO' ? false : null,
-        tiene_menos_70_anios: form.tiene_menos_70_anios === 'SI' ? true : form.tiene_menos_70_anios === 'NO' ? false : null,
+
+        // PASO 6: Validaciones (enviar como string 'SI' o 'NO')
+        tiene_medidor_luz: form.tieneMedidorLuzSinAdeudo || null,
+        vive_max_5km_tesorera: form.viveMaximo5KmTesorera || null,
+        tiene_menos_70_anios: form.tiene_menos_70_anios || null,
+
+        // Monto solicitado
         monto_solicitado: form.montoSolicitado ? Number(form.montoSolicitado) : null,
       };
 
       // Intentar PATCH primero, si falla hacer POST
       try {
-        console.log('💾 Guardando solicitud para integrante:', integranteId);
-        console.log('💾 Datos a guardar:', JSON.stringify(solicitudData).slice(0, 200));
+        console.log('💾 ========================================');
+        console.log('💾 GUARDANDO SOLICITUD');
+        console.log('💾 Integrante ID:', integranteId);
+        console.log('💾 URL:', apiUrl(`/solicitudes/integrante/${integranteId}`));
+        console.log('💾 Datos:', JSON.stringify(solicitudData, null, 2));
 
         const patchResponse = await fetch(apiUrl(`/solicitudes/integrante/${integranteId}`), {
           method: 'PATCH',
@@ -979,11 +1112,12 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         });
 
         console.log('💾 Respuesta PATCH status:', patchResponse.status);
+        const patchText = await patchResponse.text();
+        console.log('💾 Respuesta PATCH body:', patchText);
 
         if (patchResponse.status === 404) {
-          console.log('💾 Creando nueva solicitud con POST');
-          // No existe — crear con POST
-          await fetch(apiUrl('/solicitudes'), {
+          console.log('💾 ⚠️ 404 - Creando nueva solicitud con POST');
+          const postResponse = await fetch(apiUrl('/solicitudes'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -991,9 +1125,15 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
               ...solicitudData,
             }),
           });
+          console.log('💾 Respuesta POST status:', postResponse.status);
+          const postText = await postResponse.text();
+          console.log('💾 Respuesta POST body:', postText);
         }
+
+        console.log('💾 ✅ GUARDADO COMPLETADO');
+        console.log('💾 ========================================');
       } catch (err) {
-        console.error('Error guardando solicitud:', err);
+        console.error('❌ Error guardando solicitud:', err);
       }
 
       console.log('✅ Guardado completado');
@@ -1024,6 +1164,231 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   }, [saveCurrentStep]);
 
+  const handleSubirDocumento = async (documentoId: string) => {
+    try {
+      setUploadingDocId(documentoId);
+
+      // Solicitar permisos para acceder a la galería
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert('Permiso requerido', 'Se necesita acceso a la galería para seleccionar imágenes.');
+        setUploadingDocId(null);
+        return;
+      }
+
+      // Para INEs, capturar frente y reverso
+      const esINE = documentoId === 'ine_integrante' || documentoId === 'ine_beneficiario';
+
+      if (esINE) {
+        // Capturar frente del INE
+        Alert.alert(
+          'INE - Frente',
+          'Selecciona la foto del FRENTE de la INE',
+          [
+            { text: 'Cancelar', style: 'cancel', onPress: () => setUploadingDocId(null) },
+            {
+              text: 'Seleccionar',
+              onPress: async () => {
+                const frenteResult = await ImagePicker.launchImageLibraryAsync({
+                  mediaTypes: ['images'],
+                  allowsEditing: false,
+                  quality: 0.9,
+                  base64: false,
+                  aspect: [1.6, 1], // Proporción de INE
+                });
+
+                if (frenteResult.canceled || !frenteResult.assets[0]) {
+                  setUploadingDocId(null);
+                  return;
+                }
+
+                // Ahora capturar reverso
+                Alert.alert(
+                  'INE - Reverso',
+                  'Ahora selecciona la foto del REVERSO de la INE',
+                  [
+                    { text: 'Cancelar', style: 'cancel', onPress: () => setUploadingDocId(null) },
+                    {
+                      text: 'Seleccionar',
+                      onPress: async () => {
+                        const reversoResult = await ImagePicker.launchImageLibraryAsync({
+                          mediaTypes: ['images'],
+                          allowsEditing: false,
+                          quality: 0.9,
+                          base64: false,
+                          aspect: [1.6, 1], // Proporción de INE
+                        });
+
+                        if (reversoResult.canceled || !reversoResult.assets[0]) {
+                          setUploadingDocId(null);
+                          return;
+                        }
+
+                        // Mostrar previsualización antes de guardar
+                        setPreviewImage({
+                          uri: frenteResult.assets[0].uri,
+                          reversoUri: reversoResult.assets[0].uri,
+                          documentoId,
+                          titulo: 'INE (Frente y Reverso)',
+                        });
+                        setUploadingDocId(null);
+                      }
+                    }
+                  ]
+                );
+              }
+            }
+          ]
+        );
+      } else {
+        // Para otros documentos, solo una imagen
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: false,
+          quality: 0.9,
+          base64: false,
+        });
+
+        if (result.canceled || !result.assets[0]) {
+          setUploadingDocId(null);
+          return;
+        }
+
+        // Mostrar previsualización antes de guardar
+        const nombreDoc = DOCUMENTOS_REQUERIDOS.find(d => d.id === documentoId)?.nombre || 'Documento';
+        setPreviewImage({
+          uri: result.assets[0].uri,
+          documentoId,
+          titulo: nombreDoc,
+        });
+        setUploadingDocId(null);
+      }
+    } catch (error) {
+      console.error('Error subiendo documento:', error);
+      Alert.alert('Error', error instanceof Error ? error.message : 'Error al subir el documento');
+      setUploadingDocId(null);
+    }
+  };
+
+  const handleConfirmarDocumento = async () => {
+    if (!previewImage) return;
+
+    try {
+      await guardarDocumento(previewImage.documentoId, previewImage.uri, previewImage.reversoUri);
+      setPreviewImage(null);
+    } catch (error) {
+      console.error('Error guardando documento:', error);
+      Alert.alert('Error', 'No se pudo guardar el documento');
+    }
+  };
+
+  const handleCancelarDocumento = () => {
+    setPreviewImage(null);
+  };
+
+  const guardarDocumento = async (documentoId: string, frenteUri: string, reversoUri?: string) => {
+    try {
+      // Mapear ID del documento a campos en la base de datos
+      const fieldMap: Record<string, { ruta: string; fecha: string }> = {
+        'ine_integrante': { ruta: 'doc_ine_ruta', fecha: 'doc_ine_fecha' },
+        'comprobante_domicilio': { ruta: 'doc_comprobante_ruta', fecha: 'doc_comprobante_fecha' },
+        'ine_beneficiario': { ruta: 'doc_ine_beneficiario_ruta', fecha: 'doc_ine_beneficiario_fecha' },
+        'solicitud_firmada': { ruta: 'doc_solicitud_firmada_ruta', fecha: 'doc_solicitud_firmada_fecha' },
+        'comprobante_linea_credito': { ruta: 'doc_comprobante_credito_ruta', fecha: 'doc_comprobante_credito_fecha' },
+      };
+
+      const fields = fieldMap[documentoId];
+      if (!fields) {
+        throw new Error(`Documento desconocido: ${documentoId}`);
+      }
+
+      // Guardar las URIs en AsyncStorage para persistencia
+      const storageKey = `documento_${integranteId}_${documentoId}`;
+      const documentData = {
+        frente: frenteUri,
+        reverso: reversoUri,
+        timestamp: Date.now(),
+      };
+      await AsyncStorage.setItem(storageKey, JSON.stringify(documentData));
+
+      // Guardar referencia en la BD (guardamos la key de AsyncStorage)
+      const rutaGuardada = reversoUri
+        ? `storage:${storageKey}|frente-reverso`
+        : `storage:${storageKey}|frente`;
+      const fechaCaptura = new Date().toISOString().split('T')[0];
+
+      // Actualizar campos en la tabla solicitudes
+      const response = await fetch(apiUrl(`/solicitudes/${integranteId}`), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          [fields.ruta]: rutaGuardada,
+          [fields.fecha]: fechaCaptura,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al guardar el documento');
+      }
+
+      // Actualizar el estado del documento a CARGADO y guardar las URIs
+      setDocumentos((prev) =>
+        prev.map((doc) =>
+          doc.id === documentoId
+            ? {
+                ...doc,
+                status: 'CARGADO',
+                uriFrente: frenteUri,
+                uriReverso: reversoUri,
+              }
+            : doc
+        )
+      );
+
+      Alert.alert('Éxito', reversoUri ? 'INE (frente y reverso) cargada correctamente' : 'Documento cargado correctamente');
+    } catch (error) {
+      console.error('Error guardando documento:', error);
+      Alert.alert('Error', error instanceof Error ? error.message : 'Error al guardar el documento');
+    } finally {
+      setUploadingDocId(null);
+    }
+  };
+
+  const handleVerDocumento = (documento: DocumentoRequerido) => {
+    if (!documento.uriFrente) {
+      Alert.alert(
+        'Imagen no disponible',
+        'Este documento fue cargado en una versión anterior y necesita ser actualizado. Por favor, sube la imagen nuevamente.'
+      );
+      return;
+    }
+
+    // Si es INE y tiene reverso, mostrar opciones
+    if (documento.uriReverso) {
+      Alert.alert(
+        documento.nombre,
+        'Selecciona qué lado deseas ver',
+        [
+          {
+            text: 'Frente',
+            onPress: () => setViewingImage({ uri: documento.uriFrente!, titulo: `${documento.nombre} - Frente` }),
+          },
+          {
+            text: 'Reverso',
+            onPress: () => setViewingImage({ uri: documento.uriReverso!, titulo: `${documento.nombre} - Reverso` }),
+          },
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+        ]
+      );
+    } else {
+      setViewingImage({ uri: documento.uriFrente, titulo: documento.nombre });
+    }
+  };
+
   const handleMarcarCapturado = async () => {
     if (!validateCurrentStep()) {
       return;
@@ -1035,12 +1400,16 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     try {
       // 1. Guardar formulario completo
       const payload = {
-        integranteId,
+        integrante_id: integranteId,  // Campo correcto esperado por el backend
+        solicitanteId: integranteId,  // Legacy para compatibilidad
         ...form,
         telefono: form.telefonoInicial,
         domicilio: `${form.calle} ${form.numeroExterior}${form.numeroInterior ? ` INT ${form.numeroInterior}` : ''}, ${form.colonia}, ${form.municipio}, ${form.estado}, CP ${form.codigoPostal}`,
-        negocio_domicilio: `${form.negocioCalle} ${form.negocioNumeroExterior}${form.negocioNumeroInterior ? ` INT ${form.negocioNumeroInterior}` : ''}, ${form.negocio_colonia}, ${form.negocio_municipio}, ${form.negocioEstado}, CP ${form.negocioCodigoPostal}`,
+        // Campos de negocio ya incluidos en form, no hace falta duplicarlos aquí
       };
+
+      console.log('📤 Enviando payload final a POST /solicitudes');
+      console.log('integranteId:', integranteId);
 
       const solicitudResponse = await fetch(apiUrl('/solicitudes'), {
         method: 'POST',
@@ -1049,7 +1418,9 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
       });
 
       if (!solicitudResponse.ok) {
-        throw new Error('Error guardando solicitud');
+        const errorText = await solicitudResponse.text();
+        console.error('❌ Error del servidor:', errorText);
+        throw new Error(`Error guardando solicitud: ${errorText}`);
       }
 
       // 2. Cambiar estado a SUJETA_CREDITO
@@ -1102,7 +1473,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
   const renderReadOnlyField = (label: string, value: string, helperText?: string, errorText?: string) => (
     <FormField label={label} required helperText={helperText} errorText={errorText}>
       <View style={styles.readOnlyField}>
-        <Text style={styles.valueText}>{value}</Text>
+        <Text allowFontScaling={false} style={styles.valueText}>{value}</Text>
       </View>
     </FormField>
   );
@@ -1110,13 +1481,52 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
   const renderFixedState = () => (
     <FormField label="Estado">
       <View style={styles.readOnlyField}>
-        <Text style={styles.valueText}>{DEFAULT_STATE}</Text>
+        <Text allowFontScaling={false} style={styles.valueText}>{DEFAULT_STATE}</Text>
       </View>
     </FormField>
   );
 
   const renderMunicipioSelector = (field: 'municipio' | 'negocio_municipio', value: string, error?: string) =>
     renderSelectCard(field, 'Municipio', value, NUEVO_LEON_MUNICIPALITIES, error, 'Selecciona un municipio', 'Seleccionar municipio');
+
+  const renderEdadConPregunta = () => {
+    let edadTexto = '';
+    if (form.fecha_nac) {
+      const hoy = new Date();
+      const nacimiento = new Date(form.fecha_nac);
+      let edad = hoy.getFullYear() - nacimiento.getFullYear();
+      const mesActual = hoy.getMonth();
+      const mesNacimiento = nacimiento.getMonth();
+      if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < nacimiento.getDate())) {
+        edad--;
+      }
+      edadTexto = `${edad} años`;
+    }
+
+    return (
+      <Card style={styles.optionCard}>
+        <View style={styles.edadPreguntaContainer}>
+          <View style={{ flex: 1 }}>
+            <SelectorField
+              label="¿La integrante tiene menos de 70 años?"
+              required
+              helperText="Selecciona una opción"
+              value={form.tiene_menos_70_anios}
+              placeholder="Seleccionar opción"
+              options={yesNoOptions}
+              errorText={errors.tiene_menos_70_anios}
+              onSelect={(nextValue) => handleSelectorSelect('tiene_menos_70_anios', nextValue)}
+            />
+          </View>
+          {edadTexto && (
+            <View style={styles.edadBurbuja}>
+              <Text allowFontScaling={false} style={styles.edadBurbujaTexto}>{edadTexto}</Text>
+            </View>
+          )}
+        </View>
+      </Card>
+    );
+  };
 
   const handleLlamarIntegrante = (telefono: string, nombre: string) => {
     llamar(telefono, nombre);
@@ -1145,7 +1555,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
       {/* Banner del grupo */}
       <View style={styles.grupoBanner}>
-        <Text style={styles.grupoBannerText}>{groupName || 'Cargando grupo...'}</Text>
+        <Text allowFontScaling={false} style={styles.grupoBannerText}>{groupName || 'Cargando grupo...'}</Text>
       </View>
 
       <KeyboardAvoidingView
@@ -1158,13 +1568,13 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
           <Card style={styles.integranteCard}>
             <View style={styles.integranteHeader}>
               {/* Nombre a la izquierda - Actualización inmediata */}
-              <Text style={styles.integranteName}>
+              <Text allowFontScaling={false} style={styles.integranteName}>
                 {integrante?.nombre || integranteNombre || 'Sin nombre'}
               </Text>
 
               {/* Número a la derecha */}
               {integrantePosition && integrantesTotal && (
-                <Text style={styles.positionText}>
+                <Text allowFontScaling={false} style={styles.positionText}>
                   {integrantePosition}/{integrantesTotal}
                 </Text>
               )}
@@ -1173,19 +1583,23 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             {/* Teléfono y Monto */}
             {integrante && (
               <View style={styles.contactInfoRow}>
-                {/* Teléfono con ícono - CLICKEABLE */}
-                <TouchableOpacity
-                  style={styles.phoneButton}
-                  onPress={() => handleLlamarIntegrante(integrante.telefono, integrante.nombre)}
-                >
-                  <Text style={styles.phoneIcon}>📞</Text>
-                  <Text style={styles.phoneText}>{formatPhone(integrante.telefono ?? '')}</Text>
-                </TouchableOpacity>
+                {/* Teléfono - Ícono fuera del recuadro celeste */}
+                <View style={styles.phoneRowContainer}>
+                  <TouchableOpacity
+                    style={styles.phoneIconButton}
+                    onPress={() => handleLlamarIntegrante(integrante.telefono, integrante.nombre)}
+                  >
+                    <Text allowFontScaling={false} style={styles.phoneIcon}>📞</Text>
+                  </TouchableOpacity>
+                  <View style={styles.phoneDisplayContainer}>
+                    <Text allowFontScaling={false} style={styles.phoneText}>{formatPhone(integrante.telefono ?? '')}</Text>
+                  </View>
+                </View>
 
                 {/* Monto */}
                 <View style={styles.montoContainer}>
-                  <Text style={styles.montoIcon}>💰</Text>
-                  <Text style={styles.montoText}>{formatCurrency(integrante.montoSolicitado)}</Text>
+                  <Text allowFontScaling={false} style={styles.montoIcon}>💰</Text>
+                  <Text allowFontScaling={false} style={styles.montoText}>{formatCurrency(integrante.montoSolicitado)}</Text>
                 </View>
               </View>
             )}
@@ -1194,12 +1608,12 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
         {/* Barra de progreso del wizard */}
         <View style={styles.wizardProgressContainer}>
-          <View style={styles.wizardHeader}>
-            <Text style={styles.wizardStepText}>
-              Paso {currentStep} de {WIZARD_STEPS.length}
-            </Text>
-            <Text style={styles.wizardStepTitle}>
+          <View style={styles.wizardHeaderOneLine}>
+            <Text allowFontScaling={false} style={styles.wizardStepTitleCompact}>
               {WIZARD_STEPS[currentStep - 1].title}
+            </Text>
+            <Text allowFontScaling={false} style={styles.wizardStepTextCompact}>
+              Paso {currentStep} de {WIZARD_STEPS.length}
             </Text>
           </View>
           <View style={styles.progressBarContainer}>
@@ -1210,13 +1624,13 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         {/* Indicador de autosave */}
         <View style={styles.autoSaveIndicatorContainer}>
           {autoSaveStatus === 'saving' && (
-            <Text style={styles.autoSaveTextSaving}>Guardando...</Text>
+            <Text allowFontScaling={false} style={styles.autoSaveTextSaving}>Guardando...</Text>
           )}
           {autoSaveStatus === 'saved' && (
-            <Text style={styles.autoSaveTextSaved}>Guardado ✓</Text>
+            <Text allowFontScaling={false} style={styles.autoSaveTextSaved}>Guardado ✓</Text>
           )}
           {autoSaveStatus === 'error' && (
-            <Text style={styles.autoSaveTextError}>Error al guardar</Text>
+            <Text allowFontScaling={false} style={styles.autoSaveTextError}>Error al guardar</Text>
           )}
         </View>
 
@@ -1224,15 +1638,16 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
           ref={scrollViewRef}
           contentContainerStyle={styles.form}
           keyboardShouldPersistTaps="always"
-          keyboardDismissMode="none"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
+          onScrollBeginDrag={() => Keyboard.dismiss()}
         >
           <Card>
             {/* PASO 1: INFORMACIÓN PERSONAL */}
             {currentStep === 1 && (
               <>
                 <FormField label="Nombre(s)" required errorText={errors.nombres}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Nombre(s)"
                     value={form.nombres}
@@ -1242,7 +1657,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Apellido paterno" required errorText={errors.apellido_pat}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Apellido paterno"
                     value={form.apellido_pat}
@@ -1252,7 +1667,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Apellido materno" required errorText={errors.apellido_mat}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Apellido materno"
                     value={form.apellido_mat}
@@ -1262,7 +1677,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Teléfono" required helperText="10 dígitos" errorText={errors.telefonoInicial}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Teléfono"
                     value={formatPhone(form.telefonoInicial ?? '')}
@@ -1272,26 +1687,31 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                   />
                 </FormField>
 
-                <FormField
+                <DatePickerField
                   label="Fecha de nacimiento"
                   required
-                  helperText="Formato DD/MM/AAAA (se muestra DD/MMM/AAAA)"
+                  value={fechaNacimientoInput}
+                  onChange={(value) => {
+                    setFechaNacimientoInput(value);
+                    // Convertir de DD-MMM-YYYY a DD/MM/YYYY para procesamiento
+                    const parts = value.split('-');
+                    if (parts.length === 3) {
+                      const monthMap: { [key: string]: string } = {
+                        'ENE': '01', 'FEB': '02', 'MAR': '03', 'ABR': '04',
+                        'MAY': '05', 'JUN': '06', 'JUL': '07', 'AGO': '08',
+                        'SEP': '09', 'OCT': '10', 'NOV': '11', 'DIC': '12'
+                      };
+                      const ddmmyyyy = `${parts[0]}/${monthMap[parts[1]] || '01'}/${parts[2]}`;
+                      const isoDate = toISODateFromDDMMYYYY(ddmmyyyy);
+                      updateField('fecha_nac', isoDate);
+                      setErrors({ ...errors, fecha_nac: validateFechaNacimientoField(isoDate) });
+                    }
+                  }}
                   errorText={errors.fecha_nac}
-                >
-                  <TextInput
-                    style={styles.input}
-                    placeholder="DD/MM/AAAA"
-                    value={fechaNacimientoInput}
-                    onChangeText={handleFechaNacimientoChange}
-                    onBlur={handleFechaNacimientoBlur}
-                    onFocus={handleFechaNacimientoFocus}
-                    keyboardType="number-pad"
-                    maxLength={11}
-                  />
-                </FormField>
+                />
 
                 <FormField label="CURP" required helperText="18 caracteres" errorText={errors.curp}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="CURP"
                     value={form.curp}
@@ -1312,13 +1732,13 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                   : (
                     <FormField label="Estado de nacimiento" helperText="No aplica para nacionalidad extranjera">
                       <View style={styles.readOnlyField}>
-                        <Text style={styles.valueText}>NO APLICA</Text>
+                        <Text allowFontScaling={false} style={styles.valueText}>NO APLICA</Text>
                       </View>
                     </FormField>
                   )}
 
                 <FormField label="Ocupación" required errorText={errors.ocupacion}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Ocupación"
                     value={form.ocupacion}
@@ -1333,7 +1753,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             {currentStep === 2 && (
               <>
                 <FormField label="Calle" required errorText={errors.calle}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Calle"
                     value={form.calle}
@@ -1343,7 +1763,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Número exterior" required errorText={errors.numeroExterior}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Número exterior"
                     value={form.numeroExterior}
@@ -1353,7 +1773,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Número interior" helperText="Opcional">
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Número interior"
                     value={form.numeroInterior}
@@ -1363,7 +1783,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Entre calles" required errorText={errors.entreCalles}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Entre calles"
                     value={form.entreCalles}
@@ -1375,10 +1795,10 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 <FormField
                   label="Código postal"
                   required
-                  helperText={domicilioPostalNotFound ? 'Código postal no encontrado en catálogo local' : '5 dígitos'}
+                  helperText={loadingColoniasDomicilio ? 'Buscando colonias...' : form.codigoPostal.length === 5 && coloniasDisponiblesDomicilio.length === 0 ? 'Código postal no encontrado' : '5 dígitos'}
                   errorText={errors.codigoPostal}
                 >
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Código postal"
                     value={form.codigoPostal}
@@ -1388,11 +1808,11 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                   />
                 </FormField>
 
-                {domicilioPostalEntry
-                  ? renderSelectCard('colonia', 'Colonia', form.colonia, domicilioColonias, errors.colonia, 'Selecciona una colonia', 'Seleccionar colonia')
+                {coloniasDisponiblesDomicilio.length > 0
+                  ? renderSelectCard('colonia', 'Colonia', form.colonia, coloniasDisponiblesDomicilio, errors.colonia, `${coloniasDisponiblesDomicilio.length} colonias disponibles`, 'Seleccionar colonia')
                   : (
                     <FormField label="Colonia" required errorText={errors.colonia}>
-                      <TextInput
+                      <TextInput allowFontScaling={false}
                         style={styles.input}
                         placeholder="Colonia"
                         value={form.colonia}
@@ -1402,35 +1822,27 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                     </FormField>
                   )}
 
-                {domicilioPostalEntry
-                  ? renderReadOnlyField('Municipio', domicilioPostalEntry.municipio, 'Autocompletado por código postal', errors.municipio)
-                  : renderMunicipioSelector('municipio', form.municipio, errors.municipio)}
+                {renderMunicipioSelector('municipio', form.municipio, errors.municipio)}
 
                 {renderFixedState()}
 
                 <FormField label="Teléfono" required helperText="10 dígitos">
-                  <TextInput
-                    key="telefono-inicial-paso2"
-                    style={styles.input}
+                  <PhoneFieldWithCall
+                    value={form.telefonoInicial}
+                    onChange={(value) => updateField('telefonoInicial', value)}
                     placeholder="Teléfono"
-                    value={formatPhone(form.telefonoInicial ?? '')}
-                    onChangeText={(v) => updateField('telefonoInicial', normalizePhone(v))}
-                    keyboardType="numeric"
-                    maxLength={14}
-                    blurOnSubmit={false}
+                    nombre={integranteNombre || form.primerNombre || 'Integrante'}
+                    relacion="Integrante - Teléfono Principal"
                   />
                 </FormField>
 
                 <FormField label="Teléfono secundario" helperText="Opcional, 10 dígitos">
-                  <TextInput
-                    key="telefono-secundario-paso2"
-                    style={styles.input}
+                  <PhoneFieldWithCall
+                    value={form.telefonoSecundario}
+                    onChange={(value) => updateField('telefonoSecundario', value)}
                     placeholder="Teléfono secundario (opcional)"
-                    value={formatPhone(form.telefonoSecundario ?? '')}
-                    onChangeText={(v) => updateField('telefonoSecundario', normalizePhone(v))}
-                    keyboardType="numeric"
-                    maxLength={14}
-                    blurOnSubmit={false}
+                    nombre={integranteNombre || form.primerNombre || 'Integrante'}
+                    relacion="Integrante - Teléfono Secundario"
                   />
                 </FormField>
               </>
@@ -1440,11 +1852,11 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             {currentStep === 3 && (
               <>
                 <View style={styles.sectionRow}>
-                  <Text style={styles.sectionTitle}>REFERENCIA 1</Text>
+                  <Text allowFontScaling={false} style={styles.sectionTitle}>REFERENCIA 1</Text>
                 </View>
 
                 <FormField label="Nombre completo" required errorText={errors.referencia1NombreCompleto}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Nombre completo"
                     value={form.referencia1NombreCompleto}
@@ -1460,11 +1872,13 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                     value={form.referencia1Telefono}
                     onChange={(value) => updatePhoneField('referencia1Telefono', value)}
                     placeholder="Teléfono"
+                    nombre={form.referencia1NombreCompleto || 'Referencia 1'}
+                    relacion={form.referencia1Parentesco ? `Referencia 1 - Parentesco: ${form.referencia1Parentesco}` : 'Referencia 1'}
                   />
                 </FormField>
 
                 <FormField label="Dirección" required errorText={errors.referencia1Direccion}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Dirección"
                     value={form.referencia1Direccion}
@@ -1474,11 +1888,11 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <View style={styles.sectionRow}>
-                  <Text style={styles.sectionTitle}>REFERENCIA 2</Text>
+                  <Text allowFontScaling={false} style={styles.sectionTitle}>REFERENCIA 2</Text>
                 </View>
 
                 <FormField label="Nombre completo" required errorText={errors.referencia2NombreCompleto}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Nombre completo"
                     value={form.referencia2NombreCompleto}
@@ -1494,11 +1908,13 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                     value={form.referencia2Telefono}
                     onChange={(value) => updatePhoneField('referencia2Telefono', value)}
                     placeholder="Teléfono"
+                    nombre={form.referencia2NombreCompleto || 'Referencia 2'}
+                    relacion={form.referencia2Parentesco ? `Referencia 2 - Parentesco: ${form.referencia2Parentesco}` : 'Referencia 2'}
                   />
                 </FormField>
 
                 <FormField label="Dirección" required errorText={errors.referencia2Direccion}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Dirección"
                     value={form.referencia2Direccion}
@@ -1508,11 +1924,11 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <View style={styles.sectionRow}>
-                  <Text style={styles.sectionTitle}>DATOS DE SU PAREJA</Text>
+                  <Text allowFontScaling={false} style={styles.sectionTitle}>DATOS DE SU PAREJA</Text>
                 </View>
 
                 <FormField label="Nombre completo" helperText="Opcional">
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Nombre completo"
                     value={form.parejaNombreCompleto}
@@ -1522,7 +1938,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Actividad económica" helperText="Opcional">
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Actividad económica"
                     value={form.parejaActividadEconomica}
@@ -1532,7 +1948,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Ingreso semanal" helperText="Solo números">
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="$ 0"
                     value={form.pareja_ingreso_semanal ? formatCurrency(form.pareja_ingreso_semanal) : ''}
@@ -1547,7 +1963,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             {currentStep === 4 && (
               <>
                 <FormField label="Calle" required errorText={errors.negocioCalle}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Calle"
                     value={form.negocioCalle}
@@ -1557,7 +1973,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Número exterior" required errorText={errors.negocioNumeroExterior}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Número exterior"
                     value={form.negocioNumeroExterior}
@@ -1567,7 +1983,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Número interior" helperText="Opcional">
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Número interior"
                     value={form.negocioNumeroInterior}
@@ -1579,10 +1995,10 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 <FormField
                   label="Código postal"
                   required
-                  helperText={negocioPostalNotFound ? 'Código postal no encontrado en catálogo local' : '5 dígitos'}
+                  helperText={loadingColoniasNegocio ? 'Buscando colonias...' : form.negocioCodigoPostal.length === 5 && coloniasDisponiblesNegocio.length === 0 ? 'Código postal no encontrado' : '5 dígitos'}
                   errorText={errors.negocioCodigoPostal}
                 >
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Código postal"
                     value={form.negocioCodigoPostal}
@@ -1592,11 +2008,11 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                   />
                 </FormField>
 
-                {negocioPostalEntry
-                  ? renderSelectCard('negocio_colonia', 'Colonia', form.negocio_colonia, negocioColonias, errors.negocio_colonia, 'Selecciona una colonia', 'Seleccionar colonia')
+                {coloniasDisponiblesNegocio.length > 0
+                  ? renderSelectCard('negocio_colonia', 'Colonia', form.negocio_colonia, coloniasDisponiblesNegocio, errors.negocio_colonia, `${coloniasDisponiblesNegocio.length} colonias disponibles`, 'Seleccionar colonia')
                   : (
                     <FormField label="Colonia" required errorText={errors.negocio_colonia}>
-                      <TextInput
+                      <TextInput allowFontScaling={false}
                         style={styles.input}
                         placeholder="Colonia"
                         value={form.negocio_colonia}
@@ -1606,9 +2022,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                     </FormField>
                   )}
 
-                {negocioPostalEntry
-                  ? renderReadOnlyField('Municipio', negocioPostalEntry.municipio, 'Autocompletado por código postal', errors.negocio_municipio)
-                  : renderMunicipioSelector('negocio_municipio', form.negocio_municipio, errors.negocio_municipio)}
+                {renderMunicipioSelector('negocio_municipio', form.negocio_municipio, errors.negocio_municipio)}
 
                 {renderFixedState()}
 
@@ -1622,7 +2036,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 )}
 
                 <FormField label="Giro del negocio o trabajo" required errorText={errors.negocio_giro}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Giro"
                     value={form.negocio_giro}
@@ -1632,7 +2046,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Ingreso semanal" required helperText="Solo números" errorText={errors.negocio_ingreso_semanal}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="$ 0"
                     value={form.negocio_ingreso_semanal ? formatCurrency(form.negocio_ingreso_semanal) : ''}
@@ -1642,7 +2056,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Otros ingresos" helperText="Opcional, solo números">
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="$ 0"
                     value={form.negocio_otros_ingresos ? formatCurrency(form.negocio_otros_ingresos) : ''}
@@ -1652,7 +2066,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 </FormField>
 
                 <FormField label="Gastos" required helperText="Solo números" errorText={errors.negocio_gastos}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="$ 0"
                     value={form.negocio_gastos ? formatCurrency(form.negocio_gastos) : ''}
@@ -1674,7 +2088,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             {currentStep === 5 && (
               <>
                 <FormField label="Nombre completo" required errorText={errors.beneficiarioNombreCompleto}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Nombre completo"
                     value={form.beneficiarioNombreCompleto}
@@ -1690,11 +2104,13 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                     value={form.beneficiario_telefono}
                     onChange={(value) => updatePhoneField('beneficiario_telefono', value)}
                     placeholder="Teléfono"
+                    nombre={form.beneficiarioNombreCompleto || 'Beneficiario'}
+                    relacion={form.beneficiario_parentesco ? `Beneficiario - Parentesco: ${form.beneficiario_parentesco}` : 'Beneficiario'}
                   />
                 </FormField>
 
                 <FormField label="Dirección" required errorText={errors.beneficiario_direccion}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Dirección"
                     value={form.beneficiario_direccion}
@@ -1710,10 +2126,12 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
               <>
                 {renderSelectCard('tieneMedidorLuzSinAdeudo', '¿Tiene medidor de luz sin adeudo?', form.tieneMedidorLuzSinAdeudo, yesNoOptions, errors.tieneMedidorLuzSinAdeudo)}
                 {renderSelectCard('viveMaximo5KmTesorera', '¿La integrante vive a máximo 5 km de la tesorera?', form.viveMaximo5KmTesorera, yesNoOptions, errors.viveMaximo5KmTesorera)}
-                {renderSelectCard('tiene_menos_70_anios', '¿La integrante tiene menos de 70 años?', form.tiene_menos_70_anios, yesNoOptions, errors.tiene_menos_70_anios)}
+
+                {/* Pregunta de 70 años con edad en burbuja */}
+                {renderEdadConPregunta()}
 
                 <FormField label="Monto solicitado" required helperText={`Máximo ${formatCurrency(MAX_SOLICITUD_AMOUNT)}`} errorText={errors.montoSolicitado}>
-                  <TextInput
+                  <TextInput allowFontScaling={false}
                     style={styles.input}
                     placeholder="Monto solicitado"
                     value={form.montoSolicitado ? formatCurrency(form.montoSolicitado) : ''}
@@ -1728,8 +2146,8 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             {currentStep === 7 && (
               <>
                 <View style={styles.documentacionHeader}>
-                  <Text style={styles.documentacionTitle}>Documentos Requeridos</Text>
-                  <Text style={styles.documentacionSubtitle}>
+                  <Text allowFontScaling={false} style={styles.documentacionTitle}>Documentos Requeridos</Text>
+                  <Text allowFontScaling={false} style={styles.documentacionSubtitle}>
                     Debes cargar los 4 documentos obligatorios para continuar
                   </Text>
                 </View>
@@ -1737,7 +2155,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 {documentos.map((doc) => (
                   <View key={doc.id} style={styles.documentoRow}>
                     <View style={styles.documentoInfo}>
-                      <Text style={styles.documentoNombre}>{doc.nombre}</Text>
+                      <Text allowFontScaling={false} style={styles.documentoNombre}>{doc.nombre}</Text>
                       <View
                         style={[
                           styles.statusBadge,
@@ -1746,7 +2164,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                           doc.status === 'OPCIONAL' && styles.statusBadgeOpcional,
                         ]}
                       >
-                        <Text
+                        <Text allowFontScaling={false}
                           style={[
                             styles.statusBadgeText,
                             doc.status === 'CARGADO' && styles.statusBadgeTextCargado,
@@ -1758,21 +2176,40 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                         </Text>
                       </View>
                     </View>
-                    <TouchableOpacity
-                      style={styles.subirButton}
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        // Por ahora solo visual, sin funcionalidad
-                        console.log('Subir documento:', doc.id);
-                      }}
-                    >
-                      <Text style={styles.subirButtonText}>Subir</Text>
-                    </TouchableOpacity>
+                    <View style={styles.documentoActions}>
+                      {doc.status === 'CARGADO' && doc.uriFrente && (
+                        <TouchableOpacity
+                          style={styles.verButton}
+                          activeOpacity={0.7}
+                          onPress={() => handleVerDocumento(doc)}
+                        >
+                          <Text allowFontScaling={false} style={styles.verButtonText}>👁️ Ver</Text>
+                        </TouchableOpacity>
+                      )}
+                      <TouchableOpacity
+                        style={[
+                          styles.subirButton,
+                          uploadingDocId === doc.id && styles.subirButtonDisabled,
+                          doc.status === 'CARGADO' && styles.subirButtonCargado,
+                        ]}
+                        activeOpacity={0.7}
+                        disabled={uploadingDocId === doc.id}
+                        onPress={() => handleSubirDocumento(doc.id)}
+                      >
+                        {uploadingDocId === doc.id ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                          <Text allowFontScaling={false} style={styles.subirButtonText}>
+                            {doc.status === 'CARGADO' ? 'Actualizar' : 'Subir'}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 ))}
 
                 <View style={styles.documentacionFooter}>
-                  <Text style={styles.documentacionFooterText}>
+                  <Text allowFontScaling={false} style={styles.documentacionFooterText}>
                     * El Comprobante Línea de Crédito es opcional
                   </Text>
                 </View>
@@ -1783,6 +2220,16 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
         {/* Botones de navegación fijos en la parte inferior */}
         <View style={styles.navigationButtons}>
+          {currentStep > 1 && (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleAtras}
+              activeOpacity={0.8}
+            >
+              <Text allowFontScaling={false} style={styles.backButtonText}>← Atrás</Text>
+            </TouchableOpacity>
+          )}
+
           {currentStep < WIZARD_STEPS.length ? (
             <TouchableOpacity
               style={[
@@ -1793,7 +2240,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
               disabled={!isStepComplete(currentStep)}
               activeOpacity={0.8}
             >
-              <Text style={styles.continueButtonText}>Continuar →</Text>
+              <Text allowFontScaling={false} style={styles.continueButtonText}>Continuar →</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -1805,33 +2252,117 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
               disabled={!isStepComplete(currentStep) || isSubmitting}
               activeOpacity={0.8}
             >
-              <Text style={styles.continueButtonText}>
-                {isSubmitting ? 'Guardando...' : 'Marcar como Capturado'}
+              <Text allowFontScaling={false} style={styles.continueButtonText}>
+                {isSubmitting ? 'Guardando...' : 'COMPLETO ✓'}
               </Text>
-            </TouchableOpacity>
-          )}
-
-          {currentStep > 1 && (
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={handleAtras}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.backButtonText}>← Atrás</Text>
             </TouchableOpacity>
           )}
         </View>
       </KeyboardAvoidingView>
+
+      {/* Modal para ver imágenes */}
+      <Modal
+        visible={viewingImage !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setViewingImage(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text allowFontScaling={false} style={styles.modalTitle}>{viewingImage?.titulo}</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setViewingImage(null)}
+              >
+                <Text allowFontScaling={false} style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            {viewingImage?.uri && (
+              <Image
+                source={{ uri: viewingImage.uri }}
+                style={styles.modalImage}
+                resizeMode="contain"
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal para previsualizar y confirmar documento */}
+      <Modal
+        visible={previewImage !== null}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCancelarDocumento}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text allowFontScaling={false} style={styles.modalTitle}>{previewImage?.titulo}</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={handleCancelarDocumento}
+              >
+                <Text allowFontScaling={false} style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.previewScrollContent}>
+              {previewImage?.uri && (
+                <View style={styles.previewImageContainer}>
+                  <Text allowFontScaling={false} style={styles.previewLabel}>
+                    {previewImage.reversoUri ? 'Frente' : 'Documento'}
+                  </Text>
+                  <Image
+                    source={{ uri: previewImage.uri }}
+                    style={styles.previewImage}
+                    resizeMode="contain"
+                  />
+                </View>
+              )}
+
+              {previewImage?.reversoUri && (
+                <View style={styles.previewImageContainer}>
+                  <Text allowFontScaling={false} style={styles.previewLabel}>Reverso</Text>
+                  <Image
+                    source={{ uri: previewImage.reversoUri }}
+                    style={styles.previewImage}
+                    resizeMode="contain"
+                  />
+                </View>
+              )}
+            </ScrollView>
+
+            <View style={styles.previewActions}>
+              <TouchableOpacity
+                style={styles.previewCancelButton}
+                onPress={handleCancelarDocumento}
+                activeOpacity={0.8}
+              >
+                <Text allowFontScaling={false} style={styles.previewCancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.previewSaveButton}
+                onPress={handleConfirmarDocumento}
+                activeOpacity={0.8}
+              >
+                <Text allowFontScaling={false} style={styles.previewSaveButtonText}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
   keyboardContainer: { flex: 1 },
-  form: { padding: spacing.lg, gap: spacing.md, paddingBottom: 200 },
+  form: { padding: spacing.lg, gap: spacing.md, paddingBottom: 400 },
   grupoBanner: {
     backgroundColor: moduleThemes.documentation.headerBg,
-    paddingVertical: spacing.md,
+    paddingVertical: 6,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1844,7 +2375,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   fixedSolicitanteContainer: {
     paddingHorizontal: spacing.lg,
@@ -1852,7 +2383,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   integranteCard: {
-    padding: spacing.md,
+    padding: spacing.sm,
     borderWidth: 2,
     borderColor: '#000000',
     marginBottom: 0,
@@ -1861,17 +2392,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   integranteName: {
     ...typography.bodyStrong,
     color: colors.textPrimary,
-    fontSize: 18,
+    fontSize: 14,
     flex: 1,
     textAlign: 'left',
   },
   positionText: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '700',
     color: '#666',
     textAlign: 'right',
@@ -1880,53 +2411,81 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
+    marginTop: spacing.xs,
+    paddingTop: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
     gap: spacing.sm,
   },
-  phoneButton: {
+  phoneRowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1.3,
+    gap: 6,
+  },
+  phoneDisplayContainer: {
     backgroundColor: '#EFF6FF',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.md,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
     flex: 1,
-    gap: spacing.xs,
+  },
+  phoneIconButton: {
+    backgroundColor: '#EFF6FF',
+    padding: 8,
+    borderRadius: 8,
   },
   phoneIcon: {
-    fontSize: 16,
+    fontSize: 20,
   },
   phoneText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#1E40AF',
   },
   montoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#F0FDF4',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
     borderRadius: radius.md,
     gap: spacing.xs,
+    flex: 1,
   },
   montoIcon: {
-    fontSize: 16,
+    fontSize: 18,
   },
   montoText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: '#15803D',
   },
   wizardProgressContainer: {
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  wizardHeaderOneLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  wizardStepTitleCompact: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
+    flex: 1,
+  },
+  wizardStepTextCompact: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginLeft: spacing.sm,
   },
   wizardHeader: {
     marginBottom: spacing.sm,
@@ -2017,7 +2576,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    flexDirection: 'column',
+    flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 16,
     paddingBottom: 24,
@@ -2030,7 +2589,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   continueButton: {
-    width: '100%',
+    flex: 1,
     backgroundColor: moduleThemes.documentation.headerBg,
     borderRadius: 8,
     paddingVertical: 16,
@@ -2046,7 +2605,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   backButton: {
-    width: '100%',
+    flex: 1,
     backgroundColor: 'transparent',
     borderWidth: 2,
     borderColor: moduleThemes.documentation.headerBg,
@@ -2130,6 +2689,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  subirButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+    opacity: 0.7,
+  },
+  subirButtonCargado: {
+    backgroundColor: '#059669',
   },
   subirButtonText: {
     color: '#FFFFFF',
@@ -2146,5 +2714,138 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     fontStyle: 'italic',
+  },
+  documentoActions: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  verButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  verButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '95%',
+    height: '90%',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    flex: 1,
+  },
+  modalCloseButton: {
+    padding: spacing.sm,
+  },
+  modalCloseText: {
+    fontSize: 24,
+    color: colors.textSecondary,
+    fontWeight: '300',
+  },
+  modalImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  previewScrollContent: {
+    padding: spacing.md,
+  },
+  previewImageContainer: {
+    marginBottom: spacing.lg,
+  },
+  previewLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  previewImage: {
+    width: '100%',
+    height: 300,
+    backgroundColor: colors.gray[100],
+    borderRadius: 8,
+  },
+  previewActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: spacing.lg,
+    gap: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  previewCancelButton: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: moduleThemes.documentation.headerBg,
+    borderRadius: 8,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewCancelButtonText: {
+    color: moduleThemes.documentation.headerBg,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  previewSaveButton: {
+    flex: 1,
+    backgroundColor: moduleThemes.documentation.headerBg,
+    borderRadius: 8,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewSaveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  edadPreguntaContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  edadBurbuja: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 70,
+    marginTop: 32,
+  },
+  edadBurbujaTexto: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.white,
   },
 });

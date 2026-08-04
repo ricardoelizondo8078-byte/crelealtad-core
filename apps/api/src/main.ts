@@ -6,11 +6,12 @@ async function bootstrap() {
 
   app.enableCors();
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 3100;
 
-  await app.listen(port);
+  // Escuchar en todas las interfaces de red para permitir conexiones desde dispositivos móviles
+  await app.listen(port, '0.0.0.0');
 
-  console.log(`🚀 API iniciada en el puerto ${port}`);
+  console.log(`🚀 API iniciada en el puerto ${port} (todas las interfaces)`);
 }
 
 bootstrap();

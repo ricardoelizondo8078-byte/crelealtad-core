@@ -12,3 +12,8 @@ apps/mobile/.env
 apps/api/.env
 coverage/
 .vscode/
+
+# Spec-Kit
+.specify/feature.json
+.specify/.cache/
+.claude/skills/spec-kit/.git/

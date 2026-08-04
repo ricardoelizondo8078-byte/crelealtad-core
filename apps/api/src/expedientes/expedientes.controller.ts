@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch } from '@nestjs/common';
+import { Controller, Get, Param, Patch, NotFoundException } from '@nestjs/common';
 import { ExpedientesService } from './expedientes.service';
 
 @Controller('expedientes')
@@ -20,8 +20,17 @@ export class ExpedientesController {
     return this.expedientesService.getById(id);
   }
 
+  @Get(':id/integrantes')
+  getIntegrantes(@Param('id') id: string) {
+    return this.expedientesService.getIntegrantes(id);
+  }
+
   @Patch(':id/send-to-verification')
-  sendToVerification(@Param('id') id: string) {
-    return this.expedientesService.sendToVerification(id);
+  async sendToVerification(@Param('id') id: string) {
+    const expediente = await this.expedientesService.sendToVerification(id);
+    if (!expediente) {
+      throw new NotFoundException('Expediente no encontrado');
+    }
+    return expediente;
   }
 }

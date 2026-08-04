@@ -1,12 +1,12 @@
 ﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
-import { DocumentosModule } from './documentos/documentos.module';
 import { ExpedientesModule } from './expedientes/expedientes.module';
 import { GruposModule } from './grupos/grupos.module';
 import { HealthController } from './health.controller';
 import { IntegrantesModule } from './integrantes/integrantes.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
+import { CodigosPostalesModule } from './codigos-postales/codigos-postales.module';
 
 @Module({
   controllers: [HealthController],
@@ -30,7 +30,7 @@ import { SolicitudesModule } from './solicitudes/solicitudes.module';
     ExpedientesModule,
     IntegrantesModule,
     SolicitudesModule,
-    DocumentosModule,
+    CodigosPostalesModule,
   ],
 })
 export class AppModule {}

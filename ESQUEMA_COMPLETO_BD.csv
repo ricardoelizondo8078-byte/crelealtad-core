@@ -1,0 +1,333 @@
+TABLA,COLUMNA,TIPO_DATO,NULLABLE,DEFAULT,RELACION_FK,REGISTROS_EN_TABLA
+asesoras,id,uuid,NO,"uuid_generate_v4()",,0
+asesoras,folio,character varying(20),YES,"",,0
+asesoras,usuario_id,uuid,NO,"",FK → usuarios.id,0
+asesoras,zona_id,uuid,YES,"",FK → zonas.id,0
+asesoras,telefono,character varying(20),YES,"",,0
+asesoras,estado,character varying(20),NO,"'ACTIVA'::character varying",,0
+asesoras,created_at,timestamp without time zone,NO,"now()",,0
+asesoras,updated_at,timestamp without time zone,NO,"now()",,0
+asesoras,nombre,character varying(100),YES,"",,0
+asesoras,apellido_paterno,character varying(100),YES,"",,0
+asesoras,apellido_materno,character varying(100),YES,"",,0
+asesoras,fecha_nacimiento,date,YES,"",,0
+asesoras,genero,character varying(10),YES,"",,0
+asesoras,curp,character varying(18),YES,"",,0
+asesoras,rfc,character varying(13),YES,"",,0
+asesoras,email,character varying(255),YES,"",,0
+asesoras,telefono_celular,character varying(20),YES,"",,0
+asesoras,telefono_casa,character varying(20),YES,"",,0
+asesoras,telefono_emergencia,character varying(20),YES,"",,0
+asesoras,contacto_emergencia_nombre,character varying(100),YES,"",,0
+asesoras,contacto_emergencia_parentesco,character varying(50),YES,"",,0
+asesoras,dom_calle,character varying(200),YES,"",,0
+asesoras,dom_numero_ext,character varying(20),YES,"",,0
+asesoras,dom_numero_int,character varying(20),YES,"",,0
+asesoras,dom_colonia,character varying(100),YES,"",,0
+asesoras,dom_municipio,character varying(100),YES,"",,0
+asesoras,dom_estado,character varying(100),YES,"",,0
+asesoras,dom_codigo_postal,character varying(10),YES,"",,0
+asesoras,dom_referencias,text,YES,"",,0
+asesoras,dom_latitud,numeric,YES,"",,0
+asesoras,dom_longitud,numeric,YES,"",,0
+asesoras,dom_geolocalizacion_fecha,timestamp without time zone,YES,"",,0
+asesoras,foto_perfil_ruta,character varying(500),YES,"",,0
+asesoras,foto_ine_frente_ruta,character varying(500),YES,"",,0
+asesoras,foto_ine_reverso_ruta,character varying(500),YES,"",,0
+asesoras,foto_comprobante_domicilio_ruta,character varying(500),YES,"",,0
+asesoras,fecha_ingreso,date,YES,"",,0
+asesoras,sucursal_id,uuid,YES,"",FK → sucursales.id,0
+asesoras,jefe_inmediato_id,uuid,YES,"",FK → usuarios.id,0
+asesoras,tipo_contrato,character varying(50),YES,"",,0
+asesoras,nivel,character varying(50),YES,"",,0
+asesoras,meta_mensual_grupos,integer,YES,"",,0
+asesoras,meta_mensual_monto,numeric,YES,"",,0
+asesoras,observaciones,text,YES,"",,0
+asesoras,activo,boolean,YES,"true",,0
+audit_log,id,uuid,NO,"uuid_generate_v4()",,0
+audit_log,tabla,character varying(50),NO,"",,0
+audit_log,registro_id,uuid,NO,"",,0
+audit_log,accion,character varying(20),NO,"",,0
+audit_log,datos_antes,jsonb,YES,"",,0
+audit_log,datos_despues,jsonb,YES,"",,0
+audit_log,usuario_id,uuid,YES,"",FK → usuarios.id,0
+audit_log,ip_address,character varying(45),YES,"",,0
+audit_log,created_at,timestamp without time zone,NO,"now()",,0
+caja_movimientos,id,uuid,NO,"uuid_generate_v4()",,0
+caja_movimientos,folio,character varying(20),YES,"",,0
+caja_movimientos,tipo,character varying(20),NO,"",,0
+caja_movimientos,concepto,character varying(150),NO,"",,0
+caja_movimientos,monto,numeric,NO,"",,0
+caja_movimientos,referencia_id,uuid,YES,"",,0
+caja_movimientos,referencia_tipo,character varying(30),YES,"",,0
+caja_movimientos,sucursal_id,uuid,YES,"",FK → sucursales.id,0
+caja_movimientos,registrado_por,uuid,NO,"",FK → usuarios.id,0
+caja_movimientos,fecha_movimiento,timestamp without time zone,NO,"now()",,0
+caja_movimientos,es_corte,boolean,NO,"false",,0
+caja_movimientos,saldo_al_corte,numeric,YES,"",,0
+caja_movimientos,created_at,timestamp without time zone,NO,"now()",,0
+calendario_pagos,id,uuid,NO,"uuid_generate_v4()",,0
+calendario_pagos,credito_id,uuid,NO,"",FK → creditos.id,0
+calendario_pagos,numero_pago,integer,NO,"",,0
+calendario_pagos,fecha_programada,date,NO,"",,0
+calendario_pagos,monto_programado,numeric,NO,"",,0
+calendario_pagos,estado,character varying(20),NO,"'PENDIENTE'::character varying",,0
+calendario_pagos,created_at,timestamp without time zone,NO,"now()",,0
+ciclos,id,uuid,NO,"uuid_generate_v4()",,0
+ciclos,folio,character varying(20),YES,"",,0
+ciclos,grupo_id,uuid,NO,"",FK → grupos.id,0
+ciclos,numero_ciclo,integer,NO,"",,0
+ciclos,expediente_id,uuid,YES,"",FK → expedientes.id,0
+ciclos,asesora_id,uuid,NO,"",FK → asesoras.id,0
+ciclos,tesorera_id,uuid,NO,"",FK → personas.id,0
+ciclos,fecha_inicio,date,NO,"",,0
+ciclos,fecha_fin,date,YES,"",,0
+ciclos,dia_pago,character varying(15),NO,"",,0
+ciclos,estado,character varying(20),NO,"'ACTIVO'::character varying",,0
+ciclos,created_at,timestamp without time zone,NO,"now()",,0
+ciclos,updated_at,timestamp without time zone,NO,"now()",,0
+codigos_postales,id,uuid,NO,"uuid_generate_v4()",,0
+codigos_postales,folio,character varying(20),YES,"",,0
+codigos_postales,codigo,character varying(5),NO,"",,0
+codigos_postales,colonia,character varying(100),NO,"",,0
+codigos_postales,municipio,character varying(100),NO,"",,0
+codigos_postales,estado,character varying(50),NO,"'Nuevo León'::character varying",,0
+codigos_postales,created_at,timestamp without time zone,NO,"now()",,0
+creditos,id,uuid,NO,"uuid_generate_v4()",,0
+creditos,folio,character varying(20),YES,"",,0
+creditos,solicitud_id,uuid,NO,"",FK → solicitudes.id,0
+creditos,persona_id,uuid,NO,"",FK → personas.id,0
+creditos,expediente_id,uuid,NO,"",FK → expedientes.id,0
+creditos,monto_autorizado,numeric,NO,"",,0
+creditos,tasa,numeric,NO,"",,0
+creditos,num_semanas,integer,NO,"",,0
+creditos,monto_seguro,numeric,NO,"",,0
+creditos,costo_apertura,numeric,NO,"",,0
+creditos,retencion,numeric,NO,"",,0
+creditos,fecha_desembolso,date,NO,"",,0
+creditos,monto_desembolsado,numeric,NO,"",,0
+creditos,estado,character varying(20),NO,"'ACTIVO'::character varying",,0
+creditos,created_at,timestamp without time zone,NO,"now()",,0
+creditos,updated_at,timestamp without time zone,NO,"now()",,0
+documentos,id,uuid,NO,"uuid_generate_v4()",,0
+documentos,solicitanteId,uuid,YES,"",,0
+documentos,tipo,character varying(50),YES,"",,0
+documentos,estado,character varying(50),YES,"'PENDIENTE'::character varying",,0
+documentos,archivoBase64,text,YES,"",,0
+documentos,archivoNombre,character varying(255),YES,"",,0
+documentos,fechaCarga,timestamp without time zone,YES,"",,0
+documentos,createdAt,timestamp without time zone,YES,"now()",,0
+documentos,updatedAt,timestamp without time zone,YES,"now()",,0
+expedientes,id,uuid,NO,"uuid_generate_v4()",,9
+expedientes,grupo_id,uuid,NO,"",FK → grupos.id,9
+expedientes,estado,character varying,NO,"'En proceso'::character varying",,9
+expedientes,created_at,timestamp with time zone,NO,"now()",,9
+expedientes,updated_at,timestamp with time zone,NO,"now()",,9
+expedientes,folio,character varying(20),YES,"",,9
+expedientes,producto_id,uuid,YES,"",FK → productos_credito.id,9
+expedientes,asesora_id,uuid,YES,"",FK → asesoras.id,9
+expedientes,horario_visita,character varying(20),YES,"",,9
+expedientes,dias_visita,character varying(50),YES,"",,9
+expedientes,semana_cobro,date,YES,"",,9
+expedientes,observaciones,text,YES,"",,9
+grupos,id,uuid,NO,"uuid_generate_v4()",,9
+grupos,nombre,character varying,NO,"",,9
+grupos,created_by,character varying,YES,"",,9
+grupos,estado,USER-DEFINED,NO,"'FORMANDO'::grupos_status_enum",,9
+grupos,created_at,timestamp with time zone,NO,"now()",,9
+grupos,updated_at,timestamp with time zone,NO,"now()",,9
+grupos,deleted_at,timestamp with time zone,YES,"",,9
+grupos,folio,character varying(20),YES,"",,9
+grupos,zona_id,uuid,YES,"",FK → zonas.id,9
+grupos,sucursal_id,uuid,YES,"",FK → sucursales.id,9
+grupos,fecha_inicio,date,NO,"CURRENT_DATE",,9
+integrantes,id,uuid,NO,"uuid_generate_v4()",,10
+integrantes,expediente_id,uuid,NO,"",FK → expedientes.id,10
+integrantes,estado,USER-DEFINED,NO,"'DOCUMENTANDO'::solicitantes_estado_enum",,10
+integrantes,created_at,timestamp with time zone,NO,"now()",,10
+integrantes,updated_at,timestamp with time zone,NO,"now()",,10
+integrantes,folio,character varying(20),YES,"",,10
+integrantes,persona_id,uuid,YES,"",FK → personas.id,10
+mora,id,uuid,NO,"uuid_generate_v4()",,0
+mora,credito_id,uuid,NO,"",FK → creditos.id,0
+mora,calendario_id,uuid,NO,"",FK → calendario_pagos.id,0
+mora,fecha_inicio_mora,date,NO,"",,0
+mora,fecha_fin_mora,date,YES,"",,0
+mora,dias_mora,integer,NO,"0",,0
+mora,monto_mora,numeric,NO,"0",,0
+mora,estado,character varying(20),NO,"'ACTIVA'::character varying",,0
+mora,created_at,timestamp without time zone,NO,"now()",,0
+mora,updated_at,timestamp without time zone,NO,"now()",,0
+pagos,id,uuid,NO,"uuid_generate_v4()",,0
+pagos,folio,character varying(20),YES,"",,0
+pagos,calendario_id,uuid,NO,"",FK → calendario_pagos.id,0
+pagos,credito_id,uuid,NO,"",FK → creditos.id,0
+pagos,persona_id,uuid,NO,"",FK → personas.id,0
+pagos,fecha_pago,date,NO,"",,0
+pagos,monto_pagado,numeric,NO,"",,0
+pagos,dias_atraso,integer,NO,"0",,0
+pagos,metodo_pago,character varying(30),YES,"",,0
+pagos,recibido_por,uuid,YES,"",FK → usuarios.id,0
+pagos,estado,character varying(20),NO,"'REGISTRADO'::character varying",,0
+pagos,observaciones,text,YES,"",,0
+pagos,created_at,timestamp without time zone,NO,"now()",,0
+pagos,updated_at,timestamp without time zone,NO,"now()",,0
+personas,id,uuid,NO,"uuid_generate_v4()",,10
+personas,folio,character varying(20),YES,"",,10
+personas,curp,character varying(18),YES,"",,10
+personas,primer_nombre,character varying(50),NO,"",,10
+personas,segundo_nombre,character varying(50),YES,"",,10
+personas,apellido_pat,character varying(50),NO,"",,10
+personas,apellido_mat,character varying(50),YES,"",,10
+personas,fecha_nac,date,YES,"",,10
+personas,genero,character varying(15),YES,"",,10
+personas,estado,character varying(20),NO,"'ACTIVA'::character varying",,10
+personas,created_at,timestamp without time zone,NO,"now()",,10
+personas,updated_at,timestamp without time zone,NO,"now()",,10
+personas,telefono,character varying(20),YES,"",,10
+personas,monto_solicitado,numeric,YES,"",,10
+personas,telefono_secundario,character varying,YES,"",,10
+productos_credito,id,uuid,NO,"uuid_generate_v4()",,0
+productos_credito,folio,character varying(20),YES,"",,0
+productos_credito,nombre,character varying(100),NO,"",,0
+productos_credito,descripcion,text,YES,"",,0
+productos_credito,tasa,numeric,NO,"",,0
+productos_credito,precio_seguro,numeric,NO,"",,0
+productos_credito,costo_apertura,numeric,NO,"",,0
+productos_credito,retencion,numeric,NO,"",,0
+productos_credito,num_semanas,integer,NO,"",,0
+productos_credito,monto_minimo,numeric,NO,"",,0
+productos_credito,monto_maximo,numeric,NO,"",,0
+productos_credito,min_integrantes,integer,NO,"6",,0
+productos_credito,max_integrantes,integer,NO,"12",,0
+productos_credito,estado,character varying(20),NO,"'ACTIVO'::character varying",,0
+productos_credito,created_at,timestamp without time zone,NO,"now()",,0
+productos_credito,updated_at,timestamp without time zone,NO,"now()",,0
+reestructuras,id,uuid,NO,"uuid_generate_v4()",,0
+reestructuras,folio,character varying(20),YES,"",,0
+reestructuras,credito_id,uuid,NO,"",FK → creditos.id,0
+reestructuras,tipo,character varying(20),NO,"",,0
+reestructuras,motivo,text,YES,"",,0
+reestructuras,nuevo_monto,numeric,YES,"",,0
+reestructuras,nuevas_semanas,integer,YES,"",,0
+reestructuras,nueva_tasa,numeric,YES,"",,0
+reestructuras,fecha_acuerdo,date,NO,"",,0
+reestructuras,autorizado_por,uuid,YES,"",FK → usuarios.id,0
+reestructuras,estado,character varying(20),NO,"'ACTIVA'::character varying",,0
+reestructuras,created_at,timestamp without time zone,NO,"now()",,0
+reestructuras,updated_at,timestamp without time zone,NO,"now()",,0
+roles,id,uuid,NO,"uuid_generate_v4()",,1
+roles,folio,character varying(20),YES,"",,1
+roles,nombre,character varying(50),NO,"",,1
+roles,descripcion,character varying(200),YES,"",,1
+roles,permisos,jsonb,YES,"",,1
+roles,estado,character varying(20),NO,"'ACTIVO'::character varying",,1
+roles,created_at,timestamp without time zone,NO,"now()",,1
+roles,updated_at,timestamp without time zone,NO,"now()",,1
+solicitudes,id,uuid,NO,"uuid_generate_v4()",,6
+solicitudes,integrante_id_old,uuid,YES,"",FK → integrantes.id,6
+solicitudes,curp,character varying,YES,"",,6
+solicitudes,fecha_nac,character varying,YES,"",,6
+solicitudes,estado_civil,character varying,YES,"",,6
+solicitudes,colonia,character varying,YES,"",,6
+solicitudes,municipio,character varying,YES,"",,6
+solicitudes,estado,character varying,YES,"",,6
+solicitudes,nacionalidad,character varying,YES,"",,6
+solicitudes,estado_nacimiento,character varying,YES,"",,6
+solicitudes,genero,character varying,YES,"",,6
+solicitudes,ocupacion,character varying,YES,"",,6
+solicitudes,nivel_estudio,character varying,YES,"",,6
+solicitudes,calle,character varying,YES,"",,6
+solicitudes,dom_codigo_postal,character varying,YES,"",,6
+solicitudes,telefono,character varying,YES,"",,6
+solicitudes,negocio_num_ext,character varying,YES,"",,6
+solicitudes,negocio_num_int,character varying,YES,"",,6
+solicitudes,negocio_estado,character varying,YES,"",,6
+solicitudes,negocio_giro,character varying,YES,"",,6
+solicitudes,negocio_gastos,character varying,YES,"",,6
+solicitudes,folio,character varying(20),YES,"",,6
+solicitudes,integrante_id,uuid,YES,"",FK → integrantes.id,6
+solicitudes,persona_id,uuid,YES,"",FK → personas.id,6
+solicitudes,expediente_id,uuid,YES,"",FK → expedientes.id,6
+solicitudes,grupo_id,uuid,YES,"",FK → grupos.id,6
+solicitudes,ciclo_numero,integer,YES,"",,6
+solicitudes,numero_credito,integer,YES,"",,6
+solicitudes,credito_id,uuid,YES,"",FK → creditos.id,6
+solicitudes,primer_nombre,character varying(50),YES,"",,6
+solicitudes,segundo_nombre,character varying(50),YES,"",,6
+solicitudes,apellido_pat,character varying(50),YES,"",,6
+solicitudes,apellido_mat,character varying(50),YES,"",,6
+solicitudes,dom_calle,character varying(150),YES,"",,6
+solicitudes,dom_num_ext,character varying(20),YES,"",,6
+solicitudes,dom_num_int,character varying(20),YES,"",,6
+solicitudes,dom_entre_calles,character varying(150),YES,"",,6
+solicitudes,dom_cp_id,uuid,YES,"",FK → codigos_postales.id,6
+solicitudes,dom_colonia,character varying(100),YES,"",,6
+solicitudes,dom_municipio,character varying(100),YES,"",,6
+solicitudes,dom_estado,character varying(50),YES,"",,6
+solicitudes,dom_telefono,character varying(20),YES,"",,6
+solicitudes,ref1_nombre,character varying(150),YES,"",,6
+solicitudes,ref1_parentesco,character varying(50),YES,"",,6
+solicitudes,ref1_telefono,character varying(20),YES,"",,6
+solicitudes,ref1_direccion,character varying(200),YES,"",,6
+solicitudes,ref2_nombre,character varying(150),YES,"",,6
+solicitudes,ref2_parentesco,character varying(50),YES,"",,6
+solicitudes,ref2_telefono,character varying(20),YES,"",,6
+solicitudes,ref2_direccion,character varying(200),YES,"",,6
+solicitudes,pareja_nombre,character varying(150),YES,"",,6
+solicitudes,pareja_actividad,character varying(100),YES,"",,6
+solicitudes,pareja_ingreso_semanal,numeric,YES,"",,6
+solicitudes,negocio_domicilio,character varying(200),YES,"",,6
+solicitudes,negocio_cp_id,uuid,YES,"",FK → codigos_postales.id,6
+solicitudes,negocio_colonia,character varying(100),YES,"",,6
+solicitudes,negocio_municipio,character varying(100),YES,"",,6
+solicitudes,negocio_desde_cuando,character varying,YES,"",,6
+solicitudes,negocio_ingreso_semanal,numeric,YES,"",,6
+solicitudes,negocio_otros_ingresos,numeric,YES,"",,6
+solicitudes,negocio_total,numeric,YES,"",,6
+solicitudes,beneficiario_nombre,character varying(150),YES,"",,6
+solicitudes,beneficiario_parentesco,character varying(50),YES,"",,6
+solicitudes,beneficiario_telefono,character varying(20),YES,"",,6
+solicitudes,beneficiario_direccion,character varying(200),YES,"",,6
+solicitudes,monto_autorizado,numeric,YES,"",,6
+solicitudes,doc_ine_ruta,character varying(500),YES,"",,6
+solicitudes,doc_ine_fecha,date,YES,"",,6
+solicitudes,doc_comprobante_ruta,character varying(500),YES,"",,6
+solicitudes,doc_comprobante_fecha,date,YES,"",,6
+solicitudes,doc_ine_beneficiario_ruta,character varying(500),YES,"",,6
+solicitudes,doc_ine_beneficiario_fecha,date,YES,"",,6
+solicitudes,doc_solicitud_firmada_ruta,character varying(500),YES,"",,6
+solicitudes,doc_solicitud_firmada_fecha,date,YES,"",,6
+solicitudes,tiene_medidor_luz,boolean,YES,"",,6
+solicitudes,vive_max_5km_tesorera,boolean,YES,"",,6
+solicitudes,tiene_menos_70_anios,boolean,YES,"",,6
+solicitudes,monto_solicitado,numeric,YES,"",,6
+solicitudes,created_at,timestamp with time zone,YES,"now()",,6
+solicitudes,updated_at,timestamp with time zone,YES,"now()",,6
+solicitudes,negocio_codigo_postal,character varying(5),YES,"",,6
+sucursales,id,uuid,NO,"uuid_generate_v4()",,1
+sucursales,folio,character varying(20),YES,"",,1
+sucursales,nombre,character varying(100),NO,"",,1
+sucursales,direccion,character varying(200),YES,"",,1
+sucursales,telefono,character varying(20),YES,"",,1
+sucursales,estado,character varying(20),NO,"'ACTIVA'::character varying",,1
+sucursales,created_at,timestamp without time zone,NO,"now()",,1
+sucursales,updated_at,timestamp without time zone,NO,"now()",,1
+usuarios,id,uuid,NO,"uuid_generate_v4()",,1
+usuarios,folio,character varying(20),YES,"",,1
+usuarios,nombre,character varying(100),NO,"",,1
+usuarios,email,character varying(100),NO,"",,1
+usuarios,password_hash,character varying(255),NO,"",,1
+usuarios,rol_id,uuid,NO,"",FK → roles.id,1
+usuarios,sucursal_id,uuid,YES,"",FK → sucursales.id,1
+usuarios,estado,character varying(20),NO,"'ACTIVO'::character varying",,1
+usuarios,created_at,timestamp without time zone,NO,"now()",,1
+usuarios,updated_at,timestamp without time zone,NO,"now()",,1
+usuarios,ultimo_login,timestamp with time zone,YES,"",,1
+zonas,id,uuid,NO,"uuid_generate_v4()",,0
+zonas,folio,character varying(20),YES,"",,0
+zonas,nombre,character varying(100),NO,"",,0
+zonas,sucursal_id,uuid,NO,"",FK → sucursales.id,0
+zonas,estado,character varying(20),NO,"'ACTIVA'::character varying",,0
+zonas,created_at,timestamp without time zone,NO,"now()",,0
+zonas,updated_at,timestamp without time zone,NO,"now()",,0

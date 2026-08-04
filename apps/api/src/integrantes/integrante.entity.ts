@@ -1,7 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { ExpedienteEntity } from '../expedientes/expediente.entity';
 import { SolicitudEntity } from '../solicitudes/solicitud.entity';
-import { DocumentoEntity } from '../documentos/documento.entity';
 
 export enum IntegranteEstado {
   DOCUMENTANDO = 'DOCUMENTANDO',
@@ -44,7 +43,4 @@ export class IntegranteEntity {
 
   @OneToOne(() => SolicitudEntity, (solicitud) => solicitud.integrante)
   solicitud: SolicitudEntity;
-
-  @OneToMany(() => DocumentoEntity, (documento) => documento.integrante)
-  documentos: DocumentoEntity[];
 }

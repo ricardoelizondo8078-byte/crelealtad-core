@@ -1,0 +1,5 @@
+nombre,email,pin,rol,sucursal,estado,notas
+Juan Pérez García,juan.perez@crelealtad.com,1234,ASESOR,MATRIZ,ACTIVO,Ejemplo - Asesor activo con PIN 1234
+María López Hernández,maria.lopez@crelealtad.com,5678,ASESOR,MATRIZ,ACTIVO,Ejemplo - Asesora con PIN personalizado
+Carlos Ramírez,carlos.ramirez@crelealtad.com,9999,ASESOR,MATRIZ,INACTIVO,Ejemplo - Asesor dado de baja
+Ana Martínez,ana.martinez@crelealtad.com,4321,COORDINADOR,MATRIZ,ACTIVO,Ejemplo - Coordinadora de sucursal

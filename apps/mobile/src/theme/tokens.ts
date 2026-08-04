@@ -9,7 +9,30 @@ export const colors = {
   borderSoft: '#E5E7EB',
   successSoft: '#DCFCE7',
   dangerSoft: '#FEE2E2',
+  danger: '#EF4444', // Color de error/peligro para textos
   white: '#FFFFFF',
+  // Colores principales
+  primary: '#0F5A35', // Verde principal CRELEALTAD
+  success: '#10B981', // Verde éxito
+  error: '#EF4444', // Rojo error
+  warning: '#F59E0B', // Naranja advertencia
+  warningLight: '#FEF3C7', // Fondo amarillo claro para advertencias
+  // Degradado verde para login (derivados del verde principal #0F5A35)
+  greenGradientTop: '#0F5A35', // Verde principal CRELEALTAD
+  greenGradientBottom: '#083D24', // Verde más oscuro para degradado
+  // Gray scale
+  gray: {
+    50: '#F9FAFB',
+    100: '#F3F4F6',
+    200: '#E5E7EB',
+    300: '#D1D5DB',
+    400: '#9CA3AF',
+    500: '#6B7280',
+    600: '#4B5563',
+    700: '#374151',
+    800: '#1F2937',
+    900: '#111827',
+  },
 };
 
 export const moduleThemes: Record<ModuleThemeKey, {
@@ -29,11 +52,11 @@ export const moduleThemes: Record<ModuleThemeKey, {
     primaryText: '#FFFFFF',
   },
   verification: {
-    headerBg: '#B45309',
-    titleBarBg: '#92400E',
-    headerAccent: '#FDE68A',
+    headerBg: '#9F7410', // Amarillo profundo
+    titleBarBg: '#C89B1F', // Amarillo principal
+    headerAccent: '#FFF8E6', // Fondo amarillo muy claro
     headerText: '#FFFFFF',
-    primary: '#B45309',
+    primary: '#9F7410',
     primaryText: '#FFFFFF',
   },
   disbursement: {
@@ -44,6 +67,17 @@ export const moduleThemes: Record<ModuleThemeKey, {
     primary: '#6D28D9',
     primaryText: '#FFFFFF',
   },
+};
+
+export const fonts = {
+  // Montserrat — títulos, números, botones, labels
+  bold: 'Montserrat_700Bold',
+  extraBold: 'Montserrat_800ExtraBold',
+  black: 'Montserrat_900Black',
+  // Inter — cuerpo, inputs, texto secundario
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semiBold: 'Inter_600SemiBold',
 };
 
 export const typography = {

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✅ QR CORRECTO - CRELEALTAD App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .success-badge {
+            background: #48bb78;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 3em;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 1.4em;
+            font-weight: 500;
+        }
+
+        .fix-box {
+            background: #e6fffa;
+            border: 3px solid #38b2ac;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: left;
+        }
+
+        .fix-box h3 {
+            color: #234e52;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .fix-item {
+            padding: 10px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 8px;
+            font-size: 1.1em;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 30px 0;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            border: 5px solid #48bb78;
+        }
+
+        #qrcode {
+            width: 400px;
+            height: 400px;
+        }
+
+        .url-box {
+            background: #2d3748;
+            color: #48bb78;
+            border: 3px solid #48bb78;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.3em;
+            font-weight: bold;
+            word-break: break-all;
+        }
+
+        .instructions {
+            text-align: left;
+            margin-top: 30px;
+            padding: 30px;
+            background: #f7fafc;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .instructions h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .step {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            color: #2d3748;
+            line-height: 1.8;
+            font-size: 1.15em;
+            border-left: 4px solid #48bb78;
+        }
+
+        .btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            margin: 10px;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn:hover {
+            background: #38a169;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.5);
+        }
+
+        .important {
+            background: #fff5f5;
+            border-left: 5px solid #fc8181;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+
+        .important strong {
+            color: #c53030;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-badge">✅ PROBLEMA SOLUCIONADO</div>
+
+        <h1>📱 CRELEALTAD App</h1>
+        <p class="subtitle">QR Corregido - Ya Funciona</p>
+
+        <div class="fix-box">
+            <h3>🔧 Errores Corregidos:</h3>
+            <div class="fix-item">❌ IP antigua: <del>192.168.150.229</del> → ✅ Nueva: <strong>192.168.1.79</strong></div>
+            <div class="fix-item">✅ Archivo .env actualizado</div>
+            <div class="fix-item">✅ Expo reiniciado con cache limpio</div>
+            <div class="fix-item">✅ Modo LAN activado</div>
+        </div>
+
+        <div class="qr-container">
+            <div id="qrcode"></div>
+        </div>
+
+        <div class="url-box">
+            exp://192.168.1.79:8081
+        </div>
+
+        <button class="btn" onclick="copyUrl()">📋 Copiar URL</button>
+        <button class="btn" onclick="openLocal()">💻 Abrir en PC</button>
+
+        <div class="important">
+            <strong>⚠️ MUY IMPORTANTE:</strong><br><br>
+            1. Tu celular DEBE estar conectado al MISMO WiFi que tu PC<br>
+            2. Desactiva datos móviles 4G/5G en tu celular<br>
+            3. El API debe estar corriendo en puerto 3000<br>
+            4. Escanea el QR con Expo Go
+        </div>
+
+        <div class="instructions">
+            <h3>📱 Instrucciones Paso a Paso:</h3>
+            <div class="step">1️⃣ Conecta tu celular al WiFi (mismo que la PC)</div>
+            <div class="step">2️⃣ Desactiva datos móviles 4G/5G</div>
+            <div class="step">3️⃣ Abre <strong>Expo Go</strong></div>
+            <div class="step">4️⃣ Toca <strong>"Scan QR Code"</strong></div>
+            <div class="step">5️⃣ Escanea el código de arriba ☝️</div>
+            <div class="step">6️⃣ Espera 30-60 segundos (primera carga)</div>
+        </div>
+
+        <div class="fix-box" style="margin-top: 30px;">
+            <h3>📡 Configuración de Red:</h3>
+            <div class="fix-item">📍 IP de tu PC WiFi: <strong>192.168.1.79</strong></div>
+            <div class="fix-item">📱 Puerto Expo: <strong>8081</strong></div>
+            <div class="fix-item">🔌 API Backend: <strong>http://192.168.1.79:3000</strong></div>
+            <div class="fix-item">✅ Estado API: <span id="apiStatus">Verificando...</span></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        const expoUrl = "exp://192.168.1.79:8081";
+
+        // Generar QR grande
+        new QRCode(document.getElementById("qrcode"), {
+            text: expoUrl,
+            width: 400,
+            height: 400,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        function copyUrl() {
+            navigator.clipboard.writeText(expoUrl).then(() => {
+                event.target.textContent = '✅ ¡Copiado!';
+                setTimeout(() => {
+                    event.target.textContent = '📋 Copiar URL';
+                }, 2000);
+            });
+        }
+
+        function openLocal() {
+            window.open('http://localhost:8081', '_blank');
+        }
+
+        // Verificar API
+        function checkAPI() {
+            fetch('http://localhost:3000/health')
+                .then(res => {
+                    if (res.ok) {
+                        document.getElementById('apiStatus').textContent = '✅ Online';
+                        document.getElementById('apiStatus').style.color = '#38a169';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('apiStatus').textContent = '❌ Offline';
+                    document.getElementById('apiStatus').style.color = '#e53e3e';
+                });
+        }
+
+        checkAPI();
+        setInterval(checkAPI, 10000);
+    </script>
+</body>
+</html>

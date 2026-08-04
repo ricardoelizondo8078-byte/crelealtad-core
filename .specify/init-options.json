@@ -1,0 +1,7 @@
+{
+  "feature_numbering": "sequential",
+  "integration": "claude",
+  "specs_directory": "specs",
+  "initialized_at": "2026-07-23T12:24:00Z",
+  "spec_kit_version": "0.12.0"
+}

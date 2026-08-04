@@ -1,9 +1,22 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn } from 'typeorm';
 import { IntegranteEntity } from '../integrantes/integrante.entity';
 
-@Entity('solicitudes')
+/**
+ * Entidad Solicitud - VERSIÓN CORREGIDA
+ *
+ * CAMBIOS APLICADOS:
+ * - fechaNacimiento → fecha_nac (snake_case, sin @Column name)
+ * - estadoCivil → estado_civil (snake_case, sin @Column name)
+ * - nivelEstudio → nivel_estudio (snake_case, sin @Column name)
+ * - estado_nacimiento_nuevo → estado_nacimiento (sin sufijo _nuevo)
+ * - negocio_giro_nuevo → negocio_giro (sin sufijo _nuevo)
+ * - negocio_gastos_nuevo → negocio_gastos (sin sufijo _nuevo)
+ *
+ * CONSISTENCIA: Ahora usa snake_case puro, sin @Column name overrides innecesarios
+ */
+@Entity('solicitudes_completo')
 export class SolicitudEntity {
-  @PrimaryGeneratedColumn('uuid')
+  @Column({ type: 'uuid', primary: true, name: 'solicitud_id' })
   id: string;
 
   // Nuevas columnas de vínculo
@@ -34,8 +47,8 @@ export class SolicitudEntity {
   @Column({ type: 'uuid', nullable: true })
   credito_id: string;
 
-  @Column({ type: 'boolean', default: true })
-  es_nuevo: boolean;
+  // @Column({ type: 'boolean', default: true })
+  // es_nuevo: boolean;  // CAMPO NO EXISTE EN BD - COMENTADO
 
   // Datos personales (snapshot)
   @Column({ type: 'varchar', nullable: true })
@@ -53,25 +66,29 @@ export class SolicitudEntity {
   @Column({ type: 'varchar', nullable: true })
   curp: string;
 
-  @Column({ type: 'date', nullable: true, name: 'fechaNacimiento' })
+  // ✅ CORREGIDO: fecha_nac sin @Column name override
+  @Column({ type: 'date', nullable: true })
   fecha_nac: Date;
 
   @Column({ type: 'varchar', nullable: true })
   nacionalidad: string;
 
-  @Column({ type: 'varchar', nullable: true, name: 'estado_nacimiento_nuevo' })
+  // ✅ CORREGIDO: estado_nacimiento sin sufijo _nuevo
+  @Column({ type: 'varchar', nullable: true })
   estado_nacimiento: string;
 
   @Column({ type: 'varchar', nullable: true })
   genero: string;
 
-  @Column({ type: 'varchar', nullable: true, name: 'estadoCivil' })
+  // ✅ CORREGIDO: estado_civil sin @Column name override
+  @Column({ type: 'varchar', nullable: true })
   estado_civil: string;
 
   @Column({ type: 'varchar', nullable: true })
   ocupacion: string;
 
-  @Column({ type: 'varchar', nullable: true, name: 'nivelEstudio' })
+  // ✅ CORREGIDO: nivel_estudio sin @Column name override
+  @Column({ type: 'varchar', nullable: true })
   nivel_estudio: string;
 
   // Domicilio (snapshot)
@@ -87,8 +104,8 @@ export class SolicitudEntity {
   @Column({ type: 'varchar', nullable: true })
   dom_entre_calles: string;
 
-  @Column({ type: 'uuid', nullable: true })
-  dom_cp_id: string;
+  @Column({ type: 'varchar', length: 5, nullable: true })
+  dom_codigo_postal: string;
 
   @Column({ type: 'varchar', nullable: true })
   dom_colonia: string;
@@ -141,8 +158,17 @@ export class SolicitudEntity {
   @Column({ type: 'varchar', nullable: true })
   negocio_domicilio: string;
 
-  @Column({ type: 'uuid', nullable: true })
-  negocio_cp_id: string;
+  @Column({ type: 'varchar', nullable: true })
+  negocio_num_ext: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  negocio_num_int: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  negocio_estado: string;
+
+  @Column({ type: 'varchar', length: 5, nullable: true })
+  negocio_codigo_postal: string;
 
   @Column({ type: 'varchar', nullable: true })
   negocio_colonia: string;
@@ -150,11 +176,12 @@ export class SolicitudEntity {
   @Column({ type: 'varchar', nullable: true })
   negocio_municipio: string;
 
-  @Column({ type: 'date', nullable: true })
-  negocio_desde_cuando: Date;
-
   @Column({ type: 'varchar', nullable: true })
-  negocio_giro_nuevo: string;
+  negocio_desde_cuando: string;
+
+  // ✅ CORREGIDO: negocio_giro sin sufijo _nuevo
+  @Column({ type: 'varchar', nullable: true })
+  negocio_giro: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   negocio_ingreso_semanal: number;
@@ -162,8 +189,9 @@ export class SolicitudEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   negocio_otros_ingresos: number;
 
+  // ✅ CORREGIDO: negocio_gastos sin sufijo _nuevo
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  negocio_gastos_nuevo: number;
+  negocio_gastos: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   negocio_total: number;
@@ -183,13 +211,13 @@ export class SolicitudEntity {
 
   // Validaciones
   @Column({ type: 'varchar', nullable: true })
-  tiene_medidor_luz: string; // antes: tieneMedidorLuzSinAdeudo
+  tiene_medidor_luz: string;
 
   @Column({ type: 'varchar', nullable: true })
-  vive_max_5km_tesorera: string; // antes: viveMaximo5KmTesorera
+  vive_max_5km_tesorera: string;
 
   @Column({ type: 'varchar', nullable: true })
-  tiene_menos_70_anios: string; // antes: tieneMenos70Anios
+  tiene_menos_70_anios: string;
 
   // Documentos
   @Column({ type: 'varchar', nullable: true })
@@ -216,15 +244,21 @@ export class SolicitudEntity {
   @Column({ type: 'date', nullable: true })
   doc_solicitud_firmada_fecha: Date;
 
+  @Column({ type: 'varchar', nullable: true })
+  doc_comprobante_credito_ruta: string;
+
+  @Column({ type: 'date', nullable: true })
+  doc_comprobante_credito_fecha: Date;
+
   // Monto autorizado
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   monto_autorizado: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  created_at: Date; // antes: createdAt
+  created_at: Date;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updated_at: Date; // antes: updatedAt
+  updated_at: Date;
 
   // Relación
   @OneToOne(() => IntegranteEntity, (integrante) => integrante.solicitud)

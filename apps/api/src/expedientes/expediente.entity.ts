@@ -3,6 +3,7 @@ import { GrupoEntity } from '../grupos/grupo.entity';
 
 export enum ExpedienteEstado {
   EN_DOCUMENTACION = 'EN_DOCUMENTACION',
+  EN_VERIFICACION = 'EN_VERIFICACION',
   COMPLETO = 'COMPLETO',
   EN_REVISION = 'EN_REVISION',
   AUTORIZADO = 'AUTORIZADO',
@@ -41,6 +42,9 @@ export class ExpedienteEntity {
 
   @Column({ type: 'varchar', default: ExpedienteEstado.EN_DOCUMENTACION })
   estado: string; // antes: status
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  estado_fecha: Date; // Fecha del último cambio de estado
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date; // antes: createdAt

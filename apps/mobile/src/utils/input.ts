@@ -3,6 +3,9 @@ export const normalizeUppercaseText = (value: string): string => value.toUpperCa
 export const normalizeUppercaseLettersOnly = (value: string): string =>
   value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÜÑ\s]/g, '');
 
+export const normalizeCurpInput = (value: string): string =>
+  value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 18);
+
 export const normalizeDigits = (value: string, maxLength?: number): string => {
   const digitsOnly = value.replace(/\D/g, '');
   if (!maxLength) {
@@ -100,7 +103,7 @@ export const formatDDMMYYYYToDDMMMYYYY = (value: string): string => {
   const [dayText, monthText, yearText] = value.split('/');
   const monthIndex = Number(monthText) - 1;
   const monthLabel = SPANISH_MONTHS_3[monthIndex];
-  return `${dayText}/${monthLabel}/${yearText}`;
+  return `${dayText}-${monthLabel}-${yearText}`;
 };
 
 export const formatISODateToDDMMMYYYY = (value: string): string => {

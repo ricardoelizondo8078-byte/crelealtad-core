@@ -197,6 +197,29 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
   };
 
   const handleCapturarDocumento = async (documento: DocumentoItem) => {
+    // Preguntar si quiere usar cámara o galería
+    Alert.alert(
+      'Capturar documento',
+      '¿Cómo deseas capturar el documento?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: '📷 Cámara',
+          onPress: () => capturarConCamara(documento),
+        },
+        {
+          text: '🖼️ Galería',
+          onPress: () => seleccionarDeGaleria(documento),
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const capturarConCamara = async (documento: DocumentoItem) => {
     // Solicitar permisos de cámara
     const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
 
@@ -213,7 +236,30 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
 
     // Para otros documentos, captura simple
     const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
+      allowsEditing: false,
+      quality: 0.9,
+      base64: false,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      // TODO: Convertir a PDF aquí en el futuro
+      await actualizarDocumento(documento, 'Capturado');
+    }
+  };
+
+  const seleccionarDeGaleria = async (documento: DocumentoItem) => {
+    // Solicitar permisos de galería
+    const { status: galleryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (galleryStatus !== 'granted') {
+      Alert.alert('Permiso requerido', 'Se necesita acceso a la galería para seleccionar imágenes.');
+      return;
+    }
+
+    // Seleccionar imagen de la galería
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
       quality: 0.9,
       base64: false,
     });
@@ -226,12 +272,12 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
 
   const capturarINE = async (documento: DocumentoItem) => {
     // Capturar frente del INE
-    Alert.alert('INE - Frente', 'Centra el frente de tu INE en el recuadro');
+    Alert.alert('INE - Frente', 'Toma una foto del frente de tu INE');
 
     const frenteResult = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
+      allowsEditing: false,
       quality: 0.9,
-      aspect: [1.6, 1], // Proporción de INE
+      base64: false,
     });
 
     if (frenteResult.canceled) {
@@ -239,12 +285,12 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
     }
 
     // Capturar reverso del INE
-    Alert.alert('INE - Reverso', 'Ahora centra el reverso de tu INE');
+    Alert.alert('INE - Reverso', 'Ahora toma una foto del reverso de tu INE');
 
     const reversoResult = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
+      allowsEditing: false,
       quality: 0.9,
-      aspect: [1.6, 1], // Proporción de INE
+      base64: false,
     });
 
     if (!reversoResult.canceled && reversoResult.assets[0]) {
@@ -298,7 +344,7 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
   return (
     <ScreenContainer>
       <AppHeader showBackButton onBackPress={onBack} moduleTheme="documentation" />
-      <ScreenTitleBar title="Documentos" moduleTheme="documentation" />
+      <ScreenTitleBar title="Documentos V2.0" moduleTheme="documentation" />
 
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" />
@@ -306,7 +352,7 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
         <>
           {/* Banner del grupo - FIJO */}
           <View style={styles.grupoBanner}>
-            <Text style={styles.grupoBannerText}>
+            <Text allowFontScaling={false} style={styles.grupoBannerText}>
               {grupo?.name || groupName || 'Cargando grupo...'}
             </Text>
           </View>
@@ -316,13 +362,13 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
             <Card style={styles.integranteCard}>
               <View style={styles.integranteHeader}>
                 {/* Nombre a la izquierda */}
-                <Text style={styles.integranteName}>
+                <Text allowFontScaling={false} style={styles.integranteName}>
                   {integrante?.nombre || integranteNombre || 'Cargando...'}
                 </Text>
 
                 {/* Número a la derecha */}
                 {integrantePosition && integrantesTotal && (
-                  <Text style={styles.positionText}>
+                  <Text allowFontScaling={false} style={styles.positionText}>
                     {integrantePosition}/{integrantesTotal}
                   </Text>
                 )}
@@ -336,14 +382,14 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
                     style={styles.phoneButton}
                     onPress={() => handleLlamarIntegrante(integrante.telefono, integrante.nombre)}
                   >
-                    <Text style={styles.phoneIcon}>📞</Text>
-                    <Text style={styles.phoneText}>{formatPhone(integrante.telefono)}</Text>
+                    <Text allowFontScaling={false} style={styles.phoneIcon}>📞</Text>
+                    <Text allowFontScaling={false} style={styles.phoneText}>{formatPhone(integrante.telefono)}</Text>
                   </TouchableOpacity>
 
                   {/* Monto */}
                   <View style={styles.montoContainer}>
-                    <Text style={styles.montoIcon}>💰</Text>
-                    <Text style={styles.montoText}>{formatCurrency(integrante.montoSolicitado)}</Text>
+                    <Text allowFontScaling={false} style={styles.montoIcon}>💰</Text>
+                    <Text allowFontScaling={false} style={styles.montoText}>{formatCurrency(integrante.montoSolicitado)}</Text>
                   </View>
                 </View>
               )}
@@ -353,16 +399,16 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
           {/* Lista de documentos - SCROLLABLE */}
           <ScrollView style={styles.scroll}>
             <View style={styles.content}>
-              <Text style={styles.sectionTitle}>Documentos requeridos</Text>
+              <Text allowFontScaling={false} style={styles.sectionTitle}>Documentos requeridos</Text>
 
             {documentos.map((documento) => (
               <Card key={documento.id} style={styles.documentoCard}>
                 <View style={styles.cardHeader}>
                   <View style={styles.documentInfo}>
-                    <Text style={styles.name}>{documento.nombre}</Text>
-                    <Text style={styles.meta}>{documento.requerido ? 'Requerido' : 'Opcional'}</Text>
+                    <Text allowFontScaling={false} style={styles.name}>{documento.nombre}</Text>
+                    <Text allowFontScaling={false} style={styles.meta}>{documento.requerido ? 'Requerido' : 'Opcional'}</Text>
                     {documento.clave === 'ine' && (
-                      <Text style={styles.ineNote}>📸 Frente y reverso</Text>
+                      <Text allowFontScaling={false} style={styles.ineNote}>📸 Frente y reverso</Text>
                     )}
                   </View>
                   <View
@@ -371,7 +417,7 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
                       documento.estado === 'Capturado' ? styles.badgeCaptured : styles.badgePending,
                     ]}
                   >
-                    <Text style={styles.badgeText}>{documento.estado}</Text>
+                    <Text allowFontScaling={false} style={styles.badgeText}>{documento.estado}</Text>
                   </View>
                 </View>
 
@@ -412,33 +458,38 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
         </>
       )}
 
-      {/* Modal para ver documento */}
+      {/* Modal para ver documento - VERSIÓN 2.0 - SOLO X ARRIBA */}
       <Modal visible={showViewer} transparent animationType="fade" onRequestClose={() => setShowViewer(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{viewingDocumento?.nombre}</Text>
-              <TouchableOpacity onPress={() => setShowViewer(false)} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>✕</Text>
+              <Text allowFontScaling={false} style={styles.modalTitle}>{viewingDocumento?.nombre}</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  console.log('✕ CERRAR MODAL - VERSIÓN 2.0');
+                  setShowViewer(false);
+                }}
+                style={styles.closeButton}
+              >
+                <Text allowFontScaling={false} style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.imageContainer}>
+            <View style={styles.imageContainer}>
               {/* TODO: Aquí irán las imágenes cuando se implementeel almacenamiento */}
               <View style={styles.placeholder}>
-                <Text style={styles.placeholderText}>📄</Text>
-                <Text style={styles.placeholderSubtext}>
+                <Text allowFontScaling={false} style={styles.placeholderText}>📄</Text>
+                <Text allowFontScaling={false} style={styles.placeholderSubtext}>
                   Documento capturado{'\n'}
                   {viewingDocumento?.clave === 'ine' ? '(Frente y Reverso)' : ''}
                 </Text>
-                <Text style={styles.placeholderNote}>
+                <Text allowFontScaling={false} style={styles.placeholderNote}>
                   💡 Próximamente podrás ver las imágenes guardadas aquí
                 </Text>
+                <Text allowFontScaling={false} style={{ color: 'red', marginTop: 20, textAlign: 'center', fontSize: 12 }}>
+                  VERSIÓN 2.0 - SIN BOTÓN ABAJO
+                </Text>
               </View>
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <PrimaryButton title="Cerrar" onPress={() => setShowViewer(false)} moduleTheme="documentation" />
             </View>
           </View>
         </View>
@@ -457,7 +508,7 @@ const styles = StyleSheet.create({
   },
   grupoBanner: {
     backgroundColor: moduleThemes.documentation.headerBg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.xs,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -466,11 +517,11 @@ const styles = StyleSheet.create({
   },
   grupoBannerText: {
     color: '#FDE047',
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   fixedSolicitanteContainer: {
     paddingHorizontal: spacing.lg,
@@ -506,8 +557,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
+    marginTop: spacing.xs,
+    paddingTop: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
     gap: spacing.sm,
@@ -516,34 +567,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#EFF6FF',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
     borderRadius: radius.md,
-    flex: 1,
+    flex: 1.3,
     gap: spacing.xs,
   },
   phoneIcon: {
-    fontSize: 16,
+    fontSize: 20,
   },
   phoneText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#1E40AF',
   },
   montoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#F0FDF4',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
     borderRadius: radius.md,
     gap: spacing.xs,
+    flex: 1,
   },
   montoIcon: {
-    fontSize: 16,
+    fontSize: 18,
   },
   montoText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: '#15803D',
   },
@@ -630,6 +683,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
+    zIndex: 9999,
   },
   modalContent: {
     backgroundColor: 'white',
@@ -689,10 +743,5 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     fontStyle: 'italic',
-  },
-  modalFooter: {
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
 });

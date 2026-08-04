@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code - CRELEALTAD App (LAN)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 700px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #48bb78;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin: 10px 5px;
+            font-weight: bold;
+        }
+
+        .badge.warning {
+            background: #ed8936;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            display: inline-block;
+            margin: 20px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        #qrcode {
+            width: 350px;
+            height: 350px;
+        }
+
+        .url-box {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            color: #2d3748;
+            word-break: break-all;
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .important-box {
+            background: #fff5f5;
+            border: 3px solid #fc8181;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .important-box h3 {
+            color: #c53030;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .important-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .important-box li {
+            padding: 8px 0;
+            color: #2d3748;
+            font-size: 1.05em;
+        }
+
+        .important-box li:before {
+            content: "✓ ";
+            color: #48bb78;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .instructions {
+            text-align: left;
+            margin-top: 30px;
+            padding: 20px;
+            background: #edf2f7;
+            border-radius: 10px;
+        }
+
+        .instructions h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .step {
+            margin: 12px 0;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            color: #4a5568;
+            line-height: 1.6;
+            font-size: 1.05em;
+        }
+
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin: 10px 5px;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .copy-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .web-btn {
+            background: #48bb78;
+        }
+
+        .web-btn:hover {
+            background: #38a169;
+        }
+
+        .alternative {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            border-radius: 5px;
+            text-align: left;
+        }
+
+        .alternative strong {
+            color: #276749;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 CRELEALTAD App</h1>
+        <p class="subtitle">Modo LAN - Escanea con Expo Go</p>
+
+        <span class="badge">✅ EXPO ACTIVO</span>
+        <span class="badge warning">📡 MODO LAN</span>
+
+        <div class="important-box">
+            <h3>⚠️ IMPORTANTE - Verifica ANTES de escanear:</h3>
+            <ul>
+                <li>Tu celular y PC deben estar en la MISMA red WiFi</li>
+                <li>Desactiva datos móviles en tu celular</li>
+                <li>Ambos dispositivos conectados al mismo router</li>
+            </ul>
+        </div>
+
+        <div class="qr-container">
+            <div id="qrcode"></div>
+        </div>
+
+        <div class="url-box">
+            <div style="color: #718096; font-size: 0.8em; margin-bottom: 5px;">URL para Expo Go:</div>
+            <span id="expoUrl">exp://192.168.1.129:8081</span>
+        </div>
+
+        <button class="copy-btn" onclick="copyUrl()">📋 Copiar URL</button>
+        <button class="copy-btn web-btn" onclick="openWeb()">🌐 Abrir en PC</button>
+
+        <div class="instructions">
+            <h3>📱 Pasos para Celular:</h3>
+            <div class="step">1️⃣ Conecta tu celular a tu WiFi (mismo que la PC)</div>
+            <div class="step">2️⃣ Abre <strong>Expo Go</strong> en tu celular</div>
+            <div class="step">3️⃣ Toca <strong>"Scan QR Code"</strong></div>
+            <div class="step">4️⃣ Escanea este código QR ☝️</div>
+            <div class="step">5️⃣ Espera 30-60 segundos (primera carga)</div>
+        </div>
+
+        <div class="alternative">
+            <strong>🔧 Si NO funciona, prueba esto:</strong><br><br>
+
+            <strong>Opción A - URL Manual:</strong><br>
+            1. Copia la URL de arriba<br>
+            2. En Expo Go: "Enter URL manually"<br>
+            3. Pega la URL<br><br>
+
+            <strong>Opción B - Usar el navegador de PC:</strong><br>
+            1. Haz clic en el botón verde "Abrir en PC"<br>
+            2. O ve a: <code>http://localhost:8081</code><br>
+            3. Presiona la tecla <strong>"W"</strong>
+        </div>
+
+        <div class="alternative" style="background: #ebf8ff; border-left-color: #4299e1;">
+            <strong>📡 Tu configuración de red:</strong><br>
+            IP de tu PC: <code>192.168.1.129</code><br>
+            Puerto Expo: <code>8081</code><br>
+            API Backend: <code>http://localhost:3000</code> ✅
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        const expoUrl = "exp://192.168.1.129:8081";
+
+        // Generar QR más grande
+        new QRCode(document.getElementById("qrcode"), {
+            text: expoUrl,
+            width: 350,
+            height: 350,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        function copyUrl() {
+            const url = document.getElementById("expoUrl").textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = event.target;
+                btn.textContent = '✅ ¡Copiado!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copiar URL';
+                }, 2000);
+            });
+        }
+
+        function openWeb() {
+            window.open('http://localhost:8081', '_blank');
+        }
+
+        // Verificar estado del servidor
+        setInterval(() => {
+            fetch('http://localhost:8081')
+                .then(() => {
+                    document.querySelector('.badge').textContent = '✅ EXPO ACTIVO';
+                    document.querySelector('.badge').style.background = '#48bb78';
+                })
+                .catch(() => {
+                    document.querySelector('.badge').textContent = '❌ EXPO OFFLINE';
+                    document.querySelector('.badge').style.background = '#f56565';
+                });
+        }, 10000);
+    </script>
+</body>
+</html>

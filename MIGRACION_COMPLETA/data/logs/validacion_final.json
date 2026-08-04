@@ -1,0 +1,22 @@
+{
+  "fecha": "2026-08-02T21:16:24.856Z",
+  "tablas": {
+    "personas": 3235,
+    "grupos": 493,
+    "expedientes": 493,
+    "integrantes": 3426,
+    "creditos": 0,
+    "tesoreras": 297
+  },
+  "integridad": {
+    "integrantes_sin_persona": 0,
+    "integrantes_sin_expediente": 0,
+    "expedientes_sin_grupo": 0
+  },
+  "advertencias": [
+    "personas: 61.02% de diferencia con esperado",
+    "integrantes: 59.25% de diferencia con esperado",
+    "tesoreras: 95.56% de diferencia con esperado"
+  ],
+  "errores": []
+}

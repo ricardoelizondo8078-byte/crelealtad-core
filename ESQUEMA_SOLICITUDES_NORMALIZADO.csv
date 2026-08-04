@@ -1,0 +1,106 @@
+TABLA,COLUMNA,TIPO_DATO,NULLABLE,DEFAULT,RELACION_FK,REGISTROS_EN_TABLA
+solicitudes,id,uuid,NO,"uuid_generate_v4()",,0
+solicitudes,folio,character varying(20),YES,"",,0
+solicitudes,integrante_id,uuid,YES,"",,0
+solicitudes,integrante_id_old,uuid,YES,"",,0
+solicitudes,persona_id,uuid,YES,"",,0
+solicitudes,expediente_id,uuid,YES,"",,0
+solicitudes,grupo_id,uuid,YES,"",,0
+solicitudes,credito_id,uuid,YES,"",,0
+solicitudes,ciclo_numero,numeric(32),YES,"",,0
+solicitudes,numero_credito,numeric(32),YES,"",,0
+solicitudes,monto_solicitado,numeric(10),YES,"",,0
+solicitudes,monto_autorizado,numeric(10),YES,"",,0
+solicitudes,created_at,timestamp with time zone,NO,"now()",,0
+solicitudes,updated_at,timestamp with time zone,NO,"now()",,0
+solicitudes_datos_personales,id,uuid,NO,"uuid_generate_v4()",,0
+solicitudes_datos_personales,solicitud_id,uuid,NO,"",FK → solicitudes.id,0
+solicitudes_datos_personales,primer_nombre,character varying(50),YES,"",,0
+solicitudes_datos_personales,segundo_nombre,character varying(50),YES,"",,0
+solicitudes_datos_personales,apellido_pat,character varying(50),YES,"",,0
+solicitudes_datos_personales,apellido_mat,character varying(50),YES,"",,0
+solicitudes_datos_personales,curp,character varying(18),YES,"",,0
+solicitudes_datos_personales,fecha_nac,date,YES,"",,0
+solicitudes_datos_personales,genero,character varying(20),YES,"",,0
+solicitudes_datos_personales,nacionalidad,character varying(50),YES,"",,0
+solicitudes_datos_personales,estado_nacimiento,character varying(50),YES,"",,0
+solicitudes_datos_personales,estado_civil,character varying(50),YES,"",,0
+solicitudes_datos_personales,ocupacion,character varying(100),YES,"",,0
+solicitudes_datos_personales,nivel_estudio,character varying(50),YES,"",,0
+solicitudes_datos_personales,telefono,character varying(20),YES,"",,0
+solicitudes_datos_personales,created_at,timestamp with time zone,NO,"now()",,0
+solicitudes_datos_personales,updated_at,timestamp with time zone,NO,"now()",,0
+solicitudes_domicilios,id,uuid,NO,"uuid_generate_v4()",,0
+solicitudes_domicilios,solicitud_id,uuid,NO,"",FK → solicitudes.id,0
+solicitudes_domicilios,dom_calle,character varying(150),YES,"",,0
+solicitudes_domicilios,dom_num_ext,character varying(20),YES,"",,0
+solicitudes_domicilios,dom_num_int,character varying(20),YES,"",,0
+solicitudes_domicilios,dom_entre_calles,character varying(150),YES,"",,0
+solicitudes_domicilios,dom_colonia,character varying(100),YES,"",,0
+solicitudes_domicilios,dom_municipio,character varying(100),YES,"",,0
+solicitudes_domicilios,dom_estado,character varying(50),YES,"",,0
+solicitudes_domicilios,dom_codigo_postal,character varying(5),YES,"",,0
+solicitudes_domicilios,dom_cp_id,uuid,YES,"",,0
+solicitudes_domicilios,dom_telefono,character varying(20),YES,"",,0
+solicitudes_domicilios,created_at,timestamp with time zone,NO,"now()",,0
+solicitudes_domicilios,updated_at,timestamp with time zone,NO,"now()",,0
+solicitudes_negocios,id,uuid,NO,"uuid_generate_v4()",,0
+solicitudes_negocios,solicitud_id,uuid,NO,"",FK → solicitudes.id,0
+solicitudes_negocios,negocio_giro,character varying(100),YES,"",,0
+solicitudes_negocios,negocio_domicilio,character varying(200),YES,"",,0
+solicitudes_negocios,negocio_colonia,character varying(100),YES,"",,0
+solicitudes_negocios,negocio_municipio,character varying(100),YES,"",,0
+solicitudes_negocios,negocio_estado,character varying(50),YES,"",,0
+solicitudes_negocios,negocio_codigo_postal,character varying(5),YES,"",,0
+solicitudes_negocios,negocio_cp_id,uuid,YES,"",,0
+solicitudes_negocios,negocio_num_ext,character varying(20),YES,"",,0
+solicitudes_negocios,negocio_num_int,character varying(20),YES,"",,0
+solicitudes_negocios,negocio_desde_cuando,character varying(50),YES,"",,0
+solicitudes_negocios,negocio_ingreso_semanal,numeric(10),YES,"",,0
+solicitudes_negocios,negocio_otros_ingresos,numeric(10),YES,"",,0
+solicitudes_negocios,negocio_gastos,numeric(10),YES,"",,0
+solicitudes_negocios,negocio_total,numeric(10),YES,"",,0
+solicitudes_negocios,created_at,timestamp with time zone,NO,"now()",,0
+solicitudes_negocios,updated_at,timestamp with time zone,NO,"now()",,0
+solicitudes_referencias,id,uuid,NO,"uuid_generate_v4()",,0
+solicitudes_referencias,solicitud_id,uuid,NO,"",FK → solicitudes.id,0
+solicitudes_referencias,ref1_nombre,character varying(150),YES,"",,0
+solicitudes_referencias,ref1_parentesco,character varying(50),YES,"",,0
+solicitudes_referencias,ref1_telefono,character varying(20),YES,"",,0
+solicitudes_referencias,ref1_direccion,character varying(200),YES,"",,0
+solicitudes_referencias,ref2_nombre,character varying(150),YES,"",,0
+solicitudes_referencias,ref2_parentesco,character varying(50),YES,"",,0
+solicitudes_referencias,ref2_telefono,character varying(20),YES,"",,0
+solicitudes_referencias,ref2_direccion,character varying(200),YES,"",,0
+solicitudes_referencias,pareja_nombre,character varying(150),YES,"",,0
+solicitudes_referencias,pareja_actividad,character varying(100),YES,"",,0
+solicitudes_referencias,pareja_ingreso_semanal,numeric(10),YES,"",,0
+solicitudes_referencias,created_at,timestamp with time zone,NO,"now()",,0
+solicitudes_referencias,updated_at,timestamp with time zone,NO,"now()",,0
+solicitudes_beneficiarios,id,uuid,NO,"uuid_generate_v4()",,0
+solicitudes_beneficiarios,solicitud_id,uuid,NO,"",FK → solicitudes.id,0
+solicitudes_beneficiarios,beneficiario_nombre,character varying(150),YES,"",,0
+solicitudes_beneficiarios,beneficiario_parentesco,character varying(50),YES,"",,0
+solicitudes_beneficiarios,beneficiario_telefono,character varying(20),YES,"",,0
+solicitudes_beneficiarios,beneficiario_direccion,character varying(200),YES,"",,0
+solicitudes_beneficiarios,created_at,timestamp with time zone,NO,"now()",,0
+solicitudes_beneficiarios,updated_at,timestamp with time zone,NO,"now()",,0
+solicitudes_validaciones,id,uuid,NO,"uuid_generate_v4()",,0
+solicitudes_validaciones,solicitud_id,uuid,NO,"",FK → solicitudes.id,0
+solicitudes_validaciones,tiene_medidor_luz,character varying(20),YES,"",,0
+solicitudes_validaciones,vive_max_5km_tesorera,character varying(20),YES,"",,0
+solicitudes_validaciones,tiene_menos_70_anios,character varying(20),YES,"",,0
+solicitudes_validaciones,created_at,timestamp with time zone,NO,"now()",,0
+solicitudes_validaciones,updated_at,timestamp with time zone,NO,"now()",,0
+solicitudes_documentos,id,uuid,NO,"uuid_generate_v4()",,0
+solicitudes_documentos,solicitud_id,uuid,NO,"",FK → solicitudes.id,0
+solicitudes_documentos,doc_ine_ruta,character varying(500),YES,"",,0
+solicitudes_documentos,doc_ine_fecha,date,YES,"",,0
+solicitudes_documentos,doc_comprobante_ruta,character varying(500),YES,"",,0
+solicitudes_documentos,doc_comprobante_fecha,date,YES,"",,0
+solicitudes_documentos,doc_ine_beneficiario_ruta,character varying(500),YES,"",,0
+solicitudes_documentos,doc_ine_beneficiario_fecha,date,YES,"",,0
+solicitudes_documentos,doc_solicitud_firmada_ruta,character varying(500),YES,"",,0
+solicitudes_documentos,doc_solicitud_firmada_fecha,date,YES,"",,0
+solicitudes_documentos,created_at,timestamp with time zone,NO,"now()",,0
+solicitudes_documentos,updated_at,timestamp with time zone,NO,"now()",,0

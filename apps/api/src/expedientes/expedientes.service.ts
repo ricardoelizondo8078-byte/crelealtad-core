@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ExpedienteEntity } from './expediente.entity';
+import { IntegranteEntity } from '../integrantes/integrante.entity';
 
 @Injectable()
 export class ExpedientesService {
   constructor(
     @InjectRepository(ExpedienteEntity)
     private readonly expedienteRepository: Repository<ExpedienteEntity>,
+    @InjectRepository(IntegranteEntity)
+    private readonly integranteRepository: Repository<IntegranteEntity>,
   ) {}
 
   async listAll(): Promise<ExpedienteEntity[]> {
@@ -26,6 +29,27 @@ export class ExpedientesService {
     });
   }
 
+  async getIntegrantes(expedienteId: string): Promise<any[]> {
+    const integrantes = await this.integranteRepository
+      .createQueryBuilder('integrante')
+      .leftJoinAndSelect('integrante.solicitud', 'solicitud')
+      .where('integrante.expediente_id = :expedienteId', { expedienteId })
+      .getMany();
+
+    return integrantes.map(int => ({
+      id: int.id,
+      nombre: int.solicitud
+        ? `${int.solicitud.primer_nombre || ''} ${int.solicitud.segundo_nombre || ''} ${int.solicitud.apellido_pat || ''} ${int.solicitud.apellido_mat || ''}`.trim()
+        : 'Sin nombre',
+      primer_nombre: int.solicitud?.primer_nombre,
+      apellido_pat: int.solicitud?.apellido_pat,
+      telefono: int.solicitud?.dom_telefono,
+      monto_solicitado: int.solicitud?.monto_autorizado || 0,
+      es_tesorera: false, // TODO: Agregar campo en la entidad
+      ciclo: 1, // TODO: Obtener del expediente
+    }));
+  }
+
   async sendToVerification(id: string): Promise<ExpedienteEntity | null> {
     const expediente = await this.expedienteRepository.findOne({
       where: { id },
@@ -35,7 +59,8 @@ export class ExpedientesService {
       return null;
     }
 
-    expediente.estado = 'EN_REVISION';
+    expediente.estado = 'EN_VERIFICACION';
+    expediente.estado_fecha = new Date(); // Actualizar fecha de cambio de estado
     return this.expedienteRepository.save(expediente);
   }
 

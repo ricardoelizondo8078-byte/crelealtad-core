@@ -26,38 +26,21 @@ interface AuthContextData {
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
-const STORAGE_KEY_USER = 'crelealtad:usuario';
+const STORAGE_KEY_USER = 'crelealtad:usuario:v2';
 const STORAGE_KEY_TOKEN = process.env.REQUIRED_SECRET;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // No cargamos de AsyncStorage al inicio
 
-  useEffect(() => {
-    loadStoredAuth();
-  }, []);
-
-  const loadStoredAuth = async () => {
-    try {
-      const [storedUser, storedToken] = await Promise.all([AsyncStorage.getItem(STORAGE_KEY_USER), AsyncStorage.getItem(STORAGE_KEY_TOKEN)]);
-
-      if (storedUser && storedToken) {
-        setUsuario(JSON.parse(storedUser));
-        setToken(storedToken);
-      }
-    } catch (error) {
-      console.error('Error loading auth:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // NO cargamos sesión guardada - por seguridad siempre inicia sin sesión
+  // Esto obliga a hacer login cada vez que se abre la app desde cero
 
   const login = async (data: LoginResponse) => {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.usuario));
-      await AsyncStorage.setItem(STORAGE_KEY_TOKEN, data.token);
-
+      // Solo guardamos en memoria (estado), NO en AsyncStorage
+      // Así cuando se cierra completamente la app, se pierde la sesión
       setUsuario(data.usuario);
       setToken(data.token);
     } catch (error) {
@@ -68,9 +51,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await Promise.all([AsyncStorage.removeItem(STORAGE_KEY_USER), AsyncStorage.removeItem(STORAGE_KEY_TOKEN)]);
+      // Limpiar estado en memoria
       setUsuario(null);
       setToken(null);
+
+      // Limpiar AsyncStorage por si acaso (limpieza de sesiones antiguas)
+      await Promise.all([
+        AsyncStorage.removeItem(STORAGE_KEY_USER),
+        AsyncStorage.removeItem(STORAGE_KEY_TOKEN)
+      ]);
     } catch (error) {
       console.error('Error clearing auth:', error);
       throw error;

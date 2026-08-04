@@ -1,0 +1,225 @@
+﻿
+═══════════════════════════════════════════════════════
+  EXTRAYENDO DE HOJA: BASE DE DATOS
+═══════════════════════════════════════════════════════
+
+Total de filas: 24580
+
+PRIMERAS 30 COLUMNAS (fila 1 - encabezados):
+[A] col[ 0]: (vacío)
+[B] col[ 1]: BASE DE DATOS 
+[C] col[ 2]: (vacío)
+[D] col[ 3]: (vacío)
+[E] col[ 4]: (vacío)
+[F] col[ 5]: 365
+[G] col[ 6]: 366
+[H] col[ 7]: (vacío)
+[I] col[ 8]: (vacío)
+[J] col[ 9]: (vacío)
+[K] col[10]: (vacío)
+[L] col[11]: (vacío)
+[M] col[12]: (vacío)
+[N] col[13]: COBRANZA CAPTURA SEM 365
+[O] col[14]: (vacío)
+[P] col[15]: (vacío)
+[Q] col[16]: (vacío)
+[R] col[17]: (vacío)
+[S] col[18]: (vacío)
+[T] col[19]: (vacío)
+[U] col[20]: (vacío)
+[V] col[21]: (vacío)
+[W] col[22]: (vacío)
+[X] col[23]: (vacío)
+[Y] col[24]: (vacío)
+[Z] col[25]: (vacío)
+[[] col[26]: (vacío)
+[\] col[27]: (vacío)
+[]] col[28]: (vacío)
+[^] col[29]: (vacío)
+
+
+VALORES DE LAS COLUMNAS ESPECÍFICAS:
+Columna J [9]: 
+Columna W [22]: 
+Columna X [23]: 
+
+
+MUESTRA DE PRIMERAS 20 FILAS:
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Fila  10:
+   [A] #
+   [B] SEM
+   [C] # GPO
+   [J] Fecha: FECHA DE DESEMBOLSO
+   [W] Día: DIA PAGO
+   [X] Hora: HORA PAGO
+
+Fila  11:
+   [A] 214-002-(0003-15-00)
+   [B] 214
+   [C] 3
+   [J] Fecha: 8-Sep-23
+   [W] Día: 
+   [X] Hora: 
+
+Fila  12:
+   [A] 214-002-(0003-15-01)
+   [B] 214
+   [C] 3
+   [J] Fecha: 8-Sep-23
+   [W] Día: 
+   [X] Hora: 
+
+Fila  13:
+   [A] 214-002-(0003-15-02)
+   [B] 214
+   [C] 3
+   [J] Fecha: 8-Sep-23
+   [W] Día: 
+   [X] Hora: 
+
+Fila  14:
+   [A] 214-002-(0003-15-03)
+   [B] 214
+   [C] 3
+   [J] Fecha: 8-Sep-23
+   [W] Día: 
+   [X] Hora: 
+
+Fila  15:
+   [A] 214-002-(0003-15-04)
+   [B] 214
+   [C] 3
+   [J] Fecha: 8-Sep-23
+   [W] Día: 
+   [X] Hora: 
+
+Fila  16:
+   [A] 214-002-(0003-15-05)
+   [B] 214
+   [C] 3
+   [J] Fecha: 8-Sep-23
+   [W] Día: 
+   [X] Hora: 
+
+Fila  17:
+   [A] 214-002-(0003-15-06)
+   [B] 214
+   [C] 3
+   [J] Fecha: 8-Sep-23
+   [W] Día: 
+   [X] Hora: 
+
+Fila  18:
+   [A] 214-002-(0003-15-07)
+   [B] 214
+   [C] 3
+   [J] Fecha: 8-Sep-23
+   [W] Día: 
+   [X] Hora: 
+
+Fila  19:
+   [A] 214-002-(0003-15-08)
+   [B] 214
+   [C] 3
+   [J] Fecha: 8-Sep-23
+   [W] Día: 
+   [X] Hora: 
+
+Fila  20:
+   [A] 214-002-(0003-15-09)
+   [B] 214
+   [C] 3
+   [J] Fecha: 8-Sep-23
+   [W] Día: 
+   [X] Hora: 
+
+
+🔍 BUSCANDO COLUMNAS DE GRUPO, NOMBRE, CICLO:
+════════════════════════════════════════════════════════════════════════════════
+✅ GRUPO encontrado en columna [col208] índice 208: FILTRADO GRUPOS VIGENTES
+❌ NOMBRE no encontrado en encabezados
+❌ CICLO no encontrado en encabezados
+
+
+📊 EXTRAYENDO TODOS LOS DATOS:
+════════════════════════════════════════════════════════════════════════════════
+
+Total de registros extraídos: 24571
+✅ Datos guardados en: data/logs/datos_base_datos_76_COMPLETO.json
+
+📈 ESTADÍSTICAS:
+   Registros con GRUPO: 2
+   Registros con FECHA: 24570
+   Registros con DÍA PAGO: 22590
+
+
+📋 MUESTRA DE REGISTROS CON DATOS (primeros 20):
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+1. Fila Excel 2:
+   Grupo: BASE DE GRUPOS HISTORICA
+
+2. Fila Excel 11:
+   Grupo: #
+   Fecha Desembolso: FECHA DE DESEMBOLSO
+   Día Pago: DIA PAGO
+   Hora Pago: HORA PAGO
+
+3. Fila Excel 12:
+   Fecha Desembolso: 8-Sep-23
+
+4. Fila Excel 13:
+   Fecha Desembolso: 8-Sep-23
+
+5. Fila Excel 14:
+   Fecha Desembolso: 8-Sep-23
+
+6. Fila Excel 15:
+   Fecha Desembolso: 8-Sep-23
+
+7. Fila Excel 16:
+   Fecha Desembolso: 8-Sep-23
+
+8. Fila Excel 17:
+   Fecha Desembolso: 8-Sep-23
+
+9. Fila Excel 18:
+   Fecha Desembolso: 8-Sep-23
+
+10. Fila Excel 19:
+   Fecha Desembolso: 8-Sep-23
+
+11. Fila Excel 20:
+   Fecha Desembolso: 8-Sep-23
+
+12. Fila Excel 21:
+   Fecha Desembolso: 8-Sep-23
+
+13. Fila Excel 22:
+   Fecha Desembolso: 8-Sep-23
+
+14. Fila Excel 23:
+   Fecha Desembolso: 8-Sep-23
+
+15. Fila Excel 24:
+   Fecha Desembolso: 8-Sep-23
+
+16. Fila Excel 25:
+   Fecha Desembolso: 8-Sep-23
+
+17. Fila Excel 26:
+   Fecha Desembolso: 8-Sep-23
+
+18. Fila Excel 27:
+   Fecha Desembolso: 8-Sep-23
+
+19. Fila Excel 28:
+   Fecha Desembolso: 8-Sep-23
+
+20. Fila Excel 29:
+   Fecha Desembolso: 8-Sep-23
+
+═══════════════════════════════════════════════════════
+
