@@ -1,6 +1,8 @@
 ﻿import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { ExpedientesModule } from './expedientes/expedientes.module';
 import { GruposModule } from './grupos/grupos.module';
 import { HealthController } from './health.controller';
@@ -10,18 +12,25 @@ import { CodigosPostalesModule } from './codigos-postales/codigos-postales.modul
 
 @Module({
   controllers: [HealthController],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: process.env.DB_PASSWORD || process.env.DB_PASS,
-      database: 'crelealtad',
-      ssl: false,
+      url: process.env.DATABASE_URL,
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      username: process.env.DB_USERNAME || 'postgres',
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME || 'crelealtad',
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
       synchronize: false, // ⚠️ DESACTIVADO - Schema se gestiona con migraciones SQL
       autoLoadEntities: true,
-      logging: true,
+      logging: process.env.NODE_ENV !== 'production',
       retryAttempts: 3,
       retryDelay: 3000,
     }),

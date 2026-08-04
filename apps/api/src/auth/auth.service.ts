@@ -1,13 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
 import { Usuario, UsuarioEstado } from '../catalogos/entities/usuario.entity';
+import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
-
-export interface LoginDto {
-  email: string;
-  password: string;
-}
 
 export interface LoginResponse {
   usuario: {
@@ -26,6 +23,7 @@ export class AuthService {
   constructor(
     @InjectRepository(Usuario)
     private usuariosRepo: Repository<Usuario>,
+    private jwtService: JwtService,
   ) {}
 
   async getLoginList(): Promise<{ id: string; nombre: string; email: string }[]> {
@@ -68,9 +66,14 @@ export class AuthService {
       ultimo_login: new Date(),
     });
 
-    // Por ahora, generar un token simple (UUID)
-    // En producción usar JWT
-    const token = `${usuario.id}-${Date.now()}`;
+    // Generar JWT token
+    const payload = {
+      sub: usuario.id,
+      email: usuario.email,
+      rol: usuario.rol_id,
+    };
+
+    const token = this.jwtService.sign(payload);
 
     return {
       usuario: {
@@ -86,21 +89,19 @@ export class AuthService {
   }
 
   async validateToken(token: string): Promise<Usuario | null> {
-    // Por ahora, extraer el ID del token simple
-    const [userId] = token.split('-');
+    try {
+      const payload = this.jwtService.verify(token);
+      const usuario = await this.usuariosRepo.findOne({
+        where: { id: payload.sub },
+      });
 
-    if (!userId) {
+      if (!usuario || usuario.estado !== UsuarioEstado.ACTIVO) {
+        return null;
+      }
+
+      return usuario;
+    } catch {
       return null;
     }
-
-    const usuario = await this.usuariosRepo.findOne({
-      where: { id: userId },
-    });
-
-    if (!usuario || usuario.estado !== 'ACTIVO') {
-      return null;
-    }
-
-    return usuario;
   }
 }

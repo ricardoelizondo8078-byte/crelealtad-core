@@ -1,10 +1,51 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors();
+  // Habilitar validación global
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Elimina propiedades no definidas en el DTO
+      forbidNonWhitelisted: true, // Lanza error si hay propiedades no permitidas
+      transform: true, // Transforma payloads a instancias de DTO
+      transformOptions: {
+        enableImplicitConversion: true, // Convierte tipos automáticamente
+      },
+    }),
+  );
+
+  // Configurar CORS con orígenes permitidos
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:8081', 'http://192.168.1.*'];
+
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Permitir requests sin origin (mobile apps, Postman)
+      if (!origin) return callback(null, true);
+
+      // Verificar si el origin está en la lista de permitidos
+      const isAllowed = allowedOrigins.some((allowed) => {
+        if (allowed.includes('*')) {
+          const pattern = new RegExp('^' + allowed.replace(/\*/g, '.*') + '$');
+          return pattern.test(origin);
+        }
+        return allowed === origin;
+      });
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
   const port = process.env.PORT || 3100;
 

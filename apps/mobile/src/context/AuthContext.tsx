@@ -39,10 +39,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (data: LoginResponse) => {
     try {
-      // Solo guardamos en memoria (estado), NO en AsyncStorage
-      // Así cuando se cierra completamente la app, se pierde la sesión
+      // Guardar en memoria (estado)
       setUsuario(data.usuario);
       setToken(data.token);
+
+      // Guardar token en AsyncStorage para que el api-client pueda accederlo
+      await AsyncStorage.setItem(STORAGE_KEY_TOKEN, data.token);
+      await AsyncStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.usuario));
     } catch (error) {
       console.error('Error saving auth:', error);
       throw error;
