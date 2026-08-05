@@ -24,8 +24,7 @@ export const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ onBack, on
     setIsSubmitting(true);
     try {
       const data = await api.post<any>('/grupos', {
-        name: name.trim(),
-        createdBy: 'advisor',
+        nombre: name.trim(),
       });
 
       console.log('✅ Grupo creado exitosamente:', JSON.stringify(data));

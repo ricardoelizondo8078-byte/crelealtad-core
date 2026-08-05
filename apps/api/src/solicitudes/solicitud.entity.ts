@@ -16,7 +16,7 @@ import { IntegranteEntity } from '../integrantes/integrante.entity';
  */
 @Entity('solicitudes_completo')
 export class SolicitudEntity {
-  @Column({ type: 'uuid', primary: true, name: 'solicitud_id' })
+  @Column({ type: 'uuid', primary: true })
   id: string;
 
   // Nuevas columnas de vínculo
