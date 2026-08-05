@@ -190,6 +190,23 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
       ddl += '\n';
     }
 
+    // Vistas
+    const views = await client.query(`
+      SELECT
+        table_name,
+        view_definition
+      FROM information_schema.views
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `);
+
+    if (views.rows.length > 0) {
+      ddl += `-- Vistas\n`;
+      for (const view of views.rows) {
+        ddl += `CREATE OR REPLACE VIEW ${view.table_name} AS\n${view.view_definition};\n\n`;
+      }
+    }
+
     // Guardar
     const outputPath = path.join(__dirname, '../../../database/schema-dump.sql');
     fs.writeFileSync(outputPath, ddl, 'utf8');

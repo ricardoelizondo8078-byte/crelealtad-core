@@ -1,5 +1,5 @@
 -- Schema dump de crelealtad (estructura completa)
--- Generado: 2026-08-05T22:31:25.368Z
+-- Generado: 2026-08-05T22:36:05.657Z
 -- Base: crelealtad (producción)
 
 -- Extensiones
@@ -672,4 +672,21 @@ ALTER TABLE solicitudes_validaciones ADD CONSTRAINT solicitudes_validaciones_uni
 ALTER TABLE sucursales ADD CONSTRAINT sucursales_folio_key UNIQUE (folio);
 ALTER TABLE usuarios ADD CONSTRAINT usuarios_new_email_key UNIQUE (email);
 ALTER TABLE zonas ADD CONSTRAINT zonas_folio_key UNIQUE (folio);
+
+-- Vistas
+CREATE OR REPLACE VIEW solicitudes_completo AS
+ SELECT id,
+    folio,
+    integrante_id,
+    persona_id,
+    expediente_id,
+    grupo_id,
+    credito_id,
+    ciclo_numero,
+    numero_credito,
+    monto_solicitado,
+    monto_autorizado,
+    created_at,
+    updated_at
+   FROM solicitudes s;;
 
