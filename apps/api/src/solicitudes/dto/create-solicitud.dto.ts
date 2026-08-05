@@ -1,17 +1,39 @@
-import { IsUUID, IsOptional, IsString, IsNumber, IsBoolean, MaxLength, Min } from 'class-validator';
+import {
+  IsUUID,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsDateString,
+  IsBoolean,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 /**
  * DTO para crear/actualizar solicitudes
  *
- * CRÍTICO: NO usar firma de índice [key: string].
- * Cada campo debe estar explícitamente declarado con su validador.
+ * ARQUITECTURA: cada campo coincide EXACTAMENTE con el nombre de columna en PostgreSQL.
+ * Las 8 tablas (solicitudes + 7 hijas) están representadas aquí con sus prefijos originales.
  *
- * Campos que NUNCA deben venir del frontend:
- * - numero_credito (asignado en desembolso)
- * - credito_id (asignado en desembolso)
+ * CAMPOS CORE REQUERIDOS (solicitudes):
+ * - integrante_id, persona_id, expediente_id, grupo_id
+ *
+ * CAMPOS QUE NUNCA VIENEN DEL FRONTEND:
+ * - numero_credito, credito_id (asignados en desembolso)
+ *
+ * TABLAS HIJAS (todos opcionales porque el wizard guarda por pasos):
+ * - solicitudes_datos_personales: 17 cols
+ * - solicitudes_domicilios: 14 cols
+ * - solicitudes_negocios: 18 cols
+ * - solicitudes_referencias: 15 cols
+ * - solicitudes_beneficiarios: 8 cols
+ * - solicitudes_validaciones: 7 cols
+ * - solicitudes_documentos: 12 cols
  */
 export class CreateSolicitudDto {
-  // ===== IDENTIFICADORES (CORE - REQUERIDOS) =====
+  // ====================================================================
+  // TABLA: solicitudes (CORE) - 14 columnas
+  // ====================================================================
 
   @IsUUID('4', { message: 'integrante_id debe ser un UUID válido' })
   integrante_id: string;
@@ -35,8 +57,6 @@ export class CreateSolicitudDto {
   @Min(1)
   ciclo_numero?: number;
 
-  // ===== MONTOS =====
-
   @IsOptional()
   @IsNumber()
   @Min(0)
@@ -47,21 +67,28 @@ export class CreateSolicitudDto {
   @Min(0)
   monto_autorizado?: number;
 
-  // ===== DATOS PERSONALES =====
+  // ====================================================================
+  // TABLA: solicitudes_datos_personales - 17 columnas
+  // ====================================================================
 
   @IsOptional()
   @IsString()
-  @MaxLength(100)
-  nombres?: string;
+  @MaxLength(50)
+  primer_nombre?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(100)
+  @MaxLength(50)
+  segundo_nombre?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
   apellido_pat?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(100)
+  @MaxLength(50)
   apellido_mat?: string;
 
   @IsOptional()
@@ -70,13 +97,23 @@ export class CreateSolicitudDto {
   curp?: string;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(13)
-  rfc?: string;
+  @IsDateString()
+  fecha_nac?: string;
 
   @IsOptional()
   @IsString()
-  fecha_nacimiento?: string;
+  @MaxLength(20)
+  genero?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  nacionalidad?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  estado_nacimiento?: string;
 
   @IsOptional()
   @IsString()
@@ -84,78 +121,76 @@ export class CreateSolicitudDto {
   estado_civil?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  dependientes_economicos?: number;
+  @IsString()
+  @MaxLength(100)
+  ocupacion?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  escolaridad?: string;
+  nivel_estudio?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(20)
   telefono?: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  email?: string;
-
-  // ===== DOMICILIO =====
+  // ====================================================================
+  // TABLA: solicitudes_domicilios - 14 columnas
+  // ====================================================================
 
   @IsOptional()
   @IsString()
-  @MaxLength(200)
-  calle?: string;
+  @MaxLength(150)
+  dom_calle?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(20)
-  numero_ext?: string;
+  dom_num_ext?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(20)
-  numero_int?: string;
+  dom_num_int?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  dom_entre_calles?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  colonia?: string;
+  dom_colonia?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  municipio?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  estado?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(5)
-  codigo_postal?: string;
+  dom_municipio?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  tipo_vivienda?: string;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  años_residencia?: number;
-
-  // ===== NEGOCIO =====
+  dom_estado?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(200)
-  negocio_nombre?: string;
+  @MaxLength(5)
+  dom_codigo_postal?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  dom_cp_id?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  dom_telefono?: string;
+
+  // ====================================================================
+  // TABLA: solicitudes_negocios - 18 columnas
+  // ====================================================================
 
   @IsOptional()
   @IsString()
@@ -165,12 +200,7 @@ export class CreateSolicitudDto {
   @IsOptional()
   @IsString()
   @MaxLength(200)
-  negocio_calle?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(20)
-  negocio_numero_ext?: string;
+  negocio_domicilio?: string;
 
   @IsOptional()
   @IsString()
@@ -183,35 +213,61 @@ export class CreateSolicitudDto {
   negocio_municipio?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  negocio_años_operacion?: number;
+  @IsString()
+  @MaxLength(50)
+  negocio_estado?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(5)
+  negocio_codigo_postal?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  negocio_cp_id?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  negocio_num_ext?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  negocio_num_int?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  negocio_tipo_local?: string;
+  negocio_desde_cuando?: string;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  negocio_monto_renta?: number;
+  negocio_ingreso_semanal?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  negocio_ingresos_mensuales?: number;
+  negocio_otros_ingresos?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  negocio_gastos_mensuales?: number;
+  negocio_gastos?: number;
 
-  // ===== REFERENCIAS =====
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  negocio_total?: number;
+
+  // ====================================================================
+  // TABLA: solicitudes_referencias - 15 columnas
+  // ====================================================================
 
   @IsOptional()
   @IsString()
-  @MaxLength(200)
+  @MaxLength(150)
   ref1_nombre?: string;
 
   @IsOptional()
@@ -227,6 +283,11 @@ export class CreateSolicitudDto {
   @IsOptional()
   @IsString()
   @MaxLength(200)
+  ref1_direccion?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
   ref2_nombre?: string;
 
   @IsOptional()
@@ -239,11 +300,33 @@ export class CreateSolicitudDto {
   @MaxLength(20)
   ref2_telefono?: string;
 
-  // ===== BENEFICIARIO =====
-
   @IsOptional()
   @IsString()
   @MaxLength(200)
+  ref2_direccion?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  pareja_nombre?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  pareja_actividad?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  pareja_ingreso_semanal?: number;
+
+  // ====================================================================
+  // TABLA: solicitudes_beneficiarios - 8 columnas
+  // ====================================================================
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
   beneficiario_nombre?: string;
 
   @IsOptional()
@@ -256,51 +339,67 @@ export class CreateSolicitudDto {
   @MaxLength(20)
   beneficiario_telefono?: string;
 
-  // ===== VALIDACIONES =====
-
   @IsOptional()
-  @IsBoolean()
-  validacion_identidad?: boolean;
+  @IsString()
+  @MaxLength(200)
+  beneficiario_direccion?: string;
 
-  @IsOptional()
-  @IsBoolean()
-  validacion_domicilio?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  validacion_negocio?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  validacion_referencias?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  validacion_buro?: boolean;
+  // ====================================================================
+  // TABLA: solicitudes_validaciones - 7 columnas
+  // ====================================================================
 
   @IsOptional()
   @IsString()
-  validacion_observaciones?: string;
-
-  // ===== DOCUMENTOS =====
-
-  @IsOptional()
-  @IsString()
-  documento_ine_url?: string;
+  @MaxLength(20)
+  tiene_medidor_luz?: string;
 
   @IsOptional()
   @IsString()
-  documento_curp_url?: string;
+  @MaxLength(20)
+  vive_max_5km_tesorera?: string;
 
   @IsOptional()
   @IsString()
-  documento_comprobante_domicilio_url?: string;
+  @MaxLength(20)
+  tiene_menos_70_anios?: string;
+
+  // ====================================================================
+  // TABLA: solicitudes_documentos - 12 columnas
+  // ====================================================================
 
   @IsOptional()
   @IsString()
-  documento_estado_cuenta_url?: string;
+  @MaxLength(500)
+  doc_ine_ruta?: string;
 
   @IsOptional()
-  @IsBoolean()
-  documentos_completos?: boolean;
+  @IsDateString()
+  doc_ine_fecha?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  doc_comprobante_ruta?: string;
+
+  @IsOptional()
+  @IsDateString()
+  doc_comprobante_fecha?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  doc_ine_beneficiario_ruta?: string;
+
+  @IsOptional()
+  @IsDateString()
+  doc_ine_beneficiario_fecha?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  doc_solicitud_firmada_ruta?: string;
+
+  @IsOptional()
+  @IsDateString()
+  doc_solicitud_firmada_fecha?: string;
 }
