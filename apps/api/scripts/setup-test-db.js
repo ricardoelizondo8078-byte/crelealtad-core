@@ -1,9 +1,18 @@
+/**
+ * Setup de crelealtad_test desde schema dump de producción
+ *
+ * PRINCIPIO: Test debe correr contra el MISMO schema que producción.
+ * Aplica el schema-dump.sql que es el dump completo de la base real.
+ *
+ * Ejecutar: node scripts/setup-test-db.js
+ */
+
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
 async function setupTestDb() {
-  // Primero crear la BD (conectar a postgres default)
+  // Conectar a postgres para crear/borrar BD
   const adminClient = new Client({
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432'),
@@ -16,21 +25,19 @@ async function setupTestDb() {
     await adminClient.connect();
     console.log('✓ Conectado a PostgreSQL');
 
-    // Verificar si existe
-    const checkDb = await adminClient.query(
-      "SELECT 1 FROM pg_database WHERE datname = 'crelealtad_test'"
-    );
+    // 1. BORRAR base existente
+    console.log('\n=== PASO 1: Borrar crelealtad_test si existe ===');
+    await adminClient.query('DROP DATABASE IF EXISTS crelealtad_test');
+    console.log('✓ Base borrada');
 
-    if (checkDb.rows.length === 0) {
-      await adminClient.query('CREATE DATABASE crelealtad_test');
-      console.log('✓ Base de datos crelealtad_test creada');
-    } else {
-      console.log('✓ Base de datos crelealtad_test ya existe');
-    }
+    // 2. CREAR base vacía
+    console.log('\n=== PASO 2: Crear crelealtad_test vacía ===');
+    await adminClient.query('CREATE DATABASE crelealtad_test');
+    console.log('✓ Base creada');
 
     await adminClient.end();
 
-    // Ahora conectar a crelealtad_test y aplicar migraciones
+    // 3. APLICAR SCHEMA DUMP
     const testClient = new Client({
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5432'),
@@ -40,76 +47,113 @@ async function setupTestDb() {
     });
 
     await testClient.connect();
-    console.log('✓ Conectado a crelealtad_test');
+    console.log('\n=== PASO 3: Aplicar schema dump ===');
 
-    // Habilitar extensión uuid
-    await testClient.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
-    console.log('✓ Extensión uuid-ossp habilitada');
+    const schemaDump = path.join(__dirname, '../../../database/schema-dump.sql');
 
-    // Crear tabla personas
-    await testClient.query(`
-      CREATE TABLE IF NOT EXISTS personas (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        nombres VARCHAR(150),
-        apellido_pat VARCHAR(50),
-        apellido_mat VARCHAR(50),
-        nombre_completo VARCHAR(255),
-        curp VARCHAR(18) UNIQUE,
-        fecha_nac DATE,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-    `);
-    console.log('✓ Tabla personas creada');
+    if (!fs.existsSync(schemaDump)) {
+      throw new Error(`Schema dump no encontrado: ${schemaDump}`);
+    }
 
-    // Crear tablas auxiliares
-    await testClient.query(`
-      CREATE TABLE IF NOT EXISTS grupos (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        nombre VARCHAR(200),
-        tesorera_id UUID,
-        ciclo_numero INTEGER,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-    `);
-    console.log('✓ Tabla grupos creada');
-
-    await testClient.query(`
-      CREATE TABLE IF NOT EXISTS expedientes (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        grupo_id UUID,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-    `);
-    console.log('✓ Tabla expedientes creada');
-
-    await testClient.query(`
-      CREATE TABLE IF NOT EXISTS integrantes (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        expediente_id UUID,
-        persona_id UUID,
-        estado VARCHAR(50) DEFAULT 'DOCUMENTANDO',
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-    `);
-    console.log('✓ Tabla integrantes creada');
-
-    // Aplicar migración principal (solicitudes)
-    const migrationPath = path.join(__dirname, '../src/migrations/crear-solicitudes-normalizadas.sql');
-    const migrationSql = fs.readFileSync(migrationPath, 'utf8');
-
-    await testClient.query(migrationSql);
-    console.log('✓ Migraciones de solicitudes aplicadas');
+    const sql = fs.readFileSync(schemaDump, 'utf8');
+    await testClient.query(sql);
+    console.log('✓ Schema aplicado');
 
     await testClient.end();
-    console.log('✓ Setup completo');
+
+    console.log('\n=== PASO 4: Verificación final ===');
+    await verificarSchema();
+
+    console.log('\n✅ Setup completo. crelealtad_test es copia exacta de producción.');
   } catch (error) {
-    console.error('Error en setup:', error.message);
+    console.error('\n❌ Error en setup:', error.message);
     process.exit(1);
   }
+}
+
+async function verificarSchema() {
+  const testClient = new Client({
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASS,
+    database: 'crelealtad_test',
+  });
+
+  await testClient.connect();
+
+  // Verificar columnas críticas
+  const columnas = await testClient.query(`
+    SELECT table_name, count(*) as num_columnas
+    FROM information_schema.columns
+    WHERE table_name IN ('grupos', 'integrantes', 'expedientes', 'personas')
+    GROUP BY table_name
+    ORDER BY table_name
+  `);
+
+  console.log('\n  Columnas por tabla:');
+  columnas.rows.forEach(row => {
+    console.log(`    ${row.table_name}: ${row.num_columnas} columnas`);
+  });
+
+  // Verificar que grupos NO tenga tesorera_id ni ciclo_numero
+  const gruposExtras = await testClient.query(`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name = 'grupos'
+      AND column_name IN ('tesorera_id', 'ciclo_numero')
+  `);
+
+  if (gruposExtras.rows.length > 0) {
+    console.error('\n  ❌ ERROR: grupos tiene columnas inventadas:');
+    gruposExtras.rows.forEach(row => console.error(`     - ${row.column_name}`));
+    throw new Error('Schema test tiene columnas que contradicen arquitectura');
+  }
+
+  console.log('  ✓ grupos NO tiene tesorera_id ni ciclo_numero');
+
+  // Verificar que integrantes SÍ tenga folio
+  const integrantesFolio = await testClient.query(`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name = 'integrantes'
+      AND column_name = 'folio'
+  `);
+
+  if (integrantesFolio.rows.length === 0) {
+    console.error('\n  ❌ ERROR: integrantes NO tiene columna folio');
+    throw new Error('Schema test le falta columna folio en integrantes');
+  }
+
+  console.log('  ✓ integrantes SÍ tiene folio');
+
+  // Verificar las 5 FK de solicitudes con RESTRICT
+  const fksRestrict = await testClient.query(`
+    SELECT
+      tc.constraint_name,
+      kcu.column_name,
+      rc.delete_rule
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu
+      ON tc.constraint_name = kcu.constraint_name
+    JOIN information_schema.referential_constraints rc
+      ON rc.constraint_name = tc.constraint_name
+    WHERE tc.table_name = 'solicitudes'
+      AND tc.constraint_type = 'FOREIGN KEY'
+      AND kcu.column_name IN ('persona_id', 'integrante_id', 'expediente_id', 'grupo_id', 'credito_id')
+  `);
+
+  const restricts = fksRestrict.rows.filter(r => r.delete_rule === 'RESTRICT');
+  if (restricts.length !== 5) {
+    console.error(`\n  ❌ ERROR: Solo ${restricts.length}/5 FK tienen RESTRICT`);
+    throw new Error('Faltan FK con RESTRICT en solicitudes');
+  }
+
+  console.log('  ✓ 5 FK de solicitudes con ON DELETE RESTRICT');
+
+  console.log('  ✓ Verificación OK: schema correcto');
+
+  await testClient.end();
 }
 
 setupTestDb();

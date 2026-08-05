@@ -72,8 +72,6 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
       .post('/grupos')
       .send({
         nombre: 'Grupo Test Wizard',
-        tesorera_id: '00000000-0000-0000-0000-000000000001', // UUID de prueba
-        ciclo_numero: 1,
       })
       .expect(201);
 

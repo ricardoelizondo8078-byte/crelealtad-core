@@ -47,8 +47,6 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
       .post('/grupos')
       .send({
         nombre: 'Grupo Test Validación',
-        tesorera_id: '00000000-0000-0000-0000-000000000001',
-        ciclo_numero: 1,
       });
     grupoId = grupoRes.body.id;
 

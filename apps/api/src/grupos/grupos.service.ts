@@ -17,12 +17,15 @@ export class GruposService {
     private readonly expedientesService: ExpedientesService,
   ) {}
 
-  async create(dto: { name: string }) {
-    const normalizedName = dto.name.trim().toUpperCase();
+  async create(dto: { nombre: string; zona_id?: string; sucursal_id?: string; fecha_inicio?: string; created_by?: string }) {
+    const normalizedName = dto.nombre.trim().toUpperCase();
 
     const grupo = this.grupoRepository.create({
       nombre: normalizedName,
-      fecha_inicio: new Date(),
+      zona_id: dto.zona_id || null,
+      sucursal_id: dto.sucursal_id || null,
+      fecha_inicio: dto.fecha_inicio ? new Date(dto.fecha_inicio) : new Date(),
+      created_by: dto.created_by || null,
       estado: GrupoEstado.FORMANDO,
     } as any);
 
