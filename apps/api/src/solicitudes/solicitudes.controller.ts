@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { SolicitudesService } from './solicitudes.service';
 import { SolicitudEntity } from './solicitud.entity';
 import { CreateSolicitudDto } from './dto/create-solicitud.dto';
+import { PartialUpdateSolicitudDto } from './dto/partial-update-solicitud.dto';
 
 @Controller('solicitudes')
 export class SolicitudesController {
@@ -31,7 +32,7 @@ export class SolicitudesController {
   @Patch(':solicitanteId')
   async partialUpdate(
     @Param('solicitanteId') solicitanteId: string,
-    @Body() data: any,
+    @Body() data: PartialUpdateSolicitudDto,
   ) {
     return this.solicitudesService.partialUpdate(solicitanteId, data);
   }
@@ -39,7 +40,7 @@ export class SolicitudesController {
   @Patch('integrante/:integranteId')
   async partialUpdateByIntegrante(
     @Param('integranteId') integranteId: string,
-    @Body() data: any,
+    @Body() data: PartialUpdateSolicitudDto,
   ) {
     return this.solicitudesService.partialUpdate(integranteId, data);
   }

@@ -107,9 +107,27 @@ export class SolicitudesService {
     return this.createOrUpdateForSolicitante(dto);
   }
 
-  async partialUpdate(solicitanteId: string, data: CreateSolicitudDto): Promise<SolicitudEntity> {
-    // Usar integrante_id del DTO, no del path parameter
-    return this.createOrUpdateForSolicitante(data);
+  async partialUpdate(integranteId: string, data: any): Promise<SolicitudEntity> {
+    // DERIVAR los 4 campos obligatorios desde el integrante
+    const integrante = await this.dataSource.manager.findOne(
+      'integrantes',
+      { where: { id: integranteId }, relations: ['expediente'] }
+    );
+
+    if (!integrante) {
+      throw new BadRequestException(`Integrante ${integranteId} no encontrado`);
+    }
+
+    // Construir DTO completo con campos derivados
+    const fullDto: CreateSolicitudDto = {
+      ...data,
+      integrante_id: integranteId,
+      persona_id: integrante.persona_id,
+      expediente_id: integrante.expediente_id,
+      grupo_id: integrante.grupo_id,
+    };
+
+    return this.createOrUpdateForSolicitante(fullDto);
   }
 
   // =====================================================
@@ -118,7 +136,7 @@ export class SolicitudesService {
 
   private async upsertDatosPersonales(manager: any, solicitudId: string, data: any) {
     const fields = [
-      'nombres', 'apellido_pat', 'apellido_mat',
+      'primer_nombre', 'segundo_nombre', 'apellido_pat', 'apellido_mat',
       'curp', 'fecha_nac', 'genero', 'nacionalidad', 'estado_nacimiento',
       'estado_civil', 'ocupacion', 'nivel_estudio', 'telefono'
     ];
@@ -144,7 +162,8 @@ export class SolicitudesService {
     try {
       console.log('🔍 Guardando solicitudes_datos_personales:', JSON.stringify({
         solicitud_id: solicitudId,
-        nombres: (entity as any).nombres,
+        primer_nombre: (entity as any).primer_nombre,
+        segundo_nombre: (entity as any).segundo_nombre,
         apellido_pat: (entity as any).apellido_pat,
         apellido_mat: (entity as any).apellido_mat,
       }, null, 2));
