@@ -7,7 +7,6 @@ import { SolicitudesModule } from './solicitudes.module';
 import { IntegrantesModule } from '../integrantes/integrantes.module';
 import { ExpedientesModule } from '../expedientes/expedientes.module';
 import { GruposModule } from '../grupos/grupos.module';
-import { PersonasModule } from '../personas/personas.module';
 
 describe('Solicitudes Integration - Wizard 7 pasos', () => {
   let app: INestApplication;
@@ -31,7 +30,6 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
           synchronize: false, // NO auto-sincronizar - usamos migraciones reales
         }),
         GruposModule,
-        PersonasModule,
         ExpedientesModule,
         IntegrantesModule,
         SolicitudesModule,
@@ -91,19 +89,13 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     expedienteId = expedienteRes.body.id;
     expect(expedienteId).toBeDefined();
 
-    // 3. Crear persona
-    const personaRes = await request(app.getHttpServer())
-      .post('/personas')
-      .send({
-        nombres: 'María Elena',
-        apellido_pat: 'González',
-        apellido_mat: 'Ruiz',
-        curp: 'GORM850615MDFNZR09',
-        fecha_nac: '1985-06-15',
-      })
-      .expect(201);
-
-    personaId = personaRes.body.id;
+    // 3. Crear persona directamente en BD porque no hay endpoint /personas
+    const personaResult = await dataSource.query(
+      `INSERT INTO personas (nombres, apellido_pat, apellido_mat, curp, fecha_nac)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      ['María Elena', 'González', 'Ruiz', 'GORM850615MDFNZR09', '1985-06-15']
+    );
+    personaId = personaResult[0].id;
     expect(personaId).toBeDefined();
 
     // 4. Crear integrante

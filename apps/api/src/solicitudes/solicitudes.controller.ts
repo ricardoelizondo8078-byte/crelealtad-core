@@ -31,7 +31,7 @@ export class SolicitudesController {
   @Patch(':solicitanteId')
   async partialUpdate(
     @Param('solicitanteId') solicitanteId: string,
-    @Body() data: Partial<SolicitudEntity>,
+    @Body() data: any,
   ) {
     return this.solicitudesService.partialUpdate(solicitanteId, data);
   }
@@ -39,7 +39,7 @@ export class SolicitudesController {
   @Patch('integrante/:integranteId')
   async partialUpdateByIntegrante(
     @Param('integranteId') integranteId: string,
-    @Body() data: Partial<SolicitudEntity>,
+    @Body() data: any,
   ) {
     return this.solicitudesService.partialUpdate(integranteId, data);
   }

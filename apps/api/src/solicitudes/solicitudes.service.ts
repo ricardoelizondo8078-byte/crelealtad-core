@@ -110,61 +110,6 @@ export class SolicitudesService {
   async partialUpdate(solicitanteId: string, data: CreateSolicitudDto): Promise<SolicitudEntity> {
     // Usar integrante_id del DTO, no del path parameter
     return this.createOrUpdateForSolicitante(data);
-
-    // Mapear campos legacy
-    const fieldMappings: Record<string, string> = {
-      fechaNacimiento: 'fecha_nac',
-      estadoCivil: 'estado_civil',
-      nivelEstudio: 'nivel_estudio',
-      estado_nacimiento_nuevo: 'estado_nacimiento',
-    };
-
-    const mappedData = { ...sanitizedData };
-    Object.entries(fieldMappings).forEach(([from, to]) => {
-      if (mappedData[from] !== undefined) {
-        mappedData[to] = mappedData[from];
-        delete mappedData[from];
-      }
-    });
-
-    return await this.dataSource.transaction(async (manager) => {
-      // 1. Buscar o crear solicitud core
-      let solicitudCore = await manager.findOne(SolicitudCoreEntity, {
-        where: { integrante_id: solicitanteId },
-      });
-
-      if (!solicitudCore) {
-        solicitudCore = manager.create(SolicitudCoreEntity, { integrante_id: solicitanteId } as any);
-        solicitudCore = await manager.save(SolicitudCoreEntity, solicitudCore);
-      }
-
-      // 2. Actualizar campos core si existen
-      const coreFields = ['monto_solicitado', 'monto_autorizado', 'folio', 'persona_id', 'expediente_id', 'grupo_id'];
-      let coreUpdated = false;
-      coreFields.forEach(field => {
-        if (mappedData[field] !== undefined && mappedData[field] !== null && mappedData[field] !== '') {
-          (solicitudCore as any)[field] = mappedData[field];
-          coreUpdated = true;
-        }
-      });
-      if (coreUpdated) {
-        await manager.save(SolicitudCoreEntity, solicitudCore);
-      }
-
-      // 3. Actualizar tablas relacionadas
-      await this.upsertDatosPersonales(manager, solicitudCore.id, mappedData);
-      await this.upsertDomicilio(manager, solicitudCore.id, mappedData);
-      await this.upsertNegocio(manager, solicitudCore.id, mappedData);
-      await this.upsertReferencias(manager, solicitudCore.id, mappedData);
-      await this.upsertBeneficiario(manager, solicitudCore.id, mappedData);
-      await this.upsertValidaciones(manager, solicitudCore.id, mappedData);
-      await this.upsertDocumentos(manager, solicitudCore.id, mappedData);
-
-      console.log('✅ Solicitud actualizada en 8 tablas');
-
-      // 4. Retornar desde vista consolidada
-      return manager.findOne(SolicitudEntity, { where: { id: solicitudCore.id } });
-    });
   }
 
   // =====================================================

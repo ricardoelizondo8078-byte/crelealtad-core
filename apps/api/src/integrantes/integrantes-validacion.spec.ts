@@ -7,7 +7,6 @@ import { IntegrantesModule } from './integrantes.module';
 import { SolicitudesModule } from '../solicitudes/solicitudes.module';
 import { ExpedientesModule } from '../expedientes/expedientes.module';
 import { GruposModule } from '../grupos/grupos.module';
-import { PersonasModule } from '../personas/personas.module';
 
 describe('Integrantes - Validación de Solicitud Completa', () => {
   let app: INestApplication;
@@ -31,7 +30,6 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
           synchronize: false,
         }),
         GruposModule,
-        PersonasModule,
         ExpedientesModule,
         IntegrantesModule,
         SolicitudesModule,
@@ -59,16 +57,13 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
       .send({ grupo_id: grupoId });
     expedienteId = expedienteRes.body.id;
 
-    const personaRes = await request(app.getHttpServer())
-      .post('/personas')
-      .send({
-        nombres: 'Test',
-        apellido_pat: 'Validación',
-        apellido_mat: 'Completa',
-        curp: 'VACM900101HDFLRL01',
-        fecha_nac: '1990-01-01',
-      });
-    personaId = personaRes.body.id;
+    // Crear persona directamente en BD porque no hay endpoint /personas
+    const personaResult = await dataSource.query(
+      `INSERT INTO personas (nombres, apellido_pat, apellido_mat, curp, fecha_nac)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      ['Test', 'Validación', 'Completa', 'VACM900101HDFLRL01', '1990-01-01']
+    );
+    personaId = personaResult[0].id;
 
     const integranteRes = await request(app.getHttpServer())
       .post('/integrantes')

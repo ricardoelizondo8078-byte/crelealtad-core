@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IntegranteEntity, IntegranteEstado } from './integrante.entity';
 import { PersonaEntity } from '../personas/persona.entity';
+import { SolicitudesService } from '../solicitudes/solicitudes.service';
 
 @Injectable()
 export class IntegrantesService {
@@ -11,6 +12,8 @@ export class IntegrantesService {
     private readonly integranteRepository: Repository<IntegranteEntity>,
     @InjectRepository(PersonaEntity)
     private readonly personaRepository: Repository<PersonaEntity>,
+    @Inject(forwardRef(() => SolicitudesService))
+    private readonly solicitudesService: SolicitudesService,
   ) {}
 
   async listByExpediente(expedienteId: string): Promise<any[]> {
