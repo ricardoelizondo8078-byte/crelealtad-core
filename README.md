@@ -6,6 +6,26 @@ Sistema Integral para la Administración del Ciclo de Crédito de CRELEALTAD.
 
 ---
 
+## Setup de Desarrollo
+
+### Backend
+
+```bash
+cd apps/api
+npm install
+npm run test:setup  # Crear BD de test y aplicar migraciones
+npm test            # Ejecutar suite completa
+```
+
+Variables de entorno (.env.test):
+- DB_HOST=localhost
+- DB_PORT=5432
+- DB_USER=postgres
+- DB_PASS=postgres
+- DB_NAME=crelealtad_test
+
+---
+
 # Objetivo
 
 Desarrollar una plataforma integral que administre el ciclo completo del crédito, desde la documentación inicial hasta la liquidación del crédito, respetando exactamente la operación real de CRELEALTAD.
