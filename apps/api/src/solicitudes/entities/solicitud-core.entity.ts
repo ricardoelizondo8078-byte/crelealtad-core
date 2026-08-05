@@ -12,9 +12,6 @@ export class SolicitudCoreEntity {
   integrante_id: string;
 
   @Column({ type: 'uuid', nullable: true })
-  integrante_id_old: string;
-
-  @Column({ type: 'uuid', nullable: true })
   persona_id: string;
 
   @Column({ type: 'uuid', nullable: true })

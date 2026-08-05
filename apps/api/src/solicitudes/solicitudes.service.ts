@@ -13,9 +13,7 @@ import { SolicitudDocumentosEntity } from './entities/solicitud-documentos.entit
 import { IntegrantesService } from '../integrantes/integrantes.service';
 
 type SolicitudPayload = {
-  solicitanteId?: string;
   integrante_id?: string;
-  integrante_id_old?: string;
   [key: string]: string | boolean | number | undefined | null;
 };
 
@@ -52,7 +50,11 @@ export class SolicitudesService {
   }
 
   async createOrUpdateForSolicitante(dto: SolicitudPayload): Promise<SolicitudEntity> {
-    const integranteId = dto.integrante_id || dto.solicitanteId || dto.integrante_id_old;
+    const integranteId = dto.integrante_id;
+
+    if (!integranteId) {
+      throw new Error('integrante_id es requerido');
+    }
 
     // ⚠️  SEGURIDAD: Eliminar campos que NO deben venir del DTO
     // numero_credito y credito_id solo deben asignarse en el momento del desembolso
@@ -69,7 +71,6 @@ export class SolicitudesService {
       if (!solicitudCore) {
         solicitudCore = manager.create(SolicitudCoreEntity, {
           integrante_id: integranteId,
-          integrante_id_old: sanitizedDto.integrante_id_old,
           persona_id: sanitizedDto.persona_id,
           expediente_id: sanitizedDto.expediente_id,
           grupo_id: sanitizedDto.grupo_id,
