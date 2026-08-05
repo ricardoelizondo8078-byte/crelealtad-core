@@ -1,9 +1,15 @@
-import { Controller, Get, Param, Patch, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Post, Body, NotFoundException } from '@nestjs/common';
 import { ExpedientesService } from './expedientes.service';
+import { CreateExpedienteDto } from './dto/create-expediente.dto';
 
 @Controller('expedientes')
 export class ExpedientesController {
   constructor(private readonly expedientesService: ExpedientesService) {}
+
+  @Post()
+  create(@Body() dto: CreateExpedienteDto) {
+    return this.expedientesService.createForGroup(dto);
+  }
 
   @Get()
   listAll() {
