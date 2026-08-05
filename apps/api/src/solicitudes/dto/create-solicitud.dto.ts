@@ -358,10 +358,7 @@ export class CreateSolicitudDto {
   @MaxLength(20)
   vive_max_5km_tesorera?: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(20)
-  tiene_menos_70_anios?: string;
+  // tiene_menos_70_anios NO se captura, se calcula desde fecha_nac
 
   // ====================================================================
   // TABLA: solicitudes_documentos - 12 columnas

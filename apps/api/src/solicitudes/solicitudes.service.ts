@@ -150,6 +150,11 @@ export class SolicitudesService {
       }, null, 2));
       await manager.save(SolicitudDatosPersonalesEntity, entity);
       console.log('✅ Guardado exitoso');
+
+      // CALCULAR tiene_menos_70_anios automáticamente si hay fecha_nac
+      if (data.fecha_nac) {
+        await this.calcularTieneMenos70Anios(manager, solicitudId, data.fecha_nac);
+      }
     } catch (error) {
       console.error('❌ ERROR EN upsertDatosPersonales:');
       console.error('Error completo:', error);
@@ -158,6 +163,36 @@ export class SolicitudesService {
       console.error('SQL:', error.query);
       throw error;
     }
+  }
+
+  private async calcularTieneMenos70Anios(manager: any, solicitudId: string, fechaNac: string | Date) {
+    if (!fechaNac) return;
+
+    const fechaNacDate = typeof fechaNac === 'string' ? new Date(fechaNac) : fechaNac;
+    const hoy = new Date();
+    const edad = hoy.getFullYear() - fechaNacDate.getFullYear();
+    const mesCumpleaños = fechaNacDate.getMonth();
+    const diaCumpleaños = fechaNacDate.getDate();
+    const edadReal = (hoy.getMonth() < mesCumpleaños ||
+                      (hoy.getMonth() === mesCumpleaños && hoy.getDate() < diaCumpleaños))
+      ? edad - 1
+      : edad;
+
+    const tieneMenos70 = edadReal < 70 ? 'SI' : 'NO';
+
+    let entity = await manager.findOne(SolicitudValidacionesEntity, { where: { solicitud_id: solicitudId } });
+
+    if (!entity) {
+      entity = manager.create(SolicitudValidacionesEntity, {
+        solicitud_id: solicitudId,
+        tiene_menos_70_anios: tieneMenos70
+      } as any);
+    } else {
+      (entity as any).tiene_menos_70_anios = tieneMenos70;
+    }
+
+    await manager.save(SolicitudValidacionesEntity, entity);
+    console.log(`✅ Calculado tiene_menos_70_anios: ${tieneMenos70} (edad: ${edadReal} años)`);
   }
 
   private async upsertDomicilio(manager: any, solicitudId: string, data: any) {
@@ -261,8 +296,9 @@ export class SolicitudesService {
   }
 
   private async upsertValidaciones(manager: any, solicitudId: string, data: any) {
+    // tiene_menos_70_anios NO se captura, se calcula automáticamente desde fecha_nac
     const fields = [
-      'tiene_medidor_luz', 'vive_max_5km_tesorera', 'tiene_menos_70_anios'
+      'tiene_medidor_luz', 'vive_max_5km_tesorera'
     ];
 
     const hasData = fields.some(f => data[f] !== undefined && data[f] !== null && data[f] !== '');

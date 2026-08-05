@@ -136,10 +136,9 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
         // Paso 5
         beneficiario_nombre: 'María',
         beneficiario_parentesco: 'Hija',
-        // Paso 6
+        // Paso 6 (tiene_menos_70_anios se calcula automáticamente desde fecha_nac del paso 1)
         tiene_medidor_luz: 'SI',
         vive_max_5km_tesorera: 'SI',
-        tiene_menos_70_anios: 'SI',
         // Paso 7
         doc_ine_ruta: '/ine.jpg',
         doc_comprobante_ruta: '/comp.pdf',
