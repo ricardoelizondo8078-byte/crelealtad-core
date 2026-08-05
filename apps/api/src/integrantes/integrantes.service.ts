@@ -225,6 +225,7 @@ export class IntegrantesService {
     const faltantesPaso6: string[] = [];
     if (solicitud.tiene_medidor_luz === null || solicitud.tiene_medidor_luz === undefined) faltantesPaso6.push('tiene_medidor_luz');
     if (solicitud.vive_max_5km_tesorera === null || solicitud.vive_max_5km_tesorera === undefined) faltantesPaso6.push('vive_max_5km_tesorera');
+    if (solicitud.tiene_menos_70_anios === null || solicitud.tiene_menos_70_anios === undefined) faltantesPaso6.push('tiene_menos_70_anios');
     if (faltantesPaso6.length > 0) {
       pasosIncompletos.push('Paso 6: Validaciones');
       camposFaltantes['Paso 6'] = faltantesPaso6;
