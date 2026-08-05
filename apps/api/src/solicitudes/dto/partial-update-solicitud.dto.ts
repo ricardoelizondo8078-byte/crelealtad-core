@@ -1,6 +1,5 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType, OmitType } from '@nestjs/mapped-types';
 import { CreateSolicitudDto } from './create-solicitud.dto';
-import { OmitType } from '@nestjs/mapped-types';
 
 /**
  * DTO para PATCH /solicitudes/:integranteId

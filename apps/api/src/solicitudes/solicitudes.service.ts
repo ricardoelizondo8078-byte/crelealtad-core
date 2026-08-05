@@ -109,10 +109,7 @@ export class SolicitudesService {
 
   async partialUpdate(integranteId: string, data: any): Promise<SolicitudEntity> {
     // DERIVAR los 4 campos obligatorios desde el integrante
-    const integrante = await this.dataSource.manager.findOne(
-      'integrantes',
-      { where: { id: integranteId }, relations: ['expediente'] }
-    );
+    const integrante = await this.integrantesService.getById(integranteId);
 
     if (!integrante) {
       throw new BadRequestException(`Integrante ${integranteId} no encontrado`);
