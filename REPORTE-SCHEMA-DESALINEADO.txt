@@ -1,0 +1,142 @@
+REPORTE DE VERIFICACIÓN DE SCHEMA - 2026-08-05
+================================================
+
+CONTEXTO: La base de test (crelealtad_test) tiene un schema MINIMALISTA que no coincide
+con las entidades TypeORM ni con los DTOs. Esto causa que los tests fallen.
+
+## 1. COLUMNAS REALES EN BASE TEST
+
+### GRUPOS
+id, nombre, tesorera_id, ciclo_numero, created_at, updated_at
+
+### INTEGRANTES
+id, expediente_id, persona_id, estado, created_at, updated_at
+
+### EXPEDIENTES
+id, grupo_id, created_at, updated_at
+
+### PERSONAS
+id, nombres, apellido_pat, apellido_mat, nombre_completo, curp, fecha_nac, created_at, updated_at
+
+## 2. HALLAZGOS CRÍTICOS
+
+### GRUPOS - Triple desalineación
+
+**Base test tiene:**
+tesorera_id, ciclo_numero
+
+**GrupoEntity declara (pero NO existen en test):**
+folio, zona_id, sucursal_id, fecha_inicio, estado, created_by, deleted_at
+
+**CreateGrupoDto usa (INGLÉS, camelCase):**
+name ❌ (debería ser nombre)
+advisorName ❌ (no existe en base)
+createdBy ❌ (no existe en base test)
+
+**Test envía:**
+nombre ✅
+tesorera_id ✅
+ciclo_numero ✅
+
+**CONCLUSIÓN:** El DTO está completamente desalineado. Usa inglés y campos que no existen.
+Los tests usan los campos reales de la base. El DTO debe corregirse para aceptar:
+- nombre (no name)
+- tesorera_id (opcional)
+- ciclo_numero (opcional)
+
+### INTEGRANTES - Columna fantasma
+
+**IntegranteEntity línea 19-20:**
+```typescript
+@Column({ type: 'varchar', unique: true, nullable: true })
+folio: string;
+```
+
+**Base test:** NO tiene columna folio
+
+**CONCLUSIÓN:** La entidad declara columna que no existe. Esto rompe queries.
+Error real: "no existe la columna IntegranteEntity.folio"
+
+### EXPEDIENTES - Solo CreateExpedienteDto alineado
+
+**CreateExpedienteDto:** grupo_id ✅ CORRECTO
+**Base test:** grupo_id ✅ existe
+
+**ExpedienteEntity declara (pero NO existen en test):**
+folio, producto_id, asesora_id, horario_visita, dias_visita, semana_cobro,
+observaciones, estado, estado_fecha
+
+**CONCLUSIÓN:** El DTO nuevo está bien. La entidad tiene campos extras que no existen en test.
+
+### SOLICITUDES - CreateSolicitudDto ya verificado previo
+
+91 campos, todos en snake_case, alineados con base de producción.
+No aplica a esta verificación porque usa base real, no test.
+
+## 3. DECISIÓN ARQUITECTÓNICA VIOLADA
+
+CLAUDE.md dice:
+"Un ciclo nace ÚNICAMENTE al desembolso real. NO se crean ciclos hasta que hay un crédito activo."
+
+**PERO:** La tabla grupos en test tiene ciclo_numero como columna directa.
+
+Esto contradice la arquitectura. El ciclo debería estar en tabla ciclos, no en grupos.
+
+## 4. LISTA COMPLETA DE DESALINEACIONES DTO vs BASE
+
+### GRUPOS
+DTO campo         | Base test real    | Match
+------------------|-------------------|-------
+name              | nombre            | ❌ INGLÉS
+advisorName       | NO EXISTE         | ❌ CAMPO INVENTADO
+createdBy         | NO EXISTE en test | ❌ (existe en entidad pero no en test)
+[faltante]        | tesorera_id       | ❌ BASE TIENE, DTO NO
+[faltante]        | ciclo_numero      | ❌ BASE TIENE, DTO NO
+
+### EXPEDIENTES
+DTO campo         | Base test real    | Match
+------------------|-------------------|-------
+grupo_id          | grupo_id          | ✅ PERFECTO
+
+### INTEGRANTES
+No tiene DTO de creación, se crean directo desde controller con validación inline.
+
+### PERSONAS
+No tiene DTO ni controller. Se crean directo en BD desde tests.
+
+### AUTH
+DTO campo         | Tabla usuarios    | Match
+------------------|-------------------|-------
+email             | email             | ✅
+password          | password          | ✅
+
+## 5. PROBLEMA RAÍZ: DOS BASES DIFERENTES
+
+Parece que existe:
+1. Base de producción/desarrollo: con schema completo (folio, zona_id, estado, etc)
+2. Base de test: con schema MINIMALISTA
+
+Las entidades TypeORM se modelaron contra producción.
+Los tests corren contra test.
+Por eso las entidades declaran columnas que no existen en test.
+
+## 6. ACCIÓN REQUERIDA
+
+### OPCIÓN A: Alinear base test con entidades
+Aplicar migraciones completas a crelealtad_test para que tenga todas las columnas.
+
+### OPCIÓN B: Alinear entidades con base test
+Quitar de las entidades las columnas que no existen en test.
+Riesgo: romper código que use esas columnas.
+
+### OPCIÓN C: Corregir DTOs primero (más seguro)
+1. CreateGrupoDto debe usar nombre, tesorera_id, ciclo_numero
+2. Quitar folio de IntegranteEntity o agregarlo a base test
+3. Aplicar migraciones faltantes a crelealtad_test
+
+## 7. FRONTEND - Verificación pendiente
+
+No se verificó qué nombres usa el frontend (React Native).
+Hay que auditar apps/mobile para ver si envía name o nombre.
+
+=== FIN DEL REPORTE ===

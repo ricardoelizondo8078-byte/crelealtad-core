@@ -30,6 +30,14 @@ La vista solicitudes_completo une las 8 tablas con LEFT JOIN.
 La fuente de verdad de los nombres de campo es la COLUMNA EN POSTGRESQL.
 DTO, service, frontend y cualquier mapeo se alinean a la base, NUNCA al revés.
 
+### REGLA DE NOMENCLATURA (CRÍTICA)
+TODOS los DTOs, entities y campos de API usan los nombres EXACTOS de las columnas PostgreSQL.
+- PROHIBIDO inglés (name, email, password son excepciones legacy de auth).
+- PROHIBIDO camelCase en capa de datos (createdBy, advisorName, etc).
+- OBLIGATORIO español y snake_case siguiendo la base: nombre, tesorera_id, ciclo_numero.
+- Antes de crear un DTO, verificar las columnas reales con information_schema.
+- Cualquier desalineación DTO-base debe corregirse en el DTO, no en la base.
+
 ### DTO
 CreateSolicitudDto tiene 91 campos:
 - 4 requeridos: integrante_id, persona_id, expediente_id, grupo_id
