@@ -27,9 +27,7 @@ export class IntegrantesService {
 
       return integrantes.map((integrante) => {
         const persona = integrante.persona;
-        const nombre = persona
-          ? `${persona.primer_nombre} ${persona.apellido_pat} ${persona.apellido_mat || ''}`.trim()
-          : '';
+        const nombre = persona?.nombre_completo || '';
         const telefono = persona?.telefono ?? null;
         const montoSolicitado = persona?.monto_solicitado ?? 0;
 
@@ -74,10 +72,10 @@ export class IntegrantesService {
         });
         if (persona) {
           personaData = {
-            nombres: persona.primer_nombre,
+            nombres: persona.nombres,
             apellido_pat: persona.apellido_pat,
             apellido_mat: persona.apellido_mat,
-            nombre: `${persona.primer_nombre} ${persona.apellido_pat} ${persona.apellido_mat ?? ''}`.trim(),
+            nombre: persona.nombre_completo,
             telefono: persona.telefono ?? null,
             telefonoSecundario: persona.telefono_secundario ?? null,
             montoSolicitado: persona.monto_solicitado ?? 0,
@@ -122,23 +120,17 @@ export class IntegrantesService {
 
       // Crear persona si se proporcionan datos
       if (!persona_id && (dto.nombres || dto.nombre)) {
-        const nombreCompleto = dto.nombre ||
-          `${dto.nombres ?? ''} ${dto.apellidoPaterno ?? ''} ${dto.apellidoMaterno ?? ''}`.trim();
-
-        const partesNombre = nombreCompleto.split(' ');
-        const nombres = dto.nombres || partesNombre[0] || '';
+        const nombres = dto.nombres?.trim().toUpperCase() || '';
         const apellido_pat = dto.apellidoPaterno?.trim().toUpperCase() ?? '';
         const apellido_mat = dto.apellidoMaterno?.trim().toUpperCase() ?? '';
 
-        const persona = this.personaRepository.create({
-          primer_nombre: nombres,
+        const personaGuardada = await this.personaRepository.save({
+          nombres: nombres,
           apellido_pat: apellido_pat,
           apellido_mat: apellido_mat,
           telefono: dto.telefono ?? null,
           monto_solicitado: dto.montoSolicitado ?? null,
         });
-
-        const personaGuardada = await this.personaRepository.save(persona);
         persona_id = personaGuardada.id;
       }
 
@@ -225,7 +217,7 @@ export class IntegrantesService {
           } else if (campo === 'montoSolicitado') {
             datosPersona.monto_solicitado = data[campo];
           } else if (campo === 'nombres') {
-            datosPersona.primer_nombre = data[campo];
+            datosPersona.nombres = data[campo];
           } else {
             datosPersona[campo] = data[campo];
           }

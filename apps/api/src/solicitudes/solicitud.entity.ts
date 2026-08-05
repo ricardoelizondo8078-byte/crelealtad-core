@@ -50,18 +50,19 @@ export class SolicitudEntity {
   // @Column({ type: 'boolean', default: true })
   // es_nuevo: boolean;  // CAMPO NO EXISTE EN BD - COMENTADO
 
-  // Datos personales (snapshot)
-  @Column({ type: 'varchar', nullable: true })
-  primer_nombre: string;
-
-  @Column({ type: 'varchar', nullable: true })
-  segundo_nombre: string;
+  // Datos personales (snapshot) - Refactorización
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  nombres: string;
 
   @Column({ type: 'varchar', nullable: true })
   apellido_pat: string;
 
   @Column({ type: 'varchar', nullable: true })
   apellido_mat: string;
+
+  // Columna generada (nombre completo)
+  @Column({ type: 'varchar', length: 255, nullable: true, select: true, insert: false, update: false })
+  nombre_completo: string;
 
   @Column({ type: 'varchar', nullable: true })
   curp: string;

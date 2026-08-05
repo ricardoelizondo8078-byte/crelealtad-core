@@ -32,19 +32,17 @@ export class ExpedientesService {
   async getIntegrantes(expedienteId: string): Promise<any[]> {
     const integrantes = await this.integranteRepository
       .createQueryBuilder('integrante')
-      .leftJoinAndSelect('integrante.solicitud', 'solicitud')
+      .leftJoinAndSelect('integrante.persona', 'persona')
       .where('integrante.expediente_id = :expedienteId', { expedienteId })
       .getMany();
 
     return integrantes.map(int => ({
       id: int.id,
-      nombre: int.solicitud
-        ? `${int.solicitud.primer_nombre || ''} ${int.solicitud.segundo_nombre || ''} ${int.solicitud.apellido_pat || ''} ${int.solicitud.apellido_mat || ''}`.trim()
-        : 'Sin nombre',
-      primer_nombre: int.solicitud?.primer_nombre,
-      apellido_pat: int.solicitud?.apellido_pat,
-      telefono: int.solicitud?.dom_telefono,
-      monto_solicitado: int.solicitud?.monto_autorizado || 0,
+      nombre: int.persona?.nombre_completo || 'Sin nombre',
+      nombres: int.persona?.nombres,
+      apellido_pat: int.persona?.apellido_pat,
+      telefono: int.persona?.telefono,
+      monto_solicitado: int.persona?.monto_solicitado || 0,
       es_tesorera: false, // TODO: Agregar campo en la entidad
       ciclo: 1, // TODO: Obtener del expediente
     }));

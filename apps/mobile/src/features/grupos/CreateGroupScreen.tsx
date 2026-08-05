@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { AppHeader, Card, FormField, PrimaryButton, ScreenContainer, ScreenTitleBar } from '../../components/ui';
-import { apiUrl } from '../../config/api';
+import { api } from '../../services/api-client';
 import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { normalizeUppercaseText } from '../../utils/input';
 
@@ -23,24 +23,12 @@ export const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ onBack, on
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(apiUrl('/grupos'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          createdBy: 'advisor',
-        }),
+      const data = await api.post<any>('/grupos', {
+        name: name.trim(),
+        createdBy: 'advisor',
       });
 
-      console.log('Status:', response.status);
-      console.log('Ok:', response.ok);
-
-      if (!response.ok) {
-        throw new Error('Failed to create group');
-      }
-
-      const data = await response.json();
-      console.log('Respuesta del backend:', JSON.stringify(data));
+      console.log('✅ Grupo creado exitosamente:', JSON.stringify(data));
 
       // Mensaje de confirmación mejorado
       Alert.alert(
@@ -56,9 +44,22 @@ export const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ onBack, on
           }
         ]
       );
-    } catch (error) {
-      console.log('Error completo:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Unexpected error');
+    } catch (error: any) {
+      console.log('❌ Error completo:', error);
+      console.log('❌ Error message:', error.message);
+      console.log('❌ Error status:', error.status);
+      console.log('❌ Error data:', JSON.stringify(error.data));
+
+      let errorMessage = 'Error al crear el grupo';
+      if (error.data?.message) {
+        errorMessage = Array.isArray(error.data.message)
+          ? error.data.message.join(', ')
+          : error.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsSubmitting(false);
     }

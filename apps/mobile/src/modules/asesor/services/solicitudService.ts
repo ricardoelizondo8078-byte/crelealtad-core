@@ -45,8 +45,7 @@ class SolicitudService {
   private mapServerToForm(data: any): SolicitudFormData {
     return {
       // Paso 1
-      primerNombre: data.primer_nombre,
-      segundoNombre: data.segundo_nombre,
+      nombres: data.nombres,
       apellidoPaterno: data.apellido_pat,
       apellidoMaterno: data.apellido_mat,
       curp: data.curp,
@@ -112,8 +111,7 @@ class SolicitudService {
   private mapFormToServer(formData: SolicitudFormData): any {
     return {
       // Paso 1
-      primer_nombre: formData.primerNombre,
-      segundo_nombre: formData.segundoNombre,
+      nombres: formData.nombres,
       apellido_pat: formData.apellidoPaterno,
       apellido_mat: formData.apellidoMaterno,
       curp: formData.curp,

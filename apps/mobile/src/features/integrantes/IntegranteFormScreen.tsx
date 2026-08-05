@@ -9,7 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { AppHeader, Card, FormField, PrimaryButton, ScreenContainer, ScreenTitleBar } from '../../components/ui';
-import { apiUrl } from '../../config/api';
+import { api } from '../../services/api-client';
 import { MAX_SOLICITUD_AMOUNT } from '../../config/parameters';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
@@ -124,28 +124,21 @@ export const IntegranteFormScreen: React.FC<IntegranteFormScreenProps> = ({ expe
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(apiUrl('/integrantes'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          expedienteId,
-          nombre: fullName,
-          nombres: nombres.trim(),
-          apellidoPaterno: apellidoPaterno.trim(),
-          apellidoMaterno: apellidoMaterno.trim(),
-          telefono: normalizePhone(telefono),
-          montoSolicitado: Number(montoSolicitado),
-        }),
+      await api.post('/integrantes', {
+        expedienteId,
+        nombre: fullName,
+        nombres: nombres.trim(),
+        apellidoPaterno: apellidoPaterno.trim(),
+        apellidoMaterno: apellidoMaterno.trim(),
+        telefono: normalizePhone(telefono),
+        montoSolicitado: Number(montoSolicitado),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create integrante');
-      }
-
-      Alert.alert('Éxito', 'integrante guardado');
+      Alert.alert('Éxito', 'Integrante guardado correctamente');
       onSaved?.();
-    } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Unexpected error');
+    } catch (error: any) {
+      const errorMessage = error.data?.message || error.message || 'Error al guardar integrante';
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsSubmitting(false);
     }

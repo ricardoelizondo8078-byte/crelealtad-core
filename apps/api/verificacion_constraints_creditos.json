@@ -1,0 +1,28 @@
+{
+  "constraints": [
+    {
+      "constraint_name": "solicitudes_datos_personales_unique",
+      "table_name": "solicitudes_datos_personales",
+      "column_name": "solicitud_id"
+    }
+  ],
+  "fks": [
+    {
+      "table_name": "solicitudes_datos_personales",
+      "column_name": "solicitud_id",
+      "foreign_table_name": "solicitudes",
+      "foreign_column_name": "id",
+      "constraint_name": "fk_datos_personales_solicitud"
+    }
+  ],
+  "integridad": {
+    "total_personas": "3242",
+    "total_solicitudes": "0",
+    "total_creditos": "0",
+    "solicitudes_huerfanas": "0",
+    "creditos_huerfanos": "0"
+  },
+  "distribucion": [],
+  "duplicados": [],
+  "timestamp": "2026-08-05T18:50:03.686Z"
+}

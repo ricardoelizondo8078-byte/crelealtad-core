@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useState, useCallback } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AppHeader, Card, PrimaryButton, ScreenContainer, ScreenTitleBar, SectionTitle } from '../../components/ui';
-import { apiUrl } from '../../config/api';
+import { api } from '../../services/api-client';
 import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
 import { formatPhone } from '../../utils/input';
@@ -65,12 +65,7 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
 
   const loadExpediente = async () => {
     try {
-      const response = await fetch(apiUrl(`/expedientes/${expedienteId}`));
-      if (!response.ok) {
-        throw new Error('Failed to load expediente');
-      }
-
-      const data = await response.json();
+      const data = await api.get<any>(`/expedientes/${expedienteId}`);
       console.log('Expediente data:', JSON.stringify(data));
       setExpediente(data);
 
@@ -78,12 +73,9 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
       if (data.grupo_id) {
         console.log('Cargando grupo con ID:', data.grupo_id);
         try {
-          const grupoResponse = await fetch(apiUrl(`/grupos/${data.grupo_id}`));
-          if (grupoResponse.ok) {
-            const grupoData = await grupoResponse.json();
-            console.log('Grupo data:', JSON.stringify(grupoData));
-            setGrupo(grupoData);
-          }
+          const grupoData = await api.get<any>(`/grupos/${data.grupo_id}`);
+          console.log('Grupo data:', JSON.stringify(grupoData));
+          setGrupo(grupoData);
         } catch {
           // Si falla, no mostramos el nombre del grupo
         }
@@ -95,22 +87,15 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
 
   const loadSolicitantes = async () => {
     try {
-      const response = await fetch(apiUrl(`/integrantes/expediente/${expedienteId}`));
-      if (!response.ok) {
-        throw new Error('Failed to load integrantes');
-      }
-
-      const data = await response.json();
+      const data = await api.get<any>(`/integrantes/expediente/${expedienteId}`);
       const enriched = await Promise.all(
         data.map(async (integrante: any) => {
           try {
-            const solicitudResponse = await fetch(apiUrl(`/solicitudes/integrante/${integrante.id}`));
             let solicitud = null;
-            if (solicitudResponse.ok) {
-              const text = await solicitudResponse.text();
-              if (text) {
-                solicitud = JSON.parse(text);
-              }
+            try {
+              solicitud = await api.get<any>(`/solicitudes/integrante/${integrante.id}`);
+            } catch {
+              // No tiene solicitud todavía
             }
             const hasSolicitud = Boolean(solicitud);
 
@@ -251,7 +236,7 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
   ) => {
     try {
       // TODO: Implementar endpoint que reciba la selección de integrantes
-      const response = await fetch(apiUrl(`/expedientes/${expedienteId}/send-to-verification`), {
+      const response = await api.patch<any>(`/expedientes/${expedienteId}/send-to-verification`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

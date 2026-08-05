@@ -20,8 +20,7 @@ export type SelectorFieldKey =
 
 export interface SolicitudFormData {
   // Paso 1: Información Personal
-  primerNombre?: string;
-  segundoNombre?: string;
+  nombres?: string;
   apellidoPaterno?: string;
   apellidoMaterno?: string;
   curp?: string;

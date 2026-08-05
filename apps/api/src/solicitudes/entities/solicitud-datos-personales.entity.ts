@@ -8,17 +8,19 @@ export class SolicitudDatosPersonalesEntity {
   @Column({ type: 'uuid' })
   solicitud_id: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  primer_nombre: string;
-
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  segundo_nombre: string;
+  // Nombres unificados (refactorización)
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  nombres: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   apellido_pat: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   apellido_mat: string;
+
+  // Columna generada (nombre completo)
+  @Column({ type: 'varchar', length: 255, nullable: true, select: true, insert: false, update: false })
+  nombre_completo: string;
 
   @Column({ type: 'varchar', length: 18, nullable: true })
   curp: string;

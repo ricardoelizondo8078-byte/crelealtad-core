@@ -2,7 +2,7 @@
 import { ActivityIndicator, Alert, StyleSheet, Text, View, ScrollView, Modal, TouchableOpacity, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { AppHeader, Card, PrimaryButton, ScreenContainer, ScreenTitleBar, SecondaryButton } from '../../components/ui';
-import { apiUrl } from '../../config/api';
+import { api } from '../../services/api-client';
 import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
 import { formatPhone } from '../../utils/input';
@@ -69,7 +69,7 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
     setLoading(true);
     try {
       // Los documentos ahora son campos en la tabla solicitudes
-      const response = await fetch(apiUrl(`/solicitudes/integrante/${integranteId}`));
+      const response = await api.get(`/solicitudes/integrante/${integranteId}`);
       if (!response.ok) {
         throw new Error('Failed to load solicitud');
       }
@@ -119,7 +119,7 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
   const loadIntegranteInfo = async () => {
     try {
       console.log('📱 Cargando integrante:', integranteId);
-      const response = await fetch(apiUrl(`/integrantes/${integranteId}`));
+      const response = await api.get(`/integrantes/${integranteId}`);
       console.log('📱 Respuesta integrante:', response.status);
 
       if (response.ok) {
@@ -156,7 +156,7 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
   useEffect(() => {
     const loadData = async () => {
       console.log('📱 Cargando integrante:', integranteId);
-      const response = await fetch(apiUrl(`/integrantes/${integranteId}`));
+      const response = await api.get(`/integrantes/${integranteId}`);
       console.log('📱 Respuesta integrante:', response.status);
 
       if (response.ok) {
@@ -322,7 +322,7 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
       const fechaCaptura = new Date().toISOString().split('T')[0];
 
       // Actualizar campos en solicitudes
-      const response = await fetch(apiUrl(`/solicitudes/${integranteId}`), {
+      const response = await api.post(`/solicitudes/${integranteId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

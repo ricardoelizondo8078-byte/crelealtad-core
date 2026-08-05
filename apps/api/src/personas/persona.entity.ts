@@ -11,17 +11,19 @@ export class PersonaEntity {
   @Column({ type: 'varchar', length: 18, unique: true, nullable: true })
   curp: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: false })
-  primer_nombre: string;
-
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  segundo_nombre: string;
+  // Nombres unificados (refactorización)
+  @Column({ type: 'varchar', length: 150, nullable: false })
+  nombres: string;
 
   @Column({ type: 'varchar', length: 50, nullable: false })
   apellido_pat: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   apellido_mat: string;
+
+  // Columna generada (nombre completo)
+  @Column({ type: 'varchar', length: 255, nullable: true, select: true, insert: false, update: false })
+  nombre_completo: string;
 
   @Column({ type: 'date', nullable: true })
   fecha_nac: Date;

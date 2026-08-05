@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { ExpedienteEntity } from '../expedientes/expediente.entity';
 import { SolicitudEntity } from '../solicitudes/solicitud.entity';
+import { PersonaEntity } from '../personas/persona.entity';
 
 export enum IntegranteEstado {
   DOCUMENTANDO = 'DOCUMENTANDO',
@@ -40,6 +41,10 @@ export class IntegranteEntity {
   @ManyToOne(() => ExpedienteEntity)
   @JoinColumn({ name: 'expediente_id' })
   expediente: ExpedienteEntity;
+
+  @ManyToOne(() => PersonaEntity)
+  @JoinColumn({ name: 'persona_id' })
+  persona: PersonaEntity;
 
   @OneToOne(() => SolicitudEntity, (solicitud) => solicitud.integrante)
   solicitud: SolicitudEntity;

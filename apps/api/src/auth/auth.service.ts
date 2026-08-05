@@ -40,6 +40,12 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<LoginResponse> {
+    // ⚠️ TEMPORAL - SOLO DESARROLLO ⚠️
+    // TODO: Implementar PINs numéricos individuales por usuario (encriptados)
+    // Este bypass con PIN 1234 debe ser removido antes de producción
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    const DEV_PIN = '1234';
+
     // Buscar usuario por email
     const usuario = await this.usuariosRepo.findOne({
       where: { email: dto.email },
@@ -49,8 +55,18 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // Verificar contraseña
-    const passwordValida = await bcrypt.compare(dto.password, usuario.password_hash);
+    // ⚠️ BYPASS TEMPORAL DE DESARROLLO ⚠️
+    // En desarrollo, acepta PIN 1234 para cualquier usuario
+    // En producción, solo valida con bcrypt
+    let passwordValida = false;
+
+    if (isDevelopment && dto.password === DEV_PIN) {
+      console.warn('⚠️ [DEV] Autenticación con PIN temporal 1234 - NO USAR EN PRODUCCIÓN');
+      passwordValida = true;
+    } else {
+      // Verificación de contraseña real con bcrypt
+      passwordValida = await bcrypt.compare(dto.password, usuario.password_hash);
+    }
 
     if (!passwordValida) {
       throw new UnauthorizedException('Credenciales inválidas');

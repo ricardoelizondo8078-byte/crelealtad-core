@@ -58,10 +58,10 @@ interface IntegranteData {
 }
 
 interface SolicitudData {
-  primer_nombre: string;
-  segundo_nombre?: string;
+  nombres: string;
   apellido_pat: string;
   apellido_mat?: string;
+  nombre_completo?: string;
   dom_calle?: string;
   dom_num_ext?: string;
   dom_num_int?: string;
@@ -233,10 +233,10 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
 
           // Guardar datos de la solicitud para usar en los headers
           setSolicitudData({
-            primer_nombre: solicitudData.primer_nombre,
-            segundo_nombre: solicitudData.segundo_nombre,
+            nombres: solicitudData.nombres,
             apellido_pat: solicitudData.apellido_pat,
             apellido_mat: solicitudData.apellido_mat,
+            nombre_completo: solicitudData.nombre_completo,
             dom_calle: solicitudData.dom_calle,
             dom_num_ext: solicitudData.dom_num_ext,
             dom_num_int: solicitudData.dom_num_int,
@@ -319,7 +319,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
               console.log('Integrantes del grupo cargadas:', integrantesData);
               const integrantesMapped = integrantesData.map((int: any) => ({
                 id: int.id,
-                nombre: int.nombre || `${int.primer_nombre || ''} ${int.apellido_pat || ''}`.trim(),
+                nombre: int.nombre || int.nombre_completo || `${int.nombres || ''} ${int.apellido_pat || ''}`.trim(),
                 telefono: int.telefono,
                 montoSolicitado: int.monto_solicitado || 0,
                 esTesorera: int.es_tesorera || false,

@@ -167,7 +167,7 @@ export class SolicitudesService {
 
   private async upsertDatosPersonales(manager: any, solicitudId: string, data: any) {
     const fields = [
-      'primer_nombre', 'segundo_nombre', 'apellido_pat', 'apellido_mat',
+      'nombres', 'apellido_pat', 'apellido_mat',
       'curp', 'fecha_nac', 'genero', 'nacionalidad', 'estado_nacimiento',
       'estado_civil', 'ocupacion', 'nivel_estudio', 'telefono'
     ];
@@ -187,7 +187,26 @@ export class SolicitudesService {
       }
     });
 
-    await manager.save(SolicitudDatosPersonalesEntity, entity);
+    // Eliminar campos readonly/generated antes de guardar
+    delete (entity as any).nombre_completo;
+
+    try {
+      console.log('🔍 Guardando solicitudes_datos_personales:', JSON.stringify({
+        solicitud_id: solicitudId,
+        nombres: (entity as any).nombres,
+        apellido_pat: (entity as any).apellido_pat,
+        apellido_mat: (entity as any).apellido_mat,
+      }, null, 2));
+      await manager.save(SolicitudDatosPersonalesEntity, entity);
+      console.log('✅ Guardado exitoso');
+    } catch (error) {
+      console.error('❌ ERROR EN upsertDatosPersonales:');
+      console.error('Error completo:', error);
+      console.error('Mensaje:', error.message);
+      console.error('Detalle:', error.detail);
+      console.error('SQL:', error.query);
+      throw error;
+    }
   }
 
   private async upsertDomicilio(manager: any, solicitudId: string, data: any) {

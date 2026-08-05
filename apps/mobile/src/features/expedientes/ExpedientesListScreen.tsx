@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AppHeader, Card, ScreenContainer, ScreenTitleBar } from '../../components/ui';
-import { apiUrl } from '../../config/api';
+import { api } from '../../services/api-client';
 import { colors, spacing, typography } from '../../theme/tokens';
 
 export interface ExpedienteSummary {
@@ -66,13 +66,8 @@ export const ExpedientesListScreen: React.FC<ExpedientesListScreenProps> = ({ on
     const loadExpedientes = async () => {
       setLoading(true);
       try {
-        const response = await fetch(apiUrl('/grupos'));
-        if (!response.ok) {
-          throw new Error('Failed to load expedientes');
-        }
-
-        const data = await response.json();
-        setExpedientes(data);
+        const data = await api.get<any>('/grupos');
+        setExpedientes(data.data || data);
       } catch (error) {
         Alert.alert('Error', error instanceof Error ? error.message : 'Unexpected error');
       } finally {

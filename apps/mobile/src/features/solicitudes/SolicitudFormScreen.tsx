@@ -21,6 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppHeader, Card, DatePickerField, FormField, PrimaryButton, ScreenContainer, ScreenTitleBar, SecondaryButton, SelectorField, StickySectionHeader } from '../../components/ui';
 import { apiUrl } from '../../config/api';
+import { api } from '../../services/api-client';
 import {
   ANTIGUEDAD_NEGOCIO_OPTIONS,
   DEFAULT_STATE,
@@ -348,20 +349,12 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
         console.log('🔄 AUTO-SAVE datos integrante:', JSON.stringify(datosSolicitante, null, 2));
 
-        await fetch(apiUrl(`/integrantes/${integranteId}`), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(datosSolicitante),
-        });
+        await api.patch(`/integrantes/${integranteId}`, datosSolicitante);
       }
 
       // Guardar formulario
       if (Object.keys(datosSolicitud).length > 0) {
-        await fetch(apiUrl(`/solicitudes/${integranteId}`), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(datosSolicitud),
-        });
+        await api.patch(`/solicitudes/${integranteId}`, datosSolicitud);
       }
 
       setAutoSaveStatus('saved');
@@ -406,56 +399,25 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
       try {
         // Cargar datos del integrante
-        const integranteResponse = await fetch(apiUrl(`/integrantes/${integranteId}`));
-        if (integranteResponse.ok) {
-          integranteData = await integranteResponse.json();
+        integranteData = await api.get(`/integrantes/${integranteId}`);
+        if (integranteData) {
           setIntegrante(integranteData);
 
           // Pre-cargar datos iniciales del integrante en el formulario
-          // Si no tiene nombres separados, intentar parsear del nombre completo
-          let nombres = integranteData.nombres || '';
-          let apellido_pat = integranteData.apellido_pat || '';
-          let apellido_mat = integranteData.apellido_mat || '';
-
-          // Fallback: si no hay nombres separados, intentar extraer del nombre completo
-          if (!nombres && !apellido_pat && !apellido_mat && integranteData.nombre) {
-            const parts = integranteData.nombre.trim().split(/\s+/);
-            if (parts.length >= 3) {
-              // Asumir formato: Nombre(s) apellido_pat apellido_mat
-              apellido_mat = parts.pop() || '';
-              apellido_pat = parts.pop() || '';
-              nombres = parts.join(' ');
-            } else if (parts.length === 2) {
-              // Solo tiene 2 partes: Nombre apellido_pat
-              apellido_pat = parts[1] || '';
-              nombres = parts[0] || '';
-            } else if (parts.length === 1) {
-              // Solo tiene nombre
-              nombres = parts[0] || '';
-            }
-          }
-
+          // El backend YA envía nombres separados, usarlos directamente
           setForm((current) => ({
             ...current,
-            nombres: nombres,
-            apellido_pat: apellido_pat,
-            apellido_mat: apellido_mat,
+            nombres: integranteData.nombres || '',
+            apellido_pat: integranteData.apellido_pat || '',
+            apellido_mat: integranteData.apellido_mat || '',
             telefonoInicial: integranteData.telefono || '',
             telefonoSecundario: integranteData.telefonoSecundario || '',
             montoSolicitado: String(integranteData.montoSolicitado || ''),
           }));
         }
 
-        const response = await fetch(apiUrl(`/solicitudes/solicitante/${integranteId}`));
-        if (response.ok) {
-          const text = await response.text();
-          if (!text) {
-            // No hay solicitud guardada, mantener datos iniciales del integrante
-            setIsLoadingSolicitud(false);
-            return;
-          }
-
-          const data = JSON.parse(text);
+        try {
+          const data = await api.get(`/solicitudes/solicitante/${integranteId}`);
           if (data) {
             // Parsear la fecha de nacimiento de ISO a DD,MMM,YYYY para display
             const fecha_nac_display = data.fecha_nac ? formatISODateToDDMMMYYYY(data.fecha_nac) : '';
@@ -578,6 +540,9 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
             cargarDocumentosAsync();
           }
+        } catch (solicitudError) {
+          // Si no hay solicitud, solo mantener datos del integrante
+          console.log('No hay solicitud guardada aún');
         }
       } catch (error) {
         console.error('Error cargando solicitud:', error);
@@ -603,16 +568,11 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
       setLoadingColoniasDomicilio(true);
       try {
-        const response = await fetch(apiUrl(`/codigos-postales/colonias?codigo=${form.codigoPostal}`));
-        if (response.ok) {
-          const data = await response.json();
-          setColoniasDisponiblesDomicilio(data.colonias || []);
-          // Llenar automáticamente el municipio
-          if (data.municipio) {
-            setForm((prev) => ({ ...prev, municipio: data.municipio }));
-          }
-        } else {
-          setColoniasDisponiblesDomicilio([]);
+        const data = await api.get(`/codigos-postales/colonias?codigo=${form.codigoPostal}`);
+        setColoniasDisponiblesDomicilio(data.colonias || []);
+        // Llenar automáticamente el municipio
+        if (data.municipio) {
+          setForm((prev) => ({ ...prev, municipio: data.municipio }));
         }
       } catch (error) {
         console.error('Error cargando colonias domicilio:', error);
@@ -635,16 +595,11 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
       setLoadingColoniasNegocio(true);
       try {
-        const response = await fetch(apiUrl(`/codigos-postales/colonias?codigo=${form.negocioCodigoPostal}`));
-        if (response.ok) {
-          const data = await response.json();
-          setColoniasDisponiblesNegocio(data.colonias || []);
-          // Llenar automáticamente el municipio del negocio
-          if (data.municipio) {
-            setForm((prev) => ({ ...prev, negocio_municipio: data.municipio }));
-          }
-        } else {
-          setColoniasDisponiblesNegocio([]);
+        const data = await api.get(`/codigos-postales/colonias?codigo=${form.negocioCodigoPostal}`);
+        setColoniasDisponiblesNegocio(data.colonias || []);
+        // Llenar automáticamente el municipio del negocio
+        if (data.municipio) {
+          setForm((prev) => ({ ...prev, negocio_municipio: data.municipio }));
         }
       } catch (error) {
         console.error('Error cargando colonias negocio:', error);
@@ -1012,24 +967,17 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
       console.log('📤 PATCH /integrantes - Datos a enviar:', JSON.stringify(integranteData, null, 2));
       console.log('🔍 VERIFICAR telefonoSecundario:', form.telefonoSecundario);
 
-      const integranteResponse = await fetch(apiUrl(`/integrantes/${integranteId}`), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(integranteData),
-      });
-
-      console.log('📥 PATCH /integrantes - Status:', integranteResponse.status);
-      const integranteResponseText = await integranteResponse.text();
-      console.log('📥 PATCH /integrantes - Body:', integranteResponseText);
-
-      if (!integranteResponse.ok) {
-        console.error('❌ Error al guardar integrante:', integranteResponse.status, integranteResponseText);
+      try {
+        await api.patch(`/integrantes/${integranteId}`, integranteData);
+        console.log('✅ Integrante actualizado correctamente');
+      } catch (error: any) {
+        console.error('❌ Error al guardar integrante:', error);
       }
 
       // Guardar datos de la solicitud (todos los pasos) - TODOS LOS CAMPOS
       const solicitudData: any = {
         // PASO 1: Información Personal
-        primer_nombre: form.nombres,
+        nombres: form.nombres,
         apellido_pat: form.apellido_pat,
         apellido_mat: form.apellido_mat,
         fecha_nac: form.fecha_nac || null,
@@ -1102,32 +1050,22 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         console.log('💾 ========================================');
         console.log('💾 GUARDANDO SOLICITUD');
         console.log('💾 Integrante ID:', integranteId);
-        console.log('💾 URL:', apiUrl(`/solicitudes/integrante/${integranteId}`));
         console.log('💾 Datos:', JSON.stringify(solicitudData, null, 2));
 
-        const patchResponse = await fetch(apiUrl(`/solicitudes/integrante/${integranteId}`), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(solicitudData),
-        });
-
-        console.log('💾 Respuesta PATCH status:', patchResponse.status);
-        const patchText = await patchResponse.text();
-        console.log('💾 Respuesta PATCH body:', patchText);
-
-        if (patchResponse.status === 404) {
-          console.log('💾 ⚠️ 404 - Creando nueva solicitud con POST');
-          const postResponse = await fetch(apiUrl('/solicitudes'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+        try {
+          await api.patch(`/solicitudes/integrante/${integranteId}`, solicitudData);
+          console.log('💾 ✅ Solicitud actualizada con PATCH');
+        } catch (patchError: any) {
+          if (patchError.status === 404) {
+            console.log('💾 ⚠️ 404 - Creando nueva solicitud con POST');
+            await api.post('/solicitudes', {
               integrante_id: integranteId,
               ...solicitudData,
-            }),
-          });
-          console.log('💾 Respuesta POST status:', postResponse.status);
-          const postText = await postResponse.text();
-          console.log('💾 Respuesta POST body:', postText);
+            });
+            console.log('💾 ✅ Solicitud creada con POST');
+          } else {
+            throw patchError;
+          }
         }
 
         console.log('💾 ✅ GUARDADO COMPLETADO');
@@ -1319,18 +1257,10 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
       const fechaCaptura = new Date().toISOString().split('T')[0];
 
       // Actualizar campos en la tabla solicitudes
-      const response = await fetch(apiUrl(`/solicitudes/${integranteId}`), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          [fields.ruta]: rutaGuardada,
-          [fields.fecha]: fechaCaptura,
-        }),
+      await api.patch(`/solicitudes/${integranteId}`, {
+        [fields.ruta]: rutaGuardada,
+        [fields.fecha]: fechaCaptura,
       });
-
-      if (!response.ok) {
-        throw new Error('Error al guardar el documento');
-      }
 
       // Actualizar el estado del documento a CARGADO y guardar las URIs
       setDocumentos((prev) =>
@@ -1411,28 +1341,10 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
       console.log('📤 Enviando payload final a POST /solicitudes');
       console.log('integranteId:', integranteId);
 
-      const solicitudResponse = await fetch(apiUrl('/solicitudes'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!solicitudResponse.ok) {
-        const errorText = await solicitudResponse.text();
-        console.error('❌ Error del servidor:', errorText);
-        throw new Error(`Error guardando solicitud: ${errorText}`);
-      }
+      await api.post('/solicitudes', payload);
 
       // 2. Cambiar estado a SUJETA_CREDITO
-      const estadoResponse = await fetch(apiUrl(`/integrantes/${integranteId}/estado`), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: 'SUJETA_CREDITO' }),
-      });
-
-      if (!estadoResponse.ok) {
-        throw new Error('Error actualizando estado');
-      }
+      await api.patch(`/integrantes/${integranteId}/estado`, { estado: 'SUJETA_CREDITO' });
 
       setAutoSaveStatus('saved');
       Alert.alert('Éxito', 'Solicitud capturada y marcada como Sujeta a Crédito');
