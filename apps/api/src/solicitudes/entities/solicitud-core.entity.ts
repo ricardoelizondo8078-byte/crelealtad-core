@@ -8,16 +8,16 @@ export class SolicitudCoreEntity {
   @Column({ type: 'varchar', length: 20, nullable: true })
   folio: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'uuid' })
   integrante_id: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'uuid' })
   persona_id: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'uuid' })
   expediente_id: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'uuid' })
   grupo_id: string;
 
   @Column({ type: 'uuid', nullable: true })

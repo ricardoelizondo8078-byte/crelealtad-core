@@ -1,12 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { SolicitudesService } from './solicitudes.service';
 import { SolicitudEntity } from './solicitud.entity';
-
-type CreateSolicitudDto = {
-  solicitanteId?: string;  // Legacy
-  integrante_id?: string;  // Schema v2 (campo correcto)
-  [key: string]: string | boolean | number | undefined;
-};
+import { CreateSolicitudDto } from './dto/create-solicitud.dto';
 
 @Controller('solicitudes')
 export class SolicitudesController {
@@ -29,7 +24,8 @@ export class SolicitudesController {
 
   @Put('solicitante/:solicitanteId')
   update(@Param('solicitanteId') solicitanteId: string, @Body() dto: CreateSolicitudDto) {
-    return this.solicitudesService.createOrUpdateForSolicitante({ ...dto, solicitanteId });
+    // solicitanteId del path es legacy - usar integrante_id del body
+    return this.solicitudesService.createOrUpdateForSolicitante(dto);
   }
 
   @Patch(':solicitanteId')

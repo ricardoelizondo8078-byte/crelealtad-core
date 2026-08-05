@@ -1,4 +1,4 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, forwardRef, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { SolicitudEntity } from './solicitud.entity';
@@ -11,11 +11,7 @@ import { SolicitudBeneficiariosEntity } from './entities/solicitud-beneficiarios
 import { SolicitudValidacionesEntity } from './entities/solicitud-validaciones.entity';
 import { SolicitudDocumentosEntity } from './entities/solicitud-documentos.entity';
 import { IntegrantesService } from '../integrantes/integrantes.service';
-
-type SolicitudPayload = {
-  integrante_id?: string;
-  [key: string]: string | boolean | number | undefined | null;
-};
+import { CreateSolicitudDto } from './dto/create-solicitud.dto';
 
 @Injectable()
 export class SolicitudesService {
@@ -49,44 +45,47 @@ export class SolicitudesService {
     });
   }
 
-  async createOrUpdateForSolicitante(dto: SolicitudPayload): Promise<SolicitudEntity> {
-    const integranteId = dto.integrante_id;
-
-    if (!integranteId) {
-      throw new Error('integrante_id es requerido');
+  async createOrUpdateForSolicitante(dto: CreateSolicitudDto): Promise<SolicitudEntity> {
+    // Validación explícita de campos requeridos
+    if (!dto.integrante_id) {
+      throw new BadRequestException('integrante_id es requerido');
     }
-
-    // ⚠️  SEGURIDAD: Eliminar campos que NO deben venir del DTO
-    // numero_credito y credito_id solo deben asignarse en el momento del desembolso
-    const sanitizedDto = { ...dto };
-    delete sanitizedDto.numero_credito;
-    delete sanitizedDto.credito_id;
+    if (!dto.persona_id) {
+      throw new BadRequestException('persona_id es requerido');
+    }
+    if (!dto.expediente_id) {
+      throw new BadRequestException('expediente_id es requerido');
+    }
+    if (!dto.grupo_id) {
+      throw new BadRequestException('grupo_id es requerido');
+    }
 
     return await this.dataSource.transaction(async (manager) => {
       // 1. Buscar o crear solicitud core
       let solicitudCore = await manager.findOne(SolicitudCoreEntity, {
-        where: { integrante_id: integranteId },
+        where: { integrante_id: dto.integrante_id },
       });
 
       if (!solicitudCore) {
+        // ASIGNACIÓN EXPLÍCITA CAMPO POR CAMPO - NO SPREAD
         solicitudCore = manager.create(SolicitudCoreEntity, {
-          integrante_id: integranteId,
-          persona_id: sanitizedDto.persona_id,
-          expediente_id: sanitizedDto.expediente_id,
-          grupo_id: sanitizedDto.grupo_id,
+          integrante_id: dto.integrante_id,
+          persona_id: dto.persona_id,
+          expediente_id: dto.expediente_id,
+          grupo_id: dto.grupo_id,
+          folio: dto.folio,
+          ciclo_numero: dto.ciclo_numero,
+          monto_solicitado: dto.monto_solicitado,
+          monto_autorizado: dto.monto_autorizado,
           // credito_id: NUNCA del DTO - solo en desembolso
-          ciclo_numero: sanitizedDto.ciclo_numero,
           // numero_credito: NUNCA del DTO - solo en desembolso
-          monto_solicitado: sanitizedDto.monto_solicitado,
-          monto_autorizado: sanitizedDto.monto_autorizado,
-          folio: sanitizedDto.folio,
-        } as any);
+        });
         solicitudCore = await manager.save(SolicitudCoreEntity, solicitudCore);
       } else {
-        // Actualizar campos core si vienen en el dto
-        if (sanitizedDto.monto_solicitado !== undefined) solicitudCore.monto_solicitado = sanitizedDto.monto_solicitado as any;
-        if (sanitizedDto.monto_autorizado !== undefined) solicitudCore.monto_autorizado = sanitizedDto.monto_autorizado as any;
-        if (sanitizedDto.folio !== undefined) solicitudCore.folio = sanitizedDto.folio as any;
+        // Actualizar campos core - ASIGNACIÓN EXPLÍCITA
+        if (dto.monto_solicitado !== undefined) solicitudCore.monto_solicitado = dto.monto_solicitado;
+        if (dto.monto_autorizado !== undefined) solicitudCore.monto_autorizado = dto.monto_autorizado;
+        if (dto.folio !== undefined) solicitudCore.folio = dto.folio;
         solicitudCore = await manager.save(SolicitudCoreEntity, solicitudCore);
       }
 
@@ -104,18 +103,13 @@ export class SolicitudesService {
     });
   }
 
-  async createForSolicitante(dto: SolicitudPayload): Promise<SolicitudEntity> {
+  async createForSolicitante(dto: CreateSolicitudDto): Promise<SolicitudEntity> {
     return this.createOrUpdateForSolicitante(dto);
   }
 
-  async partialUpdate(solicitanteId: string, data: any): Promise<SolicitudEntity> {
-    console.log('🔍 partialUpdate - integrante_id:', solicitanteId);
-    console.log('🔍 partialUpdate - data recibida:', JSON.stringify(data, null, 2));
-
-    // ⚠️  SEGURIDAD: Eliminar campos que NO deben venir del DTO
-    const sanitizedData = { ...data };
-    delete sanitizedData.numero_credito;
-    delete sanitizedData.credito_id;
+  async partialUpdate(solicitanteId: string, data: CreateSolicitudDto): Promise<SolicitudEntity> {
+    // Usar integrante_id del DTO, no del path parameter
+    return this.createOrUpdateForSolicitante(data);
 
     // Mapear campos legacy
     const fieldMappings: Record<string, string> = {
