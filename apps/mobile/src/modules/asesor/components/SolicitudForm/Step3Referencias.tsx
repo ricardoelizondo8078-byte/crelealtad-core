@@ -28,14 +28,14 @@ export const Step3Referencias: React.FC<Step3Props> = ({
     const newErrors: { [key: string]: string } = {};
 
     // Referencia 1
-    if (!data.referencia1Nombre?.trim()) newErrors.referencia1Nombre = 'Campo obligatorio';
-    if (!data.referencia1Parentesco?.trim()) newErrors.referencia1Parentesco = 'Campo obligatorio';
-    if (!data.referencia1Telefono?.trim()) newErrors.referencia1Telefono = 'Campo obligatorio';
+    if (!data.ref1_nombre?.trim()) newErrors.ref1_nombre = 'Campo obligatorio';
+    if (!data.ref1_parentesco?.trim()) newErrors.ref1_parentesco = 'Campo obligatorio';
+    if (!data.ref1_telefono?.trim()) newErrors.ref1_telefono = 'Campo obligatorio';
 
     // Referencia 2
-    if (!data.referencia2Nombre?.trim()) newErrors.referencia2Nombre = 'Campo obligatorio';
-    if (!data.referencia2Parentesco?.trim()) newErrors.referencia2Parentesco = 'Campo obligatorio';
-    if (!data.referencia2Telefono?.trim()) newErrors.referencia2Telefono = 'Campo obligatorio';
+    if (!data.ref2_nombre?.trim()) newErrors.ref2_nombre = 'Campo obligatorio';
+    if (!data.ref2_parentesco?.trim()) newErrors.ref2_parentesco = 'Campo obligatorio';
+    if (!data.ref2_telefono?.trim()) newErrors.ref2_telefono = 'Campo obligatorio';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -55,25 +55,25 @@ export const Step3Referencias: React.FC<Step3Props> = ({
 
         <FormField
           label="Nombre Completo *"
-          value={data.referencia1Nombre || ''}
-          onChangeText={(val) => updateField('referencia1Nombre', normalizeUppercaseText(val))}
-          error={errors.referencia1Nombre}
+          value={data.ref1_nombre || ''}
+          onChangeText={(val) => updateField('ref1_nombre', normalizeUppercaseText(val))}
+          error={errors.ref1_nombre}
           placeholder="PEDRO LÓPEZ"
         />
 
         <SelectorField
           label="Parentesco *"
-          value={data.referencia1Parentesco || ''}
-          onPress={() => openSelector('referencia1Parentesco')}
-          error={errors.referencia1Parentesco}
+          value={data.ref1_parentesco || ''}
+          onPress={() => openSelector('ref1_parentesco')}
+          error={errors.ref1_parentesco}
           placeholder="Seleccionar"
         />
 
         <FormField
           label="Teléfono *"
-          value={data.referencia1Telefono || ''}
-          onChangeText={(val) => updateField('referencia1Telefono', normalizePhone(val))}
-          error={errors.referencia1Telefono}
+          value={data.ref1_telefono || ''}
+          onChangeText={(val) => updateField('ref1_telefono', normalizePhone(val))}
+          error={errors.ref1_telefono}
           keyboardType="phone-pad"
           placeholder="33 1234 5678"
           maxLength={12}
@@ -81,8 +81,8 @@ export const Step3Referencias: React.FC<Step3Props> = ({
 
         <FormField
           label="Dirección"
-          value={data.referencia1Direccion || ''}
-          onChangeText={(val) => updateField('referencia1Direccion', normalizeUppercaseText(val))}
+          value={data.ref1_direccion || ''}
+          onChangeText={(val) => updateField('ref1_direccion', normalizeUppercaseText(val))}
           placeholder="CALLE Y NÚMERO"
         />
       </Card>
@@ -93,25 +93,25 @@ export const Step3Referencias: React.FC<Step3Props> = ({
 
         <FormField
           label="Nombre Completo *"
-          value={data.referencia2Nombre || ''}
-          onChangeText={(val) => updateField('referencia2Nombre', normalizeUppercaseText(val))}
-          error={errors.referencia2Nombre}
+          value={data.ref2_nombre || ''}
+          onChangeText={(val) => updateField('ref2_nombre', normalizeUppercaseText(val))}
+          error={errors.ref2_nombre}
           placeholder="ANA GARCÍA"
         />
 
         <SelectorField
           label="Parentesco *"
-          value={data.referencia2Parentesco || ''}
-          onPress={() => openSelector('referencia2Parentesco')}
-          error={errors.referencia2Parentesco}
+          value={data.ref2_parentesco || ''}
+          onPress={() => openSelector('ref2_parentesco')}
+          error={errors.ref2_parentesco}
           placeholder="Seleccionar"
         />
 
         <FormField
           label="Teléfono *"
-          value={data.referencia2Telefono || ''}
-          onChangeText={(val) => updateField('referencia2Telefono', normalizePhone(val))}
-          error={errors.referencia2Telefono}
+          value={data.ref2_telefono || ''}
+          onChangeText={(val) => updateField('ref2_telefono', normalizePhone(val))}
+          error={errors.ref2_telefono}
           keyboardType="phone-pad"
           placeholder="33 1234 5678"
           maxLength={12}
@@ -119,8 +119,8 @@ export const Step3Referencias: React.FC<Step3Props> = ({
 
         <FormField
           label="Dirección"
-          value={data.referencia2Direccion || ''}
-          onChangeText={(val) => updateField('referencia2Direccion', normalizeUppercaseText(val))}
+          value={data.ref2_direccion || ''}
+          onChangeText={(val) => updateField('ref2_direccion', normalizeUppercaseText(val))}
           placeholder="CALLE Y NÚMERO"
         />
       </Card>
@@ -131,22 +131,22 @@ export const Step3Referencias: React.FC<Step3Props> = ({
 
         <FormField
           label="Nombre de la Pareja"
-          value={data.parejaNombre || ''}
-          onChangeText={(val) => updateField('parejaNombre', normalizeUppercaseText(val))}
+          value={data.pareja_nombre || ''}
+          onChangeText={(val) => updateField('pareja_nombre', normalizeUppercaseText(val))}
           placeholder="MARÍA HERNÁNDEZ"
         />
 
         <FormField
           label="Actividad"
-          value={data.parejaActividad || ''}
-          onChangeText={(val) => updateField('parejaActividad', normalizeUppercaseText(val))}
+          value={data.pareja_actividad || ''}
+          onChangeText={(val) => updateField('pareja_actividad', normalizeUppercaseText(val))}
           placeholder="COMERCIANTE"
         />
 
         <FormField
           label="Ingreso Semanal"
-          value={data.parejaIngresoSemanal || ''}
-          onChangeText={(val) => updateField('parejaIngresoSemanal', normalizeDigits(val))}
+          value={data.pareja_ingreso_semanal || ''}
+          onChangeText={(val) => updateField('pareja_ingreso_semanal', normalizeDigits(val))}
           keyboardType="number-pad"
           placeholder="2000"
         />

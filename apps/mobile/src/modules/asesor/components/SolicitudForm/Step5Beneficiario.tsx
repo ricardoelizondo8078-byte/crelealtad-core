@@ -19,8 +19,8 @@ export const Step5Beneficiario: React.FC<Step5Props> = ({ data, onNext, onBack, 
 
   const validateStep = (): boolean => {
     const newErrors: { [key: string]: string } = {};
-    if (!data.beneficiarioNombre?.trim()) newErrors.beneficiarioNombre = 'Campo obligatorio';
-    if (!data.beneficiarioParentesco?.trim()) newErrors.beneficiarioParentesco = 'Campo obligatorio';
+    if (!data.beneficiario_nombre?.trim()) newErrors.beneficiario_nombre = 'Campo obligatorio';
+    if (!data.beneficiario_parentesco?.trim()) newErrors.beneficiario_parentesco = 'Campo obligatorio';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -28,10 +28,10 @@ export const Step5Beneficiario: React.FC<Step5Props> = ({ data, onNext, onBack, 
   return (
     <ScrollView ref={scrollViewRef} style={styles.container}>
       <Card style={styles.card}>
-        <FormField label="Nombre del Beneficiario *" value={data.beneficiarioNombre || ''} onChangeText={(val) => updateField('beneficiarioNombre', normalizeUppercaseText(val))} error={errors.beneficiarioNombre} placeholder="MARÍA PÉREZ" />
-        <SelectorField label="Parentesco *" value={data.beneficiarioParentesco || ''} onPress={() => openSelector('beneficiario_parentesco')} error={errors.beneficiarioParentesco} placeholder="Seleccionar" />
-        <FormField label="Teléfono" value={data.beneficiarioTelefono || ''} onChangeText={(val) => updateField('beneficiarioTelefono', normalizePhone(val))} keyboardType="phone-pad" placeholder="33 1234 5678" maxLength={12} />
-        <FormField label="Dirección" value={data.beneficiarioDireccion || ''} onChangeText={(val) => updateField('beneficiarioDireccion', normalizeUppercaseText(val))} placeholder="CALLE Y NÚMERO" />
+        <FormField label="Nombre del Beneficiario *" value={data.beneficiario_nombre || ''} onChangeText={(val) => updateField('beneficiario_nombre', normalizeUppercaseText(val))} error={errors.beneficiario_nombre} placeholder="MARÍA PÉREZ" />
+        <SelectorField label="Parentesco *" value={data.beneficiario_parentesco || ''} onPress={() => openSelector('beneficiario_parentesco')} error={errors.beneficiario_parentesco} placeholder="Seleccionar" />
+        <FormField label="Teléfono" value={data.beneficiario_telefono || ''} onChangeText={(val) => updateField('beneficiario_telefono', normalizePhone(val))} keyboardType="phone-pad" placeholder="33 1234 5678" maxLength={12} />
+        <FormField label="Dirección" value={data.beneficiario_direccion || ''} onChangeText={(val) => updateField('beneficiario_direccion', normalizeUppercaseText(val))} placeholder="CALLE Y NÚMERO" />
       </Card>
       <View style={styles.footer}>
         <SecondaryButton title="Anterior" onPress={onBack} style={{ marginBottom: spacing.sm }} />

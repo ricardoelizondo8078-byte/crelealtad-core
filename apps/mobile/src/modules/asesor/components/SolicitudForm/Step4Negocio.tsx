@@ -19,17 +19,17 @@ export const Step4Negocio: React.FC<Step4Props> = ({ data, onNext, onBack, updat
 
   // Auto-calcular total
   useEffect(() => {
-    const ingreso = parseFloat(data.negocioIngresoSemanal || '0');
-    const otros = parseFloat(data.negocioOtrosIngresos || '0');
-    const gastos = parseFloat(data.negocioGastos || '0');
+    const ingreso = parseFloat(data.negocio_ingreso_semanal || '0');
+    const otros = parseFloat(data.negocio_otros_ingresos || '0');
+    const gastos = parseFloat(data.negocio_gastos || '0');
     const total = ingreso + otros - gastos;
     updateField('negocioTotal', total.toString());
-  }, [data.negocioIngresoSemanal, data.negocioOtrosIngresos, data.negocioGastos]);
+  }, [data.negocio_ingreso_semanal, data.negocio_otros_ingresos, data.negocio_gastos]);
 
   const validateStep = (): boolean => {
     const newErrors: { [key: string]: string } = {};
-    if (!data.negocioGiro?.trim()) newErrors.negocioGiro = 'Campo obligatorio';
-    if (!data.negocioIngresoSemanal?.trim()) newErrors.negocioIngresoSemanal = 'Campo obligatorio';
+    if (!data.negocio_giro?.trim()) newErrors.negocio_giro = 'Campo obligatorio';
+    if (!data.negocio_ingreso_semanal?.trim()) newErrors.negocio_ingreso_semanal = 'Campo obligatorio';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -37,16 +37,16 @@ export const Step4Negocio: React.FC<Step4Props> = ({ data, onNext, onBack, updat
   return (
     <ScrollView ref={scrollViewRef} style={styles.container}>
       <Card style={styles.card}>
-        <FormField label="Giro del Negocio *" value={data.negocioGiro || ''} onChangeText={(val) => updateField('negocioGiro', normalizeUppercaseText(val))} error={errors.negocioGiro} placeholder="ABARROTES" />
-        <FormField label="Domicilio del Negocio" value={data.negocioDomicilio || ''} onChangeText={(val) => updateField('negocioDomicilio', normalizeUppercaseText(val))} placeholder="CALLE Y NÚMERO" />
-        <FormField label="Código Postal" value={data.negocioCodigoPostal || ''} onChangeText={(val) => updateField('negocioCodigoPostal', normalizeDigits(val))} keyboardType="number-pad" maxLength={5} />
-        <SelectorField label="Colonia" value={data.negocioColonia || ''} onPress={() => openSelector('negocio_colonia')} placeholder="Seleccionar" />
-        <SelectorField label="Municipio" value={data.negocioMunicipio || ''} onPress={() => openSelector('negocio_municipio')} placeholder="Seleccionar" />
-        <FormField label="Estado" value={data.negocioEstado || ''} onChangeText={(val) => updateField('negocioEstado', normalizeUppercaseText(val))} placeholder="JALISCO" />
-        <SelectorField label="¿Desde Cuándo?" value={data.negocioDesdeCuando || ''} onPress={() => openSelector('negocioDesdeCuando')} placeholder="Seleccionar" />
-        <FormField label="Ingreso Semanal *" value={data.negocioIngresoSemanal || ''} onChangeText={(val) => updateField('negocioIngresoSemanal', normalizeDigits(val))} error={errors.negocioIngresoSemanal} keyboardType="number-pad" placeholder="3500" />
-        <FormField label="Otros Ingresos" value={data.negocioOtrosIngresos || ''} onChangeText={(val) => updateField('negocioOtrosIngresos', normalizeDigits(val))} keyboardType="number-pad" placeholder="500" />
-        <FormField label="Gastos Semanales" value={data.negocioGastos || ''} onChangeText={(val) => updateField('negocioGastos', normalizeDigits(val))} keyboardType="number-pad" placeholder="1500" />
+        <FormField label="Giro del Negocio *" value={data.negocio_giro || ''} onChangeText={(val) => updateField('negocio_giro', normalizeUppercaseText(val))} error={errors.negocio_giro} placeholder="ABARROTES" />
+        <FormField label="Domicilio del Negocio" value={data.negocio_domicilio || ''} onChangeText={(val) => updateField('negocio_domicilio', normalizeUppercaseText(val))} placeholder="CALLE Y NÚMERO" />
+        <FormField label="Código Postal" value={data.negocio_codigo_postal || ''} onChangeText={(val) => updateField('negocio_codigo_postal', normalizeDigits(val))} keyboardType="number-pad" maxLength={5} />
+        <SelectorField label="Colonia" value={data.negocio_colonia || ''} onPress={() => openSelector('negocio_colonia')} placeholder="Seleccionar" />
+        <SelectorField label="Municipio" value={data.negocio_municipio || ''} onPress={() => openSelector('negocio_municipio')} placeholder="Seleccionar" />
+        <FormField label="Estado" value={data.negocio_estado || ''} onChangeText={(val) => updateField('negocio_estado', normalizeUppercaseText(val))} placeholder="JALISCO" />
+        <SelectorField label="¿Desde Cuándo?" value={data.negocio_desde_cuando || ''} onPress={() => openSelector('negocio_desde_cuando')} placeholder="Seleccionar" />
+        <FormField label="Ingreso Semanal *" value={data.negocio_ingreso_semanal || ''} onChangeText={(val) => updateField('negocio_ingreso_semanal', normalizeDigits(val))} error={errors.negocio_ingreso_semanal} keyboardType="number-pad" placeholder="3500" />
+        <FormField label="Otros Ingresos" value={data.negocio_otros_ingresos || ''} onChangeText={(val) => updateField('negocio_otros_ingresos', normalizeDigits(val))} keyboardType="number-pad" placeholder="500" />
+        <FormField label="Gastos Semanales" value={data.negocio_gastos || ''} onChangeText={(val) => updateField('negocio_gastos', normalizeDigits(val))} keyboardType="number-pad" placeholder="1500" />
         <FormField label="Total (calculado)" value={data.negocioTotal || '0'} editable={false} />
       </Card>
       <View style={styles.footer}>

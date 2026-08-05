@@ -21,15 +21,15 @@ export const Step6Validaciones: React.FC<Step6Props> = ({ data, onNext, onBack, 
 
   const validateStep = (): boolean => {
     const newErrors: { [key: string]: string } = {};
-    if (!data.tieneMedidorLuzSinAdeudo) newErrors.tieneMedidorLuzSinAdeudo = 'Campo obligatorio';
-    if (!data.viveMaximo5KmTesorera) newErrors.viveMaximo5KmTesorera = 'Campo obligatorio';
+    if (!data.tiene_medidor_luz) newErrors.tiene_medidor_luz = 'Campo obligatorio';
+    if (!data.vive_max_5km_tesorera) newErrors.vive_max_5km_tesorera = 'Campo obligatorio';
     if (!data.tieneMenos70Anios) newErrors.tieneMenos70Anios = 'Campo obligatorio';
-    if (!data.montoSolicitado) {
-      newErrors.montoSolicitado = 'Campo obligatorio';
+    if (!data.monto_solicitado) {
+      newErrors.monto_solicitado = 'Campo obligatorio';
     } else {
-      const monto = parseFloat(data.montoSolicitado);
+      const monto = parseFloat(data.monto_solicitado);
       if (monto > MAX_SOLICITUD_AMOUNT) {
-        newErrors.montoSolicitado = `Máximo ${formatCurrency(MAX_SOLICITUD_AMOUNT)}`;
+        newErrors.monto_solicitado = `Máximo ${formatCurrency(MAX_SOLICITUD_AMOUNT)}`;
       }
     }
     setErrors(newErrors);
@@ -39,10 +39,10 @@ export const Step6Validaciones: React.FC<Step6Props> = ({ data, onNext, onBack, 
   return (
     <ScrollView ref={scrollViewRef} style={styles.container}>
       <Card style={styles.card}>
-        <SelectorField label="¿Tiene medidor de luz sin adeudo? *" value={data.tieneMedidorLuzSinAdeudo || ''} onPress={() => openSelector('tieneMedidorLuzSinAdeudo')} error={errors.tieneMedidorLuzSinAdeudo} placeholder="Seleccionar" />
-        <SelectorField label="¿Vive a máximo 5 km de la tesorera? *" value={data.viveMaximo5KmTesorera || ''} onPress={() => openSelector('viveMaximo5KmTesorera')} error={errors.viveMaximo5KmTesorera} placeholder="Seleccionar" />
+        <SelectorField label="¿Tiene medidor de luz sin adeudo? *" value={data.tiene_medidor_luz || ''} onPress={() => openSelector('tiene_medidor_luz')} error={errors.tiene_medidor_luz} placeholder="Seleccionar" />
+        <SelectorField label="¿Vive a máximo 5 km de la tesorera? *" value={data.vive_max_5km_tesorera || ''} onPress={() => openSelector('vive_max_5km_tesorera')} error={errors.vive_max_5km_tesorera} placeholder="Seleccionar" />
         <SelectorField label="¿Tiene menos de 70 años? *" value={data.tieneMenos70Anios || ''} onPress={() => openSelector('tiene_menos_70_anios')} error={errors.tieneMenos70Anios} placeholder="Seleccionar" />
-        <FormField label="Monto Solicitado *" value={data.montoSolicitado || ''} onChangeText={(val) => updateField('montoSolicitado', normalizeDigits(val))} error={errors.montoSolicitado} keyboardType="number-pad" placeholder="5000" />
+        <FormField label="Monto Solicitado *" value={data.monto_solicitado || ''} onChangeText={(val) => updateField('monto_solicitado', normalizeDigits(val))} error={errors.monto_solicitado} keyboardType="number-pad" placeholder="5000" />
       </Card>
       <View style={styles.footer}>
         <SecondaryButton title="Anterior" onPress={onBack} style={{ marginBottom: spacing.sm }} />
