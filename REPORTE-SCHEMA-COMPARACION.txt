@@ -1,0 +1,109 @@
+COMPARACIÓN DE SCHEMAS: PRODUCCIÓN vs TEST
+==========================================
+Fecha: 2026-08-05
+Base producción: crelealtad
+Base test: crelealtad_test
+
+## HALLAZGO CRÍTICO
+
+setup-test-db.js INVENTA las tablas con DDL propio en lugar de aplicar migraciones reales.
+Líneas 50-98 del script: CREATE TABLE personas/grupos/expedientes/integrantes con schema minimalista.
+Esto viola el principio: test debe ejecutarse contra el MISMO schema que producción.
+
+## GRUPOS - COMPARACIÓN
+
+### PRODUCCIÓN (crelealtad)
+id, nombre, created_by, estado, created_at, updated_at, deleted_at, folio,
+zona_id, sucursal_id, fecha_inicio
+
+TOTAL: 11 columnas
+NOTABLE: NO tiene tesorera_id ni ciclo_numero
+
+### TEST (crelealtad_test)
+id, nombre, tesorera_id, ciclo_numero, created_at, updated_at
+
+TOTAL: 6 columnas
+FALTAN: created_by, estado, deleted_at, folio, zona_id, sucursal_id, fecha_inicio
+EXTRA: tesorera_id, ciclo_numero (que NO existen en producción)
+
+## INTEGRANTES - COMPARACIÓN
+
+### PRODUCCIÓN (crelealtad)
+id, expediente_id, estado, created_at, updated_at, folio, persona_id
+
+TOTAL: 7 columnas
+NOTABLE: SÍ tiene folio
+
+### TEST (crelealtad_test)
+id, expediente_id, persona_id, estado, created_at, updated_at
+
+TOTAL: 6 columnas
+FALTA: folio ❌ (IntegranteEntity lo declara pero test no lo tiene)
+
+## EXPEDIENTES - COMPARACIÓN
+
+### PRODUCCIÓN (crelealtad)
+id, grupo_id, estado, created_at, updated_at, folio, producto_id, asesora_id,
+horario_visita, dias_visita, semana_cobro, observaciones, estado_fecha
+
+TOTAL: 13 columnas
+
+### TEST (crelealtad_test)
+id, grupo_id, created_at, updated_at
+
+TOTAL: 4 columnas
+FALTAN: estado, folio, producto_id, asesora_id, horario_visita, dias_visita,
+semana_cobro, observaciones, estado_fecha
+
+## PERSONAS - COMPARACIÓN
+
+### PRODUCCIÓN (crelealtad)
+id, folio, curp, primer_nombre, segundo_nombre, apellido_pat, apellido_mat,
+fecha_nac, genero, estado, created_at, updated_at, telefono, monto_solicitado,
+telefono_secundario, nombres, nombre_completo
+
+TOTAL: 17 columnas
+
+### TEST (crelealtad_test)
+id, nombres, apellido_pat, apellido_mat, nombre_completo, curp, fecha_nac,
+created_at, updated_at
+
+TOTAL: 9 columnas
+FALTAN: folio, primer_nombre, segundo_nombre, genero, estado, telefono,
+monto_solicitado, telefono_secundario
+
+## CONTRADICCIÓN DE ARQUITECTURA CONFIRMADA
+
+CLAUDE.md dice:
+"tesorera vive en expedientes.tesorera_id"
+"ciclo nace ÚNICAMENTE al desembolso en tabla ciclos"
+
+REALIDAD EN PRODUCCIÓN:
+- expedientes NO tiene tesorera_id ❌
+- grupos NO tiene tesorera_id ✅ (correcto)
+- grupos NO tiene ciclo_numero ✅ (correcto)
+
+REALIDAD EN TEST (INVENTADA):
+- grupos SÍ tiene tesorera_id ❌ (contradicción)
+- grupos SÍ tiene ciclo_numero ❌ (contradicción)
+
+CONCLUSIÓN: La base de producción respeta la arquitectura documentada.
+La base de test fue inventada con campos que no deberían existir.
+
+## RESUMEN DE DESALINEACIONES
+
+1. setup-test-db.js crea schema minimalista inventado
+2. Test tiene 60-70% MENOS columnas que producción
+3. Test tiene campos EXTRA que contradicen arquitectura (tesorera_id, ciclo_numero en grupos)
+4. Tests e2e corren contra schema equivocado
+5. Entidades TypeORM están alineadas con PRODUCCIÓN, no con TEST
+
+## ACCIÓN REQUERIDA
+
+REESCRIBIR setup-test-db.js para:
+1. Borrar crelealtad_test si existe
+2. Crear base vacía
+3. Aplicar TODAS las migraciones en orden desde database/migrations/
+4. Verificar que quede IDÉNTICO a producción
+
+NO intentar "parchar" el test. Recrear desde cero con migraciones reales.
