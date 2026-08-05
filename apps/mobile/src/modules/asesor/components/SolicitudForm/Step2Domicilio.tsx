@@ -27,12 +27,12 @@ export const Step2Domicilio: React.FC<Step2Props> = ({
   const validateStep = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!data.domCalle?.trim()) newErrors.domCalle = 'Campo obligatorio';
-    if (!data.domNumExt?.trim()) newErrors.domNumExt = 'Campo obligatorio';
-    if (!data.domCodigoPostal?.trim()) newErrors.domCodigoPostal = 'Campo obligatorio';
-    if (!data.domColonia?.trim()) newErrors.domColonia = 'Campo obligatorio';
-    if (!data.domMunicipio?.trim()) newErrors.domMunicipio = 'Campo obligatorio';
-    if (!data.domEstado?.trim()) newErrors.domEstado = 'Campo obligatorio';
+    if (!data.dom_calle?.trim()) newErrors.dom_calle = 'Campo obligatorio';
+    if (!data.dom_num_ext?.trim()) newErrors.dom_num_ext = 'Campo obligatorio';
+    if (!data.dom_codigo_postal?.trim()) newErrors.dom_codigo_postal = 'Campo obligatorio';
+    if (!data.dom_colonia?.trim()) newErrors.dom_colonia = 'Campo obligatorio';
+    if (!data.dom_municipio?.trim()) newErrors.dom_municipio = 'Campo obligatorio';
+    if (!data.dom_estado?.trim()) newErrors.dom_estado = 'Campo obligatorio';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -49,39 +49,39 @@ export const Step2Domicilio: React.FC<Step2Props> = ({
       <Card style={styles.card}>
         <FormField
           label="Calle *"
-          value={data.domCalle || ''}
-          onChangeText={(val) => updateField('domCalle', normalizeUppercaseText(val))}
-          error={errors.domCalle}
+          value={data.dom_calle || ''}
+          onChangeText={(val) => updateField('dom_calle', normalizeUppercaseText(val))}
+          error={errors.dom_calle}
           placeholder="AV. JUÁREZ"
         />
 
         <FormField
           label="Número Exterior *"
-          value={data.domNumExt || ''}
-          onChangeText={(val) => updateField('domNumExt', normalizeUppercaseText(val))}
-          error={errors.domNumExt}
+          value={data.dom_num_ext || ''}
+          onChangeText={(val) => updateField('dom_num_ext', normalizeUppercaseText(val))}
+          error={errors.dom_num_ext}
           placeholder="123"
         />
 
         <FormField
           label="Número Interior"
-          value={data.domNumInt || ''}
-          onChangeText={(val) => updateField('domNumInt', normalizeUppercaseText(val))}
+          value={data.dom_num_int || ''}
+          onChangeText={(val) => updateField('dom_num_int', normalizeUppercaseText(val))}
           placeholder="DEPTO 2"
         />
 
         <FormField
           label="Entre Calles"
-          value={data.domEntreCalles || ''}
-          onChangeText={(val) => updateField('domEntreCalles', normalizeUppercaseText(val))}
+          value={data.dom_entre_calles || ''}
+          onChangeText={(val) => updateField('dom_entre_calles', normalizeUppercaseText(val))}
           placeholder="HIDALGO Y MORELOS"
         />
 
         <FormField
           label="Código Postal *"
-          value={data.domCodigoPostal || ''}
-          onChangeText={(val) => updateField('domCodigoPostal', normalizeDigits(val))}
-          error={errors.domCodigoPostal}
+          value={data.dom_codigo_postal || ''}
+          onChangeText={(val) => updateField('dom_codigo_postal', normalizeDigits(val))}
+          error={errors.dom_codigo_postal}
           keyboardType="number-pad"
           placeholder="44100"
           maxLength={5}
@@ -89,32 +89,32 @@ export const Step2Domicilio: React.FC<Step2Props> = ({
 
         <SelectorField
           label="Colonia *"
-          value={data.domColonia || ''}
+          value={data.dom_colonia || ''}
           onPress={() => openSelector('colonia')}
-          error={errors.domColonia}
+          error={errors.dom_colonia}
           placeholder="Seleccionar"
         />
 
         <SelectorField
           label="Municipio *"
-          value={data.domMunicipio || ''}
+          value={data.dom_municipio || ''}
           onPress={() => openSelector('municipio')}
-          error={errors.domMunicipio}
+          error={errors.dom_municipio}
           placeholder="Seleccionar"
         />
 
         <FormField
           label="Estado *"
-          value={data.domEstado || ''}
-          onChangeText={(val) => updateField('domEstado', normalizeUppercaseText(val))}
-          error={errors.domEstado}
+          value={data.dom_estado || ''}
+          onChangeText={(val) => updateField('dom_estado', normalizeUppercaseText(val))}
+          error={errors.dom_estado}
           placeholder="JALISCO"
         />
 
         <FormField
           label="Teléfono de Domicilio"
-          value={data.domTelefono || ''}
-          onChangeText={(val) => updateField('domTelefono', normalizePhone(val))}
+          value={data.dom_telefono || ''}
+          onChangeText={(val) => updateField('dom_telefono', normalizePhone(val))}
           keyboardType="phone-pad"
           placeholder="33 1234 5678"
           maxLength={12}

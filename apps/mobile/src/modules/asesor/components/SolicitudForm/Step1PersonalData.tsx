@@ -51,22 +51,22 @@ export const Step1PersonalData: React.FC<Step1Props> = ({
   const validateStep = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!data.primerNombre?.trim()) newErrors.primerNombre = 'Campo obligatorio';
-    if (!data.apellidoPaterno?.trim()) newErrors.apellidoPaterno = 'Campo obligatorio';
-    if (!data.apellidoMaterno?.trim()) newErrors.apellidoMaterno = 'Campo obligatorio';
+    if (!data.primer_nombre?.trim()) newErrors.primer_nombre = 'Campo obligatorio';
+    if (!data.apellido_pat?.trim()) newErrors.apellido_pat = 'Campo obligatorio';
+    if (!data.apellido_mat?.trim()) newErrors.apellido_mat = 'Campo obligatorio';
     if (!data.curp?.trim()) {
       newErrors.curp = 'Campo obligatorio';
     } else if (data.curp.length !== 18 || !validateCURP(data.curp)) {
       newErrors.curp = 'CURP inválida';
     }
-    if (!data.fechaNacimiento) newErrors.fechaNacimiento = 'Campo obligatorio';
+    if (!data.fecha_nac) newErrors.fecha_nac = 'Campo obligatorio';
     if (!data.nacionalidad) newErrors.nacionalidad = 'Campo obligatorio';
-    if (data.nacionalidad === 'MEXICANA' && !data.estadoNacimiento) {
-      newErrors.estadoNacimiento = 'Campo obligatorio';
+    if (data.nacionalidad === 'MEXICANA' && !data.estado_nacimiento) {
+      newErrors.estado_nacimiento = 'Campo obligatorio';
     }
     if (!data.genero) newErrors.genero = 'Campo obligatorio';
-    if (!data.estadoCivil) newErrors.estadoCivil = 'Campo obligatorio';
-    if (!data.nivelEstudio) newErrors.nivelEstudio = 'Campo obligatorio';
+    if (!data.estado_civil) newErrors.estado_civil = 'Campo obligatorio';
+    if (!data.nivel_estudio) newErrors.nivel_estudio = 'Campo obligatorio';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -88,35 +88,35 @@ export const Step1PersonalData: React.FC<Step1Props> = ({
       <Card style={styles.card}>
         <FormField
           label="Primer Nombre *"
-          value={data.primerNombre || ''}
-          onChangeText={(val) => updateField('primerNombre', normalizeUppercaseText(val))}
-          error={errors.primerNombre}
+          value={data.primer_nombre || ''}
+          onChangeText={(val) => updateField('primer_nombre', normalizeUppercaseText(val))}
+          error={errors.primer_nombre}
           autoCapitalize="characters"
           placeholder="JUAN"
         />
 
         <FormField
           label="Segundo Nombre"
-          value={data.segundoNombre || ''}
-          onChangeText={(val) => updateField('segundoNombre', normalizeUppercaseText(val))}
+          value={data.segundo_nombre || ''}
+          onChangeText={(val) => updateField('segundo_nombre', normalizeUppercaseText(val))}
           autoCapitalize="characters"
           placeholder="CARLOS"
         />
 
         <FormField
           label="Apellido Paterno *"
-          value={data.apellidoPaterno || ''}
-          onChangeText={(val) => updateField('apellidoPaterno', normalizeUppercaseText(val))}
-          error={errors.apellidoPaterno}
+          value={data.apellido_pat || ''}
+          onChangeText={(val) => updateField('apellido_pat', normalizeUppercaseText(val))}
+          error={errors.apellido_pat}
           autoCapitalize="characters"
           placeholder="PÉREZ"
         />
 
         <FormField
           label="Apellido Materno *"
-          value={data.apellidoMaterno || ''}
-          onChangeText={(val) => updateField('apellidoMaterno', normalizeUppercaseText(val))}
-          error={errors.apellidoMaterno}
+          value={data.apellido_mat || ''}
+          onChangeText={(val) => updateField('apellido_mat', normalizeUppercaseText(val))}
+          error={errors.apellido_mat}
           autoCapitalize="characters"
           placeholder="GARCÍA"
         />
@@ -134,9 +134,9 @@ export const Step1PersonalData: React.FC<Step1Props> = ({
 
         <DatePickerField
           label="Fecha de Nacimiento *"
-          value={data.fechaNacimiento || ''}
-          onChange={(val) => updateField('fechaNacimiento', val)}
-          error={errors.fechaNacimiento}
+          value={data.fecha_nac || ''}
+          onChange={(val) => updateField('fecha_nac', val)}
+          error={errors.fecha_nac}
           placeholder="DD/MM/AAAA"
         />
 
@@ -151,9 +151,9 @@ export const Step1PersonalData: React.FC<Step1Props> = ({
         {data.nacionalidad === 'MEXICANA' && (
           <SelectorField
             label="Estado de Nacimiento *"
-            value={data.estadoNacimiento || ''}
+            value={data.estado_nacimiento || ''}
             onPress={() => openSelector('estado_nacimiento')}
-            error={errors.estadoNacimiento}
+            error={errors.estado_nacimiento}
             placeholder="Seleccionar"
           />
         )}
@@ -168,9 +168,9 @@ export const Step1PersonalData: React.FC<Step1Props> = ({
 
         <SelectorField
           label="Estado Civil *"
-          value={data.estadoCivil || ''}
+          value={data.estado_civil || ''}
           onPress={() => openSelector('estado_civil')}
-          error={errors.estadoCivil}
+          error={errors.estado_civil}
           placeholder="Seleccionar"
         />
 
@@ -184,9 +184,9 @@ export const Step1PersonalData: React.FC<Step1Props> = ({
 
         <SelectorField
           label="Nivel de Estudios *"
-          value={data.nivelEstudio || ''}
+          value={data.nivel_estudio || ''}
           onPress={() => openSelector('nivel_estudio')}
-          error={errors.nivelEstudio}
+          error={errors.nivel_estudio}
           placeholder="Seleccionar"
         />
 

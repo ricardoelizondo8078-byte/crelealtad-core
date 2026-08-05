@@ -20,66 +20,72 @@ export type SelectorFieldKey =
 
 export interface SolicitudFormData {
   // Paso 1: Información Personal
-  nombres?: string;
-  apellidoPaterno?: string;
-  apellidoMaterno?: string;
+  primer_nombre?: string;
+  segundo_nombre?: string;
+  apellido_pat?: string;
+  apellido_mat?: string;
   curp?: string;
-  fechaNacimiento?: string;
+  fecha_nac?: string;
   nacionalidad?: string;
-  estadoNacimiento?: string;
+  estado_nacimiento?: string;
   genero?: string;
-  estadoCivil?: string;
+  estado_civil?: string;
   ocupacion?: string;
-  nivelEstudio?: string;
+  nivel_estudio?: string;
   telefono?: string;
 
   // Paso 2: Domicilio
-  domCalle?: string;
-  domNumExt?: string;
-  domNumInt?: string;
-  domEntreCalles?: string;
-  domCodigoPostal?: string;
-  domColonia?: string;
-  domMunicipio?: string;
-  domEstado?: string;
-  domTelefono?: string;
+  dom_calle?: string;
+  dom_num_ext?: string;
+  dom_num_int?: string;
+  dom_entre_calles?: string;
+  dom_codigo_postal?: string;
+  dom_colonia?: string;
+  dom_municipio?: string;
+  dom_estado?: string;
+  dom_telefono?: string;
 
   // Paso 3: Referencias
-  referencia1Nombre?: string;
-  referencia1Parentesco?: string;
-  referencia1Telefono?: string;
-  referencia1Direccion?: string;
-  referencia2Nombre?: string;
-  referencia2Parentesco?: string;
-  referencia2Telefono?: string;
-  referencia2Direccion?: string;
-  parejaNombre?: string;
-  parejaActividad?: string;
-  parejaIngresoSemanal?: string;
+  ref1_nombre?: string;
+  ref1_parentesco?: string;
+  ref1_telefono?: string;
+  ref1_direccion?: string;
+  ref2_nombre?: string;
+  ref2_parentesco?: string;
+  ref2_telefono?: string;
+  ref2_direccion?: string;
+  pareja_nombre?: string;
+  pareja_actividad?: string;
+  pareja_ingreso_semanal?: string;
 
   // Paso 4: Negocio
-  negocioGiro?: string;
-  negocioDomicilio?: string;
-  negocioCodigoPostal?: string;
-  negocioColonia?: string;
-  negocioMunicipio?: string;
-  negocioEstado?: string;
-  negocioDesdeCuando?: string;
-  negocioIngresoSemanal?: string;
-  negocioOtrosIngresos?: string;
-  negocioGastos?: string;
+  negocio_giro?: string;
+  negocio_domicilio?: string;
+  negocio_codigo_postal?: string;
+  negocio_colonia?: string;
+  negocio_municipio?: string;
+  negocio_estado?: string;
+  negocio_desde_cuando?: string;
+  negocio_ingreso_semanal?: string;
+  negocio_otros_ingresos?: string;
+  negocio_gastos?: string;
 
   // Paso 5: Beneficiario
-  beneficiarioNombre?: string;
-  beneficiarioParentesco?: string;
-  beneficiarioTelefono?: string;
-  beneficiarioDireccion?: string;
+  beneficiario_nombre?: string;
+  beneficiario_parentesco?: string;
+  beneficiario_telefono?: string;
+  beneficiario_direccion?: string;
 
   // Paso 6: Validaciones
-  tieneMedidorLuzSinAdeudo?: string;
-  viveMaximo5KmTesorera?: string;
-  tieneMenos70Anios?: string;
-  montoSolicitado?: string;
+  tiene_medidor_luz?: string;
+  vive_max_5km_tesorera?: string;
+  monto_solicitado?: string;
+
+  // Paso 7: Documentos
+  doc_ine_ruta?: string;
+  doc_comprobante_ruta?: string;
+  doc_ine_beneficiario_ruta?: string;
+  doc_solicitud_firmada_ruta?: string;
 }
 
 export interface SolicitudErrors {

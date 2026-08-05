@@ -54,12 +54,12 @@ export const useSolicitudForm = ({
       }
 
       // Pre-llenar nombre si viene de props
-      if (integranteNombre && !formData.primerNombre) {
+      if (integranteNombre && !formData.primer_nombre) {
         const nombres = integranteNombre.split(' ');
         setFormData(prev => ({
           ...prev,
-          primerNombre: nombres[0],
-          segundoNombre: nombres[1] || '',
+          primer_nombre: nombres[0],
+          segundo_nombre: nombres[1] || '',
         }));
       }
     } catch (error) {
@@ -79,17 +79,17 @@ export const useSolicitudForm = ({
   // Notificar cambios al padre
   useEffect(() => {
     if (onDataChange) {
-      const nombre = [formData.primerNombre, formData.segundoNombre, formData.apellidoPaterno, formData.apellidoMaterno]
+      const nombre = [formData.primer_nombre, formData.segundo_nombre, formData.apellido_pat, formData.apellido_mat]
         .filter(Boolean)
         .join(' ');
 
       onDataChange({
         nombre: nombre || undefined,
         telefono: formData.telefono,
-        montoSolicitado: formData.montoSolicitado ? parseFloat(formData.montoSolicitado) : undefined,
+        montoSolicitado: formData.monto_solicitado ? parseFloat(formData.monto_solicitado) : undefined,
       });
     }
-  }, [formData.primerNombre, formData.segundoNombre, formData.apellidoPaterno, formData.apellidoMaterno, formData.telefono, formData.montoSolicitado]);
+  }, [formData.primer_nombre, formData.segundo_nombre, formData.apellido_pat, formData.apellido_mat, formData.telefono, formData.monto_solicitado]);
 
   const updateFormData = useCallback((field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
