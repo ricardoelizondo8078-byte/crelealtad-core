@@ -54,6 +54,12 @@ export class SolicitudesService {
   async createOrUpdateForSolicitante(dto: SolicitudPayload): Promise<SolicitudEntity> {
     const integranteId = dto.integrante_id || dto.solicitanteId || dto.integrante_id_old;
 
+    // ⚠️  SEGURIDAD: Eliminar campos que NO deben venir del DTO
+    // numero_credito y credito_id solo deben asignarse en el momento del desembolso
+    const sanitizedDto = { ...dto };
+    delete sanitizedDto.numero_credito;
+    delete sanitizedDto.credito_id;
+
     return await this.dataSource.transaction(async (manager) => {
       // 1. Buscar o crear solicitud core
       let solicitudCore = await manager.findOne(SolicitudCoreEntity, {
@@ -63,23 +69,23 @@ export class SolicitudesService {
       if (!solicitudCore) {
         solicitudCore = manager.create(SolicitudCoreEntity, {
           integrante_id: integranteId,
-          integrante_id_old: dto.integrante_id_old,
-          persona_id: dto.persona_id,
-          expediente_id: dto.expediente_id,
-          grupo_id: dto.grupo_id,
-          credito_id: dto.credito_id,
-          ciclo_numero: dto.ciclo_numero,
-          numero_credito: dto.numero_credito,
-          monto_solicitado: dto.monto_solicitado,
-          monto_autorizado: dto.monto_autorizado,
-          folio: dto.folio,
+          integrante_id_old: sanitizedDto.integrante_id_old,
+          persona_id: sanitizedDto.persona_id,
+          expediente_id: sanitizedDto.expediente_id,
+          grupo_id: sanitizedDto.grupo_id,
+          // credito_id: NUNCA del DTO - solo en desembolso
+          ciclo_numero: sanitizedDto.ciclo_numero,
+          // numero_credito: NUNCA del DTO - solo en desembolso
+          monto_solicitado: sanitizedDto.monto_solicitado,
+          monto_autorizado: sanitizedDto.monto_autorizado,
+          folio: sanitizedDto.folio,
         } as any);
         solicitudCore = await manager.save(SolicitudCoreEntity, solicitudCore);
       } else {
         // Actualizar campos core si vienen en el dto
-        if (dto.monto_solicitado !== undefined) solicitudCore.monto_solicitado = dto.monto_solicitado as any;
-        if (dto.monto_autorizado !== undefined) solicitudCore.monto_autorizado = dto.monto_autorizado as any;
-        if (dto.folio !== undefined) solicitudCore.folio = dto.folio as any;
+        if (sanitizedDto.monto_solicitado !== undefined) solicitudCore.monto_solicitado = sanitizedDto.monto_solicitado as any;
+        if (sanitizedDto.monto_autorizado !== undefined) solicitudCore.monto_autorizado = sanitizedDto.monto_autorizado as any;
+        if (sanitizedDto.folio !== undefined) solicitudCore.folio = sanitizedDto.folio as any;
         solicitudCore = await manager.save(SolicitudCoreEntity, solicitudCore);
       }
 
@@ -105,6 +111,11 @@ export class SolicitudesService {
     console.log('🔍 partialUpdate - integrante_id:', solicitanteId);
     console.log('🔍 partialUpdate - data recibida:', JSON.stringify(data, null, 2));
 
+    // ⚠️  SEGURIDAD: Eliminar campos que NO deben venir del DTO
+    const sanitizedData = { ...data };
+    delete sanitizedData.numero_credito;
+    delete sanitizedData.credito_id;
+
     // Mapear campos legacy
     const fieldMappings: Record<string, string> = {
       fechaNacimiento: 'fecha_nac',
@@ -113,7 +124,7 @@ export class SolicitudesService {
       estado_nacimiento_nuevo: 'estado_nacimiento',
     };
 
-    const mappedData = { ...data };
+    const mappedData = { ...sanitizedData };
     Object.entries(fieldMappings).forEach(([from, to]) => {
       if (mappedData[from] !== undefined) {
         mappedData[to] = mappedData[from];
