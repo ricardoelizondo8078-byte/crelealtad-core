@@ -27,9 +27,6 @@ export class SolicitudEntity {
   integrante_id: string;
 
   @Column({ type: 'uuid', nullable: true })
-  integrante_id_old: string; // Temporal - mapea a la tabla vieja
-
-  @Column({ type: 'uuid', nullable: true })
   persona_id: string;
 
   @Column({ type: 'uuid', nullable: true })
