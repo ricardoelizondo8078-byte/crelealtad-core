@@ -157,6 +157,94 @@ export class IntegrantesService {
     }
   }
 
+  async validarSolicitudCompleta(integranteId: string): Promise<{ completa: boolean; pasosIncompletos: string[]; camposFaltantes: Record<string, string[]> }> {
+    const solicitud = await this.solicitudesService.getBySolicitante(integranteId);
+
+    if (!solicitud) {
+      return {
+        completa: false,
+        pasosIncompletos: ['Paso 1', 'Paso 2', 'Paso 3', 'Paso 4', 'Paso 5', 'Paso 6', 'Paso 7'],
+        camposFaltantes: { solicitud: ['No existe solicitud'] },
+      };
+    }
+
+    const pasosIncompletos: string[] = [];
+    const camposFaltantes: Record<string, string[]> = {};
+
+    // Paso 1: Datos Personales
+    const faltantesPaso1: string[] = [];
+    if (!solicitud.curp) faltantesPaso1.push('curp');
+    if (!solicitud.fecha_nac) faltantesPaso1.push('fecha_nac');
+    if (!solicitud.genero) faltantesPaso1.push('genero');
+    if (faltantesPaso1.length > 0) {
+      pasosIncompletos.push('Paso 1: Datos Personales');
+      camposFaltantes['Paso 1'] = faltantesPaso1;
+    }
+
+    // Paso 2: Domicilio
+    const faltantesPaso2: string[] = [];
+    if (!solicitud.dom_calle) faltantesPaso2.push('dom_calle');
+    if (!solicitud.dom_colonia) faltantesPaso2.push('dom_colonia');
+    if (!solicitud.dom_municipio) faltantesPaso2.push('dom_municipio');
+    if (faltantesPaso2.length > 0) {
+      pasosIncompletos.push('Paso 2: Domicilio');
+      camposFaltantes['Paso 2'] = faltantesPaso2;
+    }
+
+    // Paso 3: Referencias
+    const faltantesPaso3: string[] = [];
+    if (!solicitud.ref1_nombre) faltantesPaso3.push('ref1_nombre');
+    if (!solicitud.ref2_nombre) faltantesPaso3.push('ref2_nombre');
+    if (faltantesPaso3.length > 0) {
+      pasosIncompletos.push('Paso 3: Referencias');
+      camposFaltantes['Paso 3'] = faltantesPaso3;
+    }
+
+    // Paso 4: Negocio
+    const faltantesPaso4: string[] = [];
+    if (!solicitud.negocio_giro) faltantesPaso4.push('negocio_giro');
+    if (!solicitud.negocio_ingreso_semanal) faltantesPaso4.push('negocio_ingreso_semanal');
+    if (faltantesPaso4.length > 0) {
+      pasosIncompletos.push('Paso 4: Negocio');
+      camposFaltantes['Paso 4'] = faltantesPaso4;
+    }
+
+    // Paso 5: Beneficiario
+    const faltantesPaso5: string[] = [];
+    if (!solicitud.beneficiario_nombre) faltantesPaso5.push('beneficiario_nombre');
+    if (!solicitud.beneficiario_parentesco) faltantesPaso5.push('beneficiario_parentesco');
+    if (faltantesPaso5.length > 0) {
+      pasosIncompletos.push('Paso 5: Beneficiario');
+      camposFaltantes['Paso 5'] = faltantesPaso5;
+    }
+
+    // Paso 6: Validaciones
+    const faltantesPaso6: string[] = [];
+    if (solicitud.tiene_medidor_luz === null || solicitud.tiene_medidor_luz === undefined) faltantesPaso6.push('tiene_medidor_luz');
+    if (solicitud.vive_max_5km_tesorera === null || solicitud.vive_max_5km_tesorera === undefined) faltantesPaso6.push('vive_max_5km_tesorera');
+    if (faltantesPaso6.length > 0) {
+      pasosIncompletos.push('Paso 6: Validaciones');
+      camposFaltantes['Paso 6'] = faltantesPaso6;
+    }
+
+    // Paso 7: Documentos (4 obligatorios)
+    const faltantesPaso7: string[] = [];
+    if (!solicitud.doc_ine_ruta) faltantesPaso7.push('doc_ine_ruta');
+    if (!solicitud.doc_comprobante_ruta) faltantesPaso7.push('doc_comprobante_ruta');
+    if (!solicitud.doc_ine_beneficiario_ruta) faltantesPaso7.push('doc_ine_beneficiario_ruta');
+    if (!solicitud.doc_solicitud_firmada_ruta) faltantesPaso7.push('doc_solicitud_firmada_ruta');
+    if (faltantesPaso7.length > 0) {
+      pasosIncompletos.push('Paso 7: Documentos');
+      camposFaltantes['Paso 7'] = faltantesPaso7;
+    }
+
+    return {
+      completa: pasosIncompletos.length === 0,
+      pasosIncompletos,
+      camposFaltantes,
+    };
+  }
+
   async updateEstadoManual(id: string, estado: IntegranteEstado): Promise<IntegranteEntity> {
     try {
       const integrante = await this.integranteRepository.findOne({
@@ -176,6 +264,21 @@ export class IntegrantesService {
 
       if (!estadosPermitidos.includes(estado)) {
         throw new Error(`Solo se permiten cambios manuales a: ${estadosPermitidos.join(', ')}`);
+      }
+
+      // VALIDACIÓN: Si se intenta marcar como SUJETA_CREDITO, verificar que la solicitud esté completa
+      if (estado === IntegranteEstado.SUJETA_CREDITO) {
+        const validacion = await this.validarSolicitudCompleta(id);
+        if (!validacion.completa) {
+          const error = new Error('Solicitud incompleta. No se puede marcar como SUJETA_CREDITO.');
+          (error as any).statusCode = 400;
+          (error as any).response = {
+            message: 'Solicitud incompleta',
+            pasosIncompletos: validacion.pasosIncompletos,
+            camposFaltantes: validacion.camposFaltantes,
+          };
+          throw error;
+        }
       }
 
       integrante.estado = estado;

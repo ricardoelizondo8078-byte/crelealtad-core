@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Patch, HttpException, HttpStatus } from '@nestjs/common';
 import { IsString, IsOptional, IsNumber, IsEnum, IsUUID } from 'class-validator';
 import { IntegrantesService } from './integrantes.service';
 import { IntegranteEstado } from './integrante.entity';
@@ -104,8 +104,15 @@ export class IntegrantesController {
   }
 
   @Patch(':id/estado')
-  updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDto) {
-    return this.integrantesService.updateEstadoManual(id, dto.estado);
+  async updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoDto) {
+    try {
+      return await this.integrantesService.updateEstadoManual(id, dto.estado);
+    } catch (error) {
+      if ((error as any).statusCode === 400 && (error as any).response) {
+        throw new HttpException((error as any).response, HttpStatus.BAD_REQUEST);
+      }
+      throw error;
+    }
   }
 
   @Patch(':id')
