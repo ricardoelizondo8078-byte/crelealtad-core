@@ -340,12 +340,6 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     try {
       // Guardar datos básicos
       if (Object.keys(datosSolicitante).length > 0) {
-        if (datosSolicitante.nombres || datosSolicitante.apellido_pat || datosSolicitante.apellido_mat) {
-          const nombreCompleto = `${datosSolicitante.nombres || form.nombres || ''} ${datosSolicitante.apellido_pat || form.apellido_pat || ''} ${datosSolicitante.apellido_mat || form.apellido_mat || ''}`.trim();
-          if (nombreCompleto) {
-            datosSolicitante.nombre = nombreCompleto;
-          }
-        }
 
         console.log('🔄 AUTO-SAVE datos integrante:', JSON.stringify(datosSolicitante, null, 2));
 
@@ -404,7 +398,6 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
           setIntegrante(integranteData);
 
           // Pre-cargar datos iniciales del integrante en el formulario
-          // El backend YA envía nombres separados, usarlos directamente
           setForm((current) => ({
             ...current,
             nombres: integranteData.nombres || '',
@@ -427,8 +420,8 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             const montoFromIntegrante = integranteData?.montoSolicitado ? String(Number(integranteData.montoSolicitado)) : '';
 
             setForm({
-              // Datos básicos de identidad (fuente: tabla integrantes)
-              nombres: integranteData?.nombres || '',
+              // Datos básicos de identidad (fuente: tabla integrantes o solicitud)
+              nombres: data.nombres || integranteData?.nombres || '',
               apellido_pat: integranteData?.apellido_pat || '',
               apellido_mat: integranteData?.apellido_mat || '',
               telefonoInicial: integranteData?.telefono || '',
@@ -952,13 +945,10 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
   const saveCurrentStep = useCallback(async () => {
     try {
       // Guardar datos básicos del integrante (siempre)
-      const nombreCompleto = `${form.nombres} ${form.apellido_pat} ${form.apellido_mat}`.trim();
-
       const integranteData = {
         nombres: form.nombres,
         apellido_pat: form.apellido_pat,
         apellido_mat: form.apellido_mat,
-        nombre: nombreCompleto,
         telefono: form.telefonoInicial,
         telefonoSecundario: form.telefonoSecundario,
         montoSolicitado: Number(form.montoSolicitado),
@@ -1063,7 +1053,21 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
               ...solicitudData,
             });
             console.log('💾 ✅ Solicitud creada con POST');
+          } else if (patchError.status === 400) {
+            console.error('❌ ERROR 400 - Validación fallida');
+            console.error('Status:', patchError.status);
+            console.error('Message:', patchError.message);
+            console.error('Detalle completo:', JSON.stringify(patchError, null, 2));
+            if (patchError.response?.data) {
+              console.error('Body de respuesta:', JSON.stringify(patchError.response.data, null, 2));
+            }
+            Alert.alert(
+              'Error de validación',
+              `El servidor rechazó los datos. Revisa la consola para detalles.\n\n${JSON.stringify(patchError.response?.data || patchError.message, null, 2)}`
+            );
+            throw patchError;
           } else {
+            console.error('❌ Error inesperado:', patchError);
             throw patchError;
           }
         }
@@ -1561,7 +1565,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 <FormField label="Nombre(s)" required errorText={errors.nombres}>
                   <TextInput allowFontScaling={false}
                     style={styles.input}
-                    placeholder="Nombre(s)"
+                    placeholder="Nombre(s) completo(s)"
                     value={form.nombres}
                     onChangeText={(value) => updateField('nombres', normalizeUppercaseLettersOnly(value))}
                     autoCapitalize="characters"
