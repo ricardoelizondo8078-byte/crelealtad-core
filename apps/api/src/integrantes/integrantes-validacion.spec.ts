@@ -125,10 +125,11 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
     expect(res.body.pasosIncompletos).toContain('Paso 5: Beneficiario');
     expect(res.body.pasosIncompletos).toContain('Paso 6: Validaciones');
     expect(res.body.pasosIncompletos).toContain('Paso 7: Documentos');
-    expect(res.body.camposFaltantes['Paso 1']).toContain('nombres');
-    expect(res.body.camposFaltantes['Paso 1']).toContain('curp');
-    expect(res.body.camposFaltantes['Paso 1']).toContain('fecha_nac');
-    expect(res.body.camposFaltantes['Paso 1']).toContain('genero');
+    // Ahora devuelve etiquetas legibles en español, no nombres de columna
+    expect(res.body.camposFaltantes['Paso 1']).toContain('Nombre(s) de pila');
+    expect(res.body.camposFaltantes['Paso 1']).toContain('CURP');
+    expect(res.body.camposFaltantes['Paso 1']).toContain('Fecha de nacimiento');
+    expect(res.body.camposFaltantes['Paso 1']).toContain('Género');
   });
 
   it('debe ACEPTAR SUJETA_CREDITO con solicitud completa', async () => {
