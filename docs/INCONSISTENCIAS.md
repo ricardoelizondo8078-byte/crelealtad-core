@@ -4,6 +4,41 @@ Deuda técnica registrada. NO implementar sin aprobación explícita.
 
 ---
 
+## CRÍTICO: UPLOAD DE DOCUMENTOS NO IMPLEMENTADO
+
+**Impacto**: BLOQUEADOR TOTAL del flujo. Ninguna solicitud puede completarse ni pasar a SUJETA_CREDITO.
+
+**Estado actual**:
+- Paso 7 del wizard permite "cargar" documentos mediante React Native ImagePicker
+- Los documentos se guardan en AsyncStorage local del dispositivo (NO en servidor)
+- Las URIs se guardan en la tabla solicitudes_documentos con prefijo `storage:...`
+- Al reentrar, los documentos se ven SOLO porque están en estado local
+- Si la app se desinstala o se cambia de dispositivo, se pierden TODOS los documentos
+
+**Campos bloqueados** (4 requeridos para SUJETA_CREDITO):
+- doc_ine_ruta
+- doc_comprobante_ruta
+- doc_ine_beneficiario_ruta
+- doc_solicitud_firmada_ruta
+
+**Validación actual**:
+IntegrantesService.cambiarEstado() rechaza transición a SUJETA_CREDITO si faltan los 4 campos.
+Backend devuelve pasosIncompletos y camposFaltantes pero frontend NO muestra el mensaje.
+
+**Qué falta**:
+1. Endpoint POST /documentos/upload que reciba multipart/form-data
+2. Almacenamiento seguro (S3, Cloudinary, o filesystem con backup)
+3. Política de retención/eliminación de documentos (son identificaciones oficiales)
+4. Actualizar SolicitudFormScreen para enviar archivos reales al servidor
+5. Mostrar mensaje claro en UI cuando intente pasar a SUJETA_CREDITO sin documentos
+
+**Decisión pendiente**:
+Ricardo debe definir DÓNDE se almacenan los archivos antes de implementar upload.
+
+Fecha identificado: 2026-08-06
+
+---
+
 ## IMPORTANTE: Validaciones como VARCHAR en lugar de BOOLEAN
 
 ### Estado actual
