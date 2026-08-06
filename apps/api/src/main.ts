@@ -34,6 +34,32 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true, // Convierte tipos automáticamente
       },
+      exceptionFactory: (errors) => {
+        console.error('❌ ========================================');
+        console.error('❌ VALIDACIÓN FALLIDA - HTTP 400');
+        console.error('❌ ========================================');
+        console.error('Errores de validación:');
+        errors.forEach((error) => {
+          console.error(`  Campo: ${error.property}`);
+          console.error(`  Valor recibido: ${JSON.stringify(error.value)}`);
+          console.error(`  Constraints: ${JSON.stringify(error.constraints)}`);
+          if (error.children && error.children.length > 0) {
+            console.error(`  Children errors: ${JSON.stringify(error.children)}`);
+          }
+        });
+        console.error('❌ ========================================');
+
+        const messages = errors.map((error) => {
+          return Object.values(error.constraints || {}).join(', ');
+        });
+
+        return {
+          statusCode: 400,
+          message: messages,
+          error: 'Bad Request',
+          validationErrors: errors,
+        };
+      },
     }),
   );
 

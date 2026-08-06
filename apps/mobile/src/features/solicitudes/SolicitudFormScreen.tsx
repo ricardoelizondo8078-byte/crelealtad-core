@@ -330,6 +330,10 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             datosSolicitud.vive_max_5km_tesorera = value;
           } else if (key === 'tiene_menos_70_anios') {
             datosSolicitud.tiene_menos_70_anios = value;
+          } else if (key === 'estado') {
+            datosSolicitud.dom_estado = value;
+          } else if (key === 'negocioEstado') {
+            datosSolicitud.negocio_estado = value;
           } else {
             datosSolicitud[key] = value;
           }
@@ -1040,7 +1044,9 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         console.log('💾 ========================================');
         console.log('💾 GUARDANDO SOLICITUD');
         console.log('💾 Integrante ID:', integranteId);
-        console.log('💾 Datos:', JSON.stringify(solicitudData, null, 2));
+        console.log('💾 PAYLOAD COMPLETO QUE SE VA A ENVIAR:');
+        console.log(JSON.stringify(solicitudData, null, 2));
+        console.log('💾 ========================================');
 
         try {
           await api.patch(`/solicitudes/integrante/${integranteId}`, solicitudData);
