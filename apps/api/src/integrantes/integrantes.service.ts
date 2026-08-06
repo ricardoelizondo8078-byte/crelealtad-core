@@ -57,6 +57,7 @@ export class IntegrantesService {
     try {
       const integrante = await this.integranteRepository.findOne({
         where: { id },
+        relations: { expediente: true },
       });
 
       if (!integrante) {
@@ -90,6 +91,7 @@ export class IntegrantesService {
         id: integrante.id,
         expediente_id: integrante.expediente_id,
         persona_id: integrante.persona_id,
+        grupo_id: integrante.expediente?.grupo_id,
         estado: integrante.estado,
         created_at: integrante.created_at,
         updated_at: integrante.updated_at,

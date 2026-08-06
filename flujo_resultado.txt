@@ -1,0 +1,38 @@
+﻿{
+    "nombre":  "GRUPO WIZARD TEST",
+    "zona_id":  null,
+    "sucursal_id":  null,
+    "fecha_inicio":  "2026-08-05T23:39:27.676Z",
+    "estado":  "FORMANDO",
+    "created_by":  null,
+    "folio":  null,
+    "id":  "2d3b9023-ede2-4076-a401-3e68e80945b0",
+    "created_at":  "2026-08-05T23:39:27.723Z",
+    "updated_at":  "2026-08-05T23:39:27.723Z",
+    "deleted_at":  null,
+    "name":  "GRUPO WIZARD TEST",
+    "expedienteId":  "b6e64fcc-e4ae-4dac-b6d5-ba0a96f2ea1e"
+}
+{
+    "grupo_id":  "2d3b9023-ede2-4076-a401-3e68e80945b0",
+    "estado":  "EN_DOCUMENTACION",
+    "folio":  null,
+    "producto_id":  null,
+    "asesora_id":  null,
+    "horario_visita":  null,
+    "dias_visita":  null,
+    "semana_cobro":  null,
+    "observaciones":  null,
+    "id":  "5d81e0ac-62da-4eda-8edb-c063692f318a",
+    "estado_fecha":  "2026-08-05T23:39:27.809Z",
+    "created_at":  "2026-08-05T23:39:27.809Z",
+    "updated_at":  "2026-08-05T23:39:27.809Z"
+}
+{
+    "id":  "a66ad54b-4d13-479d-ac24-5474b7e9a06a",
+    "nombre":  "MARIA GONZALEZ LOPEZ",
+    "telefono":  "5512345678",
+    "montoSolicitado":  5000,
+    "estado":  "DOCUMENTANDO",
+    "expediente_id":  "5d81e0ac-62da-4eda-8edb-c063692f318a"
+}

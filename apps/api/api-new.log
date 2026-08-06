@@ -1,0 +1,87 @@
+
+> api@1.0.0 start:dev
+> nest start --watch
+
+[2J[3J[H[[90m5:16:17 p.m.[0m] Starting compilation in watch mode...
+
+[[90m5:16:21 p.m.[0m] Found 0 errors. Watching for file changes.
+
+(node:22852) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[Nest] 4288  - 05/08/2026, 5:16:24 p.m.     LOG [NestFactory] Starting Nest application...
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] LoggerModule dependencies initialized +81ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] TypeOrmModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] PassportModule dependencies initialized +4ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] ThrottlerModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] JwtModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] AppModule dependencies initialized +1ms
+query: SELECT version()
+query: SELECT * FROM current_schema()
+query: CREATE EXTENSION IF NOT EXISTS "uuid-ossp"
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] TypeOrmCoreModule dependencies initialized +60ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] TypeOrmModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] TypeOrmModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] TypeOrmModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] TypeOrmModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] TypeOrmModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] TypeOrmModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] ExpedientesModule dependencies initialized +1ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] IntegrantesModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] SolicitudesModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] CodigosPostalesModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] GruposModule dependencies initialized +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [InstanceLoader] AuthModule dependencies initialized +1ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RoutesResolver] HealthController {/health}: +11ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/health, GET} route +3ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RoutesResolver] AuthController {/auth}: +1ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/auth/login-list, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/auth/login, POST} route +1ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/auth/me, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RoutesResolver] GruposController {/grupos}: +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/grupos, POST} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/grupos, GET} route +1ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/grupos/:id, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RoutesResolver] ExpedientesController {/expedientes}: +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/expedientes, POST} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/expedientes, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/expedientes/group/:groupId, GET} route +1ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/expedientes/:id, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/expedientes/:id/integrantes, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/expedientes/:id/send-to-verification, PATCH} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RoutesResolver] IntegrantesController {/integrantes}: +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/integrantes/expediente/:expedienteId, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/integrantes/:id, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/integrantes, POST} route +1ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/integrantes/:id/estado, PATCH} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/integrantes/:id, PATCH} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RoutesResolver] SolicitudesController {/solicitudes}: +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/solicitudes/solicitante/:solicitanteId, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/solicitudes/integrante/:integranteId, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/solicitudes, POST} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/solicitudes/solicitante/:solicitanteId, PUT} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/solicitudes/:solicitanteId, PATCH} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/solicitudes/integrante/:integranteId, PATCH} route +1ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RoutesResolver] CodigosPostalesController {/codigos-postales}: +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/codigos-postales/colonias, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [RouterExplorer] Mapped {/codigos-postales/info, GET} route +0ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.     LOG [NestApplication] Nest application successfully started +2ms
+[Nest] 4288  - 05/08/2026, 5:16:25 p.m.   ERROR [NestApplication] Error: listen EADDRINUSE: address already in use 0.0.0.0:3100 +2ms
+node:net:2008
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:3100
+    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+    at listenInCluster (node:net:2065:12)
+    at node:net:2274:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3100
+}
+
+Node.js v24.15.0
+
+C:\Users\Admin\Desktop\CRELEALTAD CORE\apps\api>

@@ -6,7 +6,7 @@ describe('Cálculo de tiene_menos_70_anios', () => {
   let savedEntity: any;
 
   beforeEach(() => {
-    service = new SolicitudesService(null, null, null, null, null, null, null, null, null, null, null);
+    service = new SolicitudesService(null, null, null, null, null, null, null, null, null, null, null, null);
 
     manager = {
       findOne: jest.fn().mockResolvedValue(null),

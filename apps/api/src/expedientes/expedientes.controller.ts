@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Patch, Post, Body, NotFoundException } from '@nestjs/common';
 import { ExpedientesService } from './expedientes.service';
 import { CreateExpedienteDto } from './dto/create-expediente.dto';
+import { Public } from '../auth/public.decorator';
 
 @Controller('expedientes')
 export class ExpedientesController {

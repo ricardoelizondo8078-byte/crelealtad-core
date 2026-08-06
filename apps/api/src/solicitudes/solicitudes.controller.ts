@@ -1,8 +1,9 @@
 import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { SolicitudesService } from './solicitudes.service';
-import { SolicitudEntity } from './solicitud.entity';
+import { SolicitudReadEntity } from './entities/solicitud-read.entity';
 import { CreateSolicitudDto } from './dto/create-solicitud.dto';
 import { PartialUpdateSolicitudDto } from './dto/partial-update-solicitud.dto';
+import { Public } from '../auth/public.decorator';
 
 @Controller('solicitudes')
 export class SolicitudesController {

@@ -2,6 +2,7 @@ import { Injectable, Inject, forwardRef, BadRequestException } from '@nestjs/com
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { SolicitudEntity } from './solicitud.entity';
+import { SolicitudReadEntity } from './entities/solicitud-read.entity';
 import { SolicitudCoreEntity } from './entities/solicitud-core.entity';
 import { SolicitudDatosPersonalesEntity } from './entities/solicitud-datos-personales.entity';
 import { SolicitudDomiciliosEntity } from './entities/solicitud-domicilios.entity';
@@ -18,6 +19,8 @@ export class SolicitudesService {
   constructor(
     @InjectRepository(SolicitudEntity)
     private readonly solicitudRepository: Repository<SolicitudEntity>,
+    @InjectRepository(SolicitudReadEntity)
+    private readonly solicitudReadRepository: Repository<SolicitudReadEntity>,
     @InjectRepository(SolicitudCoreEntity)
     private readonly solicitudCoreRepository: Repository<SolicitudCoreEntity>,
     @InjectRepository(SolicitudDatosPersonalesEntity)
@@ -39,13 +42,13 @@ export class SolicitudesService {
     private readonly integrantesService: IntegrantesService,
   ) {}
 
-  async getBySolicitante(solicitanteId: string): Promise<SolicitudEntity | null> {
-    return this.solicitudRepository.findOne({
+  async getBySolicitante(solicitanteId: string): Promise<SolicitudReadEntity | null> {
+    return this.solicitudReadRepository.findOne({
       where: { integrante_id: solicitanteId },
     });
   }
 
-  async createOrUpdateForSolicitante(dto: CreateSolicitudDto): Promise<SolicitudEntity> {
+  async createOrUpdateForSolicitante(dto: CreateSolicitudDto): Promise<SolicitudReadEntity> {
     // Validación explícita de campos requeridos
     if (!dto.integrante_id) {
       throw new BadRequestException('integrante_id es requerido');
@@ -99,15 +102,15 @@ export class SolicitudesService {
       await this.upsertDocumentos(manager, solicitudCore.id, dto);
 
       // 3. Retornar desde vista consolidada
-      return manager.findOne(SolicitudEntity, { where: { id: solicitudCore.id } });
+      return manager.findOne(SolicitudReadEntity, { where: { id: solicitudCore.id } });
     });
   }
 
-  async createForSolicitante(dto: CreateSolicitudDto): Promise<SolicitudEntity> {
+  async createForSolicitante(dto: CreateSolicitudDto): Promise<SolicitudReadEntity> {
     return this.createOrUpdateForSolicitante(dto);
   }
 
-  async partialUpdate(integranteId: string, data: any): Promise<SolicitudEntity> {
+  async partialUpdate(integranteId: string, data: any): Promise<SolicitudReadEntity> {
     // DERIVAR los 4 campos obligatorios desde el integrante
     const integrante = await this.integrantesService.getById(integranteId);
 

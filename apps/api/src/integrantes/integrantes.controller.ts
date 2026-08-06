@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post, Patch, HttpException, HttpStatus } 
 import { IsString, IsOptional, IsNumber, IsEnum, IsUUID } from 'class-validator';
 import { IntegrantesService } from './integrantes.service';
 import { IntegranteEstado } from './integrante.entity';
+import { Public } from '../auth/public.decorator';
 
 class CreateIntegranteDto {
   @IsOptional()
