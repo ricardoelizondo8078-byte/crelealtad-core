@@ -413,13 +413,13 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
       // Guardar formulario
       if (Object.keys(datosSolicitud).length > 0) {
         console.log('\n📤 ========================================');
-        console.log('📤 AUTO-SAVE PATCH /solicitudes/:integranteId');
+        console.log('📤 AUTO-SAVE PATCH /solicitudes/integrante/:integranteId');
         console.log('📤 Integrante ID:', integranteId);
         console.log('📤 PAYLOAD QUE SE VA A ENVIAR:');
         console.log(JSON.stringify(datosSolicitud, null, 2));
         console.log('📤 Cantidad de propiedades:', Object.keys(datosSolicitud).length);
         console.log('📤 ========================================\n');
-        await api.patch(`/solicitudes/${integranteId}`, datosSolicitud);
+        await api.patch(`/solicitudes/integrante/${integranteId}`, datosSolicitud);
       }
 
       setAutoSaveStatus('saved');
@@ -1035,6 +1035,8 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         console.error('❌ Error al guardar integrante:', error);
       }
 
+      // NOTA: persona_id, expediente_id, grupo_id NO se envían - el backend los deriva del integrante
+
       // Guardar datos de la solicitud (todos los pasos) - TODOS LOS CAMPOS
       const solicitudData: any = {
         // PASO 1: Información Personal
@@ -1334,7 +1336,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
       const fechaCaptura = new Date().toISOString().split('T')[0];
 
       // Actualizar campos en la tabla solicitudes
-      await api.patch(`/solicitudes/${integranteId}`, {
+      await api.patch(`/solicitudes/integrante/${integranteId}`, {
         [fields.ruta]: rutaGuardada,
         [fields.fecha]: fechaCaptura,
       });
