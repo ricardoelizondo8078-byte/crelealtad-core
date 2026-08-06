@@ -352,6 +352,13 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
       // Guardar formulario
       if (Object.keys(datosSolicitud).length > 0) {
+        console.log('\n📤 ========================================');
+        console.log('📤 AUTO-SAVE PATCH /solicitudes/:integranteId');
+        console.log('📤 Integrante ID:', integranteId);
+        console.log('📤 PAYLOAD QUE SE VA A ENVIAR:');
+        console.log(JSON.stringify(datosSolicitud, null, 2));
+        console.log('📤 Cantidad de propiedades:', Object.keys(datosSolicitud).length);
+        console.log('📤 ========================================\n');
         await api.patch(`/solicitudes/${integranteId}`, datosSolicitud);
       }
 

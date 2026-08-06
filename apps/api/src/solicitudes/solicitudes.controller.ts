@@ -43,6 +43,13 @@ export class SolicitudesController {
     @Param('integranteId') integranteId: string,
     @Body() data: PartialUpdateSolicitudDto,
   ) {
+    console.log('\n📥 ========================================');
+    console.log('📥 PATCH /solicitudes/integrante/:integranteId');
+    console.log('📥 Integrante ID:', integranteId);
+    console.log('📥 PAYLOAD RECIBIDO EN CONTROLLER:');
+    console.log(JSON.stringify(data, null, 2));
+    console.log('📥 Cantidad de propiedades:', Object.keys(data).length);
+    console.log('📥 ========================================\n');
     return this.solicitudesService.partialUpdate(integranteId, data);
   }
 }

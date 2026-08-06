@@ -35,19 +35,24 @@ async function bootstrap() {
         enableImplicitConversion: true, // Convierte tipos automáticamente
       },
       exceptionFactory: (errors) => {
-        console.error('❌ ========================================');
+        console.error('\n');
+        console.error('========================================');
         console.error('❌ VALIDACIÓN FALLIDA - HTTP 400');
-        console.error('❌ ========================================');
-        console.error('Errores de validación:');
-        errors.forEach((error) => {
-          console.error(`  Campo: ${error.property}`);
-          console.error(`  Valor recibido: ${JSON.stringify(error.value)}`);
-          console.error(`  Constraints: ${JSON.stringify(error.constraints)}`);
-          if (error.children && error.children.length > 0) {
-            console.error(`  Children errors: ${JSON.stringify(error.children)}`);
+        console.error('========================================');
+        console.error('');
+        console.error('PROPIEDADES RECHAZADAS:');
+        errors.forEach((error, index) => {
+          console.error(`\n[${index + 1}] Campo: "${error.property}"`);
+          console.error(`    Valor: ${JSON.stringify(error.value)}`);
+          console.error(`    Tipo recibido: ${typeof error.value}`);
+          console.error(`    Constraints:`);
+          if (error.constraints) {
+            Object.entries(error.constraints).forEach(([key, msg]) => {
+              console.error(`      - ${key}: ${msg}`);
+            });
           }
         });
-        console.error('❌ ========================================');
+        console.error('\n========================================\n');
 
         const messages = errors.map((error) => {
           return Object.values(error.constraints || {}).join(', ');

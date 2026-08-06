@@ -73,6 +73,17 @@ export class CreateSolicitudDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(150)
+  nombres?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  apellido_pat?: string;
+
+  // Legacy: separación errónea de nombres compuestos
+  @IsOptional()
+  @IsString()
   @MaxLength(50)
   primer_nombre?: string;
 
@@ -80,11 +91,6 @@ export class CreateSolicitudDto {
   @IsString()
   @MaxLength(50)
   segundo_nombre?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  apellido_pat?: string;
 
   @IsOptional()
   @IsString()
@@ -358,7 +364,10 @@ export class CreateSolicitudDto {
   @MaxLength(20)
   vive_max_5km_tesorera?: string;
 
-  // tiene_menos_70_anios NO se captura, se calcula desde fecha_nac
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  tiene_menos_70_anios?: string;
 
   // ====================================================================
   // TABLA: solicitudes_documentos - 12 columnas
