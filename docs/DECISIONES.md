@@ -270,5 +270,54 @@ El esquema de diseño original indica que deberían ser BOOLEAN.
 
 ---
 
+## 2026-08-06 | Validación de documentos: solo rutas de servidor (Opción A → B)
+
+**DECISION**: La validación de solicitudes completas rechaza rutas locales del dispositivo
+(prefijos `storage:`, `file://`, `content://`) en los 4 campos de documentos obligatorios.
+Solo acepta rutas de servidor. Las solicitudes quedan en DOCUMENTANDO hasta que los
+documentos se suban al servidor.
+
+**MOTIVO**: Evitar expedientes marcados como completos con documentos inexistentes del lado
+del servidor. Sin esta validación, una solicitud puede pasar a SUJETA_CREDITO con documentos
+que solo existen en AsyncStorage del teléfono, perdiéndose al reinstalar la app o cambiar
+de dispositivo. Esto representa riesgo operativo y legal crítico: no se puede verificar
+identidad, domicilio ni firmas después.
+
+**IMPLEMENTACION ACTUAL (Opción A)**:
+- Helper `esRutaServidor()` rechaza prefijos locales
+- Validación en `validarSolicitudCompleta()` usa el helper para Paso 7
+- Mensajes legibles para asesoras: "INE de la integrante - pendiente de subir"
+- Frontend muestra badge "⚠️ PENDIENTE DE SUBIR" en documentos locales
+- El botón "Marcar como Capturado" muestra el mensaje de validación del backend
+
+**ROADMAP HACIA OPCION B (Captura offline + sincronización)**:
+Esta es una solución intermedia. El objetivo final es permitir captura offline con
+sincronización posterior, porque las asesoras trabajan en la calle con señal irregular.
+
+Próximos pasos cuando se implemente upload:
+1. Agregar columna `documentos_origen` ENUM('LOCAL', 'SERVIDOR')
+2. Crear estado intermedio DOCUMENTOS_PENDIENTES
+3. Modificar `esRutaServidor()` para aceptar locales con origen='LOCAL'
+4. Solo SUJETA_CREDITO requiere origen='SERVIDOR'
+5. Flujo de sincronización para subir documentos pendientes
+
+**ALTERNATIVAS DESCARTADAS**:
+- Opción B directo (estado DOCUMENTOS_PENDIENTES): más complejo, requiere migración.
+  Se implementará después.
+- Opción C (bloqueo total): bloquea captura completa hoy, requiere upload urgente.
+
+**ESTADO**: CERRADA (implementada Opción A como paso intermedio hacia B)
+
+**UBICACION**:
+- Backend: apps/api/src/integrantes/integrantes.service.ts
+  - Helper privado `esRutaServidor()`
+  - Helper privado `obtenerEtiquetaLegible()` para mensajes en español
+  - Validación en `validarSolicitudCompleta()` líneas 295-314
+- Frontend: apps/mobile/src/features/solicitudes/SolicitudFormScreen.tsx
+  - Badge en documentos locales
+  - Mensaje en Alert cuando falta Paso 7
+
+---
+
 **Última actualización**: 2026-08-06
 **Responsable**: Ricardo Elizondo (ricardoelizondo8078@gmail.com)

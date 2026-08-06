@@ -2145,6 +2145,21 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                   </Text>
                 </View>
 
+                {/* AVISO IMPORTANTE: Documentos locales */}
+                <View style={styles.avisoDocumentosLocales}>
+                  <Text allowFontScaling={false} style={styles.avisoDocumentosLocalesIcon}>⚠️</Text>
+                  <View style={styles.avisoDocumentosLocalesTexto}>
+                    <Text allowFontScaling={false} style={styles.avisoDocumentosLocalesTitle}>
+                      Documentos guardados localmente
+                    </Text>
+                    <Text allowFontScaling={false} style={styles.avisoDocumentosLocalesBody}>
+                      Los documentos se guardan en tu teléfono y AÚN NO están resguardados en el servidor.
+                      Se perderán si desinstalas la app o cambias de dispositivo. La función de subida al
+                      servidor estará disponible próximamente.
+                    </Text>
+                  </View>
+                </View>
+
                 {documentos.map((doc) => (
                   <View key={doc.id} style={styles.documentoRow}>
                     <View style={styles.documentoInfo}>
@@ -2165,7 +2180,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                             doc.status === 'OPCIONAL' && styles.statusBadgeTextOpcional,
                           ]}
                         >
-                          {doc.status}
+                          {doc.status === 'CARGADO' ? '⚠️ PENDIENTE DE SUBIR' : doc.status}
                         </Text>
                       </View>
                     </View>
@@ -2625,6 +2640,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
+  },
+  avisoDocumentosLocales: {
+    backgroundColor: '#FFF3CD',
+    borderLeftWidth: 4,
+    borderLeftColor: '#FFA500',
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  avisoDocumentosLocalesIcon: {
+    fontSize: 24,
+    marginTop: 2,
+  },
+  avisoDocumentosLocalesTexto: {
+    flex: 1,
+  },
+  avisoDocumentosLocalesTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#856404',
+    marginBottom: spacing.xs,
+  },
+  avisoDocumentosLocalesBody: {
+    fontSize: 13,
+    color: '#856404',
+    lineHeight: 18,
   },
   documentoRow: {
     flexDirection: 'row',

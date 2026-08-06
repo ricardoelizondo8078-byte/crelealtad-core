@@ -162,6 +162,63 @@ export class IntegrantesService {
     }
   }
 
+  /**
+   * Helper para verificar si una ruta es del servidor o local del dispositivo.
+   * Rechaza prefijos locales: storage:, file://, content://
+   *
+   * NOTA: Este helper está diseñado para extenderse a un estado intermedio
+   * DOCUMENTOS_PENDIENTES cuando se implemente captura offline + sincronización.
+   * Ver docs/DECISIONES.md para el roadmap completo.
+   */
+  private esRutaServidor(ruta: string | null | undefined): boolean {
+    if (!ruta) return false;
+
+    // Rechazar rutas locales del dispositivo
+    const esLocal = ruta.startsWith('storage:') ||
+                    ruta.startsWith('file://') ||
+                    ruta.startsWith('content://');
+
+    return !esLocal;
+  }
+
+  /**
+   * Mapeo de nombres técnicos a etiquetas legibles para asesoras.
+   * Facilita la comprensión de los mensajes de validación en campo.
+   */
+  private obtenerEtiquetaLegible(campo: string): string {
+    const etiquetas: Record<string, string> = {
+      // Paso 1
+      'nombres': 'Nombre(s) de pila',
+      'curp': 'CURP',
+      'fecha_nac': 'Fecha de nacimiento',
+      'genero': 'Género',
+      // Paso 2
+      'dom_calle': 'Calle del domicilio',
+      'dom_colonia': 'Colonia',
+      'dom_municipio': 'Municipio',
+      // Paso 3
+      'ref1_nombre': 'Nombre de la primera referencia',
+      'ref2_nombre': 'Nombre de la segunda referencia',
+      // Paso 4
+      'negocio_giro': 'Giro del negocio',
+      'negocio_ingreso_semanal': 'Ingreso semanal del negocio',
+      // Paso 5
+      'beneficiario_nombre': 'Nombre del beneficiario',
+      'beneficiario_parentesco': 'Parentesco del beneficiario',
+      // Paso 6
+      'tiene_medidor_luz': 'Medidor de luz sin adeudo',
+      'vive_max_5km_tesorera': 'Vive a máximo 5km de la tesorera',
+      'tiene_menos_70_anios': 'Tiene menos de 70 años',
+      // Paso 7 - Documentos del servidor
+      'doc_ine_ruta': 'INE de la integrante',
+      'doc_comprobante_ruta': 'Comprobante de domicilio',
+      'doc_ine_beneficiario_ruta': 'INE del beneficiario',
+      'doc_solicitud_firmada_ruta': 'Solicitud firmada',
+    };
+
+    return etiquetas[campo] || campo;
+  }
+
   async validarSolicitudCompleta(integranteId: string): Promise<{ completa: boolean; pasosIncompletos: string[]; camposFaltantes: Record<string, string[]> }> {
     const solicitud = await this.solicitudesService.getBySolicitante(integranteId);
 
@@ -178,13 +235,40 @@ export class IntegrantesService {
           'Paso 7: Documentos',
         ],
         camposFaltantes: {
-          'Paso 1': ['nombres', 'curp', 'fecha_nac', 'genero'],
-          'Paso 2': ['dom_calle', 'dom_colonia', 'dom_municipio'],
-          'Paso 3': ['ref1_nombre', 'ref2_nombre'],
-          'Paso 4': ['negocio_giro', 'negocio_ingreso_semanal'],
-          'Paso 5': ['beneficiario_nombre', 'beneficiario_parentesco'],
-          'Paso 6': ['tiene_medidor_luz', 'vive_max_5km_tesorera', 'tiene_menos_70_anios'],
-          'Paso 7': ['doc_ine_ruta', 'doc_comprobante_ruta', 'doc_ine_beneficiario_ruta', 'doc_solicitud_firmada_ruta'],
+          'Paso 1': [
+            this.obtenerEtiquetaLegible('nombres'),
+            this.obtenerEtiquetaLegible('curp'),
+            this.obtenerEtiquetaLegible('fecha_nac'),
+            this.obtenerEtiquetaLegible('genero'),
+          ],
+          'Paso 2': [
+            this.obtenerEtiquetaLegible('dom_calle'),
+            this.obtenerEtiquetaLegible('dom_colonia'),
+            this.obtenerEtiquetaLegible('dom_municipio'),
+          ],
+          'Paso 3': [
+            this.obtenerEtiquetaLegible('ref1_nombre'),
+            this.obtenerEtiquetaLegible('ref2_nombre'),
+          ],
+          'Paso 4': [
+            this.obtenerEtiquetaLegible('negocio_giro'),
+            this.obtenerEtiquetaLegible('negocio_ingreso_semanal'),
+          ],
+          'Paso 5': [
+            this.obtenerEtiquetaLegible('beneficiario_nombre'),
+            this.obtenerEtiquetaLegible('beneficiario_parentesco'),
+          ],
+          'Paso 6': [
+            this.obtenerEtiquetaLegible('tiene_medidor_luz'),
+            this.obtenerEtiquetaLegible('vive_max_5km_tesorera'),
+            this.obtenerEtiquetaLegible('tiene_menos_70_anios'),
+          ],
+          'Paso 7': [
+            this.obtenerEtiquetaLegible('doc_ine_ruta'),
+            this.obtenerEtiquetaLegible('doc_comprobante_ruta'),
+            this.obtenerEtiquetaLegible('doc_ine_beneficiario_ruta'),
+            this.obtenerEtiquetaLegible('doc_solicitud_firmada_ruta'),
+          ],
         },
       };
     }
@@ -194,10 +278,10 @@ export class IntegrantesService {
 
     // Paso 1: Datos Personales
     const faltantesPaso1: string[] = [];
-    if (!solicitud.nombres) faltantesPaso1.push('nombres');
-    if (!solicitud.curp) faltantesPaso1.push('curp');
-    if (!solicitud.fecha_nac) faltantesPaso1.push('fecha_nac');
-    if (!solicitud.genero) faltantesPaso1.push('genero');
+    if (!solicitud.nombres) faltantesPaso1.push(this.obtenerEtiquetaLegible('nombres'));
+    if (!solicitud.curp) faltantesPaso1.push(this.obtenerEtiquetaLegible('curp'));
+    if (!solicitud.fecha_nac) faltantesPaso1.push(this.obtenerEtiquetaLegible('fecha_nac'));
+    if (!solicitud.genero) faltantesPaso1.push(this.obtenerEtiquetaLegible('genero'));
     if (faltantesPaso1.length > 0) {
       pasosIncompletos.push('Paso 1: Datos Personales');
       camposFaltantes['Paso 1'] = faltantesPaso1;
@@ -205,9 +289,9 @@ export class IntegrantesService {
 
     // Paso 2: Domicilio
     const faltantesPaso2: string[] = [];
-    if (!solicitud.dom_calle) faltantesPaso2.push('dom_calle');
-    if (!solicitud.dom_colonia) faltantesPaso2.push('dom_colonia');
-    if (!solicitud.dom_municipio) faltantesPaso2.push('dom_municipio');
+    if (!solicitud.dom_calle) faltantesPaso2.push(this.obtenerEtiquetaLegible('dom_calle'));
+    if (!solicitud.dom_colonia) faltantesPaso2.push(this.obtenerEtiquetaLegible('dom_colonia'));
+    if (!solicitud.dom_municipio) faltantesPaso2.push(this.obtenerEtiquetaLegible('dom_municipio'));
     if (faltantesPaso2.length > 0) {
       pasosIncompletos.push('Paso 2: Domicilio');
       camposFaltantes['Paso 2'] = faltantesPaso2;
@@ -215,8 +299,8 @@ export class IntegrantesService {
 
     // Paso 3: Referencias
     const faltantesPaso3: string[] = [];
-    if (!solicitud.ref1_nombre) faltantesPaso3.push('ref1_nombre');
-    if (!solicitud.ref2_nombre) faltantesPaso3.push('ref2_nombre');
+    if (!solicitud.ref1_nombre) faltantesPaso3.push(this.obtenerEtiquetaLegible('ref1_nombre'));
+    if (!solicitud.ref2_nombre) faltantesPaso3.push(this.obtenerEtiquetaLegible('ref2_nombre'));
     if (faltantesPaso3.length > 0) {
       pasosIncompletos.push('Paso 3: Referencias');
       camposFaltantes['Paso 3'] = faltantesPaso3;
@@ -224,8 +308,8 @@ export class IntegrantesService {
 
     // Paso 4: Negocio
     const faltantesPaso4: string[] = [];
-    if (!solicitud.negocio_giro) faltantesPaso4.push('negocio_giro');
-    if (!solicitud.negocio_ingreso_semanal) faltantesPaso4.push('negocio_ingreso_semanal');
+    if (!solicitud.negocio_giro) faltantesPaso4.push(this.obtenerEtiquetaLegible('negocio_giro'));
+    if (!solicitud.negocio_ingreso_semanal) faltantesPaso4.push(this.obtenerEtiquetaLegible('negocio_ingreso_semanal'));
     if (faltantesPaso4.length > 0) {
       pasosIncompletos.push('Paso 4: Negocio');
       camposFaltantes['Paso 4'] = faltantesPaso4;
@@ -233,8 +317,8 @@ export class IntegrantesService {
 
     // Paso 5: Beneficiario
     const faltantesPaso5: string[] = [];
-    if (!solicitud.beneficiario_nombre) faltantesPaso5.push('beneficiario_nombre');
-    if (!solicitud.beneficiario_parentesco) faltantesPaso5.push('beneficiario_parentesco');
+    if (!solicitud.beneficiario_nombre) faltantesPaso5.push(this.obtenerEtiquetaLegible('beneficiario_nombre'));
+    if (!solicitud.beneficiario_parentesco) faltantesPaso5.push(this.obtenerEtiquetaLegible('beneficiario_parentesco'));
     if (faltantesPaso5.length > 0) {
       pasosIncompletos.push('Paso 5: Beneficiario');
       camposFaltantes['Paso 5'] = faltantesPaso5;
@@ -242,20 +326,28 @@ export class IntegrantesService {
 
     // Paso 6: Validaciones
     const faltantesPaso6: string[] = [];
-    if (solicitud.tiene_medidor_luz === null || solicitud.tiene_medidor_luz === undefined) faltantesPaso6.push('tiene_medidor_luz');
-    if (solicitud.vive_max_5km_tesorera === null || solicitud.vive_max_5km_tesorera === undefined) faltantesPaso6.push('vive_max_5km_tesorera');
-    if (solicitud.tiene_menos_70_anios === null || solicitud.tiene_menos_70_anios === undefined) faltantesPaso6.push('tiene_menos_70_anios');
+    if (solicitud.tiene_medidor_luz === null || solicitud.tiene_medidor_luz === undefined) faltantesPaso6.push(this.obtenerEtiquetaLegible('tiene_medidor_luz'));
+    if (solicitud.vive_max_5km_tesorera === null || solicitud.vive_max_5km_tesorera === undefined) faltantesPaso6.push(this.obtenerEtiquetaLegible('vive_max_5km_tesorera'));
+    if (solicitud.tiene_menos_70_anios === null || solicitud.tiene_menos_70_anios === undefined) faltantesPaso6.push(this.obtenerEtiquetaLegible('tiene_menos_70_anios'));
     if (faltantesPaso6.length > 0) {
       pasosIncompletos.push('Paso 6: Validaciones');
       camposFaltantes['Paso 6'] = faltantesPaso6;
     }
 
-    // Paso 7: Documentos (4 obligatorios)
+    // Paso 7: Documentos (4 obligatorios) - Deben estar en el servidor
     const faltantesPaso7: string[] = [];
-    if (!solicitud.doc_ine_ruta) faltantesPaso7.push('doc_ine_ruta');
-    if (!solicitud.doc_comprobante_ruta) faltantesPaso7.push('doc_comprobante_ruta');
-    if (!solicitud.doc_ine_beneficiario_ruta) faltantesPaso7.push('doc_ine_beneficiario_ruta');
-    if (!solicitud.doc_solicitud_firmada_ruta) faltantesPaso7.push('doc_solicitud_firmada_ruta');
+    if (!this.esRutaServidor(solicitud.doc_ine_ruta)) {
+      faltantesPaso7.push(this.obtenerEtiquetaLegible('doc_ine_ruta') + ' - pendiente de subir');
+    }
+    if (!this.esRutaServidor(solicitud.doc_comprobante_ruta)) {
+      faltantesPaso7.push(this.obtenerEtiquetaLegible('doc_comprobante_ruta') + ' - pendiente de subir');
+    }
+    if (!this.esRutaServidor(solicitud.doc_ine_beneficiario_ruta)) {
+      faltantesPaso7.push(this.obtenerEtiquetaLegible('doc_ine_beneficiario_ruta') + ' - pendiente de subir');
+    }
+    if (!this.esRutaServidor(solicitud.doc_solicitud_firmada_ruta)) {
+      faltantesPaso7.push(this.obtenerEtiquetaLegible('doc_solicitud_firmada_ruta') + ' - pendiente de subir');
+    }
     if (faltantesPaso7.length > 0) {
       pasosIncompletos.push('Paso 7: Documentos');
       camposFaltantes['Paso 7'] = faltantesPaso7;
