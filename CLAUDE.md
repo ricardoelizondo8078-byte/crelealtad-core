@@ -100,6 +100,55 @@ El backend rechaza con 400 y devuelve pasosIncompletos y camposFaltantes si falt
 
 ---
 
+## COMO DIAGNOSTICAR ERRORES
+
+ANTE UN ERROR, LEE EL ERROR REAL ANTES DE PROPONER CUALQUIER CAUSA. No infieras.
+
+Para un HTTP 400 del ValidationPipe: existe un middleware de logging global y un
+exceptionFactory que imprimen el payload recibido y la lista de propiedades rechazadas.
+
+LEVANTAR API CON LOG ACTIVO:
+```bash
+cd apps/api
+npm run start:dev
+```
+
+El log se escribe en la consola donde corre el servidor. ValidationPipe imprime:
+- Payload completo recibido
+- Lista de errores de validación campo por campo con constraint violado
+
+REPORTAR UNA CAUSA INFERIDA SIN HABER VISTO EL ERROR CUESTA RONDAS COMPLETAS.
+
+---
+
+## PRINCIPIOS DE DISEÑO DE UI
+
+La app se guia por ELEMENTOS VISUALES, no por mensajes de texto. El estado se comunica
+con botones, etiquetas y colores, NO con alerts ni instrucciones.
+
+Ejemplo: la presencia del botón "Ver" indica que hay documento; su ausencia indica que
+falta. NO agregar mensajes explicativos donde el estado ya es visible.
+
+Solo se justifica texto cuando comunica algo sin equivalente visual, como un riesgo de
+perdida de datos.
+
+---
+
+## PATRONES RECURRENTES A VIGILAR
+
+Al corregir un mapeo o nombre de campo, auditar TODAS las rutas y funciones que tocan
+ese dato, no solo la que fallo.
+
+LISTA DE ERRORES RECURRENTES:
+- Rutas duplicadas conviviendo (una legacy que exige campos y otra nueva que los deriva)
+- Alias legacy en DTOs que reabren puertas ya cerradas
+- Múltiples funciones de guardado donde solo una recibió la corrección
+- Mapeos de escritura corregidos pero de lectura no
+- Campos derivados por el backend que el DTO también acepta del cliente
+- Validaciones obligatorias sobre campos que ningún flujo llena
+
+---
+
 ## FORMATO DE TRABAJO
 
 ### REPORTES

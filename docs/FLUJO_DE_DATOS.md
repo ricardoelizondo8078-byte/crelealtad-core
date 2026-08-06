@@ -713,7 +713,39 @@ erDiagram
 | Solicitud Firmada | PENDIENTE | solicitudes_documentos | doc_solicitud_firmada_ruta | SI | imagen |
 | Comprobante Línea Crédito | PENDIENTE | solicitudes_documentos | doc_comprobante_linea_ruta | NO | imagen |
 
+**ESTADO ACTUAL (2026-08-06)**:
+- Documentos se guardan en AsyncStorage local con prefijo `storage:`
+- NO hay endpoint de upload al servidor
+- Ninguna solicitud puede pasar a SUJETA_CREDITO porque validación rechaza rutas locales
+- Este es el bloqueador principal del flujo
+
 **EVIDENCIA**: apps/mobile/src/features/solicitudes/SolicitudFormScreen.tsx:148-154
+
+---
+
+## ESTADO REAL DEL WIZARD Y GUARDADO
+
+### Wizard de 7 pasos
+Funcional. Guarda en las 7 tablas hijas. Precarga datos al reentrar.
+
+### Endpoint de guardado vigente
+`PATCH /solicitudes/integrante/:integranteId`
+
+Este endpoint deriva automáticamente persona_id, expediente_id y grupo_id desde el
+integrante. El frontend NO los envía.
+
+**RUTA LEGACY ELIMINADA**: `PATCH /solicitudes/:solicitanteId` fue reemplazada.
+
+### Funciones de guardado en el frontend
+1. `performAutoSave()` - auto-guardado cada 2 segundos de inactividad
+2. `saveCurrentStep()` - guardado manual al cambiar de paso
+3. Ambas usan el mismo endpoint: `/solicitudes/integrante/${integranteId}`
+
+### Mapeos corregidos
+- Escritura: usa nombres correctos de columnas (nombres, apellido_pat, apellido_mat)
+- Lectura: precarga usa los mismos nombres
+- DTO backend: acepta solo los nombres correctos
+- Validación: rechaza campos legacy (primer_nombre, segundo_nombre) con forbidNonWhitelisted
 
 ---
 

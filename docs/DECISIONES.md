@@ -319,5 +319,29 @@ Próximos pasos cuando se implemente upload:
 
 ---
 
+## 2026-08-06 | Diseño visual sobre mensajes de texto
+
+**DECISION**: La app se guía por elementos visuales (botones, etiquetas, colores), NO
+por mensajes de texto. El estado se comunica visualmente, no con alerts ni instrucciones.
+
+**MOTIVO**: La presencia/ausencia de controles comunica más rápido que leer texto. Las
+asesoras trabajan en campo con prisas. Un botón "Ver" presente = documento existe; botón
+ausente = falta documento. NO requiere leer instrucciones.
+
+**CUANDO SE JUSTIFICA TEXTO**: Solo cuando comunica algo sin equivalente visual, como
+riesgo de pérdida de datos, advertencias críticas, o explicación de un error.
+
+**ALTERNATIVAS DESCARTADAS**:
+- Alerts explicativos cuando el estado ya es visible: ruido innecesario, ralentiza flujo.
+
+**ESTADO**: CERRADA
+
+**EJEMPLOS APLICADOS**:
+- Badge "⚠️ PENDIENTE DE SUBIR" en documentos locales (SolicitudFormScreen.tsx)
+- Botón "Ver" presente solo cuando hay documento capturado
+- NO mostrar alert cuando pase validación exitosa (el cambio de paso es suficiente)
+
+---
+
 **Última actualización**: 2026-08-06
 **Responsable**: Ricardo Elizondo (ricardoelizondo8078@gmail.com)

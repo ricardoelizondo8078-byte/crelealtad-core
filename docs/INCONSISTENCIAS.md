@@ -37,6 +37,13 @@ Ricardo debe definir DÓNDE se almacenan los archivos antes de implementar uploa
 
 Fecha identificado: 2026-08-06
 
+**ACTUALIZACIÓN 2026-08-06 SESIÓN CIERRE**:
+- Validación implementada: rechaza rutas locales (storage:, file://, content://)
+- Solo acepta rutas de servidor para los 4 documentos obligatorios
+- Frontend muestra badge "⚠️ PENDIENTE DE SUBIR" en documentos locales
+- Botón "Marcar como Capturado" muestra mensaje de validación del backend
+- Mensajes en español legibles: "INE de la integrante - pendiente de subir"
+
 ---
 
 ## IMPORTANTE: Validaciones como VARCHAR en lugar de BOOLEAN
@@ -110,6 +117,22 @@ ALTER TABLE solicitudes_validaciones
 
 ---
 
+## IMPORTANTE: Etiquetas "Subir" en botones que no suben
+
+**Estado**: Los botones de captura de documentos dicen "Subir" pero solo guardan localmente.
+
+**Impacto**: Confusión para asesoras que creen que el documento ya está en el servidor.
+
+**Corrección propuesta**:
+- Cambiar etiqueta a "Capturar" o "Tomar foto"
+- Reservar "Subir" para cuando haya endpoint real de upload
+
+**Ubicación**: apps/mobile/src/features/solicitudes/SolicitudFormScreen.tsx
+
+Fecha identificado: 2026-08-06
+
+---
+
 ## Otras desviaciones de esquema
 
 ### A verificar
@@ -135,7 +158,9 @@ ORDER BY table_name, ordinal_position;
 
 ### Candidatos conocidos
 - `solicitudes_validaciones.*`: 3 columnas VARCHAR que deberían ser BOOLEAN (documentado arriba)
-- `solicitudes_datos_personales.nombre_completo`: VARCHAR no-generated que debería ser GENERATED o eliminarse
+- `personas.primer_nombre` y `personas.segundo_nombre`: columnas LEGACY pendientes de eliminar
+- `solicitudes_datos_personales.primer_nombre` y `segundo_nombre`: columnas LEGACY pendientes
+  de eliminar (no se usan en CreateSolicitudDto ni en wizard mobile)
 
 ---
 
