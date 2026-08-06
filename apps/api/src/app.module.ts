@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+﻿import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -11,6 +11,7 @@ import { IntegrantesModule } from './integrantes/integrantes.module';
 import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { CodigosPostalesModule } from './codigos-postales/codigos-postales.module';
 import { LoggerModule } from './common/logger/logger.module';
+import { LoggingMiddleware } from './common/logging.middleware';
 
 @Module({
   controllers: [HealthController],
@@ -55,4 +56,8 @@ import { LoggerModule } from './common/logger/logger.module';
     CodigosPostalesModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggingMiddleware).forRoutes('*');
+  }
+}

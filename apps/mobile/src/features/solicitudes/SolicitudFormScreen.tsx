@@ -1399,39 +1399,41 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
   };
 
   const handleMarcarCapturado = async () => {
-    if (!validateCurrentStep()) {
-      return;
-    }
-
     setIsSubmitting(true);
     setAutoSaveStatus('saving');
 
     try {
-      // 1. Guardar formulario completo
-      const payload = {
-        integrante_id: integranteId,  // Campo correcto esperado por el backend
-        solicitanteId: integranteId,  // Legacy para compatibilidad
-        ...form,
-        telefono: form.telefonoInicial,
-        domicilio: `${form.calle} ${form.numeroExterior}${form.numeroInterior ? ` INT ${form.numeroInterior}` : ''}, ${form.colonia}, ${form.municipio}, ${form.estado}, CP ${form.codigoPostal}`,
-        // Campos de negocio ya incluidos en form, no hace falta duplicarlos aquí
-      };
+      // El auto-save ya guardó todo. Solo intentamos cambiar el estado.
+      // El backend validará que tenga los 7 pasos completos y devolverá
+      // pasosIncompletos y camposFaltantes si falta algo.
 
-      console.log('📤 Enviando payload final a POST /solicitudes');
+      console.log('📤 Intentando cambiar estado a SUJETA_CREDITO');
       console.log('integranteId:', integranteId);
 
-      await api.post('/solicitudes', payload);
-
-      // 2. Cambiar estado a SUJETA_CREDITO
       await api.patch(`/integrantes/${integranteId}/estado`, { estado: 'SUJETA_CREDITO' });
 
       setAutoSaveStatus('saved');
-      Alert.alert('Éxito', 'Solicitud capturada y marcada como Sujeta a Crédito');
+      Alert.alert('Éxito', 'Solicitud marcada como Sujeta a Crédito');
       onSaved?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error marcando capturado:', error);
       setAutoSaveStatus('error');
-      Alert.alert('Error', error instanceof Error ? error.message : 'Error inesperado');
+
+      // Mostrar mensaje detallado si el backend rechazó por pasos incompletos
+      if (error.response?.data?.pasosIncompletos) {
+        const pasos = error.response.data.pasosIncompletos.join('\n');
+        const campos = Object.entries(error.response.data.camposFaltantes || {})
+          .map(([paso, campos]: [string, any]) => `${paso}: ${campos.join(', ')}`)
+          .join('\n');
+
+        Alert.alert(
+          'Solicitud Incompleta',
+          `Faltan los siguientes pasos:\n\n${pasos}\n\nCampos faltantes:\n${campos}`,
+          [{ text: 'Entendido' }]
+        );
+      } else {
+        Alert.alert('Error', error.response?.data?.message || error.message || 'Error inesperado');
+      }
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setAutoSaveStatus('idle'), 2000);
