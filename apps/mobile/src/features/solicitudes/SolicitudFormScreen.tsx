@@ -323,17 +323,77 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             datosSolicitante[key] = value;
           }
         } else {
-          // Mapear campos de validación directamente como string
-          if (key === 'tieneMedidorLuzSinAdeudo') {
+          // Mapear campos con nombres del form state a nombres del DTO (snake_case con prefijos)
+
+          // PASO 2: Domicilio
+          if (key === 'calle') {
+            datosSolicitud.dom_calle = value;
+          } else if (key === 'numeroExterior') {
+            datosSolicitud.dom_num_ext = value;
+          } else if (key === 'numeroInterior') {
+            datosSolicitud.dom_num_int = value;
+          } else if (key === 'colonia') {
+            datosSolicitud.dom_colonia = value;
+          } else if (key === 'municipio') {
+            datosSolicitud.dom_municipio = value;
+          } else if (key === 'estado') {
+            datosSolicitud.dom_estado = value;
+          } else if (key === 'codigoPostal') {
+            datosSolicitud.dom_codigo_postal = value;
+          } else if (key === 'entreCalles') {
+            datosSolicitud.dom_entre_calles = value;
+          } else if (key === 'telefono') {
+            datosSolicitud.dom_telefono = value;
+
+          // PASO 3: Referencias
+          } else if (key === 'referencia1NombreCompleto') {
+            datosSolicitud.ref1_nombre = value;
+          } else if (key === 'referencia1Parentesco') {
+            datosSolicitud.ref1_parentesco = value;
+          } else if (key === 'referencia1Telefono') {
+            datosSolicitud.ref1_telefono = value;
+          } else if (key === 'referencia1Direccion') {
+            datosSolicitud.ref1_direccion = value;
+          } else if (key === 'referencia2NombreCompleto') {
+            datosSolicitud.ref2_nombre = value;
+          } else if (key === 'referencia2Parentesco') {
+            datosSolicitud.ref2_parentesco = value;
+          } else if (key === 'referencia2Telefono') {
+            datosSolicitud.ref2_telefono = value;
+          } else if (key === 'referencia2Direccion') {
+            datosSolicitud.ref2_direccion = value;
+          } else if (key === 'parejaNombreCompleto') {
+            datosSolicitud.pareja_nombre = value;
+          } else if (key === 'parejaActividadEconomica') {
+            datosSolicitud.pareja_actividad = value;
+
+          // PASO 4: Negocio
+          } else if (key === 'negocioCalle') {
+            datosSolicitud.negocio_domicilio = value;
+          } else if (key === 'negocioNumeroExterior') {
+            datosSolicitud.negocio_num_ext = value;
+          } else if (key === 'negocioNumeroInterior') {
+            datosSolicitud.negocio_num_int = value;
+          } else if (key === 'negocioEstado') {
+            datosSolicitud.negocio_estado = value;
+          } else if (key === 'negocioCodigoPostal') {
+            datosSolicitud.negocio_codigo_postal = value;
+          } else if (key === 'negocioDesdeCuando') {
+            datosSolicitud.negocio_desde_cuando = value;
+
+          // PASO 5: Beneficiario
+          } else if (key === 'beneficiarioNombreCompleto') {
+            datosSolicitud.beneficiario_nombre = value;
+
+          // PASO 6: Validaciones
+          } else if (key === 'tieneMedidorLuzSinAdeudo') {
             datosSolicitud.tiene_medidor_luz = value;
           } else if (key === 'viveMaximo5KmTesorera') {
             datosSolicitud.vive_max_5km_tesorera = value;
           } else if (key === 'tiene_menos_70_anios') {
             datosSolicitud.tiene_menos_70_anios = value;
-          } else if (key === 'estado') {
-            datosSolicitud.dom_estado = value;
-          } else if (key === 'negocioEstado') {
-            datosSolicitud.negocio_estado = value;
+
+          // Campos que ya tienen el nombre correcto (snake_case)
           } else {
             datosSolicitud[key] = value;
           }

@@ -13,6 +13,7 @@ import { SolicitudValidacionesEntity } from './entities/solicitud-validaciones.e
 import { SolicitudDocumentosEntity } from './entities/solicitud-documentos.entity';
 import { IntegrantesService } from '../integrantes/integrantes.service';
 import { CreateSolicitudDto } from './dto/create-solicitud.dto';
+import { SolicitudCompletaDto } from './dto/solicitud-completa.dto';
 
 @Injectable()
 export class SolicitudesService {
@@ -42,13 +43,73 @@ export class SolicitudesService {
     private readonly integrantesService: IntegrantesService,
   ) {}
 
-  async getBySolicitante(solicitanteId: string): Promise<SolicitudReadEntity | null> {
-    return this.solicitudReadRepository.findOne({
-      where: { integrante_id: solicitanteId },
+  /**
+   * Helper: excluye colisiones (id, solicitud_id, created_at, updated_at) de entidades hijas
+   * y normaliza campos numéricos (pg devuelve decimals como string al serializar JSON)
+   */
+  private excludeCollisions<T extends { id?: string; solicitud_id?: string; created_at?: Date; updated_at?: Date }>(
+    entity: T | null,
+  ): Partial<Omit<T, 'id' | 'solicitud_id' | 'created_at' | 'updated_at'>> {
+    if (!entity) return {};
+    const { id, solicitud_id, created_at, updated_at, ...rest } = entity;
+
+    // Normalizar TODOS los campos decimals del proyecto a number
+    const result = { ...rest } as any;
+    const numericFields = [
+      // Core
+      'monto_solicitado', 'monto_autorizado',
+      // Negocios
+      'negocio_ingreso_semanal', 'negocio_otros_ingresos', 'negocio_gastos', 'negocio_total',
+      // Referencias (pareja)
+      'pareja_ingreso_semanal',
+    ];
+
+    numericFields.forEach(field => {
+      if (result[field] !== null && result[field] !== undefined && typeof result[field] === 'string') {
+        result[field] = parseFloat(result[field]);
+      }
     });
+
+    return result;
   }
 
-  async createOrUpdateForSolicitante(dto: CreateSolicitudDto): Promise<SolicitudReadEntity> {
+  async getBySolicitante(solicitanteId: string): Promise<SolicitudCompletaDto | null> {
+    // Buscar solicitud core por integrante_id
+    const core = await this.solicitudCoreRepository.findOne({
+      where: { integrante_id: solicitanteId },
+    });
+
+    if (!core) {
+      return null;
+    }
+
+    // Cargar las 7 tablas hijas en paralelo
+    const [datosPersonales, domicilios, negocios, referencias, beneficiarios, validaciones, documentos] = await Promise.all([
+      this.datosPersonalesRepository.findOne({ where: { solicitud_id: core.id } }),
+      this.domiciliosRepository.findOne({ where: { solicitud_id: core.id } }),
+      this.negociosRepository.findOne({ where: { solicitud_id: core.id } }),
+      this.referenciasRepository.findOne({ where: { solicitud_id: core.id } }),
+      this.beneficiariosRepository.findOne({ where: { solicitud_id: core.id } }),
+      this.validacionesRepository.findOne({ where: { solicitud_id: core.id } }),
+      this.documentosRepository.findOne({ where: { solicitud_id: core.id } }),
+    ]);
+
+    // Armar respuesta plana con core + hijas (sin colisiones)
+    return {
+      // Core completo (id, created_at, updated_at del core sobreviven)
+      ...core,
+      // Hijas sin colisiones
+      ...this.excludeCollisions(datosPersonales),
+      ...this.excludeCollisions(domicilios),
+      ...this.excludeCollisions(negocios),
+      ...this.excludeCollisions(referencias),
+      ...this.excludeCollisions(beneficiarios),
+      ...this.excludeCollisions(validaciones),
+      ...this.excludeCollisions(documentos),
+    };
+  }
+
+  async createOrUpdateForSolicitante(dto: CreateSolicitudDto): Promise<SolicitudCompletaDto> {
     // Validación explícita de campos requeridos
     if (!dto.integrante_id) {
       throw new BadRequestException('integrante_id es requerido');
@@ -101,16 +162,35 @@ export class SolicitudesService {
       await this.upsertValidaciones(manager, solicitudCore.id, dto);
       await this.upsertDocumentos(manager, solicitudCore.id, dto);
 
-      // 3. Retornar solo desde tabla core (vista solo tiene 13 columnas, no las hijas)
-      return manager.findOne(SolicitudCoreEntity, { where: { id: solicitudCore.id } }) as any;
+      // 3. Cargar las 7 hijas para retornar completo
+      const [datosPersonales, domicilios, negocios, referencias, beneficiarios, validaciones, documentos] = await Promise.all([
+        manager.findOne(SolicitudDatosPersonalesEntity, { where: { solicitud_id: solicitudCore.id } }),
+        manager.findOne(SolicitudDomiciliosEntity, { where: { solicitud_id: solicitudCore.id } }),
+        manager.findOne(SolicitudNegociosEntity, { where: { solicitud_id: solicitudCore.id } }),
+        manager.findOne(SolicitudReferenciasEntity, { where: { solicitud_id: solicitudCore.id } }),
+        manager.findOne(SolicitudBeneficiariosEntity, { where: { solicitud_id: solicitudCore.id } }),
+        manager.findOne(SolicitudValidacionesEntity, { where: { solicitud_id: solicitudCore.id } }),
+        manager.findOne(SolicitudDocumentosEntity, { where: { solicitud_id: solicitudCore.id } }),
+      ]);
+
+      return {
+        ...solicitudCore,
+        ...this.excludeCollisions(datosPersonales),
+        ...this.excludeCollisions(domicilios),
+        ...this.excludeCollisions(negocios),
+        ...this.excludeCollisions(referencias),
+        ...this.excludeCollisions(beneficiarios),
+        ...this.excludeCollisions(validaciones),
+        ...this.excludeCollisions(documentos),
+      };
     });
   }
 
-  async createForSolicitante(dto: CreateSolicitudDto): Promise<SolicitudReadEntity> {
+  async createForSolicitante(dto: CreateSolicitudDto): Promise<SolicitudCompletaDto> {
     return this.createOrUpdateForSolicitante(dto);
   }
 
-  async partialUpdate(integranteId: string, data: any): Promise<SolicitudReadEntity> {
+  async partialUpdate(integranteId: string, data: any): Promise<SolicitudCompletaDto> {
     // DERIVAR los 4 campos obligatorios desde el integrante
     const integrante = await this.integrantesService.getById(integranteId);
 
@@ -136,7 +216,7 @@ export class SolicitudesService {
 
   private async upsertDatosPersonales(manager: any, solicitudId: string, data: any) {
     const fields = [
-      'primer_nombre', 'segundo_nombre', 'apellido_pat', 'apellido_mat',
+      'nombres', 'apellido_pat', 'apellido_mat',
       'curp', 'fecha_nac', 'genero', 'nacionalidad', 'estado_nacimiento',
       'estado_civil', 'ocupacion', 'nivel_estudio', 'telefono'
     ];
@@ -160,15 +240,7 @@ export class SolicitudesService {
     delete (entity as any).nombre_completo;
 
     try {
-      console.log('🔍 Guardando solicitudes_datos_personales:', JSON.stringify({
-        solicitud_id: solicitudId,
-        primer_nombre: (entity as any).primer_nombre,
-        segundo_nombre: (entity as any).segundo_nombre,
-        apellido_pat: (entity as any).apellido_pat,
-        apellido_mat: (entity as any).apellido_mat,
-      }, null, 2));
       await manager.save(SolicitudDatosPersonalesEntity, entity);
-      console.log('✅ Guardado exitoso');
 
       // CALCULAR tiene_menos_70_anios automáticamente si hay fecha_nac
       if (data.fecha_nac) {

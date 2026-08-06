@@ -8,7 +8,7 @@ export class SolicitudDatosPersonalesEntity {
   @Column({ type: 'uuid' })
   solicitud_id: string;
 
-  // Nombres unificados (refactorización)
+  // Nombres de pila (fuente de verdad: UN SOLO campo)
   @Column({ type: 'varchar', length: 150, nullable: true })
   nombres: string;
 
@@ -21,6 +21,13 @@ export class SolicitudDatosPersonalesEntity {
   // Columna generada (nombre completo)
   @Column({ type: 'varchar', length: 255, nullable: true, select: true, insert: false, update: false })
   nombre_completo: string;
+
+  // Legacy: separación errónea de nombres compuestos
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  primer_nombre: string;
+
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  segundo_nombre: string;
 
   @Column({ type: 'varchar', length: 18, nullable: true })
   curp: string;

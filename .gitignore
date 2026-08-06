@@ -13,6 +13,13 @@ apps/api/.env
 coverage/
 .vscode/
 
+# Logs y archivos temporales
+*.log
+api-log.txt
+api-test.log
+query-*.sql
+test-payload-*.json
+
 # Spec-Kit
 .specify/feature.json
 .specify/.cache/

@@ -11,7 +11,7 @@ export class PersonaEntity {
   @Column({ type: 'varchar', length: 18, unique: true, nullable: true })
   curp: string;
 
-  // Nombres unificados (refactorización)
+  // Nombres de pila (fuente de verdad: UN SOLO campo para todos los nombres)
   @Column({ type: 'varchar', length: 150, nullable: false })
   nombres: string;
 
@@ -20,6 +20,13 @@ export class PersonaEntity {
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   apellido_mat: string;
+
+  // Legacy: separación errónea de nombres compuestos, pendientes de eliminar
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  primer_nombre: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  segundo_nombre: string;
 
   // Columna generada (nombre completo)
   @Column({ type: 'varchar', length: 255, nullable: true, select: true, insert: false, update: false })

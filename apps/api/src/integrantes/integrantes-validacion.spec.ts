@@ -41,12 +41,17 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
     await app.init();
 
     dataSource = moduleFixture.get<DataSource>(DataSource);
+  });
 
-    // Setup común
+  beforeEach(async () => {
+    // Crear datos de prueba para cada test (CURP único con timestamp)
+    const timestamp = Date.now().toString().slice(-6);
+    const curpUnico = `VAL${timestamp}HDFLRL01`;
+
     const grupoRes = await request(app.getHttpServer())
       .post('/grupos')
       .send({
-        nombre: 'Grupo Test Validación',
+        nombre: `Grupo Test Validación ${timestamp}`,
       });
     grupoId = grupoRes.body.id;
 
@@ -55,11 +60,10 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
       .send({ grupo_id: grupoId });
     expedienteId = expedienteRes.body.id;
 
-    // Crear persona directamente en BD porque no hay endpoint /personas
     const personaResult = await dataSource.query(
       `INSERT INTO personas (nombres, apellido_pat, apellido_mat, curp, fecha_nac)
        VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      ['Test', 'Validación', 'Completa', 'VACM900101HDFLRL01', '1990-01-01']
+      ['Test', 'Validación', 'Completa', curpUnico, '1990-01-01']
     );
     personaId = personaResult[0].id;
 
@@ -72,19 +76,37 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
     integranteId = integranteRes.body.id;
   });
 
+  afterEach(async () => {
+    // Cleanup después de cada test
+    try {
+      if (integranteId) {
+        await dataSource.query('DELETE FROM solicitudes WHERE integrante_id = $1', [integranteId]);
+        await dataSource.query('DELETE FROM integrantes WHERE id = $1', [integranteId]);
+      }
+      if (personaId) {
+        await dataSource.query('DELETE FROM personas WHERE id = $1', [personaId]);
+      }
+      if (expedienteId) {
+        await dataSource.query('DELETE FROM expedientes WHERE id = $1', [expedienteId]);
+      }
+      if (grupoId) {
+        await dataSource.query('DELETE FROM grupos WHERE id = $1', [grupoId]);
+      }
+    } catch (e) {
+      console.error('Error en cleanup afterEach:', e.message);
+    }
+  });
+
   afterAll(async () => {
-    if (integranteId) {
-      await dataSource.query('DELETE FROM solicitudes WHERE integrante_id = $1', [integranteId]);
-      await dataSource.query('DELETE FROM integrantes WHERE id = $1', [integranteId]);
-    }
-    if (personaId) {
-      await dataSource.query('DELETE FROM personas WHERE id = $1', [personaId]);
-    }
-    if (expedienteId) {
-      await dataSource.query('DELETE FROM expedientes WHERE id = $1', [expedienteId]);
-    }
-    if (grupoId) {
-      await dataSource.query('DELETE FROM grupos WHERE id = $1', [grupoId]);
+    // Cleanup final de cualquier dato residual
+    try {
+      await dataSource.query(`DELETE FROM solicitudes WHERE integrante_id IN (SELECT id FROM integrantes WHERE persona_id IN (SELECT id FROM personas WHERE curp LIKE 'VAL%'))`);
+      await dataSource.query(`DELETE FROM integrantes WHERE persona_id IN (SELECT id FROM personas WHERE curp LIKE 'VAL%')`);
+      await dataSource.query(`DELETE FROM expedientes WHERE nombre LIKE '%Test Validación%'`);
+      await dataSource.query(`DELETE FROM grupos WHERE nombre LIKE '%Test Validación%'`);
+      await dataSource.query(`DELETE FROM personas WHERE curp LIKE 'VAL%'`);
+    } catch (e) {
+      console.error('Error en cleanup afterAll:', e.message);
     }
     await app.close();
   });
@@ -103,6 +125,7 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
     expect(res.body.pasosIncompletos).toContain('Paso 5: Beneficiario');
     expect(res.body.pasosIncompletos).toContain('Paso 6: Validaciones');
     expect(res.body.pasosIncompletos).toContain('Paso 7: Documentos');
+    expect(res.body.camposFaltantes['Paso 1']).toContain('nombres');
     expect(res.body.camposFaltantes['Paso 1']).toContain('curp');
     expect(res.body.camposFaltantes['Paso 1']).toContain('fecha_nac');
     expect(res.body.camposFaltantes['Paso 1']).toContain('genero');
@@ -118,6 +141,7 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
         expediente_id: expedienteId,
         grupo_id: grupoId,
         // Paso 1
+        nombres: 'Carlos Miguel',
         curp: 'VACM900101HDFLRL01',
         fecha_nac: '1990-01-01',
         genero: 'Masculino',

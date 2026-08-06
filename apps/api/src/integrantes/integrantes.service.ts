@@ -168,8 +168,24 @@ export class IntegrantesService {
     if (!solicitud) {
       return {
         completa: false,
-        pasosIncompletos: ['Paso 1', 'Paso 2', 'Paso 3', 'Paso 4', 'Paso 5', 'Paso 6', 'Paso 7'],
-        camposFaltantes: { solicitud: ['No existe solicitud'] },
+        pasosIncompletos: [
+          'Paso 1: Datos Personales',
+          'Paso 2: Domicilio',
+          'Paso 3: Referencias',
+          'Paso 4: Negocio',
+          'Paso 5: Beneficiario',
+          'Paso 6: Validaciones',
+          'Paso 7: Documentos',
+        ],
+        camposFaltantes: {
+          'Paso 1': ['nombres', 'curp', 'fecha_nac', 'genero'],
+          'Paso 2': ['dom_calle', 'dom_colonia', 'dom_municipio'],
+          'Paso 3': ['ref1_nombre', 'ref2_nombre'],
+          'Paso 4': ['negocio_giro', 'negocio_ingreso_semanal'],
+          'Paso 5': ['beneficiario_nombre', 'beneficiario_parentesco'],
+          'Paso 6': ['tiene_medidor_luz', 'vive_max_5km_tesorera', 'tiene_menos_70_anios'],
+          'Paso 7': ['doc_ine_ruta', 'doc_comprobante_ruta', 'doc_ine_beneficiario_ruta', 'doc_solicitud_firmada_ruta'],
+        },
       };
     }
 
@@ -178,6 +194,7 @@ export class IntegrantesService {
 
     // Paso 1: Datos Personales
     const faltantesPaso1: string[] = [];
+    if (!solicitud.nombres) faltantesPaso1.push('nombres');
     if (!solicitud.curp) faltantesPaso1.push('curp');
     if (!solicitud.fecha_nac) faltantesPaso1.push('fecha_nac');
     if (!solicitud.genero) faltantesPaso1.push('genero');

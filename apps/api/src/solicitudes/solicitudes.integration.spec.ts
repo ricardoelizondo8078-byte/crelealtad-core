@@ -44,19 +44,86 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
   });
 
   afterAll(async () => {
-    // Limpiar datos de prueba
-    if (integranteId) {
-      await dataSource.query('DELETE FROM solicitudes WHERE integrante_id = $1', [integranteId]);
-      await dataSource.query('DELETE FROM integrantes WHERE id = $1', [integranteId]);
-    }
-    if (personaId) {
-      await dataSource.query('DELETE FROM personas WHERE id = $1', [personaId]);
-    }
-    if (expedienteId) {
-      await dataSource.query('DELETE FROM expedientes WHERE id = $1', [expedienteId]);
-    }
-    if (grupoId) {
-      await dataSource.query('DELETE FROM grupos WHERE id = $1', [grupoId]);
+    // Limpiar TODOS los datos de prueba creados por este test suite
+    // No depender de variables que pueden estar fuera de scope
+    try {
+      // Borrar solicitudes de prueba (empiezan con GORM o TEST)
+      await dataSource.query(`
+        DELETE FROM solicitudes_documentos WHERE solicitud_id IN (
+          SELECT id FROM solicitudes WHERE integrante_id IN (
+            SELECT id FROM integrantes WHERE persona_id IN (
+              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
+            )
+          )
+        )
+      `);
+      await dataSource.query(`
+        DELETE FROM solicitudes_validaciones WHERE solicitud_id IN (
+          SELECT id FROM solicitudes WHERE integrante_id IN (
+            SELECT id FROM integrantes WHERE persona_id IN (
+              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
+            )
+          )
+        )
+      `);
+      await dataSource.query(`
+        DELETE FROM solicitudes_beneficiarios WHERE solicitud_id IN (
+          SELECT id FROM solicitudes WHERE integrante_id IN (
+            SELECT id FROM integrantes WHERE persona_id IN (
+              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
+            )
+          )
+        )
+      `);
+      await dataSource.query(`
+        DELETE FROM solicitudes_referencias WHERE solicitud_id IN (
+          SELECT id FROM solicitudes WHERE integrante_id IN (
+            SELECT id FROM integrantes WHERE persona_id IN (
+              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
+            )
+          )
+        )
+      `);
+      await dataSource.query(`
+        DELETE FROM solicitudes_negocios WHERE solicitud_id IN (
+          SELECT id FROM solicitudes WHERE integrante_id IN (
+            SELECT id FROM integrantes WHERE persona_id IN (
+              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
+            )
+          )
+        )
+      `);
+      await dataSource.query(`
+        DELETE FROM solicitudes_domicilios WHERE solicitud_id IN (
+          SELECT id FROM solicitudes WHERE integrante_id IN (
+            SELECT id FROM integrantes WHERE persona_id IN (
+              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
+            )
+          )
+        )
+      `);
+      await dataSource.query(`
+        DELETE FROM solicitudes_datos_personales WHERE solicitud_id IN (
+          SELECT id FROM solicitudes WHERE integrante_id IN (
+            SELECT id FROM integrantes WHERE persona_id IN (
+              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
+            )
+          )
+        )
+      `);
+      await dataSource.query(`
+        DELETE FROM solicitudes WHERE integrante_id IN (
+          SELECT id FROM integrantes WHERE persona_id IN (
+            SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
+          )
+        )
+      `);
+      await dataSource.query(`DELETE FROM integrantes WHERE persona_id IN (SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%')`);
+      await dataSource.query(`DELETE FROM expedientes WHERE nombre LIKE '%TEST%' OR nombre = 'Grupo de prueba - Personas'`);
+      await dataSource.query(`DELETE FROM grupos WHERE nombre LIKE '%TEST%' OR nombre = 'Grupo de prueba - Personas'`);
+      await dataSource.query(`DELETE FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'`);
+    } catch (e) {
+      console.error('Error en cleanup:', e.message);
     }
 
     await app.close();
@@ -87,11 +154,13 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     expedienteId = expedienteRes.body.id;
     expect(expedienteId).toBeDefined();
 
-    // 3. Crear persona directamente en BD porque no hay endpoint /personas
+    // 3. Crear persona directamente en BD con CURP único por corrida
+    const timestamp = Date.now().toString().slice(-6);
+    const curpUnico = `GORM${timestamp}MDF${timestamp.slice(0,2)}`;
     const personaResult = await dataSource.query(
       `INSERT INTO personas (nombres, apellido_pat, apellido_mat, curp, fecha_nac)
        VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      ['María Elena', 'González', 'Ruiz', 'GORM850615MDFNZR09', '1985-06-15']
+      ['María Elena', 'González', 'Ruiz', curpUnico, '1985-06-15']
     );
     personaId = personaResult[0].id;
     expect(personaId).toBeDefined();
@@ -349,11 +418,35 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     // VERIFICACIÓN FINAL: GET debe devolver todos los datos
     // ====================================================================
 
+    // Conteo de filas en las 7 tablas hijas
+    const solicitudId = (await dataSource.query('SELECT id FROM solicitudes WHERE integrante_id = $1', [integranteId]))[0].id;
+    const countDatosPersonales = await dataSource.query('SELECT COUNT(*) FROM solicitudes_datos_personales WHERE solicitud_id = $1', [solicitudId]);
+    const countDomicilios = await dataSource.query('SELECT COUNT(*) FROM solicitudes_domicilios WHERE solicitud_id = $1', [solicitudId]);
+    const countNegocios = await dataSource.query('SELECT COUNT(*) FROM solicitudes_negocios WHERE solicitud_id = $1', [solicitudId]);
+    const countReferencias = await dataSource.query('SELECT COUNT(*) FROM solicitudes_referencias WHERE solicitud_id = $1', [solicitudId]);
+    const countBeneficiarios = await dataSource.query('SELECT COUNT(*) FROM solicitudes_beneficiarios WHERE solicitud_id = $1', [solicitudId]);
+    const countValidaciones = await dataSource.query('SELECT COUNT(*) FROM solicitudes_validaciones WHERE solicitud_id = $1', [solicitudId]);
+    const countDocumentos = await dataSource.query('SELECT COUNT(*) FROM solicitudes_documentos WHERE solicitud_id = $1', [solicitudId]);
+
+    console.log('=== CONTEO TABLAS HIJAS ===');
+    console.log(`datos_personales: ${countDatosPersonales[0].count}`);
+    console.log(`domicilios: ${countDomicilios[0].count}`);
+    console.log(`negocios: ${countNegocios[0].count}`);
+    console.log(`referencias: ${countReferencias[0].count}`);
+    console.log(`beneficiarios: ${countBeneficiarios[0].count}`);
+    console.log(`validaciones: ${countValidaciones[0].count}`);
+    console.log(`documentos: ${countDocumentos[0].count}`);
+    console.log('=== FIN CONTEO ===');
+
     const finalRes = await request(app.getHttpServer())
       .get(`/solicitudes/integrante/${integranteId}`)
       .expect(200);
 
     const solicitud = finalRes.body;
+
+    console.log('=== JSON COMPLETO GET /solicitudes/integrante ===');
+    console.log(JSON.stringify(solicitud, null, 2));
+    console.log('=== FIN JSON ===');
 
     // Core
     expect(solicitud.integrante_id).toBe(integranteId);

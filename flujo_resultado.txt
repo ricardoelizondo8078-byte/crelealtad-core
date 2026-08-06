@@ -1,4 +1,38 @@
-=== FLUJO SOLICITUDES - 7 PASOS ===
-
-1. Creando grupo...
-./test_flujo_solicitudes.sh: line 21: jq: command not found
+﻿{
+    "nombre":  "GRUPO WIZARD TEST",
+    "zona_id":  null,
+    "sucursal_id":  null,
+    "fecha_inicio":  "2026-08-06T15:15:35.685Z",
+    "estado":  "FORMANDO",
+    "created_by":  null,
+    "folio":  null,
+    "id":  "f74bf1ec-3567-42b9-b503-730748b918ad",
+    "created_at":  "2026-08-06T15:15:35.686Z",
+    "updated_at":  "2026-08-06T15:15:35.686Z",
+    "deleted_at":  null,
+    "name":  "GRUPO WIZARD TEST",
+    "expedienteId":  "0916d8f9-4ace-4d47-b23e-3d5449f25f66"
+}
+{
+    "grupo_id":  "f74bf1ec-3567-42b9-b503-730748b918ad",
+    "estado":  "EN_DOCUMENTACION",
+    "folio":  null,
+    "producto_id":  null,
+    "asesora_id":  null,
+    "horario_visita":  null,
+    "dias_visita":  null,
+    "semana_cobro":  null,
+    "observaciones":  null,
+    "id":  "b70e94dc-2e44-427f-a944-41cb034c619c",
+    "estado_fecha":  "2026-08-06T15:15:35.735Z",
+    "created_at":  "2026-08-06T15:15:35.735Z",
+    "updated_at":  "2026-08-06T15:15:35.735Z"
+}
+{
+    "id":  "460df2e2-5933-4cbd-bd96-a2207c1b868c",
+    "nombre":  "MARIA GONZALEZ LOPEZ",
+    "telefono":  "5512345678",
+    "montoSolicitado":  5000,
+    "estado":  "DOCUMENTANDO",
+    "expediente_id":  "b70e94dc-2e44-427f-a944-41cb034c619c"
+}

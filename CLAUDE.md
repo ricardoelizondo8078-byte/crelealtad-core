@@ -2,6 +2,11 @@
 
 Documentación permanente del proyecto para Claude Code y futuras sesiones.
 
+**ANTES DE PROPONER CUALQUIER CAMBIO DE ARQUITECTURA, MODELO DE DATOS O NOMBRADO,
+LEE docs/DECISIONES.md. Si tu propuesta contradice una decisión marcada CERRADA,
+NO la implementes: detente y explica por qué crees que debería revisarse. La
+decisión la cambia Ricardo, no tú.**
+
 ---
 
 ## MODELO DE DATOS Y REGLAS INVARIANTES
@@ -29,6 +34,19 @@ La vista solicitudes_completo une las 8 tablas con LEFT JOIN.
 ### FUENTE DE VERDAD
 La fuente de verdad de los nombres de campo es la COLUMNA EN POSTGRESQL.
 DTO, service, frontend y cualquier mapeo se alinean a la base, NUNCA al revés.
+
+### MANEJO DE NOMBRES - DECISION CERRADA
+Los nombres de pila van en UN SOLO campo llamado `nombres`.
+Los apellidos van SEPARADOS en `apellido_pat` y `apellido_mat`.
+`nombre_completo` es columna GENERATED ALWAYS que concatena nombres + apellido_pat + apellido_mat.
+`primer_nombre` y `segundo_nombre` son columnas LEGACY pendientes de eliminar.
+
+MOTIVO: Los nombres compuestos (Maria del Socorro, Juan Carlos, etc) y las personas con
+tres nombres no se pueden partir de forma confiable. CURP, RFC e INE se arman con
+apellidos separados. Las listas de cobranza se ordenan por apellido_pat.
+
+NO PROPONER volver a separar los nombres de pila en campos individuales. Esta decisión
+ya se tomó, se implementó, se revirtió por error, y se volvió a implementar.
 
 ### REGLA DE NOMENCLATURA (CRÍTICA)
 TODOS los DTOs, entities y campos de API usan los nombres EXACTOS de las columnas PostgreSQL.
