@@ -101,8 +101,8 @@ export class SolicitudesService {
       await this.upsertValidaciones(manager, solicitudCore.id, dto);
       await this.upsertDocumentos(manager, solicitudCore.id, dto);
 
-      // 3. Retornar desde vista consolidada
-      return manager.findOne(SolicitudReadEntity, { where: { id: solicitudCore.id } });
+      // 3. Retornar solo desde tabla core (vista solo tiene 13 columnas, no las hijas)
+      return manager.findOne(SolicitudCoreEntity, { where: { id: solicitudCore.id } }) as any;
     });
   }
 
