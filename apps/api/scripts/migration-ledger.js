@@ -1,12 +1,13 @@
-const { createHash } = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client } = require('pg');
+const { MigrationCatalog } = require('./migration-catalog');
 
 class MigrationLedger {
   constructor(databaseName) {
     this.databaseName = databaseName;
     this.migrationsDirectory = path.resolve(__dirname, '../../../database/migrations');
+    this.catalog = new MigrationCatalog(this.migrationsDirectory);
     this.client = new Client({
       host: process.env.DB_HOST || 'localhost',
       port: Number(process.env.DB_PORT || 5432),
@@ -17,19 +18,7 @@ class MigrationLedger {
   }
 
   discover() {
-    return fs.readdirSync(this.migrationsDirectory)
-      .filter((fileName) => /^\d{3}_.+\.sql$/.test(fileName) && !fileName.endsWith('.rollback.sql'))
-      .sort((left, right) => left.localeCompare(right))
-      .map((fileName) => {
-        const migrationPath = path.join(this.migrationsDirectory, fileName);
-        const content = fs.readFileSync(migrationPath);
-        return {
-          version: fileName,
-          sequence: Number(fileName.slice(0, 3)),
-          checksum: createHash('sha256').update(content).digest('hex'),
-          path: migrationPath,
-        };
-      });
+    return this.catalog.discover();
   }
 
   async connect() {
@@ -47,42 +36,50 @@ class MigrationLedger {
     return result.rows[0].exists;
   }
 
+  async readEntries() {
+    const result = await this.client.query(
+      'SELECT version, checksum, source, applied_at FROM public.schema_migrations ORDER BY version',
+    );
+    return result.rows;
+  }
+
+  analyze(discovered, entries) {
+    const applied = new Map(entries.map((entry) => [entry.version, entry]));
+    const pending = discovered
+      .filter((migration) => !applied.has(migration.version))
+      .map((migration) => migration.version);
+    const drift = discovered
+      .filter((migration) => (
+        applied.has(migration.version)
+        && applied.get(migration.version).checksum !== migration.checksum
+      ))
+      .map((migration) => migration.version);
+    const unknown = entries
+      .filter((entry) => !discovered.some((migration) => migration.version === entry.version))
+      .map((entry) => entry.version);
+
+    return { applied, pending, drift, unknown };
+  }
+
   async status() {
     const discovered = this.discover();
     if (!(await this.tableExists())) {
       throw new Error('schema_migrations no existe; aplica primero la migración 034');
     }
 
-    const result = await this.client.query(
-      'SELECT version, checksum, source, applied_at FROM public.schema_migrations ORDER BY version',
-    );
-    const applied = new Map(result.rows.map((row) => [row.version, row]));
-    const drift = [];
-    const pending = [];
-
-    for (const migration of discovered) {
-      const ledgerEntry = applied.get(migration.version);
-      if (!ledgerEntry) {
-        pending.push(migration.version);
-      } else if (ledgerEntry.checksum !== migration.checksum) {
-        drift.push(migration.version);
-      }
-    }
-
-    const unknown = result.rows
-      .filter((row) => !discovered.some((migration) => migration.version === row.version))
-      .map((row) => row.version);
+    const entries = await this.readEntries();
+    const { pending, drift, unknown } = this.analyze(discovered, entries);
 
     console.log(JSON.stringify({
       database: this.databaseName,
       discovered: discovered.length,
-      applied: result.rowCount,
+      applied: entries.length,
       pending,
       drift,
       unknown,
     }, null, 2));
 
-    if (drift.length || unknown.length) process.exitCode = 2;
+    if (pending.length || drift.length || unknown.length) process.exitCode = 2;
   }
 
   async baseline(throughSequence) {
@@ -93,22 +90,24 @@ class MigrationLedger {
       throw new Error('schema_migrations no existe; aplica primero la migración 034');
     }
 
-    const selected = this.discover().filter((migration) => migration.sequence <= throughSequence);
+    const discovered = this.discover();
+    const selected = discovered.filter((migration) => migration.sequence <= throughSequence);
     if (!selected.length || selected.at(-1).sequence !== throughSequence) {
       throw new Error(`No existe una migración canónica con secuencia ${throughSequence}`);
+    }
+
+    const entries = await this.readEntries();
+    const analysis = this.analyze(discovered, entries);
+    if (analysis.unknown.length || analysis.drift.length) {
+      throw new Error(
+        `Ledger inconsistente; unknown=${analysis.unknown.join(',')}; drift=${analysis.drift.join(',')}`,
+      );
     }
 
     await this.client.query('BEGIN');
     try {
       for (const migration of selected) {
-        const existing = await this.client.query(
-          'SELECT checksum FROM public.schema_migrations WHERE version = $1',
-          [migration.version],
-        );
-        if (existing.rowCount && existing.rows[0].checksum !== migration.checksum) {
-          throw new Error(`Checksum distinto para ${migration.version}`);
-        }
-        if (!existing.rowCount) {
+        if (!analysis.applied.has(migration.version)) {
           await this.client.query(
             `INSERT INTO public.schema_migrations (version, checksum, source)
              VALUES ($1, $2, 'BASELINE')`,
@@ -138,26 +137,17 @@ class MigrationLedger {
       throw new Error(`No existe una migración canónica con secuencia ${throughSequence}`);
     }
 
-    const result = await this.client.query(
-      'SELECT version, checksum FROM public.schema_migrations ORDER BY version',
-    );
-    const applied = new Map(result.rows.map((row) => [row.version, row.checksum]));
-    const unknown = result.rows
-      .filter((row) => !discovered.some((migration) => migration.version === row.version))
-      .map((row) => row.version);
-    const drift = discovered
-      .filter((migration) => (
-        applied.has(migration.version)
-        && applied.get(migration.version) !== migration.checksum
-      ))
-      .map((migration) => migration.version);
+    const entries = await this.readEntries();
+    const analysis = this.analyze(discovered, entries);
 
-    if (unknown.length || drift.length) {
-      throw new Error(`Ledger inconsistente; unknown=${unknown.join(',')}; drift=${drift.join(',')}`);
+    if (analysis.unknown.length || analysis.drift.length) {
+      throw new Error(
+        `Ledger inconsistente; unknown=${analysis.unknown.join(',')}; drift=${analysis.drift.join(',')}`,
+      );
     }
 
     const pending = discovered.filter((migration) => (
-      migration.sequence <= throughSequence && !applied.has(migration.version)
+      migration.sequence <= throughSequence && !analysis.applied.has(migration.version)
     ));
 
     for (const migration of pending) {
@@ -234,7 +224,15 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error.message);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  MigrationLedger,
+  argumentValue,
+  main,
+};

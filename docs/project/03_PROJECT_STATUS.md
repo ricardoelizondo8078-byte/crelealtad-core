@@ -1,6 +1,6 @@
 # 03 Project Status — Estado Oficial del Proyecto
 
-Versión: 3.4.0
+Versión: 3.4.1
 Estado: Vigente y verificado
 Fecha de corte: 2026-10-04
 
@@ -132,6 +132,7 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 - La migración 031 agrega la captura parcial `verificacion_entrevistas`, los historiales de familiares y desacuerdos, y convierte las evidencias del negocio en `verificacion_entrevista_evidencias` para incluir control de pagos y folleto. Toda fila nueva exige cámara, fecha, coordenadas y actor; las filas anteriores se conservan como legado sin ubicación. Se validó creación, rollback y reaplicación en `crelealtad_test`, se verificó el respaldo `database/backups/crelealtad-pre-031-20261003.backup` y se aplicó sobre `crelealtad` sin crear filas de entrevista ni evidencia.
 - La migración 033 agrega las FKs faltantes `creditos.solicitud_id`, `solicitudes_domicilios.dom_cp_id` y `solicitudes_negocios.negocio_cp_id`. Fue aplicada primero en `crelealtad_test` y después de verificar cero huérfanos y un respaldo custom se aplicó a `crelealtad` sin modificar filas.
 - La migración 034 crea `schema_migrations`. La migración 035 valida el formato y los elementos textuales de los permisos JSONB. `crelealtad_test` y `crelealtad` tienen 32 migraciones canónicas aplicadas hasta 035, sin pendientes, drift ni entradas desconocidas.
+- `database/migrations` es la única cadena ejecutable de esquema. El catálogo compartido rechaza secuencias duplicadas; `status` falla también ante pendientes, y la reconstrucción de `crelealtad_test` exige confirmación nominal y registra en el ledger el baseline exacto del dump. Los ejecutores históricos no forman parte del flujo canónico.
 - No hay Row Level Security activo ni triggers en el esquema público.
 - `audit_log` registra además el login exitoso, las altas atómicas de grupo/expediente e integrante, los campos modificados de solicitud/integrante y cada documento confirmado, sin copiar credenciales ni valores personales al evento. La auditoría transversal del resto de módulos continúa incompleta.
 - Solo una tabla tiene `created_by`; ninguna tiene `updated_by`. La auditoría transversal constitucional aún no está materializada.

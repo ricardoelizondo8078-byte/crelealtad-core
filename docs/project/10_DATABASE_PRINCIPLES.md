@@ -1,6 +1,6 @@
 # 10 Database Principles — Principios de Base de Datos
 
-Versión: 2.12.0
+Versión: 2.12.1
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -184,11 +184,12 @@ Brecha constitucional:
 
 ## Migraciones
 
-- El repositorio contiene migraciones en `database/migrations`, `apps/api/src/migrations` y `migraciones`.
-- Hay artefactos legacy y variantes de migración; antes de ejecutar se debe identificar la cadena vigente y el estado real del esquema.
+- `database/migrations` es la única cadena canónica ejecutable. `apps/api/src/migrations`, `migraciones` y los archivos `migration_*` son artefactos históricos que no deben aplicarse al esquema vigente.
+- El catálogo compartido calcula checksums y rechaza números de secuencia duplicados antes de consultar o modificar una base.
 - Ninguna migración debe ejecutarse por nombre o fecha sin revisar SQL, precondiciones, respaldo, compatibilidad y reversión.
 - Los cambios se prueban primero en `crelealtad_test` cuando corresponda.
 - `schema_migrations` conserva versión, SHA-256, origen, actor y duración. `npm run db:migrations:apply -- --database=<base> --through=<secuencia>` exige confirmación nominal mediante `MIGRATION_APPLY_CONFIRM`, ejecuta cada archivo canónico dentro de una transacción y registra el ledger sólo al confirmar.
+- `db:migrations:status` termina con error si detecta pendientes, drift o entradas desconocidas. La reconstrucción destructiva de `crelealtad_test` exige `TEST_DB_RESET_CONFIRM=crelealtad_test` y registra como `BASELINE` el catálogo exacto representado por el dump; no mantiene listas paralelas de migraciones.
 - Está prohibido activar `synchronize: true`.
 - D01 identifica cada corte por SHA-256, genera manifiesto, prevalida relaciones y carga en una sola transacción; repetir el mismo hash no duplica filas.
 

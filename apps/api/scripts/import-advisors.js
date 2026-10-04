@@ -5,7 +5,6 @@
  * - ADVISOR_TEMP_PIN en el entorno (exactamente 4 digitos).
  * - --input=<ruta JSON generada desde la tabla autorizada>.
  * - --database=<base objetivo>.
- * - --apply-schema para aplicar 005_advisor_login_abbreviation.sql.
  * - --seed-test-prerequisites solo para una base terminada en _test.
  *
  * El PIN nunca se imprime ni se almacena en texto plano.
@@ -15,6 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const { Client } = require('pg');
 const bcrypt = require('bcrypt');
+const { MigrationCatalog } = require('./migration-catalog');
 
 function loadEnv(filePath) {
   const contents = fs.readFileSync(filePath, 'utf8');
@@ -71,9 +71,11 @@ async function main() {
   const inputPath = readArg('input');
   const database = readArg('database') || process.env.DB_NAME || 'crelealtad';
   const temporaryPin = process.env.ADVISOR_TEMP_PIN;
-  const applySchema = hasFlag('apply-schema');
   const seedTestPrerequisites = hasFlag('seed-test-prerequisites');
 
+  if (hasFlag('apply-schema')) {
+    throw new Error('--apply-schema fue retirado; usa db:migrations:apply antes de importar');
+  }
   if (!inputPath) throw new Error('Falta --input=<ruta JSON>');
   if (!/^\d{4}$/.test(temporaryPin || '')) {
     throw new Error('ADVISOR_TEMP_PIN debe contener exactamente 4 digitos');
@@ -98,14 +100,7 @@ async function main() {
 
   await client.connect();
   try {
-    if (applySchema) {
-      const migrationPath = path.resolve(
-        __dirname,
-        '../../../database/migrations/005_advisor_login_abbreviation.sql',
-      );
-      await client.query(fs.readFileSync(migrationPath, 'utf8'));
-      console.log(`Esquema de autenticacion aplicado en ${database}.`);
-    }
+    await assertAdvisorSchemaMigration(client);
 
     await client.query('BEGIN');
 
@@ -214,6 +209,28 @@ async function main() {
     throw error;
   } finally {
     await client.end();
+  }
+}
+
+async function assertAdvisorSchemaMigration(client) {
+  const migrationsDirectory = path.resolve(__dirname, '../../../database/migrations');
+  const migration = new MigrationCatalog(migrationsDirectory)
+    .discover()
+    .find((item) => item.sequence === 5);
+  if (!migration) {
+    throw new Error('No existe la migración canónica 005');
+  }
+
+  const result = await client.query(
+    `SELECT checksum
+     FROM public.schema_migrations
+     WHERE version = $1`,
+    [migration.version],
+  );
+  if (result.rowCount !== 1 || result.rows[0].checksum !== migration.checksum) {
+    throw new Error(
+      'La migración 005 no está registrada con su checksum vigente; usa db:migrations:apply',
+    );
   }
 }
 

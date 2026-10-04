@@ -1,5 +1,25 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-04] - Cierre del ledger único de migraciones
+
+### Integridad del proceso
+
+- `database/migrations` quedó declarado como la única cadena ejecutable; los SQL de rutas legacy se
+  conservan sólo como contexto histórico y no forman parte del flujo vigente.
+- Un catálogo compartido calcula SHA-256, ordena la cadena y rechaza números de secuencia
+  duplicados. `db:migrations:status` ahora falla también cuando existen migraciones pendientes,
+  además de drift o entradas desconocidas.
+- `test:setup` dejó de aplicar una lista manual de archivos posteriores al dump: exige confirmación
+  nominal para reconstruir exclusivamente `crelealtad_test` y registra las 32 migraciones del dump
+  como `BASELINE` con sus checksums vigentes.
+- El importador histórico de asesores ya no puede aplicar la migración 005 directamente; antes de
+  cargar datos exige que esa versión exista en `schema_migrations` con el checksum correcto.
+
+### Alcance
+
+- No se modificaron esquema ni datos de `crelealtad` o `crelealtad_test`. La reconstrucción
+  destructiva de pruebas no se ejecutó durante este cierre.
+
 ## [2026-10-04] - Rotación local de credenciales y saneamiento de Git
 
 ### Seguridad local

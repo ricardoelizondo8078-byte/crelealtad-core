@@ -10,8 +10,16 @@
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const { MigrationCatalog } = require('./migration-catalog');
+
+const TEST_DATABASE = 'crelealtad_test';
+const MIGRATIONS_DIRECTORY = path.resolve(__dirname, '../../../database/migrations');
 
 async function setupTestDb() {
+  if (process.env.TEST_DB_RESET_CONFIRM !== TEST_DATABASE) {
+    throw new Error(`TEST_DB_RESET_CONFIRM debe ser exactamente ${TEST_DATABASE}`);
+  }
+
   // Conectar a postgres para crear/borrar BD
   const adminClient = new Client({
     host: process.env.DB_HOST || 'localhost',
@@ -27,12 +35,12 @@ async function setupTestDb() {
 
     // 1. BORRAR base existente
     console.log('\n=== PASO 1: Borrar crelealtad_test si existe ===');
-    await adminClient.query('DROP DATABASE IF EXISTS crelealtad_test');
+    await adminClient.query(`DROP DATABASE IF EXISTS ${TEST_DATABASE}`);
     console.log('✓ Base borrada');
 
     // 2. CREAR base vacía
     console.log('\n=== PASO 2: Crear crelealtad_test vacía ===');
-    await adminClient.query('CREATE DATABASE crelealtad_test');
+    await adminClient.query(`CREATE DATABASE ${TEST_DATABASE}`);
     console.log('✓ Base creada');
 
     await adminClient.end();
@@ -43,7 +51,7 @@ async function setupTestDb() {
       port: parseInt(process.env.DB_PORT || '5432'),
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || process.env.DB_PASS,
-      database: 'crelealtad_test',
+      database: TEST_DATABASE,
     });
 
     await testClient.connect();
@@ -65,27 +73,8 @@ async function setupTestDb() {
     // Las migraciones revisadas del proyecto crean objetos en el schema public.
     await testClient.query('SET search_path TO public');
 
-    const postDumpMigrations = [
-      '026_confirmacion_telefonos_entrevista.sql',
-      '027_telefono_utilizado_llamadas_verificacion.sql',
-      '028_historial_unificado_evidencias_llamada.sql',
-      '029_sincronizar_telefonos_confirmados_personas.sql',
-      '030_respuesta_medidor_luz_verificacion.sql',
-      '031_persistencia_general_entrevista.sql',
-      '032_evidencias_historial_crediticio_entrevista.sql',
-    ];
-    for (const migrationName of postDumpMigrations) {
-      const migrationPath = path.join(
-        __dirname,
-        '../../../database/migrations',
-        migrationName,
-      );
-      if (!fs.existsSync(migrationPath)) {
-        throw new Error(`Migración posterior al dump no encontrada: ${migrationPath}`);
-      }
-      await testClient.query(fs.readFileSync(migrationPath, 'utf8'));
-      console.log(`✓ Migración aplicada: ${migrationName}`);
-    }
+    const baselineCount = await registerMigrationBaseline(testClient);
+    console.log(`✓ Ledger canónico registrado: ${baselineCount} migraciones`);
 
     await seedTechnicalTestIdentity(testClient);
     console.log('✓ Identidad técnica de pruebas creada');
@@ -97,8 +86,7 @@ async function setupTestDb() {
 
     console.log('\n✅ Setup completo. crelealtad_test es copia exacta de producción.');
   } catch (error) {
-    console.error('\n❌ Error en setup:', error.message);
-    process.exit(1);
+    throw error;
   }
 }
 
@@ -158,7 +146,7 @@ async function verificarSchema() {
     port: parseInt(process.env.DB_PORT || '5432'),
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || process.env.DB_PASS,
-    database: 'crelealtad_test',
+    database: TEST_DATABASE,
   });
 
   await testClient.connect();
@@ -366,4 +354,48 @@ async function verificarSchema() {
   await testClient.end();
 }
 
-setupTestDb();
+async function registerMigrationBaseline(client) {
+  const tableResult = await client.query(
+    "SELECT to_regclass('public.schema_migrations') IS NOT NULL AS exists",
+  );
+  if (!tableResult.rows[0].exists) {
+    throw new Error('El schema dump no contiene public.schema_migrations');
+  }
+
+  const existingResult = await client.query(
+    'SELECT COUNT(*)::int AS total FROM public.schema_migrations',
+  );
+  if (existingResult.rows[0].total !== 0) {
+    throw new Error('El schema dump debe entregar un ledger vacío antes del baseline');
+  }
+
+  const migrations = new MigrationCatalog(MIGRATIONS_DIRECTORY).discover();
+  await client.query('BEGIN');
+  try {
+    for (const migration of migrations) {
+      await client.query(
+        `INSERT INTO public.schema_migrations (version, checksum, source)
+         VALUES ($1, $2, 'BASELINE')`,
+        [migration.version, migration.checksum],
+      );
+    }
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  }
+
+  return migrations.length;
+}
+
+if (require.main === module) {
+  setupTestDb().catch((error) => {
+    console.error(`\n❌ Error en setup: ${error.message}`);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  registerMigrationBaseline,
+  setupTestDb,
+};

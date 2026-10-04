@@ -81,6 +81,10 @@ Estado: Vigente
 6. Salud de API validada.
 7. Monitoreo inicial activo.
 
+La reconstrucción de `crelealtad_test` es destructiva y requiere
+`TEST_DB_RESET_CONFIRM=crelealtad_test`; el proceso debe terminar con el catálogo completo
+registrado como `BASELINE` en `schema_migrations`.
+
 ## Checklist de Documentacion
 
 1. Referencias cruzadas validas.
