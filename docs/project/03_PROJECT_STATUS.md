@@ -1,6 +1,6 @@
 # 03 Project Status — Estado Oficial del Proyecto
 
-Versión: 3.8.0
+Versión: 3.9.0
 Estado: Vigente y verificado
 Fecha de corte: 2026-10-04
 
@@ -8,7 +8,7 @@ Fecha de corte: 2026-10-04
 
 CRELEALTAD CORE superó la etapa de prototipo exclusivamente en memoria descrita en la auditoría de julio. El repositorio actual contiene persistencia PostgreSQL mediante TypeORM, autenticación JWT global, captura documental y de solicitudes, y un flujo parcial de verificación. El 2026-10-04 se rotaron las credenciales locales de PostgreSQL y JWT, se exigió SCRAM en loopback y se integró un historial Git saneado de 51 commits en `main` y `origin/main` mediante `force-with-lease` verificado.
 
-El sistema aún no está listo para producción. DEC-023 habilita temporalmente a todos los usuarios activos en los módulos ejecutables durante desarrollo; la matriz restrictiva definitiva, el alcance territorial, la trazabilidad transversal, la sincronización offline y las pruebas end-to-end continúan pendientes. El endurecimiento técnico del 2026-10-04 retiró credenciales literales de scripts, agregó detección automática de secretos, movió el JWT móvil a SecureStore, implementó el cambio obligatorio de PIN, centralizó la política de archivos, estableció trazabilidad por checksum para migraciones y protegió con FKs/checks los actores y estados cuyo contrato ya estaba cerrado. Esto reduce riesgo técnico, pero no sustituye las decisiones funcionales pendientes de M03–M12.
+El sistema aún no está listo para producción. DEC-023 habilita temporalmente a todos los usuarios activos en los módulos ejecutables durante desarrollo. La propuesta v0.1 de matriz restrictiva y gobierno de M12 ya está diseñada en `docs/modules/M12_ADMINISTRACION.md`, pero requiere aprobación explícita antes de modificar permisos, alcance, API, mobile o datos. La trazabilidad transversal, la sincronización offline y las pruebas end-to-end continúan pendientes. El endurecimiento técnico del 2026-10-04 retiró credenciales literales de scripts, agregó detección automática de secretos, movió el JWT móvil a SecureStore, implementó el cambio obligatorio de PIN, centralizó la política de archivos, estableció trazabilidad por checksum para migraciones y protegió con FKs/checks los actores y estados cuyo contrato ya estaba cerrado. Esto reduce riesgo técnico, pero no sustituye las decisiones funcionales pendientes de M03–M12.
 
 ## Método y fuentes de verificación
 
@@ -180,12 +180,12 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 - M09 Convenios: `reestructuras` presente como base de datos; sin API ni pantalla verificadas.
 - M10 Reportes: Sin módulo ejecutable verificado.
 - M11 Parámetros: Sin módulo ejecutable; políticas continúan parcialmente hardcodeadas.
-- M12 Administración: Usuarios y roles existen; la base local contiene los ocho roles institucionales y un rol técnico de prueba aislado. El contrato y formato de permisos están reforzados, pero no existe administración de usuarios, roles y permisos en API/mobile ni matriz definitiva aprobada.
+- M12 Administración: Usuarios y roles existen; la base local contiene los ocho roles institucionales y un rol técnico de prueba aislado. La especificación v0.1 registra el inventario de permisos y cuentas agregadas, identifica el producto cartesiano del contrato actual y propone pares explícitos, alcance territorial, denegación de módulos futuros y doble control. Continúa pendiente la aprobación funcional; no se cambiaron permisos, API, mobile, esquema ni datos.
 - D01 Migración histórica Excel: carga grupal e individual parcial funcional; 276 últimos ciclos cumplen contrato exacto y 193 permanecen bloqueados para reconciliación, sin inferencias.
 
 ## Riesgos críticos
 
-1. La autorización ya se aplica y DEC-023 aprobó una excepción amplia temporal para desarrollo; antes de producción debe sustituirse por la matriz restrictiva definitiva y su alcance territorial.
+1. La autorización ya se aplica y DEC-023 aprobó una excepción amplia temporal para desarrollo; existe una propuesta restrictiva v0.1, pero antes de producción Dirección debe aprobarla y después deben implementarse sus pares exactos y alcance territorial.
 2. El alcance por responsable cubre el recorrido activo y las rutas directas para `ASESOR`; faltan la reconciliación de expedientes existentes sin responsable y el alcance aprobado por sucursal/zona para los demás roles.
 3. Auditoría parcial: altas y cambios del recorrido de Documentación ya se registran, pero faltan cobertura y política transversal para módulos futuros, administración, parámetros y finanzas.
 4. Offline incompleto: la carga documental funciona en línea, pero no existe cola durable, idempotencia entre reinicios, reintentos con backoff ni reconciliación.
@@ -201,7 +201,7 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 
 ## Prioridades técnicas aprobables
 
-1. Aprobar la matriz funcional completa rol–módulo–acción y el alcance por sucursal/zona.
+1. Aprobar la propuesta v0.1 de matriz rol–módulo–acción, alcance y doble control de M12; después implementar el contrato por pares sin comodines.
 2. Reconciliar expedientes históricos con su asesor real y aprobar/aplicar el alcance territorial de los demás roles.
 3. Operar secretos productivos y retirar el PIN temporal; API y base ya fallan cerrado cuando faltan secretos o credenciales fuera de pruebas.
 4. Extender la auditoría ya aplicada en Documentación a acciones críticas de los módulos siguientes.

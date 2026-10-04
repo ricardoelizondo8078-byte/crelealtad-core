@@ -1,6 +1,6 @@
 # 20 Module Catalog — Catálogo de Módulos
 
-Versión: 2.20.0
+Versión: 2.21.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -249,11 +249,15 @@ Verificado:
 - Tablas `usuarios`, `roles`, `empleados` y sus tablas hijas, `sucursales` y `zonas`.
 - Ocho roles institucionales y un rol técnico aislado de prueba inventariados en la base local; el rol adicional no redefine la matriz objetivo.
 - `roles.permisos` y el reemplazo opcional `usuarios.permisos_personalizados` se aplican en la API y el inicio móvil mediante un contrato común de módulo/acción. El catálogo de identificadores está centralizado y la migración 035 valida el formato JSONB sin otorgar permisos nuevos.
+- La especificación propuesta `docs/modules/M12_ADMINISTRACION.md` registra el inventario agregado real y diseña la matriz inicial de los doce módulos y ocho roles institucionales. Separa par módulo–acción, alcance territorial, condición operativa y doble control.
+- La propuesta deja M04–M10 denegados hasta que cada módulo cuente con especificación aprobada, retira los comodines del objetivo productivo y no convierte DEC-023 en permiso definitivo.
+- El contrato actual de listas independientes genera un producto cartesiano entre módulos y acciones; la propuesta v0.1 exige capacidades explícitas por par antes de escalar M12.
 
 Pendiente:
 
 - API y UI administrativas.
-- Matriz aprobada rol–módulo–acción.
+- Aprobación explícita de Dirección de la propuesta v0.1 rol–módulo–acción, alcance, excepciones y doble control.
+- Migración al contrato por pares, sin comodines productivos, probada primero en `crelealtad_test` y aplicada sólo con respaldo y plan de reversión.
 - Alta/baja lógica, reasignación, alcance y auditoría.
 - API y pantallas para otorgar y revocar permisos, sujetas a aprobación de la matriz y auditoría reforzada.
 

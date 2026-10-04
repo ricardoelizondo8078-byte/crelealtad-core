@@ -1,5 +1,29 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-04] - Diseño de matriz de acceso y gobierno de M12
+
+### Administración y seguridad
+
+- Se agregó `docs/modules/M12_ADMINISTRACION.md` como propuesta v0.1 pendiente de aprobación
+  funcional. La especificación considera los doce módulos, los ocho roles institucionales, el rol
+  técnico aislado y los conteos agregados verificados en PostgreSQL sin consultar datos personales.
+- Se documentó que el contrato actual cruza listas independientes de módulos y acciones. El modelo
+  objetivo usa pares explícitos con alcance `PROPIO`, `SUCURSAL`, `ZONA` o `GLOBAL`, denegación por
+  defecto y sin comodines productivos.
+- La matriz inicial conserva M02 para `ASESOR`, propone M03 para `VERIFICADOR`, deja M04–M10
+  bloqueados hasta sus especificaciones y separa decisión funcional de publicación técnica en M11
+  y M12. DEC-023 sigue vigente únicamente como excepción temporal de desarrollo.
+- M12 separa solicitar, aprobar y ejecutar; prohíbe autoaprobación, borrado físico, herencia de
+  permisos operativos para Administración y ampliaciones individuales indefinidas.
+
+### Verificado
+
+- Código: 10 pares módulo–acción usados en 53 handlers protegidos; guard global cerrado por defecto.
+- PostgreSQL: ocho roles institucionales activos, un rol técnico inactivo, 55 cuentas activas
+  agregadas y una excepción individual; no se leyeron nombres de usuario ni datos personales.
+- No se modificaron permisos, esquema, datos, API, mobile ni decisiones cerradas. La implementación
+  queda bloqueada hasta la aprobación explícita de Dirección.
+
 ## [2026-10-04] - Segunda descomposición completa de Verificación
 
 ### Modularidad móvil
