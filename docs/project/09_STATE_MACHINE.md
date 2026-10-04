@@ -1,8 +1,8 @@
 # 06 State Machine - Maquinas de Estado Oficiales
 
-Version: 1.1.0
+Version: 1.3.0
 Estado: Vigente y auditada
-Fecha de auditoria: 2026-07-10
+Fecha de auditoria: 2026-09-02
 
 ## Alcance
 
@@ -43,6 +43,8 @@ Transiciones:
 - Pendiente -> Completa
 - Completa -> Pendiente (si aparece observacion o vencimiento)
 - Pendiente -> Retirada
+- Completa -> Retirada (confirmación de no participación antes del handoff)
+- Retirada -> Pendiente | Completa (reintegro formal con recálculo)
 - Pendiente -> Rechazada
 - Completa -> Rechazada (dictamen posterior)
 
@@ -81,11 +83,12 @@ Estados: No elegible, En preparacion, Esperando umbral, Elegible, En ejecucion, 
 2. No existe solicitante Completa sin solicitud digital capturada.
 3. No existe solicitante Completa con documento obligatorio Pendiente, Observado o Vencido.
 4. No existe renovacion Elegible sin cumplir umbral configurado.
-5. No existe expediente Listo para verificar con pendientes obligatorios criticos.
+5. No existe expediente Listo para verificar con pendientes obligatorios criticos ni sin una tesorera participante seleccionada.
+6. Sustituir a la tesorera durante Desembolso no retrocede el expediente a Verificacion: el evento se audita y la persona definitiva se registra en el ciclo desembolsado.
 
 ## Cobertura verificada en implementacion actual
 
-- API: existe accion send-to-verification, pero no se verifico enforcement integral de toda la maquina de estados.
+- API: `send-to-verification` materializa el handoff parcial; retiro, reintegro y selección de tesorera están controlados mientras el expediente permanece en documentación. El resto de la máquina continúa parcial.
 - Mobile: el flujo documental navega estados operativos, pero no modela el catalogo completo de transiciones.
 - SQL: no existen constraints verificadas que materialicen esta semantica funcional.
 

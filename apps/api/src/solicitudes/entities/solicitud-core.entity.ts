@@ -32,6 +32,9 @@ export class SolicitudCoreEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   monto_solicitado: number;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  monto_solicitado_confirmado_at: Date | null;
+
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   monto_autorizado: number;
 

@@ -1,7 +1,5 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SolicitudEntity } from './solicitud.entity';
-import { SolicitudReadEntity } from './entities/solicitud-read.entity';
 import { SolicitudCoreEntity } from './entities/solicitud-core.entity';
 import { SolicitudDatosPersonalesEntity } from './entities/solicitud-datos-personales.entity';
 import { SolicitudDomiciliosEntity } from './entities/solicitud-domicilios.entity';
@@ -12,13 +10,13 @@ import { SolicitudValidacionesEntity } from './entities/solicitud-validaciones.e
 import { SolicitudDocumentosEntity } from './entities/solicitud-documentos.entity';
 import { SolicitudesController } from './solicitudes.controller';
 import { SolicitudesService } from './solicitudes.service';
-import { IntegrantesModule } from '../integrantes/integrantes.module';
+import { DocumentosStorageService } from './documentos/documentos-storage.service';
+import { IntegranteEntity } from '../integrantes/integrante.entity';
+import { DocumentosStoragePort } from './documentos/documentos-storage.port';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      SolicitudEntity,
-      SolicitudReadEntity,
       SolicitudCoreEntity,
       SolicitudDatosPersonalesEntity,
       SolicitudDomiciliosEntity,
@@ -27,11 +25,15 @@ import { IntegrantesModule } from '../integrantes/integrantes.module';
       SolicitudBeneficiariosEntity,
       SolicitudValidacionesEntity,
       SolicitudDocumentosEntity,
+      IntegranteEntity,
     ]),
-    forwardRef(() => IntegrantesModule),
   ],
   controllers: [SolicitudesController],
-  providers: [SolicitudesService],
-  exports: [SolicitudesService],
+  providers: [
+    SolicitudesService,
+    DocumentosStorageService,
+    { provide: DocumentosStoragePort, useExisting: DocumentosStorageService },
+  ],
+  exports: [SolicitudesService, DocumentosStoragePort],
 })
 export class SolicitudesModule {}

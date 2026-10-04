@@ -1,5 +1,6 @@
 import { Injectable, LoggerService as NestLoggerService } from '@nestjs/common';
 import * as winston from 'winston';
+import { Request, Response } from 'express';
 
 @Injectable()
 export class LoggerService implements NestLoggerService {
@@ -80,16 +81,17 @@ export class LoggerService implements NestLoggerService {
   }
 
   // Custom methods for structured logging
-  logRequest(req: any) {
+  logRequest(req: Request) {
     this.logger.info('HTTP Request', {
       method: req.method,
       url: req.url,
       ip: req.ip,
       userAgent: req.get('user-agent'),
+      userId: (req.user as { id?: string } | undefined)?.id,
     });
   }
 
-  logResponse(req: any, res: any, responseTime: number) {
+  logResponse(req: Request, res: Response, responseTime: number) {
     this.logger.info('HTTP Response', {
       method: req.method,
       url: req.url,

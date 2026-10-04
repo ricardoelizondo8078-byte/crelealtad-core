@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, moduleThemes, spacing, typography } from '../../theme/tokens';
+import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { FormField } from './FormField';
 
 type ModuleThemeKey = 'documentation' | 'verification' | 'disbursement';
@@ -14,6 +14,7 @@ interface MultiSelectFieldProps {
   helperText?: string;
   errorText?: string;
   moduleTheme?: ModuleThemeKey;
+  variant?: 'cards' | 'chips';
 }
 
 export const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
@@ -25,6 +26,7 @@ export const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
   helperText,
   errorText,
   moduleTheme = 'verification',
+  variant = 'cards',
 }) => {
   const themeColors = moduleThemes[moduleTheme];
 
@@ -45,34 +47,38 @@ export const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
       helperText={helperText}
       errorText={errorText}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, variant === 'chips' && styles.chipContainer]}>
         {options.map((option) => {
           const isSelected = value.includes(option);
           return (
             <Pressable
               key={option}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: isSelected }}
               style={[
-                styles.option,
+                variant === 'chips' ? styles.chip : styles.option,
                 isSelected && {
-                  backgroundColor: `${themeColors.primary}15`,
+                  backgroundColor: `${themeColors.primary}18`,
                   borderColor: themeColors.primary,
                 }
               ]}
               onPress={() => toggleOption(option)}
             >
-              <View style={[
-                styles.checkbox,
-                isSelected && {
-                  borderColor: themeColors.primary,
-                  backgroundColor: themeColors.primary,
-                }
-              ]}>
-                {isSelected && (
-                  <Text allowFontScaling={false} style={styles.checkmark}>✓</Text>
-                )}
-              </View>
+              {variant === 'cards' ? (
+                <View style={[
+                  styles.checkbox,
+                  isSelected && {
+                    borderColor: themeColors.primary,
+                    backgroundColor: themeColors.primary,
+                  }
+                ]}>
+                  {isSelected && (
+                    <Text allowFontScaling={false} style={styles.checkmark}>✓</Text>
+                  )}
+                </View>
+              ) : null}
               <Text allowFontScaling={false} style={[
-                styles.optionText,
+                variant === 'chips' ? styles.chipText : styles.optionText,
                 isSelected && {
                   fontWeight: '600',
                   color: themeColors.primary,
@@ -91,6 +97,25 @@ export const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
 const styles = StyleSheet.create({
   container: {
     gap: spacing.sm,
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  chip: {
+    minHeight: 44,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipText: {
+    ...typography.bodyStrong,
+    color: colors.textPrimary,
   },
   option: {
     flexDirection: 'row',

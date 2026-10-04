@@ -12,6 +12,14 @@ import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { CodigosPostalesModule } from './codigos-postales/codigos-postales.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { LoggingMiddleware } from './common/logging.middleware';
+import { PermissionsGuard } from './auth/permissions.guard';
+import { RenovacionesModule } from './renovaciones/renovaciones.module';
+import { PendientesModule } from './pendientes/pendientes.module';
+import { VerificacionLlamadasModule } from './verificacion-llamadas/verificacion-llamadas.module';
+import { VerificacionVisitasVecinoModule } from './verificacion-visitas-vecino/verificacion-visitas-vecino.module';
+import { VerificacionImagenesDomicilioModule } from './verificacion-imagenes-domicilio/verificacion-imagenes-domicilio.module';
+import { VerificacionEntrevistaModule } from './verificacion-entrevista/verificacion-entrevista.module';
+import { getDatabaseConfig } from './database.config';
 
 @Module({
   controllers: [HealthController],
@@ -19,6 +27,10 @@ import { LoggingMiddleware } from './common/logging.middleware';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
     },
     {
       provide: APP_GUARD,
@@ -33,27 +45,19 @@ import { LoggingMiddleware } from './common/logging.middleware';
         limit: 100, // 100 requests por minuto (general)
       },
     ]),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      url: process.env.DATABASE_URL,
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME || 'crelealtad',
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-      synchronize: false, // ⚠️ DESACTIVADO - Schema se gestiona con migraciones SQL
-      autoLoadEntities: true,
-      logging: process.env.NODE_ENV !== 'production',
-      retryAttempts: 3,
-      retryDelay: 3000,
-    }),
+    TypeOrmModule.forRoot(getDatabaseConfig()),
     AuthModule,
     GruposModule,
     ExpedientesModule,
     IntegrantesModule,
     SolicitudesModule,
     CodigosPostalesModule,
+    RenovacionesModule,
+    PendientesModule,
+    VerificacionLlamadasModule,
+    VerificacionVisitasVecinoModule,
+    VerificacionImagenesDomicilioModule,
+    VerificacionEntrevistaModule,
   ],
 })
 export class AppModule implements NestModule {

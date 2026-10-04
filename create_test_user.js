@@ -1,6 +1,11 @@
 const { Client } = require('./apps/api/node_modules/pg');
 const bcrypt = require('./apps/api/node_modules/bcrypt');
 
+const initialTestPassword = process.env.INITIAL_TEST_PASSWORD;
+if (!initialTestPassword) {
+  throw new Error('INITIAL_TEST_PASSWORD es obligatorio');
+}
+
 const client = new Client({
   host: 'localhost',
   port: 5432,
@@ -17,7 +22,7 @@ async function createTestUser() {
     // Configuración del usuario de prueba
     const testUser = {
       email: 'test@crelealtad.com',
-      password: process.env.DB_PASSWORD || process.env.DB_PASS, // La contraseña que usarás para entrar
+      password: initialTestPassword,
       nombre: 'USUARIO DE PRUEBA',
     };
 
@@ -29,12 +34,7 @@ async function createTestUser() {
 
     if (existing.rows.length > 0) {
       console.log('⚠️  El usuario ya existe:', testUser.email);
-      console.log('\n========================================');
-      console.log('CREDENCIALES PARA LOGIN:');
-      console.log('========================================');
-      console.log('Email:', testUser.email);
-      console.log('Contraseña:', testUser.password);
-      console.log('========================================\n');
+      console.log('La credencial permanece únicamente en INITIAL_TEST_PASSWORD.');
       return;
     }
 
@@ -75,13 +75,7 @@ async function createTestUser() {
     console.log('✅ Usuario creado exitosamente:\n');
     console.table(result.rows);
 
-    console.log('\n========================================');
-    console.log('CREDENCIALES PARA LOGIN:');
-    console.log('========================================');
-    console.log('Email:', testUser.email);
-    console.log('Contraseña:', testUser.password);
-    console.log('========================================\n');
-    console.log('💡 Usa estas credenciales para entrar a la app\n');
+    console.log('La credencial permanece únicamente en INITIAL_TEST_PASSWORD.');
 
   } catch (error) {
     console.error('❌ Error:', error.message);

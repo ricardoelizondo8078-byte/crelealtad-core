@@ -1,5 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { CodigosPostalesService } from './codigos-postales.service';
+import { RequierePermiso } from '../auth/permissions.decorator';
 
 @Controller('codigos-postales')
 export class CodigosPostalesController {
@@ -10,6 +11,7 @@ export class CodigosPostalesController {
    * Buscar colonias por código postal
    */
   @Get('colonias')
+  @RequierePermiso('documentacion', 'leer')
   async buscarColonias(@Query('codigo') codigo: string) {
     if (!codigo || codigo.length !== 5) {
       return { colonias: [], municipio: '' };
@@ -33,6 +35,7 @@ export class CodigosPostalesController {
    * Buscar información completa de una colonia
    */
   @Get('info')
+  @RequierePermiso('documentacion', 'leer')
   async buscarInfo(
     @Query('codigo') codigo: string,
     @Query('colonia') colonia: string,

@@ -29,7 +29,7 @@ const generateUUID = () => crypto.randomUUID();
         nombre: 'ASESOR',
         descripcion: 'Asesor de campo - captura expedientes y documentos',
         permisos: JSON.stringify({
-          modulos: ['documentacion', 'expedientes', 'solicitudes'],
+          modulos: ['documentacion', 'expedientes', 'solicitudes', 'verificacion'],
           acciones: ['crear', 'leer', 'actualizar']
         })
       },

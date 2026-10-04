@@ -3,6 +3,9 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as request from 'supertest';
 import { DataSource } from 'typeorm';
+import { mkdtemp, rm } from 'fs/promises';
+import { join, resolve } from 'path';
+import { tmpdir } from 'os';
 import { SolicitudesModule } from './solicitudes.module';
 import { IntegrantesModule } from '../integrantes/integrantes.module';
 import { ExpedientesModule } from '../expedientes/expedientes.module';
@@ -15,8 +18,13 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
   let expedienteId: string;
   let personaId: string;
   let integranteId: string;
+  let testUserId: string;
+  let storagePath: string;
 
   beforeAll(async () => {
+    storagePath = resolve(await mkdtemp(join(tmpdir(), 'crelealtad-solicitudes-test-')));
+    process.env.DOCUMENT_STORAGE_PATH = storagePath;
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         TypeOrmModule.forRoot({
@@ -24,8 +32,8 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
           host: process.env.DB_HOST || 'localhost',
           port: parseInt(process.env.DB_PORT || '5432'),
           username: process.env.DB_USER || 'postgres',
-          password: process.env.DB_PASS,
-          database: process.env.DB_NAME || 'crelealtad_test',
+          password: process.env.DB_PASSWORD || process.env.DB_PASS,
+          database: 'crelealtad_test',
           autoLoadEntities: true,
           synchronize: false, // NO auto-sincronizar - usamos migraciones reales
         }),
@@ -37,96 +45,64 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.use((req: { user?: unknown }, _res: unknown, next: () => void) => {
+      req.user = {
+        id: testUserId,
+        rol: { nombre: 'ASESOR' },
+      };
+      next();
+    });
+    app.useGlobalPipes(new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }));
     await app.init();
 
     dataSource = moduleFixture.get<DataSource>(DataSource);
+    const testUsers = await dataSource.query(
+      'SELECT u.id FROM usuarios u JOIN empleados e ON e.usuario_id = u.id ORDER BY u.id LIMIT 1',
+    );
+    testUserId = testUsers[0].id;
   });
 
   afterAll(async () => {
-    // Limpiar TODOS los datos de prueba creados por este test suite
-    // No depender de variables que pueden estar fuera de scope
     try {
-      // Borrar solicitudes de prueba (empiezan con GORM o TEST)
-      await dataSource.query(`
-        DELETE FROM solicitudes_documentos WHERE solicitud_id IN (
-          SELECT id FROM solicitudes WHERE integrante_id IN (
-            SELECT id FROM integrantes WHERE persona_id IN (
-              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
-            )
-          )
-        )
-      `);
-      await dataSource.query(`
-        DELETE FROM solicitudes_validaciones WHERE solicitud_id IN (
-          SELECT id FROM solicitudes WHERE integrante_id IN (
-            SELECT id FROM integrantes WHERE persona_id IN (
-              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
-            )
-          )
-        )
-      `);
-      await dataSource.query(`
-        DELETE FROM solicitudes_beneficiarios WHERE solicitud_id IN (
-          SELECT id FROM solicitudes WHERE integrante_id IN (
-            SELECT id FROM integrantes WHERE persona_id IN (
-              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
-            )
-          )
-        )
-      `);
-      await dataSource.query(`
-        DELETE FROM solicitudes_referencias WHERE solicitud_id IN (
-          SELECT id FROM solicitudes WHERE integrante_id IN (
-            SELECT id FROM integrantes WHERE persona_id IN (
-              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
-            )
-          )
-        )
-      `);
-      await dataSource.query(`
-        DELETE FROM solicitudes_negocios WHERE solicitud_id IN (
-          SELECT id FROM solicitudes WHERE integrante_id IN (
-            SELECT id FROM integrantes WHERE persona_id IN (
-              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
-            )
-          )
-        )
-      `);
-      await dataSource.query(`
-        DELETE FROM solicitudes_domicilios WHERE solicitud_id IN (
-          SELECT id FROM solicitudes WHERE integrante_id IN (
-            SELECT id FROM integrantes WHERE persona_id IN (
-              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
-            )
-          )
-        )
-      `);
-      await dataSource.query(`
-        DELETE FROM solicitudes_datos_personales WHERE solicitud_id IN (
-          SELECT id FROM solicitudes WHERE integrante_id IN (
-            SELECT id FROM integrantes WHERE persona_id IN (
-              SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
-            )
-          )
-        )
-      `);
-      await dataSource.query(`
-        DELETE FROM solicitudes WHERE integrante_id IN (
-          SELECT id FROM integrantes WHERE persona_id IN (
-            SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'
-          )
-        )
-      `);
-      await dataSource.query(`DELETE FROM integrantes WHERE persona_id IN (SELECT id FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%')`);
-      await dataSource.query(`DELETE FROM expedientes WHERE nombre LIKE '%TEST%' OR nombre = 'Grupo de prueba - Personas'`);
-      await dataSource.query(`DELETE FROM grupos WHERE nombre LIKE '%TEST%' OR nombre = 'Grupo de prueba - Personas'`);
-      await dataSource.query(`DELETE FROM personas WHERE curp LIKE 'GORM%' OR curp LIKE 'TEST%'`);
-    } catch (e) {
-      console.error('Error en cleanup:', e.message);
+      if (integranteId) {
+        const solicitudes = await dataSource.query(
+          'SELECT id FROM solicitudes WHERE integrante_id = $1',
+          [integranteId],
+        );
+        for (const solicitud of solicitudes) {
+          for (const tabla of [
+            'solicitudes_documentos',
+            'solicitudes_validaciones',
+            'solicitudes_beneficiarios',
+            'solicitudes_referencias',
+            'solicitudes_negocios',
+            'solicitudes_domicilios',
+            'solicitudes_datos_personales',
+          ]) {
+            await dataSource.query(`DELETE FROM ${tabla} WHERE solicitud_id = $1`, [solicitud.id]);
+          }
+        }
+        await dataSource.query('DELETE FROM solicitudes WHERE integrante_id = $1', [integranteId]);
+        await dataSource.query('DELETE FROM integrantes WHERE id = $1', [integranteId]);
+      }
+      if (personaId) await dataSource.query('DELETE FROM personas WHERE id = $1', [personaId]);
+      if (grupoId) {
+        await dataSource.query('DELETE FROM expedientes WHERE grupo_id = $1', [grupoId]);
+        await dataSource.query('DELETE FROM grupos WHERE id = $1', [grupoId]);
+      } else if (expedienteId) {
+        await dataSource.query('DELETE FROM expedientes WHERE id = $1', [expedienteId]);
+      }
+    } catch (error) {
+      throw error;
     }
 
     await app.close();
+    await rm(storagePath, { recursive: true, force: true });
+    delete process.env.DOCUMENT_STORAGE_PATH;
   });
 
   it('CICLO COMPLETO: Crear grupo -> expediente -> persona -> integrante -> 7 pasos wizard -> verificar persistencia', async () => {
@@ -145,36 +121,29 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     grupoId = grupoRes.body.id;
     expect(grupoId).toBeDefined();
 
-    // 2. Crear expediente
-    const expedienteRes = await request(app.getHttpServer())
-      .post('/expedientes')
-      .send({ grupo_id: grupoId })
-      .expect(201);
-
-    expedienteId = expedienteRes.body.id;
+    // 2. El grupo nace con su expediente operativo en la misma transacción.
+    expedienteId = grupoRes.body.expedienteId;
     expect(expedienteId).toBeDefined();
 
-    // 3. Crear persona directamente en BD con CURP único por corrida
-    const timestamp = Date.now().toString().slice(-6);
-    const curpUnico = `GORM${timestamp}MDF${timestamp.slice(0,2)}`;
-    const personaResult = await dataSource.query(
-      `INSERT INTO personas (nombres, apellido_pat, apellido_mat, curp, fecha_nac)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      ['María Elena', 'González', 'Ruiz', curpUnico, '1985-06-15']
-    );
-    personaId = personaResult[0].id;
-    expect(personaId).toBeDefined();
-
-    // 4. Crear integrante
+    // 3. Crear integrante. La API crea una persona nueva y no acepta enlazar
+    // un persona_id arbitrario desde el cliente.
     const integranteRes = await request(app.getHttpServer())
       .post('/integrantes')
       .send({
         expediente_id: expedienteId,
-        persona_id: personaId,
+        nombres: 'María Elena',
+        apellidoPaterno: 'González',
+        apellidoMaterno: 'Ruiz',
       })
       .expect(201);
 
     integranteId = integranteRes.body.id;
+    const personaResult = await dataSource.query(
+      'SELECT persona_id FROM integrantes WHERE id = $1',
+      [integranteId],
+    );
+    personaId = personaResult[0].persona_id;
+    expect(personaId).toBeDefined();
     expect(integranteId).toBeDefined();
     expect(integranteRes.body.estado).toBe('DOCUMENTANDO');
 
@@ -185,10 +154,6 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     await request(app.getHttpServer())
       .patch(`/solicitudes/integrante/${integranteId}`)
       .send({
-        integrante_id: integranteId,
-        persona_id: personaId,
-        expediente_id: expedienteId,
-        grupo_id: grupoId,
         // Tabla solicitudes_datos_personales
         nombres: 'María Elena',
         apellido_pat: 'González',
@@ -222,10 +187,6 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     await request(app.getHttpServer())
       .patch(`/solicitudes/integrante/${integranteId}`)
       .send({
-        integrante_id: integranteId,
-        persona_id: personaId,
-        expediente_id: expedienteId,
-        grupo_id: grupoId,
         // Tabla solicitudes_domicilios
         dom_calle: 'Hidalgo',
         dom_num_ext: '123',
@@ -257,10 +218,6 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     await request(app.getHttpServer())
       .patch(`/solicitudes/integrante/${integranteId}`)
       .send({
-        integrante_id: integranteId,
-        persona_id: personaId,
-        expediente_id: expedienteId,
-        grupo_id: grupoId,
         // Tabla solicitudes_referencias
         ref1_nombre: 'Juan Pérez',
         ref1_parentesco: 'Hermano',
@@ -294,10 +251,6 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     await request(app.getHttpServer())
       .patch(`/solicitudes/integrante/${integranteId}`)
       .send({
-        integrante_id: integranteId,
-        persona_id: personaId,
-        expediente_id: expedienteId,
-        grupo_id: grupoId,
         // Tabla solicitudes_negocios
         negocio_giro: 'Venta de ropa',
         negocio_domicilio: 'Mercado Municipal Local 15',
@@ -332,10 +285,6 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     await request(app.getHttpServer())
       .patch(`/solicitudes/integrante/${integranteId}`)
       .send({
-        integrante_id: integranteId,
-        persona_id: personaId,
-        expediente_id: expedienteId,
-        grupo_id: grupoId,
         // Tabla solicitudes_beneficiarios
         beneficiario_nombre: 'Luis González Ruiz',
         beneficiario_parentesco: 'Hijo',
@@ -357,17 +306,34 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     // PASO 6: Validaciones
     // ====================================================================
 
+    const montoAntesDelIntentoInvalido = await dataSource.query(
+      'SELECT monto_solicitado FROM solicitudes WHERE integrante_id = $1',
+      [integranteId],
+    );
+
+    await request(app.getHttpServer())
+      .patch(`/solicitudes/integrante/${integranteId}`)
+      .send({ monto_solicitado: 110000 })
+      .expect(400)
+      .expect(({ body }) => {
+        expect(body.message).toContain('no puede exceder $100,000');
+      });
+
+    const montoDespuesDelIntentoInvalido = await dataSource.query(
+      'SELECT monto_solicitado FROM solicitudes WHERE integrante_id = $1',
+      [integranteId],
+    );
+    expect(montoDespuesDelIntentoInvalido[0]?.monto_solicitado ?? null).toBe(
+      montoAntesDelIntentoInvalido[0]?.monto_solicitado ?? null,
+    );
+
     await request(app.getHttpServer())
       .patch(`/solicitudes/integrante/${integranteId}`)
       .send({
-        integrante_id: integranteId,
-        persona_id: personaId,
-        expediente_id: expedienteId,
-        grupo_id: grupoId,
         // Tabla solicitudes_validaciones
         tiene_medidor_luz: 'SI',
         vive_max_5km_tesorera: 'SI',
-        tiene_menos_70_anios: 'SI',
+        monto_solicitado: 18000,
       })
       .expect(200);
 
@@ -384,24 +350,36 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     // PASO 7: Documentos
     // ====================================================================
 
-    await request(app.getHttpServer())
-      .patch(`/solicitudes/integrante/${integranteId}`)
-      .send({
-        integrante_id: integranteId,
-        persona_id: personaId,
-        expediente_id: expedienteId,
-        grupo_id: grupoId,
-        // Tabla solicitudes_documentos
-        doc_ine_ruta: '/storage/ine_maria_gonzalez.jpg',
-        doc_ine_fecha: '2024-01-15',
-        doc_comprobante_ruta: '/storage/comprobante_maria_gonzalez.pdf',
-        doc_comprobante_fecha: '2024-01-15',
-        doc_ine_beneficiario_ruta: '/storage/ine_luis_gonzalez.jpg',
-        doc_ine_beneficiario_fecha: '2024-01-15',
-        doc_solicitud_firmada_ruta: '/storage/solicitud_firmada_maria.pdf',
-        doc_solicitud_firmada_fecha: '2024-01-15',
-      })
-      .expect(200);
+    const imagenJpeg = Buffer.from([0xff, 0xd8, 0xff, 0x01]);
+    const rutasDocumentos: Record<string, string> = {};
+    const ineRes = await request(app.getHttpServer())
+      .post(`/solicitudes/integrante/${integranteId}/documentos/ine`)
+      .attach('archivos', imagenJpeg, { filename: 'ine-frente.jpg', contentType: 'image/jpeg' })
+      .attach('archivos', imagenJpeg, { filename: 'ine-reverso.jpg', contentType: 'image/jpeg' })
+      .expect(201);
+    rutasDocumentos.ine = ineRes.body.ruta;
+
+    for (const tipo of [
+      'comprobante',
+      'ine_beneficiario',
+      'solicitud_firmada',
+    ]) {
+      const documentoRes = await request(app.getHttpServer())
+        .post(`/solicitudes/integrante/${integranteId}/documentos/${tipo}`)
+        .attach('archivos', imagenJpeg, { filename: `${tipo}.jpg`, contentType: 'image/jpeg' })
+        .expect(201);
+      rutasDocumentos[tipo] = documentoRes.body.ruta;
+    }
+
+    const comprobanteCreditoRes = await request(app.getHttpServer())
+      .post(`/solicitudes/integrante/${integranteId}/documentos/comprobante_credito`)
+      .attach('archivos', imagenJpeg, { filename: 'comprobante-credito-1.jpg', contentType: 'image/jpeg' })
+      .attach('archivos', imagenJpeg, { filename: 'comprobante-credito-2.jpg', contentType: 'image/jpeg' })
+      .attach('archivos', imagenJpeg, { filename: 'comprobante-credito-3.jpg', contentType: 'image/jpeg' })
+      .attach('archivos', imagenJpeg, { filename: 'comprobante-credito-4.jpg', contentType: 'image/jpeg' })
+      .expect(201);
+    expect(comprobanteCreditoRes.body.archivos).toHaveLength(4);
+    rutasDocumentos.comprobante_credito = comprobanteCreditoRes.body.ruta;
 
     // Verificar persistencia en solicitudes_documentos
     const documentos = await dataSource.query(
@@ -409,10 +387,11 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
       [integranteId]
     );
     expect(documentos).toHaveLength(1);
-    expect(documentos[0].doc_ine_ruta).toBe('/storage/ine_maria_gonzalez.jpg');
-    expect(documentos[0].doc_comprobante_ruta).toBe('/storage/comprobante_maria_gonzalez.pdf');
-    expect(documentos[0].doc_ine_beneficiario_ruta).toBe('/storage/ine_luis_gonzalez.jpg');
-    expect(documentos[0].doc_solicitud_firmada_ruta).toBe('/storage/solicitud_firmada_maria.pdf');
+    expect(documentos[0].doc_ine_ruta).toBe(rutasDocumentos.ine);
+    expect(documentos[0].doc_comprobante_ruta).toBe(rutasDocumentos.comprobante);
+    expect(documentos[0].doc_ine_beneficiario_ruta).toBe(rutasDocumentos.ine_beneficiario);
+    expect(documentos[0].doc_solicitud_firmada_ruta).toBe(rutasDocumentos.solicitud_firmada);
+    expect(documentos[0].doc_comprobante_credito_ruta).toBe(rutasDocumentos.comprobante_credito);
 
     // ====================================================================
     // VERIFICACIÓN FINAL: GET debe devolver todos los datos
@@ -428,25 +407,19 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     const countValidaciones = await dataSource.query('SELECT COUNT(*) FROM solicitudes_validaciones WHERE solicitud_id = $1', [solicitudId]);
     const countDocumentos = await dataSource.query('SELECT COUNT(*) FROM solicitudes_documentos WHERE solicitud_id = $1', [solicitudId]);
 
-    console.log('=== CONTEO TABLAS HIJAS ===');
-    console.log(`datos_personales: ${countDatosPersonales[0].count}`);
-    console.log(`domicilios: ${countDomicilios[0].count}`);
-    console.log(`negocios: ${countNegocios[0].count}`);
-    console.log(`referencias: ${countReferencias[0].count}`);
-    console.log(`beneficiarios: ${countBeneficiarios[0].count}`);
-    console.log(`validaciones: ${countValidaciones[0].count}`);
-    console.log(`documentos: ${countDocumentos[0].count}`);
-    console.log('=== FIN CONTEO ===');
+    expect(Number(countDatosPersonales[0].count)).toBe(1);
+    expect(Number(countDomicilios[0].count)).toBe(1);
+    expect(Number(countNegocios[0].count)).toBe(1);
+    expect(Number(countReferencias[0].count)).toBe(1);
+    expect(Number(countBeneficiarios[0].count)).toBe(1);
+    expect(Number(countValidaciones[0].count)).toBe(1);
+    expect(Number(countDocumentos[0].count)).toBe(1);
 
     const finalRes = await request(app.getHttpServer())
       .get(`/solicitudes/integrante/${integranteId}`)
       .expect(200);
 
     const solicitud = finalRes.body;
-
-    console.log('=== JSON COMPLETO GET /solicitudes/integrante ===');
-    console.log(JSON.stringify(solicitud, null, 2));
-    console.log('=== FIN JSON ===');
 
     // Core
     expect(solicitud.integrante_id).toBe(integranteId);
@@ -478,12 +451,14 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     // Paso 6
     expect(solicitud.tiene_medidor_luz).toBe('SI');
     expect(solicitud.vive_max_5km_tesorera).toBe('SI');
+    expect(Number(solicitud.monto_solicitado)).toBe(18000);
+    expect(solicitud.monto_solicitado_confirmado_at).toBeTruthy();
 
     // Paso 7
-    expect(solicitud.doc_ine_ruta).toBe('/storage/ine_maria_gonzalez.jpg');
-    expect(solicitud.doc_ine_beneficiario_ruta).toBe('/storage/ine_luis_gonzalez.jpg');
-    expect(solicitud.doc_solicitud_firmada_ruta).toBe('/storage/solicitud_firmada_maria.pdf');
+    expect(solicitud.doc_ine_ruta).toBe(rutasDocumentos.ine);
+    expect(solicitud.doc_ine_beneficiario_ruta).toBe(rutasDocumentos.ine_beneficiario);
+    expect(solicitud.doc_solicitud_firmada_ruta).toBe(rutasDocumentos.solicitud_firmada);
+    expect(solicitud.doc_comprobante_credito_ruta).toBe(rutasDocumentos.comprobante_credito);
 
-    console.log('✅ CICLO COMPLETO VERIFICADO: 7 pasos persisten correctamente en las 7 tablas hijas');
   });
 });

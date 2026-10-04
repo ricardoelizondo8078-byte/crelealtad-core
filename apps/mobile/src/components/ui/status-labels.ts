@@ -1,0 +1,25 @@
+import type { StatusKey } from '../../theme/tokens';
+
+export const statusLabels: Record<StatusKey, string> = {
+  neutral: '',
+  newGroup: 'NUEVO',
+  newMember: 'NUEVO',
+  needsDocumentation: 'REVISAR DOC…',
+  needsDocumentationGroup: 'REVISAR DOC.',
+  documentation: 'DOCUMENTANDO',
+  readyForVerification: 'LISTO',
+  inVerification: 'VERIFICANDO',
+  verificationObservations: 'OBSERVADO',
+  verified: 'VERIFICADO',
+  analysis: 'ANALIZANDO',
+  authorized: 'AUTORIZADO',
+  waitingForThreshold: 'ESPERANDO',
+  readyForDisbursement: 'LISTO',
+  disbursed: 'DESEMBOLSADO',
+  pending: 'PENDIENTE',
+  completed: 'COMPLETA',
+  withdrawn: 'RETIRADA',
+  cancelled: 'CANCELADO',
+  rejected: 'NO APROBADA',
+  unknown: 'SIN ESTADO',
+};

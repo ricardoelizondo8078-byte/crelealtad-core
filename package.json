@@ -4,7 +4,13 @@
   "private": true,
   "description": "Sistema de gestión de créditos y cobranza",
   "scripts": {
-    "dev": "node scripts/dev-runner.js"
+    "dev": "node scripts/dev-runner.js",
+    "dev:remote": "node scripts/dev-runner.js --remote",
+    "dev:tailscale": "node scripts/dev-runner.js --tailscale",
+    "security:secrets": "node scripts/check-secrets.js",
+    "typecheck": "npm --prefix apps/api run typecheck && npm --prefix apps/mobile run typecheck",
+    "test": "npm --prefix apps/api run test:ci",
+    "verify": "npm run security:secrets && npm run typecheck && npm test"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

@@ -3,6 +3,12 @@
  */
 
 const API_URL = 'http://localhost:3100';
+const e2eAbreviatura = process.env.E2E_ABREVIATURA;
+const e2ePin = process.env.E2E_PIN;
+
+if (!e2eAbreviatura || !/^\d{4}$/.test(e2ePin || '')) {
+  throw new Error('E2E_ABREVIATURA y E2E_PIN de 4 dígitos son obligatorios');
+}
 
 // Helper para hacer requests con fetch
 async function request(method, url, data = null, token = null) {
@@ -70,15 +76,13 @@ async function main() {
     log(colors.cyan, '========================================\n');
 
     const loginResponse = await request('POST', `${API_URL}/auth/login`, {
-      email: 'admin@crelealtad.com',
-      password: process.env.DB_PASSWORD || process.env.DB_PASS,
+      abreviatura: e2eAbreviatura,
+      pin: e2ePin,
     });
 
     token = loginResponse.data.token;
     log(colors.green, `✅ Login exitoso`);
-    if (token) {
-      log(colors.blue, `   Token: ${token.substring(0, 30)}...`);
-    } else {
+    if (!token) {
       log(colors.red, `   ⚠️  Token no encontrado en respuesta`);
       log(colors.blue, `   Respuesta completa: ${JSON.stringify(loginResponse.data, null, 2)}`);
     }

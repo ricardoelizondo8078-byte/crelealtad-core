@@ -14,19 +14,19 @@
 
     // TypeScript Strict Mode (TEMPORALMENTE DESACTIVADO para el refactor)
     "strict": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "strictNullChecks": false,
-    "strictFunctionTypes": false,
-    "strictBindCallApply": false,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
     "strictPropertyInitialization": false,
-    "noImplicitThis": false,
-    "alwaysStrict": false,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
 
-    // Additional Type Checking (TEMPORALMENTE DESACTIVADO)
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noImplicitReturns": false,
-    "noFallthroughCasesInSwitch": false,
+    // Quality gates compatibles con el estado actual del monorepo.
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts"],

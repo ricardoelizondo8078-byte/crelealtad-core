@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { GrupoEntity } from '../grupos/grupo.entity';
 
 export enum ExpedienteEstado {
@@ -27,6 +27,15 @@ export class ExpedienteEntity {
 
   @Column({ type: 'uuid', nullable: true })
   asesora_id: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  ciclo_historico_origen_id: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  importacion_integrantes_id: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  tesorera_integrante_id: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   horario_visita: string;

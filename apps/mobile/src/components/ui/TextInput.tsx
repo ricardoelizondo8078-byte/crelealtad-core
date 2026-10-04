@@ -1,7 +1,13 @@
 import React from 'react';
 import { StyleSheet, TextInput as RNTextInput, TextInputProps as RNTextInputProps } from 'react-native';
 import { FormField } from './FormField';
-import { colors, spacing, typography } from '../../theme/tokens';
+import {
+  colors,
+  moduleThemes,
+  ModuleThemeKey,
+  spacing,
+  typography,
+} from '../../theme/tokens';
 
 export interface TextInputProps extends Omit<RNTextInputProps, 'style'> {
   label: string;
@@ -10,6 +16,8 @@ export interface TextInputProps extends Omit<RNTextInputProps, 'style'> {
   error?: string;
   helperText?: string;
   required?: boolean;
+  moduleTheme?: ModuleThemeKey;
+  highlightWhenFilled?: boolean;
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -19,14 +27,26 @@ export const TextInput: React.FC<TextInputProps> = ({
   error,
   helperText,
   required = false,
+  moduleTheme = 'general',
+  highlightWhenFilled = false,
   ...rest
 }) => {
+  const answered = highlightWhenFilled && value.trim().length > 0;
+  const themeColors = moduleThemes[moduleTheme];
+
   return (
     <FormField label={label} required={required} helperText={helperText} errorText={error}>
       <RNTextInput
         value={value}
         onChangeText={onChangeText}
-        style={[styles.input, error && styles.inputError]}
+        style={[
+          styles.input,
+          answered && {
+            borderWidth: 2,
+            borderColor: themeColors.primary,
+          },
+          error && styles.inputError,
+        ]}
         placeholderTextColor={colors.textSecondary}
         {...rest}
       />

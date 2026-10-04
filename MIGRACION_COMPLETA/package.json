@@ -4,6 +4,13 @@
   "description": "Scripts de migración de datos desde Excel a PostgreSQL",
   "main": "index.js",
   "scripts": {
+    "historico:validar": "ts-node scripts/historico/cli.ts validar",
+    "historico:prevalidar-bd": "ts-node scripts/historico/cli.ts prevalidar-bd",
+    "historico:cargar": "ts-node scripts/historico/cli.ts cargar",
+    "historico:prueba": "ts-node scripts/historico/historico.spec.ts",
+    "historico-individual:analizar": "ts-node scripts/historico-individual/cli.ts analizar",
+    "historico-individual:cargar": "ts-node scripts/historico-individual/cli.ts cargar",
+    "historico-individual:prueba": "ts-node scripts/historico-individual/contract.spec.ts",
     "migration:extract": "ts-node scripts/migration/01_extract_from_excel.ts",
     "migration:clean": "ts-node scripts/migration/02_clean_and_transform.ts",
     "migration:validate": "ts-node scripts/migration/03_validate_data.ts",

@@ -91,21 +91,6 @@ export const DatePickerField: React.FC<DatePickerFieldProps> = ({ label, value, 
     }
   }, [selectedMonth, selectedYear, daysInMonth]);
 
-  const findClosestIndex = (offset: number, snapOffsets: number[]): number => {
-    let closestIndex = 0;
-    let minDiff = Math.abs(snapOffsets[0] - offset);
-
-    for (let i = 1; i < snapOffsets.length; i++) {
-      const diff = Math.abs(snapOffsets[i] - offset);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestIndex = i;
-      }
-    }
-
-    return closestIndex;
-  };
-
   const handleDayScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     // Restar 1 porque snapToAlignment="start" causa off-by-one con el spacer

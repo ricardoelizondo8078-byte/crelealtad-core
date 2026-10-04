@@ -1,74 +1,261 @@
-# 12 Project Status - Estado Oficial del Proyecto
+# 03 Project Status — Estado Oficial del Proyecto
 
-Version: 1.1.0
-Fecha de corte: 2026-07-10
+Versión: 3.4.0
+Estado: Vigente y verificado
+Fecha de corte: 2026-10-04
 
 ## Resumen ejecutivo
 
-El proyecto se encuentra en etapa Foundation auditada. La documentacion oficial ya cubre gobierno, reglas, arquitectura, estados y catalogos principales; la implementacion funcional permanece parcial en persistencia, seguridad y modulos posteriores al flujo documental MVP.
+CRELEALTAD CORE superó la etapa de prototipo exclusivamente en memoria descrita en la auditoría de julio. El repositorio actual contiene persistencia PostgreSQL mediante TypeORM, autenticación JWT global, captura documental y de solicitudes, y un flujo parcial de verificación. El 2026-10-04 se rotaron las credenciales locales de PostgreSQL y JWT, se exigió SCRAM en loopback y se integró un historial Git saneado de 51 commits en `main` y `origin/main` mediante `force-with-lease` verificado.
 
-## Estado global por area
+El sistema aún no está listo para producción. DEC-023 habilita temporalmente a todos los usuarios activos en los módulos ejecutables durante desarrollo; la matriz restrictiva definitiva, el alcance territorial, la trazabilidad transversal, la sincronización offline y las pruebas end-to-end continúan pendientes. El endurecimiento técnico del 2026-10-04 retiró credenciales literales de scripts, agregó detección automática de secretos, movió el JWT móvil a SecureStore, centralizó la política de archivos y estableció trazabilidad por checksum para migraciones. Esto reduce riesgo técnico, pero no sustituye las decisiones funcionales pendientes de M03–M12.
 
-- Frontend mobile: 35%
-- Backend API: 30%
-- Base de datos: 25%
-- UX: 50%
-- Testing: 25%
-- Documentacion: 90%
-- Dependencias y tooling: 70%
+## Método y fuentes de verificación
+
+Inventario levantado contra:
+
+- Código activo en `apps/api/src` y `apps/mobile/src`.
+- Manifiestos `package.json` y archivos de configuración vigentes.
+- Metadatos de PostgreSQL 17.10 en la base local `crelealtad`.
+- Decisiones cerradas de `docs/DECISIONES.md`.
+
+No se usaron datos personales ni contenido de registros para esta auditoría.
 
 ## Estado verificado por capa
 
-- Backend API: 5 modulos de dominio activos mas health; servicios en memoria; sin autenticacion ni autorizacion productiva.
-- Mobile: shell funcional con flujo MVP de Documentacion; create group, mis expedientes y detalle de expediente verificados; captura parcial para solicitantes, solicitudes y documentos.
-- Base de datos: 15 tablas base verificadas; brecha vigente de persistencia para Solicitud.
-- Documentacion: paquete oficial consolidado en docs/project; borradores reemplazados e inventarios historicos reubicados en docs/archive.
+### Backend API — Parcial funcional
 
-## Estado por modulo
+- NestJS 10, TypeORM, PostgreSQL, ValidationPipe, Helmet y throttling activos.
+- `synchronize: false`; el esquema se administra mediante migraciones.
+- Catorce módulos Nest registrados, incluidos Auth, Grupos, Expedientes, Integrantes, Solicitudes, Códigos Postales, Renovaciones, Pendientes y las cuatro superficies persistentes de Verificación, más Health en el módulo raíz.
+- Health controller independiente.
+- 56 handlers HTTP verificados.
+- JWT aplicado como guard global; únicamente health y login son públicos. Se retiró la enumeración pública de usuarios.
+- Persistencia real verificada en repositorios TypeORM.
+- Existe guard global de permisos por módulo/acción, cerrado por defecto, sobre los handlers actuales; el decorador acepta sólo módulos y acciones del catálogo técnico central y la suite declarativa cubre también imágenes del domicilio y evidencias de Entrevista.
+- Los permisos personalizados opcionales restringen una cuenta sin cambiar su rol operativo; el guard, login y `/auth/me` consumen el mismo permiso efectivo. Los contratos JSONB desconocidos o malformados se normalizan a denegación y PostgreSQL valida que sus arreglos contengan sólo texto.
+- Un login exitoso actualiza `usuarios.ultimo_login` y registra `LOGIN` con resultado y contexto no sensible en `audit_log`, dentro de la misma transacción.
+- DEC-023 concede temporalmente `verificacion:leer` al rol `ASESOR`; no se retiró el guard ni se abrieron rutas anónimas.
+- El alcance por responsable se aplica para `ASESOR` en grupos y en las rutas directas de expedientes, integrantes, solicitudes y documentos. El alcance por sucursal/zona y la reconciliación de registros históricos sin responsable continúan pendientes.
+- La API rechaza identificadores relacionales, ciclo, monto autorizado y rutas/fechas documentales enviados por el cliente; deriva el contexto desde `integrante_id` y sólo registra evidencias creadas por el almacenamiento del servidor.
+- `send-to-verification` es transaccional e idempotente; bloquea estados de origen inválidos, expedientes sin participantes, pendientes no resueltos y expedientes sin tesorera participante. Ignora integrantes retiradas formalmente y registra conteos y tesorera del handoff en `audit_log`. El mínimo parametrizado exacto continúa pendiente porque M11 aún no existe.
 
-- Login: 0%
-- Documentacion: 45%
-- Verificacion: 10%
-- Analisis: 0%
-- Desembolsos: 5%
-- Cobranza: 0%
-- Recoleccion: 0%
-- Mora: 0%
-- Convenios: 0%
-- Reportes: 0%
-- Parametros: 0%
-- Administracion: 0%
+### Aplicación móvil — Parcial funcional
 
-## Hallazgos clave
+- React Native 0.86.3, React 19.2.3, Expo 57.0.26 y TypeScript 6.0.3.
+- Login, alta de grupo, lista y detalle de expedientes, captura de integrantes/solicitudes/documentos y flujo parcial de verificación.
+- Siete superficies principales conectadas desde `src/App.tsx`, además de formularios y pantallas auxiliares.
+- Biblioteca compartida de 31 componentes UI y tokens centralizados.
+- El shell móvil aplica un bloqueo global durante carga, guardado y procesos asíncronos iniciados por
+  la persona usuaria. El overlay impide acciones simultáneas, anuncia el procesamiento a
+  accesibilidad y permanece visible hasta que concluyen todas las operaciones activas; el cliente
+  HTTP y los botones compartidos lo activan sin duplicar lógica por pantalla. El autoguardado y las
+  consultas derivadas de campos no abren el overlay: conservan indicadores locales para no
+  interrumpir la captura.
+- El flujo activo del asesor usa el cliente HTTP autenticado en documentación, expediente, solicitud y envío a verificación; Verificación también consulta su bandeja, grupo, integrante, solicitud y documentos mediante JWT. Permanecen usos directos de `fetch` en superficies parciales ajenas a esos recorridos.
+- Después del login, el menú principal T8 construye el acceso según los permisos efectivos devueltos por la API; la evaluación de acceso y la construcción del catálogo de opciones están separadas de `App.tsx`. Documentación conserva dentro de su propio inicio las acciones Crear grupo, Renovación y Mis expedientes. Verificación permanece visible como segundo módulo, habilitado con `verificacion:leer` o deshabilitado como `Requiere permiso`.
+- El encabezado compartido presenta nombre, rol e iniciales desde la sesión autenticada.
+- Los encabezados contextuales de Verificación de Grupo e Individual muestran el ciclo del expediente actual al extremo derecho del nombre del grupo, sin confundirlo con el historial individual previo; un dato ausente o inconsistente se presenta como `CICLO N/D`.
+- Verificación Individual separa la referencia del desplazamiento vertical principal de la usada por el visor horizontal de documentos. Su barra inferior ocupa un espacio fijo fuera del contenido, sin superponerse ni bloquear gestos; el concentrador puede desplazarse hasta sus últimos accesos y regresar después de una recarga de Expo Go. Al abrir una integrante ya no se relanza la geocodificación nativa de todo el grupo: la tarjeta calcula la distancia sólo con coordenadas ya registradas y muestra `N/D` cuando todavía no existen. Todas las consultas iniciales usan los indicadores locales de la pantalla y no abren el modal global que intercepta scroll y regreso; las escrituras iniciadas por la usuaria conservan ese bloqueo.
+- El cliente HTTP limita las consultas ordinarias a 15 segundos y asigna a las cargas documentales multipart 120 segundos por cada bloque de hasta dos archivos. Los documentos conservan un máximo de dos archivos salvo el comprobante de línea de crédito, que admite todas las fotos necesarias en una misma versión. En iOS/Android las evidencias se adjuntan como `File` nativo compatible con Expo SDK 57, con verificación local de existencia, contenido y máximo de 10 MB por archivo antes de transmitir.
+- El JWT se guarda en Expo SecureStore; el usuario y los borradores no sensibles permanecen en AsyncStorage. La migración retira automáticamente el token legacy de AsyncStorage. La sesión se restaura sólo después de validar el token y volver a obtener usuario, rol y permisos efectivos mediante `GET /auth/me`; una respuesta autenticada `401` limpia el secreto y la sesión en memoria.
+- La edad se calcula desde la fecha de nacimiento y dejó de solicitarse como respuesta manual en el Paso 6.
+- Las variantes legacy paralelas de asesor, solicitantes, documentos, entidades de Solicitud y suites `.skip` fueron retiradas después de verificar que no tenían imports ni rutas activas.
+- `npx tsc --noEmit` termina correctamente sobre el código móvil activo.
+- La gestión documental activa, incluido el Paso 7 del formulario de solicitud, sube archivos mediante multipart autenticado, muestra confirmación real y permite consultar la versión vigente. El comprobante de línea de crédito reutiliza el carrusel lateral de Verificaciones tanto antes como después de guardar; tocar una fotografía abre el visor opaco de pantalla completa con zoom. Las referencias locales creadas por la versión anterior se recuperan y terminan de subir al reabrir la integrante; INE de beneficiario y comprobante de línea de crédito son opcionales y su ausencia no bloquea la conclusión.
+- En Entrevista, `Evidencia de otra financiera` consulta y muestra en el mismo carrusel todas las
+  imágenes vigentes del comprobante de línea de crédito de Documentación y, a continuación, las
+  fotografías adicionales de la rama activa o inactiva. Los archivos documentales no se copian a
+  la tabla de evidencias; un error de consulta queda visible y permite reintento local.
+- El formulario bloquea navegación hasta recuperar la solicitud y guarda únicamente el paso visible; las evidencias confirmadas se consultan desde servidor y una evidencia local rechazada permanece visible para volver a seleccionarla.
+- La pantalla T1 `Renovación` consulta los grupos cuyo último ciclo histórico pertenece al asesor, separados entre vigentes y pasados; los grupos sin contrato individual completo permanecen visibles pero bloqueados.
+- El detalle de expediente compara por integrante `monto_autorizado` del ciclo anterior contra `monto_solicitado` del ciclo nuevo y comunica aumento, disminución, igualdad o ausencia de antecedente sin depender sólo del color.
+- `Enviar a verificación` abre primero la pantalla T6 `Confirmar integrantes`; mantiene visibles el conteo y monto a verificar, muestra cantidad y monto al pie de cada categoría, exige motivo al excluir y usa confirmación final antes del handoff.
+- La misma pantalla exige seleccionar una única tesorera entre participantes completas, conserva la selección en el expediente, la identifica como `T · TESORERA` y mantiene fija la franja de selección sobre la lista durante el desplazamiento.
+- El alta de grupo crea grupo y expediente dentro de una sola transacción; una falla del expediente revierte el grupo completo.
+- El formulario de Solicitud usa un mapper único por pasos y serializa auto-guardado y navegación para evitar escrituras fuera de orden.
+- La descomposición modular móvil inició por las dos pantallas de mayor tamaño. Verificación ya
+  separa modelos/catálogos y las vistas de Revisión documental, Llamada, Visita al vecino,
+  Imágenes del domicilio y Preguntas generales; Solicitud separa reglas/documentos y los siete
+  pasos del wizard. Las
+  secciones restantes de Entrevista continúan en su coordinador y siguen siendo deuda técnica
+  explícita, sin cambio funcional.
+- La UI de Verificación ya no calcula capacidad ni pago semanal con constantes no aprobadas, no permite seleccionar rechazos antes del handoff y mantiene la finalización explícitamente bloqueada.
+- La tarjeta fija de Verificación Individual muestra, junto al rol de la integrante, tres burbujas de contexto: cantidad de ciclos individuales previos confirmados, edad y distancia aproximada en línea recta al domicilio de la tesorera. El conteo se presenta como `CICLO / CICLOS`, une por `persona_id` solicitudes con monto autorizado y créditos reales, cuenta una sola participación por expediente y excluye el expediente actual; no infiere el historial individual legacy que aún no esté vinculado. Ciclos usa fondo verde claro con borde y texto verde oscuro; edad conserva fondo gris, borde gris medio de mayor contraste y advertencia amarilla sobre 70 años; distancia conserva celeste hasta 5 km y rojo por encima del límite. Los valores no disponibles se presentan como `N/D`.
+- Dentro de `HISTORIAL CREDITICIO`, Entrevista muestra `CON CRELEALTAD` sólo cuando existe historia individual confirmada. El resumen usa el mismo contrato por `persona_id`, excluye el expediente actual, deduplica solicitudes autorizadas y créditos reales por expediente y prefiere el crédito real cuando ambas fuentes coinciden. Presenta el máximo y mínimo con todos sus ciclos coincidentes y hasta cinco participaciones recientes con monto autorizado; no infiere historia legacy ni requiere migración.
+- Después de la revisión documental previa, Verificación Individual funciona como un concentrador con cuatro procesos independientes: `Llamada`, `Visita al vecino`, `Imágenes del domicilio` y `Entrevista`. Al final muestra también `Conclusiones`, con un signo de pesos a la izquierda, pero permanece visible y deshabilitado sin abrir ninguna pantalla. No muestra avance lineal ni exige orden entre procesos. Dentro de `Imágenes del domicilio`, mobile presenta primero la fachada con marco ocre y mantiene visible debajo `¿TIENE MEDIDOR DE LUZ?`; sus respuestas permanecen bloqueadas con una explicación hasta que la fachada queda confirmada. Entonces `Sí` guarda la respuesta y habilita la toma obligatoria del medidor, mientras `No` abre un pop-up desplazable con cinco causas y exige confirmar una. La fachada con la integrante permanece opcional. Las fotografías se envían con ubicación actual, actor autenticado, fecha e idempotencia; la respuesta se liga a la fachada vigente, conserva actor/fecha/idempotencia y se audita. La nomenclatura se retiró de esta pantalla para trasladarse a otro módulo todavía por definir. El cierre se deriva del servidor y exige fachada más foto del medidor para `Sí`, o fachada más causa para `No`; el resumen recupera la ruta entre sesiones y pinta la paloma verde en el concentrador. `Visita al vecino` exige primero una fachada geolocalizada tomada desde la cámara; después permite consultar el INE, guardar la confirmación del vecino y tomar una segunda evidencia geolocalizada entre la pregunta y el guion de correspondencia. El indicador se recupera del servidor y la acción final sólo se habilita con respuesta y evidencia confirmadas.
+- En `Entrevista`, las respuestas generales, historial externo, datos personales, ingresos y encuestas aplicables se autoguardan como una captura parcial tipada y se recuperan al volver a abrir a la integrante. Familiares y desacuerdos por monto conservan altas y retiros en historial; la identificación de otras integrantes usa UUID validados contra el mismo expediente. El actor inicial y el último actor se derivan del JWT y cada guardado aumenta una revisión. El criterio funcional de conclusión continúa pendiente y no se infiere del borrador.
+- En `Entrevista`, seleccionar `Negocio` habilita inmediatamente fotografías opcionales tomadas exclusivamente con la cámara del teléfono, sin acceso al carrete o galería. Puede repetirse la captura todas las veces necesarias sin mínimo ni máximo de cantidad; tocar una miniatura abre el visor compartido a pantalla completa con zoom. Toda fotografía nueva de negocio, control de pagos o folleto exige hora de toma, ubicación actual y actor autenticado, además de archivo protegido, hash e idempotencia. Las filas históricas previas quedan marcadas sin inventar coordenadas.
+- En `HISTORIAL CREDITICIO`, ambas ramas del crédito grupal externo muestran evidencia fotográfica
+  inmediatamente después de la tasa. La captura es sólo por cámara, no tiene límite de
+  cantidad, conserva ubicación, actor, hash e idempotencia, y recupera por separado las fotos del
+  crédito activo y del crédito anterior inactivo.
+- Entrevista pregunta si la integrante tiene familiares dentro del grupo. `Sí` abre un selector múltiple con las demás integrantes y excluye a la entrevistada; `No` limpia la selección. Al confirmar, desaparecen la pregunta secundaria, el campo y `Familiares seleccionadas`; queda la etiqueta `FAMILIARES EN EL GRUPO` y debajo un recuadro ocre tocable por cada nombre. La selección persiste como historial inmutable de altas y retiros.
+- La identificación de la tesorera y el domicilio de recolección reutilizan el mismo selector visual de integrantes: encabezado ocre, casillas y acciones `Cancelar / Guardar selección`. Ambas limitan la captura a una respuesta. El domicilio agrega siempre como último renglón `NO SÉ DÓNDE SE RECOLECTARÁ`; al seleccionarlo muestra tacha, texto y borde rojos sobre fondo rojo claro. Una integrante conserva el formato ocre. Al confirmar se ocultan la pregunta y el campo desplegable; la etiqueta breve `DOMICILIO DE RECOLECCIÓN` identifica el contexto y debajo permanece únicamente el recuadro tocable con la respuesta. Los UUID y la opción de desconocimiento se autoguardan y se validan en servidor.
+- Entrevista pregunta primero `¿Conoce a la tesorera del grupo?` mediante `Sí / No`. `Sí` abre automáticamente el pop-up de selección única sólo con las integrantes del grupo; ya no contiene una opción de desconocimiento. Al confirmar, desaparecen la pregunta secundaria, el campo desplegable y el título `Tesorera seleccionada`: queda únicamente un recuadro ocre tocable con palomita y nombre para poder corregir la selección. `No` registra directamente `NO CONOZCO A LA TESORERA` y muestra esa respuesta en un recuadro rojo claro con borde, texto y `X` rojos, usando el mismo alto, relleno vertical y margen inferior del renglón ocre. La respuesta persiste sólo como reconocimiento declarado y no sustituye la tesorera oficial seleccionada en el expediente.
+- La primera pregunta de `PREGUNTAS GENERALES` en Entrevista es `¿Conoce a la asesora?`, con selección obligatoria `Sí / No`. `Sí` abre automáticamente `¿Cómo conoció a la asesora?` y exige confirmar una opción única entre `Por otra integrante`, `En otra financiera`, `A través de Facebook` y `Otro`; `No` oculta y limpia esa selección. Al confirmar, el selector presenta la respuesta con el mismo renglón ocre editable de las selecciones de integrantes. Ambas respuestas forman parte del autoguardado general.
+- En el selector abierto al responder `No` a la conformidad con los montos, cada renglón presenta primero el porcentaje individual respecto del total solicitado por todas las integrantes activas del expediente, seguido por nombre e importe. El cálculo usa un decimal y permanece bloqueado si cualquier monto requerido está ausente, no es finito o no es positivo. Después de guardar, el campo desplegable deja de repetirse y permanecen únicamente los renglones rojos seleccionados; tocar cualquiera vuelve a abrir el selector con las marcas actuales para agregar, retirar o corregir integrantes.
+- Entrevista separa visualmente `PREGUNTAS GENERALES`, `HISTORIAL CREDITICIO` y `DATOS PERSONALES`, en ese orden. `HISTORIAL CREDITICIO` aparece inmediatamente después de las preguntas generales y concentra todo el antecedente financiero condicional. `DATOS PERSONALES` comienza con `[nombres y apellido paterno de la integrante], ¿vive en este domicilio?` mediante `Sí / No`; después continúa, en orden, con tipo de domicilio, antigüedad en el domicilio, cantidad de personas en casa, quién vive con la integrante, si esas personas saben del crédito y si alguien más aporta ingresos al hogar. Después de la aportación semanal condicional muestra el mismo flujo persistente de `Imágenes del domicilio` y continúa con teléfono principal y teléfono secundario opcional, capacidad de pago semanal, uso del crédito y origen de ingresos. Ambos accesos comparten fachada, pregunta y causa del medidor, cámara, ubicación, vista previa, reintento, reemplazo y confirmación del servidor: la foto del medidor sólo se habilita y exige para `Sí`; `No` exige causa; la fachada con la integrante continúa opcional. Cada tarjeta presenta sólo título, estado y acción, sin una oración descriptiva intermedia; dentro de Entrevista existe separación vertical antes del teléfono principal. Tocar cualquiera de sus vistas previas abre el visor compartido a pantalla completa con pellizco, arrastre y controles de zoom, incluso si la toma continúa pendiente de envío. Mientras no exista evidencia confirmada, ambos teléfonos pueden editarse y su botón `Confirmar` permanece deshabilitado vacío o incompleto; con diez dígitos permite elegir llamada telefónica o WhatsApp. El resultado y la ubicación persisten como intento: `No contestó` termina dentro de Entrevista sin concluir `Llamada`; `Sí contestó` abre únicamente el guardado de evidencia, sin mostrar su encuesta. Al confirmar esa evidencia, el servidor marca también `Llamada` como realizada en el menú y actualiza atómicamente `personas.telefono` o `personas.telefono_secundario`, por lo que Documentación y los expedientes posteriores recuperan el dato sin otra captura. Una llamada formal previa con evidencia confirma automáticamente el número exacto utilizado. El indicador compartido de círculo verde claro, borde verde oscuro y palomita se recupera al reabrir y bloquea el campo. Su acción cambia de `Confirmar` a `Ver`, sustituyendo el ocre por fondo celeste claro, borde y texto azules: abre la imagen protegida vigente en un visor opaco casi a pantalla completa, con pellizco, arrastre y controles hasta 400 %, y permite reemplazarla agregando una versión al historial de Llamada, sin borrar las anteriores. WhatsApp mantiene el requisito de un intento telefónico previo.
+- Datos personales captura `Sueldo / Negocio` como la cuarta pregunta posterior a los teléfonos. Cuando la selección incluye `Sueldo`, una franja amarilla `SUELDO` agrupa inmediatamente, en orden, `¿Cuál es su sueldo semanal?` con formato monetario, el lugar de trabajo y una antigüedad laboral única entre `1 año`, `2 años`, `3 a 5 años` y `≥ 5 años`; desmarcar esa fuente oculta el apartado y limpia sus tres respuestas. Cuando incluye `Negocio`, una franja amarilla `NEGOCIO` agrupa, en orden, `¿De qué es el negocio?`, `¿Cuál es el ingreso libre semanal?`, la evidencia fotográfica opcional y `¿Dónde se ubica el negocio?`. La capacidad de pago semanal se pregunta antes y permanece fuera de ambos bloques. Respuestas textuales y monetarias se autoguardan; todavía no aplican reglas financieras automáticas.
+- Datos personales inicia preguntando con los nombres de pila y el apellido paterno de la integrante si vive en el domicilio, mediante `Sí / No`. Después ofrece `Renta`, `Dueña` y `Familiar` para el tipo de domicilio. `Familiar` abre el selector desplazable con `Papás`, `Hijos`, `Abuelos` y `Otro familiar`; cambiar a otra opción limpia esa relación. Después de registrar cuántas personas viven en casa mediante burbujas `1 / 2 / 3 / 4 / 5 / ≥6` y quién vive con la integrante, pregunta obligatoriamente `¿Saben los que viven con usted del crédito?` mediante `Sí / No`. A continuación pregunta `¿Alguien más aporta ingresos al hogar?` y, al responder `Sí`, habilita inmediatamente `¿A cuánto asciende la aportación semanal?`. Estos datos se autoguardan, pero no se suman ni interpretan automáticamente.
+- Cuando la confirmación nominal del domicilio es `No`, el motivo seleccionado en `¿Por qué no vive en este domicilio?` permanece visible y editable en un renglón de alerta: fondo rojo claro, borde, texto y tacha rojos, más flecha a la derecha. Cambiar la confirmación principal limpia y oculta el motivo como antes.
+- Los renglones-respuesta ocres y rojos de Entrevista usan borde de `2`, igual al espesor de las burbujas `Sí / No`; incluye los resúmenes de catálogo, integrantes, desacuerdos, tesorera desconocida, domicilio de recolección y familiares, sin modificar su tamaño ni interacción.
+- En Entrevista, cualquier selector que aplique su valor mediante `Confirmar selección` adopta automáticamente el renglón-respuesta uniforme al quedar confirmado. Esto incluye semana actual, mes de desembolso, ciclos, tasa, último pago combinado, motivos condicionales y los catálogos ya uniformados. Los importes, nombres y teléfonos escritos manualmente permanecen como campos editables.
+- Los campos de escritura libre de Verificación distinguen visualmente si ya contienen respuesta: vacíos conservan fondo blanco y borde gris de `1`; con cualquier contenido mantienen el fondo blanco y usan borde ocre de `2`. Los errores prevalecen en rojo. Los teléfonos editables siguen esta regla mientras no estén confirmados; después conservan sus estados verde y azul respaldados por evidencia.
+- `HISTORIAL CREDITICIO` registra si la integrante ha estado en otro crédito grupal. `Sí` abre automáticamente y exige seleccionar una sola financiera del último crédito grupal dentro del catálogo operativo de Nuevo León; después captura vigencia, ficha, semana o último pago, mes de desembolso, ciclos, tasa, asesora opcional y causa de no renovación cuando aplica. Meses, años, semanas, ciclos y tasa se guardan como enteros acotados; ficha como `NUMERIC(12,2)` y teléfono como texto de diez dígitos. Las respuestas se autoguardan; las semanas transcurridas continúan como cálculo visual no persistido.
+- Entrevista deriva las encuestas del historial individual confirmado de la persona en otros expedientes, no del ciclo del grupo. La tesorera con historial responde sus bloques específicos de control de pagos y evaluación del servicio de la asesora, cada uno identificado por su propia franja amarilla. La evaluación exclusiva conserva asistencia semanal, firma del control, trato de la asesora y conocimiento del premio; ya no repite la opinión del crédito ni la recomendación. `No` en la pregunta del premio muestra `"Entregar folleto de premio a tesorera"` y habilita una evidencia tomada exclusivamente con cámara, hora y ubicación actual. Después, la tesorera responde como integrante la encuesta general sobre crédito, desembolso, rapidez, claridad y recomendación; inmediatamente debajo aparece siempre la pregunta escrita obligatoria `¿En qué cree usted que podemos mejorar?`. Las respuestas y fotografías se confirman y recuperan desde el servidor.
+- Cinco seguimientos de Entrevista reutilizan ahora el selector desplazable en pop-up, con selección única y confirmación: desacuerdo con los montos, no renovación en otra financiera, causa de no contar con el control de pagos, motivo para recomendar o no recomendar a CRELEALTAD y causa por la que la integrante no vive en el domicilio. El desacuerdo conserva una causa por integrante y eventos inmutables al agregar, cambiar o retirar; los demás motivos se autoguardan en la entrevista principal.
+- `Llamada` utiliza `Llamada por teléfono` y `Llamada por WhatsApp`; después de elegir el canal, mobile permite escoger entre el teléfono principal y el secundario cuando ambos son válidos y distintos, y continúa directamente cuando sólo existe uno. WhatsApp permanece deshabilitado hasta que exista al menos un intento telefónico confirmado, contestado o no; mobile y API aplican la misma regla. Al declarar `Sí contestó / No contestó`, mobile obtiene la ubicación actual, normaliza la precisión numérica entregada por el dispositivo y la API conserva canal, resultado, actor, fecha/hora, latitud, longitud, precisión disponible y fecha/hora de la lectura; sin ubicación válida no registra el intento. Si contesta, guarda además las cuatro preguntas, seis coincidencias, acción posterior y una fotografía de la galería. La paloma se deriva del servidor y sólo aparece con coincidencias positivas, evidencia y una acción distinta de `Llamar más tarde`; una no coincidencia queda registrada sin tratamiento ni conclusión.
+- La devolución documental puntual ya persiste en `integrantes.estado`: `REVISAR DOCUMENTACIÓN` corresponde a `DOCUMENTANDO` dentro de un expediente `EN_VERIFICACION`; Documentación puede corregir sólo esa integrante y la etiqueta desaparece al volver a validar los siete pasos. `NO APROBADA` presenta `RECHAZADA` sin habilitar todavía el dictamen.
+- El arranque LAN continúa en `npm run dev`; `npm run dev:remote` prepara el túnel oficial de Expo mediante `@expo/ngrok`. El bundle puede llegar al iPhone desde otra red, pero la API continúa restringida a la red local hasta aprobar un acceso remoto seguro y configurar `EXPO_PUBLIC_API_BASE_URL`.
 
-1. Servicios backend actuales in-memory.
-2. Entidad Solicitud sin tabla dedicada en schema principal.
-3. API sin autenticacion ni autorizacion productiva.
-4. No se verificaron archivos markdown por modulo en docs/modules.
-5. packages/shared existe pero sin contenido funcional verificado.
+### Base de datos — Implementada con brechas de gobierno
 
-## Riesgos
+- PostgreSQL 17.10, base `crelealtad`.
+- 50 tablas base y una vista (`solicitudes_completo`). La tabla adicional `schema_migrations` es exclusivamente técnica y conserva versión, checksum, origen, actor PostgreSQL y fecha de aplicación. Entrevista utiliza una tabla principal, dos historiales relacionales y una tabla unificada de evidencias geolocalizadas; esa tabla distingue también el historial crediticio activo e inactivo y reutiliza por separado las confirmaciones telefónicas y las imágenes del domicilio para no duplicar historia.
+- Solicitudes normalizadas en tabla core más siete tablas hijas.
+- 50 llaves primarias, 94 llaves foráneas, 47 restricciones UNIQUE, 90 CHECK explícitos y 180 índices.
+- Las cinco relaciones críticas de `solicitudes` usan `ON DELETE RESTRICT`; sus siete tablas hijas usan `ON DELETE CASCADE`.
+- `ciclos.expediente_id` es obligatorio y único; una FK compuesta con `grupo_id` impide relacionar un ciclo con un expediente de otro grupo y restringe el borrado.
+- `roles.permisos` existe como JSONB y contiene permisos iniciales por módulos y acciones.
+- `usuarios.permisos_personalizados` permite una excepción individual auditable sin modificar `usuarios.rol_id`; Guadalupe Barrón conserva `ASESOR` y no recibe Verificación durante la prueba vigente.
+- La migración 010 agrega de forma idempotente `verificacion:leer` al rol `ASESOR`, registra el antes/después en `audit_log` y dispone de rollback condicionado.
+- La migración 011 agrega `RETIRADA`, contexto de retiro, checks y FK de actor; fue validada con aplicación repetida y rollback en `crelealtad_test`, respaldada y aplicada sobre `crelealtad` sin alterar el conteo de 5,062 integrantes.
+- La migración 013 agrega `expedientes.tesorera_integrante_id` con una FK compuesta que restringe la selección a una integrante del mismo expediente. Fue validada en `crelealtad_test`, respaldada y aplicada sobre `crelealtad` sin asignar tesoreras retrospectivas.
+- La migración 015 agrega `verificacion_llamadas`, idempotencia por actor e intento, FKs restrictivas y la acción `verificacion:registrar` para `ASESOR` y `VERIFICADOR`. Fue probada con aplicación, duplicado y rollback condicionado en `crelealtad_test`, respaldada y aplicada sobre `crelealtad` con cero intentos iniciales.
+- La migración 016 agrega encuesta, seis características y metadatos de evidencia por intento contestado. Fue probada con aplicación doble, conteos de restricciones, rollback y reaplicación en `crelealtad_test`; se respaldó y aplicó sobre `crelealtad` sin alterar sus 20 intentos existentes.
+- La migración 017 agrega ubicación del dispositivo al intento: latitud, longitud, precisión horizontal opcional, fecha/hora de lectura y fuente. Fue probada con aplicación repetida, restricciones, rollback condicionado y reaplicación en `crelealtad_test`; se respaldó y aplicó sobre `crelealtad` conservando sus 28 intentos anteriores sin coordenadas inventadas.
+- La migración 026 agrega `verificacion_entrevista_telefono_confirmaciones` para ligar una llamada contestada con tipo y número exactos, evidencia protegida, hash, actor y fecha. Fue validada con integración multipart en `crelealtad_test`, respaldada en `database/backups/crelealtad-pre-026-20260928-182211.backup` y aplicada sobre `crelealtad` con cero confirmaciones iniciales.
+- La migración 027 agrega a cada intento nuevo el teléfono utilizado y su tipo principal/secundario, permitiendo reutilizar en Entrevista una evidencia previa de Llamada. Fue validada con rollback y reaplicación en `crelealtad_test`, respaldada en `database/backups/crelealtad-pre-027-20260928-184818.backup` y aplicada sobre `crelealtad`; los 44 intentos anteriores permanecen sin atribución y no se inventó ningún número.
+- La migración 028 unifica en `verificacion_llamada_evidencias` las imágenes de encuesta y confirmación telefónica, agrega propósito, versión, intento, tipo y teléfono, y enlaza cada confirmación de Entrevista mediante `evidencia_id`. Se respaldó en `database/backups/crelealtad-pre-028-20260928-190613.backup` y se aplicó sobre `crelealtad`: quedaron tres evidencias relacionadas, dos de encuesta y una de confirmación, sin filas huérfanas ni referencias inválidas. El rollback se protege contra pérdida cuando ya existen confirmaciones o versiones nuevas.
+- La migración 029 completa en `personas` los teléfonos maestros vacíos que ya estaban confirmados con evidencia. Fue probada con aplicación, rollback y reaplicación en `crelealtad_test`, respaldada en `database/backups/crelealtad-pre-029-20260928-194134.backup` y aplicada sobre `crelealtad`: actualizó un teléfono secundario vacío, dejó las dos confirmaciones sincronizadas y terminó sin vacíos ni conflictos.
+- La migración 031 agrega la captura parcial `verificacion_entrevistas`, los historiales de familiares y desacuerdos, y convierte las evidencias del negocio en `verificacion_entrevista_evidencias` para incluir control de pagos y folleto. Toda fila nueva exige cámara, fecha, coordenadas y actor; las filas anteriores se conservan como legado sin ubicación. Se validó creación, rollback y reaplicación en `crelealtad_test`, se verificó el respaldo `database/backups/crelealtad-pre-031-20261003.backup` y se aplicó sobre `crelealtad` sin crear filas de entrevista ni evidencia.
+- La migración 033 agrega las FKs faltantes `creditos.solicitud_id`, `solicitudes_domicilios.dom_cp_id` y `solicitudes_negocios.negocio_cp_id`. Fue aplicada primero en `crelealtad_test` y después de verificar cero huérfanos y un respaldo custom se aplicó a `crelealtad` sin modificar filas.
+- La migración 034 crea `schema_migrations`. La migración 035 valida el formato y los elementos textuales de los permisos JSONB. `crelealtad_test` y `crelealtad` tienen 32 migraciones canónicas aplicadas hasta 035, sin pendientes, drift ni entradas desconocidas.
+- No hay Row Level Security activo ni triggers en el esquema público.
+- `audit_log` registra además el login exitoso, las altas atómicas de grupo/expediente e integrante, los campos modificados de solicitud/integrante y cada documento confirmado, sin copiar credenciales ni valores personales al evento. La auditoría transversal del resto de módulos continúa incompleta.
+- Solo una tabla tiene `created_by`; ninguna tiene `updated_by`. La auditoría transversal constitucional aún no está materializada.
+- Existen 585 expedientes operativos previos al contrato individual y 276 expedientes históricos fuente adicionales. Estos últimos carecen deliberadamente de `asesora_id`; los expedientes nuevos de renovación conservan al asesor desde el JWT.
+- El corte SEM 366 quedó cargado como base histórica activa y auditable: 1 importación, 1,485 ciclos grupales, 24,884 semanas y 299 ciclos vigentes; 17 ciclos de origen `OFNA` permanecen sin `asesora_id` para no inventar responsable.
+- El segundo contrato individual vinculó 276 últimos ciclos exactos con 276 expedientes históricos fuente, 1,594 integrantes y 1,594 solicitudes con `monto_autorizado`; cero diferencias de conteo/suma y cero expedientes fuente visibles por `asesora_id`.
+- La carga histórica agregó 52 nombres de grupo presentes en el Excel pero ausentes en la migración anterior; se conservaron como identidades de origen sin fusionar variantes semejantes.
 
-- Persistencia no implementada.
-- Estados de negocio no totalmente materializados en codigo.
-- Riesgo de divergencia si la implementacion futura no sigue el paquete documental oficial.
-- Riesgo operativo si se confunden estados tecnicos de SQL con estados funcionales de negocio.
+### Testing — Parcial
 
-## Pendientes prioritarios
+- Treinta y ocho suites de pruebas activas en API; no quedan suites `.skip`.
+- No se verificaron pruebas automatizadas en mobile.
+- La validación del 2026-09-02 confirmó que `npm run build` de la API termina correctamente.
+- Jest terminó con 38 suites y 189 pruebas aprobadas. La cobertura comprueba además normalización cerrada del contrato de permisos y trazabilidad transaccional del login, junto con alcance por recurso, configuración productiva cerrada, rechazo de campos controlados por servidor, completitud con archivos realmente cargados, política común de formato/tamaño/hash/UUID, autoguardado tipado de Entrevista, relaciones del mismo expediente, actor de JWT, geolocalización obligatoria y clasificación separada de evidencias.
+- Las suites con PostgreSQL ignoran `DB_NAME`, usan exclusivamente `crelealtad_test` y eliminan sólo los registros creados por cada caso mediante UUID exactos.
+- `npm run typecheck`, `npm test` y el build Nest están disponibles como puertas reproducibles desde la raíz. API activa `noImplicitAny`, funciones estrictas, retornos, parámetros/locales no usados y fallthrough; mobile aplica las puertas equivalentes compatibles con Expo.
+- Hay pruebas de solicitudes, integridad, autenticación, autorización y validación de integrantes, pero falta cobertura móvil, sincronización, flujo end-to-end y módulos financieros.
 
-1. Alinear persistencia con schema y resolver la brecha de Solicitud.
-2. Implementar autenticacion, autorizacion y trazabilidad base.
-3. Materializar maquina de estados en servicios y validaciones.
-4. Completar documentacion detallada por modulo en docs/modules.
+### Documentación — Amplia, con deuda de actualización
 
-## Ultima modificacion
+- `docs/project` continúa como paquete oficial.
+- `docs/DECISIONES.md` contiene decisiones técnicas posteriores que deben respetarse.
+- Esta actualización corrige inventarios de julio que afirmaban ausencia de persistencia, autenticación y tabla de solicitudes.
+- Persisten documentos históricos y reportes raíz que no deben confundirse con el estado oficial vigente.
 
-- Documento actualizado: 2026-07-10.
-- Responsable: Arquitectura del proyecto.
+## Estado por módulo
+
+- M01 Login: Parcial funcional; asesores autentican por abreviatura y PIN individual hasheado. Se cargaron 49 cuentas activas en `MATRIZ`, sin zona. La autorización por módulo/acción ya se aplica en API y navegación; falta alcance territorial y aprobación de la matriz funcional completa.
+- M02 Documentación: Parcial funcional con persistencia real; Renovación muestra grupos vigentes/pasados y una pulsación sobre una tarjeta elegible crea y abre el expediente siguiente con integrantes y montos precargados. El detalle presenta el autorizado anterior, lo solicitado en el ciclo nuevo y su diferencia por integrante. Antes del handoff, `Confirmar integrantes` permite retirar o reintegrar por expediente con motivo/actor/fecha auditables, mantiene fijos el resumen y la selección obligatoria de tesorera, y conserva totales al pie de cada sección. La tesorera sólo puede elegirse entre participantes completas; retirarla limpia la asignación. El Paso 7 confirma tres evidencias obligatorias en servidor; INE de beneficiario y comprobante de línea de crédito permanecen disponibles como opcionales, y las referencias locales de la versión anterior se recuperan al reabrir la integrante. Una devolución desde Verificación muestra `REVISAR DOCUMENTACIÓN`, habilita sólo esa corrección y retira la etiqueta al completar nuevamente los siete pasos. Existen 276 últimos ciclos elegibles; persistencia durable, alcance completo, cola offline y sincronización reanudable continúan pendientes.
+- M03 Verificación: Parcial funcional; DEC-023 habilita temporalmente el acceso para los 54 usuarios activos con rol `ASESOR`, el menú muestra el segundo módulo del proceso y una bandeja API autenticada lista expedientes `EN_VERIFICACION`. DEC-034 identifica con `NUEVO` los expedientes de ciclo 1 y DEC-035 marca `REVISAR DOC.` sin bloquear el grupo. El handoff es transaccional, idempotente y auditable; sólo incluye participantes confirmadas y requiere tesorera válida. La devolución documental persiste y se audita. DEC-031 establece el concentrador independiente; DEC-032 y DEC-033 cubren los canales, intentos y contadores, y DEC-040 exige un antecedente telefónico antes de WhatsApp. DEC-037 guarda las cuatro preguntas, las seis coincidencias, la acción y una fotografía protegida; DEC-039 exige y conserva la ubicación actual al declarar cada resultado nuevo. La paloma se recupera del servidor y no aparece para `Llamar más tarde` ni para una no coincidencia. DEC-038 habilita en `Visita al vecino` la consulta de ambas caras del INE y su ampliación opaca de pantalla completa; DEC-041 a DEC-047 definen sus guiones, confirmación, indicador, historial y ubicación. DEC-048 exige primero una fachada tomada con cámara, DEC-049 agrega una segunda evidencia ligada a la respuesta y DEC-051 condiciona la terminación a que ambas estén confirmadas. DEC-056 persiste las imágenes del domicilio con ubicación y actor; DEC-057 retira la nomenclatura de esta pantalla; DEC-062 incorpora `Medidor de luz` como segunda evidencia y DEC-169 la condiciona a la respuesta posterior a la fachada: `Sí` exige la foto y `No` exige una causa persistente que la sustituye para el cierre, manteniendo fachada con integrante opcional. DEC-063 agrega fotografías opcionales e ilimitadas en cantidad para el negocio dentro de Entrevista, con persistencia protegida e idempotente. DEC-141 reutiliza el mismo flujo domiciliario dentro de Entrevista sin duplicar contratos ni historial. Faltan definir el módulo de destino de la nomenclatura, el reporte y umbral de cercanía, tratamiento posterior de resultados, cita real, asignación, las demás respuestas y conclusión general de Entrevista, observaciones estructuradas, dictamen y transición autorizada.
+- M04 Análisis: No implementado como módulo ejecutable.
+- M05 Desembolsos: Modelo de datos parcial; sin API ni pantalla ejecutable verificadas. DEC-029 aprueba que, si la tesorera cambia en esta etapa, el desembolso continúe con la nueva persona, se registre en `ciclos.tesorera_id` y en auditoría, y no regrese el expediente a Verificación.
+- M06 Cobranza: Tablas financieras presentes; sin API ni pantalla verificadas.
+- M07 Recolección: Sin módulo ejecutable verificado.
+- M08 Mora: Tabla presente; sin API ni pantalla verificadas.
+- M09 Convenios: `reestructuras` presente como base de datos; sin API ni pantalla verificadas.
+- M10 Reportes: Sin módulo ejecutable verificado.
+- M11 Parámetros: Sin módulo ejecutable; políticas continúan parcialmente hardcodeadas.
+- M12 Administración: Usuarios y roles existen; la base local contiene los ocho roles institucionales y un rol técnico de prueba aislado. El contrato y formato de permisos están reforzados, pero no existe administración de usuarios, roles y permisos en API/mobile ni matriz definitiva aprobada.
+- D01 Migración histórica Excel: carga grupal e individual parcial funcional; 276 últimos ciclos cumplen contrato exacto y 193 permanecen bloqueados para reconciliación, sin inferencias.
+
+## Riesgos críticos
+
+1. La autorización ya se aplica y DEC-023 aprobó una excepción amplia temporal para desarrollo; antes de producción debe sustituirse por la matriz restrictiva definitiva y su alcance territorial.
+2. El alcance por responsable cubre el recorrido activo y las rutas directas para `ASESOR`; faltan la reconciliación de expedientes existentes sin responsable y el alcance aprobado por sucursal/zona para los demás roles.
+3. Auditoría parcial: altas y cambios del recorrido de Documentación ya se registran, pero faltan cobertura y política transversal para módulos futuros, administración, parámetros y finanzas.
+4. Offline incompleto: la carga documental funciona en línea, pero no existe cola durable, idempotencia entre reinicios, reintentos con backoff ni reconciliación.
+5. Seguridad temporal: los 49 asesores comparten temporalmente el valor de prueba `1234`, aunque cada cuenta lo valida contra su propio hash. La contraseña PostgreSQL y el JWT locales ya fueron rotados, PostgreSQL exige SCRAM en loopback, los scripts y el historial Git dejaron de conservar credenciales y el JWT móvil usa SecureStore. Falta operar secretos mediante un gestor productivo y construir el cambio de PIN.
+6. Verificación incompleta: el handoff valida participación, cero pendientes y al menos una completa; el concentrador abre cuatro procesos sin orden y mantiene `Conclusiones` visible pero deshabilitado. `Llamada` persiste intento, respuestas, evidencia y conclusión; `Visita al vecino` persiste fachada, respuesta y segunda evidencia, y sólo habilita su terminación con respuesta y evidencia confirmadas. El mínimo parametrizado, asignación, tratamiento posterior de resultados, cita real, persistencia de conclusiones y dictamen requieren decisiones posteriores.
+7. Cliente HTTP todavía inconsistente fuera del recorrido activo del asesor: subsisten usos directos de `fetch` en superficies parciales.
+8. Hotspots móviles: Solicitud y Verificación siguen concentrando UI y estado en pantallas extensas; se extrajo el mapper de persistencia, pero la separación de pasos visuales debe continuar junto con pruebas móviles para reducir riesgo.
+9. Falta el flujo obligatorio para cambiar y recuperar el PIN temporal individual.
+10. El almacenamiento documental por filesystem es configurable y verificable en servidor, pero producción requiere un volumen o proveedor durable, respaldo y monitoreo aprobados.
+
+## Prioridades técnicas aprobables
+
+1. Aprobar la matriz funcional completa rol–módulo–acción y el alcance por sucursal/zona.
+2. Reconciliar expedientes históricos con su asesor real y aprobar/aplicar el alcance territorial de los demás roles.
+3. Operar secretos productivos y retirar el PIN temporal; API y base ya fallan cerrado cuando faltan secretos o credenciales fuera de pruebas.
+4. Extender la auditoría ya aplicada en Documentación a acciones críticas de los módulos siguientes.
+5. Diseñar y probar arquitectura offline/sincronización antes de ampliar captura de campo.
+6. Terminar de consolidar rutas y clientes HTTP móviles fuera del recorrido activo del asesor, y retirar el código legacy excluido.
+7. Materializar precondiciones y transiciones oficiales en servicios de dominio.
+8. Mantener la compilación TypeScript limpia y añadir pruebas automatizadas del recorrido móvil.
+9. Ampliar pruebas de integración y end-to-end.
+10. Implementar cambio/recuperación de PIN y retirar el valor temporal compartido antes de producción.
+
+## Última modificación
+
+- Se rotaron PostgreSQL/JWT locales, se exigió SCRAM en loopback y se integró el historial Git saneado en `main` y `origin/main` sin modificar el árbol de trabajo; reflogs y objetos locales antiguos quedaron purgados.
+- Se centralizó el vocabulario técnico de permisos, se separó del shell móvil la evaluación de acceso y se consolidó la generación de claves idempotentes de Verificación.
+- El login exitoso actualiza su marca temporal y auditoría en una sola transacción, sin registrar PIN ni abreviatura capturada.
+- La migración 035 fue validada en `crelealtad_test`, respaldada y aplicada a `crelealtad`; ambas bases quedaron sin pendientes ni drift.
+- `Evidencia de otra financiera` reutiliza todas las imágenes del comprobante de línea de crédito
+  ya capturadas en Documentación y conserva la captura ilimitada de fotografías adicionales.
+- El comprobante de línea de crédito del Paso 7 admite selección múltiple y capturas consecutivas sin límite de cantidad impuesto por la aplicación; la API guarda el conjunto ordenado como una versión y conserva 10 MB por archivo.
+- El botón inferior de `Visita al vecino` ahora dice `Terminar visita al vecino` y permanece deshabilitado hasta que respuesta y segunda evidencia estén confirmadas por el servidor.
+- Después de guardar `Sí / No`, `Visita al vecino` muestra una segunda captura entre la pregunta y el guion final; sólo usa cámara, registra ubicación y conserva archivo protegido ligado a esa respuesta.
+- La migración 021 creó `verificacion_visita_vecino_evidencias`; la base operativa conservó intactas sus tres respuestas y tres fachadas existentes.
+- La migración 022 creó `verificacion_imagenes_domicilio`; cada toma confirmada conserva tipo, archivo protegido, hash, actor, fecha de foto y ubicación, y la tabla inició vacía sin modificar información previa.
+- `Visita al vecino` comienza con la captura obligatoria de la fachada mediante cámara; no ofrece carrete y bloquea el resto del contenido hasta confirmar foto y ubicación en servidor.
+- La migración 020 creó `verificacion_visita_vecino_fachadas`, almacenamiento protegido y el vínculo `fachada_id`; las tres respuestas históricas permanecieron intactas con vínculo nulo.
+- `Visita al vecino` muestra antes del INE `Estoy intentando localizar a` sin comillas y con tipografía menor; el nombre vigente permanece entre comillas, con el mismo tamaño destacado, en el renglón inferior.
+- Debajo del INE, la misma pantalla permite confirmar `Sí` o `No` para `¿La conoce? ¿Sabe dónde vive?`; al tocar una opción obtiene la ubicación actual y sólo cambia el resultado cuando el servidor confirma el guardado.
+- Al volver al concentrador, el botón `Visita al vecino` muestra una palomita verde para `Sí` o una tacha roja para `No`; el indicador expresa la respuesta recuperada del servidor. La salida inferior sólo permite terminar después de confirmar también la segunda evidencia.
+- Las migraciones 018 y 019 crean el historial `verificacion_visitas_vecino` y hacen obligatorias la ubicación, su fecha de lectura y la fuente `DISPOSITIVO`. Ambas se probaron con reversión controlada en `crelealtad_test`, se respaldó `crelealtad` y la 019 quedó aplicada sin filas previas afectadas.
+- Debajo de esa pregunta se muestra `Traigo correspondencia para`, el nombre vigente de la integrante y `Y necesito que me la firme de recibido.`; las frases van sin comillas y con tipografía menor, mientras el nombre conserva comillas y su mayor jerarquía.
+- La auditoría general cerró campos financieros, relacionales y documentales controlados por servidor; las rutas documentales sólo nacen de una carga verificada.
+- Se retiraron `GET /auth/login-list` y `POST /expedientes`; el grupo crea exactamente un expediente en su transacción y la bandeja selecciona de forma determinista el expediente más reciente.
+- El alcance de `ASESOR` se centralizó y se aplica a expedientes, integrantes, solicitudes y archivos; los demás roles conservan su alcance actual hasta aprobar la matriz territorial.
+- Grupo, expediente, integrante, solicitud y carga documental emiten auditoría transaccional sin duplicar datos personales.
+- Mobile valida y restaura la sesión con `/auth/me`; la edad es derivada y ya no se captura manualmente.
+- Producción exige credenciales de base explícitas o `DATABASE_URL` y valida TLS por defecto. El tipado de API/mobile, 38 suites/189 pruebas y el build Nest terminaron correctamente.
+- `Visita al vecino` carga el INE vigente, permite deslizar entre frente y reverso y abre cada imagen en un visor opaco de pantalla completa con zoom; la consulta no crea evidencia ni marca el proceso como realizado.
+- Después de guardar `Sí contestó`, Llamada presenta las cuatro preguntas y exige una fotografía de la galería. Encuesta, acción y evidencia persisten; las primeras tres acciones concluyen con paloma sólo si todas las coincidencias son positivas, mientras `Llamar más tarde` conserva historial sin paloma. Ninguna opción simula todavía una cita.
+- Se sustituyó el avance lineal de Verificación Individual por un concentrador posterior a la revisión documental con cuatro procesos iniciales equivalentes y retorno directo al menú.
+- Se agregó `TaskMenuButton` a la biblioteca compartida; el acceso a `Visita al vecino` recupera la respuesta desde la API y su terminación se deriva de respuesta más evidencia confirmadas.
+- El proceso `Llamada` distingue llamada telefónica y WhatsApp, obliga a registrar primero un intento telefónico, registra cada resultado y muestra contadores por canal. Las confirmaciones, seis coincidencias, acción y evidencia ya persisten; el tratamiento de no coincidencias permanece pendiente de contrato.
+- Se agregó la bandeja personal de `REVISAR DOCUMENTACIÓN`: agrupa por grupo para el asesor responsable, muestra cantidad y antigüedad, abre el expediente y mantiene un contador global de pendientes abiertos sin crear mensajería paralela ni modificar el esquema.
+- Se normalizaron las etiquetas `REVISAR DOCUMENTACIÓN`, `RETIRADA` y `NO APROBADA`, y la devolución documental dejó de depender del almacenamiento local: ahora usa una transición auditada y se resuelve al validar nuevamente los siete pasos.
+
+- Se corrigió la restricción individual de Guadalupe Barrón: conserva el rol `ASESOR`, `Mis Expedientes` vuelve a aplicar su alcance por responsable y Verificación permanece fuera de sus permisos efectivos.
+
+- Estado técnico actualizado: 2026-09-19.
+- Responsable documental: Arquitectura del proyecto.
+- Se implementó la migración de login, se cargaron 49 asesores en PostgreSQL y se actualizó API, mobile, pruebas y documentación.
+- Se estabilizó el recorrido móvil activo del asesor, se recuperó la compilación TypeScript y la suite API completa quedó en verde.
+- El encabezado ya consume la sesión real, el cliente móvil limita esperas de red y la bandeja de grupos del asesor aplica propiedad para registros correctamente asignados.
+- Se creó el proceso repetible de migración histórica semanal y se validó/cargó SEM 366 en prueba y base local con respaldo, integridad e idempotencia verificadas.
+- Se conectó D01 a la pantalla `Renovación`; la API conserva alcance por asesor, evita duplicados y no crea expedientes parciales cuando faltan integrantes o montos del último ciclo.
+- Se reforzó en `crelealtad_test` y `crelealtad` la relación ciclo–expediente mediante la migración reversible 007, después de respaldo y pruebas de aceptación/rechazo de integridad.
+- Se aplicó la migración 008 y el contrato individual V1: respaldo verificado, simulación con rollback, carga idempotente y apertura automática del expediente desde la tarjeta de Renovación.
+- Se conectó el Paso 7 del formulario de solicitud con la carga documental multipart confirmada, se habilitó el comprobante de línea de crédito opcional y se agregó recuperación compatible de las referencias locales ya capturadas.
+- Se protegió la reapertura de solicitudes: lectura canónica por integrante, estado de carga/error, persistencia aislada por paso y visualización de evidencias locales aun cuando requieran reemplazo.
+- Se agregó al detalle de expediente la comparación individual entre el monto autorizado del ciclo anterior y el monto solicitado del ciclo nuevo, sin cambios de esquema ni escrituras sobre el historial.
+- Se incorporó el recuadro permanente de Verificación al menú, con acceso restringido por permiso, bandeja específica de expedientes en revisión y lectura autenticada de las evidencias documentales ya confirmadas en servidor.
+- Se aplicó DEC-023 mediante la migración 010: todos los asesores activos heredan `verificacion:leer`, con auditoría, prueba previa y rollback controlado.
+- Se aplicó DEC-024 mediante la migración 011: `RETIRADA` y sus motivos conservan historial por expediente; la pantalla previa y el backend excluyen esas integrantes del handoff sin ocultarlas en Documentación.
 
 ## Referencias cruzadas
 
-- project/23_DECISION_LOG.md
-- project/24_CHANGELOG.md
-- project/90_ARCHITECT_REVIEW.md
-- project/20_MODULE_CATALOG.md
+- `project/10_DATABASE_PRINCIPLES.md`
+- `project/11_ARCHITECTURE_GUIDE.md`
+- `project/20_MODULE_CATALOG.md`
+- `project/23_DECISION_LOG.md`
+- `project/24_CHANGELOG.md`
+- `../DECISIONES.md`

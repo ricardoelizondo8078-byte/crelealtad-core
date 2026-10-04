@@ -1,13 +1,31 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiUrl } from '../config/api';
+import { beginProcessing } from './processing-controller';
+import {
+  clearStoredSession,
+  getStoredToken,
+  notifySessionInvalidated,
+} from './session-storage';
 
-const STORAGE_KEY_TOKEN = process.env.REQUIRED_SECRET;
+const REQUEST_TIMEOUT_MS = 15000;
+const NETWORK_ERROR_MESSAGE = 'No se pudo conectar con CRELEALTAD. Revisa tu conexión e intenta nuevamente.';
+export const DOCUMENT_UPLOAD_TIMEOUT_MS = 120000;
+
+export const getDocumentUploadTimeoutMs = (fileCount: number): number => (
+  DOCUMENT_UPLOAD_TIMEOUT_MS * Math.max(1, Math.ceil(fileCount / 2))
+);
 
 export interface ApiRequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   body?: unknown;
   headers?: Record<string, string>;
   requiresAuth?: boolean;
+  timeoutMs?: number;
+  showProcessing?: boolean;
+}
+
+export async function getAuthorizationHeaders(): Promise<Record<string, string>> {
+  const token = await getStoredToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export class ApiError extends Error {
@@ -34,20 +52,57 @@ export async function apiRequest<T = unknown>(
     body,
     headers = {},
     requiresAuth = true,
+    timeoutMs = REQUEST_TIMEOUT_MS,
+    showProcessing = true,
   } = options;
 
+  const completeProcessing = showProcessing
+    ? beginProcessing(method === 'GET' ? 'Cargando…' : 'Guardando…')
+    : () => undefined;
+
+  try {
+    return await executeApiRequest<T>({
+      endpoint,
+      method,
+      body,
+      headers,
+      requiresAuth,
+      timeoutMs,
+    });
+  } finally {
+    completeProcessing();
+  }
+}
+
+interface ExecuteApiRequestOptions {
+  endpoint: string;
+  method: NonNullable<ApiRequestOptions['method']>;
+  body: unknown;
+  headers: Record<string, string>;
+  requiresAuth: boolean;
+  timeoutMs: number;
+}
+
+async function executeApiRequest<T>({
+  endpoint,
+  method,
+  body,
+  headers,
+  requiresAuth,
+  timeoutMs,
+}: ExecuteApiRequestOptions): Promise<T> {
+
   // Construir headers base
+  const isMultipart = typeof FormData !== 'undefined' && body instanceof FormData;
   const requestHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(isMultipart ? {} : { 'Content-Type': 'application/json' }),
+    ...(method === 'GET' ? { 'Cache-Control': 'no-cache' } : {}),
     ...headers,
   };
 
   // Agregar Authorization header si se requiere autenticación
   if (requiresAuth) {
-    const token = await AsyncStorage.getItem(STORAGE_KEY_TOKEN);
-    if (token) {
-      requestHeaders['Authorization'] = `Bearer ${token}`;
-    }
+    Object.assign(requestHeaders, await getAuthorizationHeaders());
   }
 
   // Construir opciones de fetch
@@ -57,8 +112,12 @@ export async function apiRequest<T = unknown>(
   };
 
   if (body && method !== 'GET') {
-    fetchOptions.body = JSON.stringify(body);
+    fetchOptions.body = isMultipart ? body as BodyInit : JSON.stringify(body);
   }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  fetchOptions.signal = controller.signal;
 
   try {
     const response = await fetch(apiUrl(endpoint), fetchOptions);
@@ -74,8 +133,16 @@ export async function apiRequest<T = unknown>(
 
     // Verificar si la respuesta fue exitosa
     if (!response.ok) {
+      if (requiresAuth && response.status === 401) {
+        await clearStoredSession();
+        notifySessionInvalidated();
+      }
+
+      const serverMessage = typeof data === 'object' && data !== null && 'message' in data
+        ? String((data as { message: unknown }).message)
+        : undefined;
       throw new ApiError(
-        `HTTP ${response.status}: ${response.statusText}`,
+        serverMessage || `HTTP ${response.status}: ${response.statusText}`,
         response.status,
         data,
       );
@@ -88,10 +155,9 @@ export async function apiRequest<T = unknown>(
     }
 
     // Error de red o timeout
-    throw new ApiError(
-      error instanceof Error ? error.message : 'Error de red',
-      0,
-    );
+    throw new ApiError(NETWORK_ERROR_MESSAGE, 0);
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

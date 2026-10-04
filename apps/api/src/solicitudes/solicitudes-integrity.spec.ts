@@ -20,39 +20,45 @@ describe('Integridad de Historial de Créditos', () => {
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5432'),
       username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME || 'crelealtad',
+      password: process.env.DB_PASSWORD || process.env.DB_PASS,
+      database: 'crelealtad_test',
     });
 
     await dataSource.initialize();
 
-    // Obtener una persona de prueba
-    const personas = await dataSource.query('SELECT id FROM personas LIMIT 1');
-    if (personas.length === 0) {
-      throw new Error('No hay personas en la base de datos para ejecutar tests');
-    }
+    const personas = await dataSource.query(
+      `INSERT INTO personas (nombres, apellido_pat)
+       VALUES ('PRUEBA', 'INTEGRIDAD') RETURNING id`,
+    );
     testPersonaId = personas[0].id;
 
-    // Obtener un grupo de prueba (REQUERIDO para crear expedientes)
-    const grupos = await dataSource.query('SELECT id FROM grupos LIMIT 1');
-    if (grupos.length === 0) {
-      throw new Error('No hay grupos en la base de datos para ejecutar tests');
-    }
+    const grupos = await dataSource.query(
+      'INSERT INTO grupos (nombre) VALUES ($1) RETURNING id',
+      [`PRUEBA INTEGRIDAD ${Date.now()}-${process.pid}`],
+    );
     testGrupoId = grupos[0].id;
   });
 
   afterAll(async () => {
+    await dataSource.query(
+      'DELETE FROM solicitudes WHERE persona_id = $1',
+      [testPersonaId],
+    );
+    await dataSource.query(
+      'DELETE FROM integrantes WHERE persona_id = $1',
+      [testPersonaId],
+    );
+    await dataSource.query(
+      'DELETE FROM expedientes WHERE grupo_id = $1',
+      [testGrupoId],
+    );
+    await dataSource.query('DELETE FROM personas WHERE id = $1', [testPersonaId]);
+    await dataSource.query('DELETE FROM grupos WHERE id = $1', [testGrupoId]);
     await dataSource.destroy();
   });
 
   describe('1. Constraint UNIQUE (persona_id, numero_credito)', () => {
     it('debe rechazar duplicados con numero_credito NOT NULL', async () => {
-      // Limpiar
-      await dataSource.query(
-        'DELETE FROM solicitudes WHERE persona_id = $1 AND numero_credito IS NOT NULL',
-        [testPersonaId]
-      );
-
       // Crear dos expedientes temporales para evitar uq_integrante_expediente_persona
       const exp1 = await dataSource.query('INSERT INTO expedientes (grupo_id, folio) VALUES ($1, DEFAULT) RETURNING id', [testGrupoId]);
       const exp2 = await dataSource.query('INSERT INTO expedientes (grupo_id, folio) VALUES ($1, DEFAULT) RETURNING id', [testGrupoId]);
@@ -99,12 +105,6 @@ describe('Integridad de Historial de Créditos', () => {
     });
 
     it('debe permitir múltiples NULL para la misma persona_id', async () => {
-      // Limpiar
-      await dataSource.query(
-        'DELETE FROM solicitudes WHERE persona_id = $1 AND numero_credito IS NULL',
-        [testPersonaId]
-      );
-
       // Crear 3 expedientes temporales
       const exp1 = await dataSource.query('INSERT INTO expedientes (grupo_id, folio) VALUES ($1, DEFAULT) RETURNING id', [testGrupoId]);
       const exp2 = await dataSource.query('INSERT INTO expedientes (grupo_id, folio) VALUES ($1, DEFAULT) RETURNING id', [testGrupoId]);
@@ -164,9 +164,16 @@ describe('Integridad de Historial de Créditos', () => {
   describe('2. Foreign Key persona_id', () => {
     it('debe rechazar solicitudes con persona_id inexistente', async () => {
       const personaIdInexistente = '00000000-0000-0000-0000-999999999999';
-      const integrantes = await dataSource.query('SELECT id, expediente_id FROM integrantes LIMIT 1');
+      const expedientes = await dataSource.query(
+        'INSERT INTO expedientes (grupo_id, folio) VALUES ($1, DEFAULT) RETURNING id',
+        [testGrupoId],
+      );
+      const expedienteId = expedientes[0].id;
+      const integrantes = await dataSource.query(
+        'INSERT INTO integrantes (persona_id, expediente_id) VALUES ($1, $2) RETURNING id',
+        [testPersonaId, expedienteId],
+      );
       const integranteId = integrantes[0].id;
-      const expedienteId = integrantes[0].expediente_id;
 
       await expect(
         dataSource.query(
@@ -174,25 +181,33 @@ describe('Integridad de Historial de Créditos', () => {
           [personaIdInexistente, integranteId, expedienteId, testGrupoId]
         )
       ).rejects.toThrow(/fk_solicitudes_persona|viola la llave foránea/);
+
+      await dataSource.query('DELETE FROM integrantes WHERE id = $1', [integranteId]);
+      await dataSource.query('DELETE FROM expedientes WHERE id = $1', [expedienteId]);
     });
   });
 
   describe('3. NOT NULL Constraints', () => {
     it('debe rechazar solicitudes sin persona_id', async () => {
+      const exp = await dataSource.query(
+        'INSERT INTO expedientes (grupo_id, folio) VALUES ($1, DEFAULT) RETURNING id',
+        [testGrupoId],
+      );
       const int = await dataSource.query(
         'INSERT INTO integrantes (persona_id, expediente_id) VALUES ($1, $2) RETURNING id',
-        [testPersonaId, (await dataSource.query('INSERT INTO expedientes (grupo_id, folio) VALUES ($1, DEFAULT) RETURNING id', [testGrupoId]))[0].id]
+        [testPersonaId, exp[0].id]
       );
 
       await expect(
         dataSource.query(
           'INSERT INTO solicitudes (persona_id, integrante_id, expediente_id, grupo_id) VALUES (NULL, $1, $2, $3)',
-          [int[0].id, int[0].id, testGrupoId]
+          [int[0].id, exp[0].id, testGrupoId]
         )
       ).rejects.toThrow(/viola la restricción de no nulo|null value/);
 
       // Limpiar
       await dataSource.query('DELETE FROM integrantes WHERE id = $1', [int[0].id]);
+      await dataSource.query('DELETE FROM expedientes WHERE id = $1', [exp[0].id]);
     });
   });
 

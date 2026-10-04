@@ -1,6 +1,6 @@
 # 09 Development Standards - Estandares de Desarrollo
 
-Version: 1.0.0
+Version: 1.2.0
 Estado: Vigente
 
 ## Principios
@@ -53,6 +53,7 @@ Estado: Vigente
 3. Ejecutar pruebas del modulo.
 4. Actualizar documentacion afectada.
 5. Registrar riesgos y supuestos.
+6. Ejecutar `npm run verify` desde la raíz; incluye escaneo de secretos, TypeScript y pruebas API.
 
 ## Checklist de Testing (obligatorio)
 
@@ -74,8 +75,11 @@ Estado: Vigente
 
 1. Variables de entorno verificadas.
 2. Migraciones evaluadas.
-3. Salud de API validada.
-4. Monitoreo inicial activo.
+3. `db:migrations:status` sin pendientes, drift ni entradas desconocidas.
+4. Cambio de esquema probado en `crelealtad_test`, respaldo verificado y plan de reversión documentado.
+5. Aplicación canónica mediante `db:migrations:apply`, `--database`, `--through` y `MIGRATION_APPLY_CONFIRM` igual al nombre exacto de la base.
+6. Salud de API validada.
+7. Monitoreo inicial activo.
 
 ## Checklist de Documentacion
 

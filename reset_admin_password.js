@@ -1,6 +1,11 @@
 const { Client } = require('./apps/api/node_modules/pg');
 const bcrypt = require('./apps/api/node_modules/bcrypt');
 
+const newAdminPassword = process.env.NEW_ADMIN_PASSWORD;
+if (!newAdminPassword) {
+  throw new Error('NEW_ADMIN_PASSWORD es obligatorio');
+}
+
 const client = new Client({
   host: 'localhost',
   port: 5432,
@@ -14,12 +19,9 @@ async function resetAdminPassword() {
     await client.connect();
     console.log('✓ Conectado a PostgreSQL\n');
 
-    // Nueva contraseña para el administrador
-    const newPassword = process.env.REQUIRED_SECRET;
-
     // Hashear la nueva contraseña
     console.log('🔐 Generando nuevo hash de contraseña...');
-    const password_hash = await bcrypt.hash(newPassword, 10);
+    const password_hash = await bcrypt.hash(newAdminPassword, 10);
 
     // Actualizar el usuario ADMINISTRADOR
     const result = await client.query(
@@ -38,13 +40,7 @@ async function resetAdminPassword() {
     console.log('✅ Contraseña actualizada exitosamente:\n');
     console.table(result.rows);
 
-    console.log('\n========================================');
-    console.log('CREDENCIALES PARA LOGIN:');
-    console.log('========================================');
-    console.log('Email: admin@crelealtad.com');
-    console.log('Contraseña:', newPassword);
-    console.log('========================================\n');
-    console.log('💡 Usa estas credenciales para entrar a la app\n');
+    console.log('La nueva credencial permanece únicamente en NEW_ADMIN_PASSWORD.');
 
   } catch (error) {
     console.error('❌ Error:', error.message);

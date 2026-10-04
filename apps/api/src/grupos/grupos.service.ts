@@ -1,59 +1,87 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ExpedientesService } from '../expedientes/expedientes.service';
+import { DataSource, Repository } from 'typeorm';
 import { GrupoEntity, GrupoEstado } from './grupo.entity';
+import { ExpedienteEntity, ExpedienteEstado } from '../expedientes/expediente.entity';
 import { IntegranteEstado } from '../integrantes/integrante.entity';
-import { ExpedienteEntity } from '../expedientes/expediente.entity';
 import { PaginationDto, createPaginatedResponse, PaginatedResponse } from '../common/dto/pagination.dto';
+import { AccessScope, resolveEmpleadoId } from '../common/access-scope';
+import { registrarAuditoria } from '../common/audit-log';
 
 @Injectable()
 export class GruposService {
   constructor(
     @InjectRepository(GrupoEntity)
     private readonly grupoRepository: Repository<GrupoEntity>,
-    @InjectRepository(ExpedienteEntity)
-    private readonly expedienteRepository: Repository<ExpedienteEntity>,
-    private readonly expedientesService: ExpedientesService,
+    private readonly dataSource: DataSource,
   ) {}
 
-  async create(dto: { nombre: string; zona_id?: string; sucursal_id?: string; fecha_inicio?: string; created_by?: string }) {
+  async create(dto: { nombre: string; zona_id?: string; sucursal_id?: string; fecha_inicio?: string }, scope: AccessScope) {
     const normalizedName = dto.nombre.trim().toUpperCase();
+    const empleadoId = await resolveEmpleadoId(this.dataSource, scope);
 
-    const grupo = this.grupoRepository.create({
-      nombre: normalizedName,
-      zona_id: dto.zona_id || null,
-      sucursal_id: dto.sucursal_id || null,
-      fecha_inicio: dto.fecha_inicio ? new Date(dto.fecha_inicio) : new Date(),
-      created_by: dto.created_by || null,
-      estado: GrupoEstado.FORMANDO,
-    } as any);
-
-    const saved = await this.grupoRepository.save(grupo);
-    const entity = Array.isArray(saved) ? saved[0] : saved;
-
-    // Crear expediente automáticamente
-    try {
-      const expediente = this.expedienteRepository.create({
+    return this.dataSource.transaction(async (manager) => {
+      const grupoRepository = manager.getRepository(GrupoEntity);
+      const expedienteRepository = manager.getRepository(ExpedienteEntity);
+      const grupo = grupoRepository.create({
+        nombre: normalizedName,
+        zona_id: dto.zona_id || null,
+        sucursal_id: dto.sucursal_id || null,
+        fecha_inicio: dto.fecha_inicio ? new Date(dto.fecha_inicio) : new Date(),
+        created_by: scope.usuarioId,
+        estado: GrupoEstado.FORMANDO,
+      });
+      const entity = await grupoRepository.save(grupo);
+      const expediente = expedienteRepository.create({
         grupo_id: entity.id,
         estado: 'EN_DOCUMENTACION',
-        asesora_id: null,
+        asesora_id: empleadoId,
         producto_id: null,
-      } as any);
-      const savedExpediente = await this.expedienteRepository.save(expediente);
-      const expedienteEntity = Array.isArray(savedExpediente) ? savedExpediente[0] : savedExpediente;
-      console.log('Expediente creado:', expedienteEntity.id);
-      return { ...entity, name: entity.nombre, expedienteId: expedienteEntity.id };
-    } catch (err) {
-      console.error('ERROR al crear expediente:', err.message);
-      return { ...entity, name: entity.nombre, expedienteId: null };
-    }
+      });
+      const expedienteEntity = await expedienteRepository.save(expediente);
+      await registrarAuditoria(manager, {
+        tabla: 'grupos',
+        registroId: entity.id,
+        accion: 'GRUPO_CREADO',
+        usuarioId: scope.usuarioId,
+        datosDespues: {
+          estado: entity.estado,
+          expediente_id: expedienteEntity.id,
+        },
+      });
+      await registrarAuditoria(manager, {
+        tabla: 'expedientes',
+        registroId: expedienteEntity.id,
+        accion: 'EXPEDIENTE_CREADO',
+        usuarioId: scope.usuarioId,
+        datosDespues: {
+          grupo_id: entity.id,
+          estado: expediente.estado,
+          asesora_id: empleadoId,
+        },
+      });
+
+      return {
+        ...entity,
+        name: entity.nombre,
+        expedienteId: expedienteEntity.id,
+        es_grupo_nuevo_ciclo_1: true,
+      };
+    });
   }
 
-  async getById(id: string): Promise<any> {
-    const grupo = await this.grupoRepository.findOne({
-      where: { id },
-    });
+  async getById(id: string, scope?: AccessScope): Promise<any> {
+    const query = this.grupoRepository
+      .createQueryBuilder('grupo')
+      .leftJoin('grupo.expedientes', 'expediente')
+      .where('grupo.id = :id', { id });
+
+    if (scope?.rolNombre === 'ASESOR') {
+      const empleadoId = await resolveEmpleadoId(this.dataSource, scope);
+      query.andWhere('expediente.asesora_id = :empleadoId', { empleadoId });
+    }
+
+    const grupo = await query.getOne();
 
     if (!grupo) {
       return null;
@@ -68,24 +96,41 @@ export class GruposService {
     };
   }
 
-  async listAll(paginationDto: PaginationDto = {}): Promise<PaginatedResponse<any>> {
+  async listAll(paginationDto: PaginationDto = {}, scope?: AccessScope): Promise<PaginatedResponse<any>> {
     const { page = 1, limit = 20 } = paginationDto;
     const skip = (page - 1) * limit;
 
     // Usar LEFT JOIN para evitar N+1 query problem + paginación
     // Antes: 100 grupos = 101 queries sin paginación
     // Ahora: 1 query con LIMIT/OFFSET (95% mejora + 90% payload reduction)
-    const [grupos, total] = await this.grupoRepository
+    const query = this.grupoRepository
       .createQueryBuilder('grupo')
       .leftJoinAndSelect('grupo.expedientes', 'expediente')
-      .orderBy('grupo.created_at', 'DESC')
+      .orderBy('grupo.created_at', 'DESC');
+
+    if (scope?.rolNombre === 'ASESOR') {
+      const empleadoId = await resolveEmpleadoId(this.dataSource, scope);
+      query.andWhere('expediente.asesora_id = :empleadoId', { empleadoId });
+    }
+
+    const [grupos, total] = await query
       .skip(skip)
       .take(limit)
       .getManyAndCount();
 
+    const expedientesOperativos = new Map(
+      grupos.map((grupo) => [grupo.id, this.selectExpedienteOperativo(grupo.expedientes)]),
+    );
+    const expedienteIds = grupos
+      .map((grupo) => expedientesOperativos.get(grupo.id)?.id)
+      .filter((id): id is string => Boolean(id));
+    const [ciclosPorExpediente, expedientesConRevisionDocumental] = await Promise.all([
+      this.resolveCiclosPorExpediente(expedienteIds),
+      this.resolveExpedientesConRevisionDocumental(expedienteIds),
+    ]);
+
     const data = grupos.map((grupo) => {
-      // Tomar el primer expediente (debería haber solo uno por grupo)
-      const expediente = grupo.expedientes?.[0];
+      const expediente = expedientesOperativos.get(grupo.id);
 
       return {
         id: grupo.id,
@@ -93,9 +138,86 @@ export class GruposService {
         estado: expediente?.estado ?? 'EN_DOCUMENTACION',
         expedienteId: expediente?.id ?? null,
         estado_fecha: expediente?.estado_fecha ?? expediente?.created_at ?? null,
+        es_grupo_nuevo_ciclo_1: expediente
+          ? ciclosPorExpediente.get(expediente.id) === 1
+          : false,
+        requiere_revision_documental: expediente
+          ? expedientesConRevisionDocumental.has(expediente.id)
+          : false,
       };
     });
 
     return createPaginatedResponse(data, total, page, limit);
   }
+
+  private selectExpedienteOperativo(
+    expedientes: ExpedienteEntity[] | undefined,
+  ): ExpedienteEntity | undefined {
+    return [...(expedientes ?? [])].sort((left, right) => {
+      const fechaLeft = new Date(left.created_at).getTime() || 0;
+      const fechaRight = new Date(right.created_at).getTime() || 0;
+      if (fechaLeft !== fechaRight) return fechaRight - fechaLeft;
+      return right.id.localeCompare(left.id);
+    })[0];
+  }
+
+  private async resolveCiclosPorExpediente(expedienteIds: string[]): Promise<Map<string, number>> {
+    if (expedienteIds.length === 0) {
+      return new Map();
+    }
+
+    const rows = await this.dataSource.query(
+      `SELECT e.id AS expediente_id,
+              COALESCE(
+                (SELECT MAX(c.numero_ciclo) FROM ciclos c WHERE c.expediente_id = e.id),
+                (SELECT MAX(s.ciclo_numero) FROM solicitudes s WHERE s.expediente_id = e.id),
+                (SELECT MAX(NULLIF(a.datos_despues->>'ciclo_destino', '')::integer)
+                   FROM audit_log a
+                  WHERE a.tabla = 'expedientes'
+                    AND a.registro_id = e.id
+                    AND a.accion = 'INICIO_RENOVACION'),
+                CASE
+                  WHEN EXISTS (SELECT 1 FROM historial_grupos_ciclos h WHERE h.grupo_id = e.grupo_id)
+                    THEN NULL
+                  ELSE 1
+                END
+              ) AS numero_ciclo
+         FROM expedientes e
+        WHERE e.id = ANY($1::uuid[])`,
+      [expedienteIds],
+    );
+
+    return new Map(
+      (rows as Array<{ expediente_id: string; numero_ciclo: string | number | null }>)
+        .filter((row) => row.numero_ciclo != null)
+        .map((row) => [row.expediente_id, Number(row.numero_ciclo)]),
+    );
+  }
+
+  private async resolveExpedientesConRevisionDocumental(
+    expedienteIds: string[],
+  ): Promise<Set<string>> {
+    if (expedienteIds.length === 0) {
+      return new Set();
+    }
+
+    const rows = await this.dataSource.query(
+      `SELECT DISTINCT i.expediente_id
+         FROM integrantes i
+         INNER JOIN expedientes e ON e.id = i.expediente_id
+        WHERE i.expediente_id = ANY($1::uuid[])
+          AND e.estado = $2
+          AND i.estado = $3`,
+      [
+        expedienteIds,
+        ExpedienteEstado.EN_VERIFICACION,
+        IntegranteEstado.DOCUMENTANDO,
+      ],
+    );
+
+    return new Set(
+      (rows as Array<{ expediente_id: string }>).map((row) => row.expediente_id),
+    );
+  }
+
 }

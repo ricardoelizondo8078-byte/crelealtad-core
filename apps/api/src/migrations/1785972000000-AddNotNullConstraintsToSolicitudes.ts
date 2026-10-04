@@ -43,7 +43,7 @@ export class AddNotNullConstraintsToSolicitudes1785972000000 implements Migratio
 
       const solicitudesAEliminar = await queryRunner.query(`
         SELECT id, created_at FROM solicitudes WHERE persona_id IS NULL
-      `);
+      `) as Array<{ id: string }>;
 
       console.log('   IDs a eliminar:', solicitudesAEliminar.map(s => s.id).join(', '));
 

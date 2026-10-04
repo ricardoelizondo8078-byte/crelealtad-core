@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { FormField } from './FormField';
 
 type ModuleThemeKey = 'documentation' | 'verification' | 'disbursement';
+type SelectorVariant = 'default' | 'countBubbles';
 
 interface SelectorFieldProps {
   label: string;
@@ -15,6 +16,8 @@ interface SelectorFieldProps {
   errorText?: string;
   onSelect: (value: string) => void;
   moduleTheme?: ModuleThemeKey;
+  variant?: SelectorVariant;
+  disabled?: boolean;
 }
 
 export const SelectorField: React.FC<SelectorFieldProps> = ({
@@ -27,8 +30,13 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
   errorText,
   onSelect,
   moduleTheme = 'documentation',
+  variant = 'default',
+  disabled = false,
 }) => {
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
   // Siempre usar scroll para colonias, el resto según la cantidad (7 o menos = chips)
   const useChips = label === 'Colonia' ? false : options.length <= 7;
 
@@ -36,7 +44,7 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
   const themeColors = moduleThemes[moduleTheme];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, disabled && styles.disabled]}>
       <FormField
         label={label}
         required={required}
@@ -51,13 +59,20 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
                 text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
               // Comparar de forma normalizada
-              const isSelected = value && normalizeText(value) === normalizeText(option);
+              const isSelected = Boolean(value && normalizeText(value) === normalizeText(option));
+              const isCountBubble = variant === 'countBubbles';
+              const bubbleStyle = option === '≥6'
+                ? styles.countRangeBubble
+                : styles.countNumberBubble;
 
               return (
                 <Pressable
                   key={option}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: isSelected, disabled }}
+                  disabled={disabled}
                   style={[
-                    styles.chip,
+                    isCountBubble ? bubbleStyle : styles.chip,
                     isSelected
                       ? { backgroundColor: `${themeColors.primary}20`, borderColor: themeColors.primary }
                       : styles.chipUnselected
@@ -80,14 +95,20 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
             })}
           </View>
         ) : (
-          <Pressable style={styles.trigger} onPress={() => setOpen(true)}>
+          <Pressable
+            style={styles.trigger}
+            accessibilityRole="button"
+            accessibilityState={{ disabled }}
+            disabled={disabled}
+            onPress={() => setOpen(true)}
+          >
             <Text allowFontScaling={false} style={value ? styles.valueText : styles.placeholderText}>{value || placeholder}</Text>
           </Pressable>
         )}
       </FormField>
 
       {!useChips ? (
-        <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <Modal visible={open && !disabled} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
           <Pressable style={styles.modalBackdrop} onPress={() => setOpen(false)}>
             <Pressable style={styles.modalSheet} onPress={() => undefined}>
               <View style={[styles.modalHeader, { backgroundColor: themeColors.primary }]}>
@@ -119,6 +140,9 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
   },
+  disabled: {
+    opacity: 0.55,
+  },
   trigger: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -145,6 +169,23 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  countNumberBubble: {
+    width: 44,
+    height: 44,
+    borderWidth: 2,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  countRangeBubble: {
+    minWidth: 58,
+    height: 44,
+    borderWidth: 2,
+    borderRadius: 22,
+    paddingHorizontal: spacing.md,
     justifyContent: 'center',
     alignItems: 'center',
   },

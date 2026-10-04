@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { AppHeader, Card, FormField, PrimaryButton, ScreenContainer, ScreenTitleBar } from '../../components/ui';
-import { api } from '../../services/api-client';
+import { api, ApiError } from '../../services/api-client';
 import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { normalizeUppercaseText } from '../../utils/input';
 
 interface CreateGroupScreenProps {
   onBack?: () => void;
-  onCreated?: () => void;
+  onCreated?: (result: CreatedGroupResult) => void;
+}
+
+interface CreatedGroupResult {
+  expedienteId: string | null;
+  es_grupo_nuevo_ciclo_1: boolean;
 }
 
 export const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ onBack, onCreated }) => {
@@ -23,11 +28,16 @@ export const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ onBack, on
 
     setIsSubmitting(true);
     try {
-      const data = await api.post<any>('/grupos', {
+      const data = await api.post<Partial<CreatedGroupResult>>('/grupos', {
         nombre: name.trim(),
       });
 
-      console.log('✅ Grupo creado exitosamente:', JSON.stringify(data));
+      const createdGroup: CreatedGroupResult = {
+        expedienteId: data.expedienteId ?? null,
+        // El alta de /grupos siempre inicia el primer ciclo; la API vigente lo confirma
+        // explícitamente y este respaldo conserva la marca durante la navegación inmediata.
+        es_grupo_nuevo_ciclo_1: data.es_grupo_nuevo_ciclo_1 ?? Boolean(data.expedienteId),
+      };
 
       // Mensaje de confirmación mejorado
       Alert.alert(
@@ -38,23 +48,21 @@ export const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ onBack, on
             text: 'OK',
             onPress: () => {
               setName('');
-              onCreated?.();
+              onCreated?.(createdGroup);
             }
           }
         ]
       );
-    } catch (error: any) {
-      console.log('❌ Error completo:', error);
-      console.log('❌ Error message:', error.message);
-      console.log('❌ Error status:', error.status);
-      console.log('❌ Error data:', JSON.stringify(error.data));
-
+    } catch (error) {
       let errorMessage = 'Error al crear el grupo';
-      if (error.data?.message) {
-        errorMessage = Array.isArray(error.data.message)
-          ? error.data.message.join(', ')
-          : error.data.message;
-      } else if (error.message) {
+      const details = error instanceof ApiError && typeof error.data === 'object' && error.data !== null
+        ? error.data as { message?: string | string[] }
+        : undefined;
+      if (details?.message) {
+        errorMessage = Array.isArray(details.message)
+          ? details.message.join(', ')
+          : details.message;
+      } else if (error instanceof Error) {
         errorMessage = error.message;
       }
 

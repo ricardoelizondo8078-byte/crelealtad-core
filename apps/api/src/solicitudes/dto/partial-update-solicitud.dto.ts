@@ -5,11 +5,12 @@ import { CreateSolicitudDto } from './create-solicitud.dto';
  * DTO para PATCH /solicitudes/:integranteId
  *
  * ARQUITECTURA:
- * - Los 4 campos requeridos (integrante_id, persona_id, expediente_id, grupo_id)
- *   NO se requieren en el PATCH porque el backend los deriva del integranteId del path.
- * - Todos los 87 campos de las tablas hijas son opcionales como en CreateSolicitudDto.
- * - El servicio reconstruye el DTO completo antes de llamar a createOrUpdateForSolicitante.
+ * - integrante_id no se requiere en el PATCH porque se recibe en la ruta.
+ * - persona_id, expediente_id y grupo_id siempre los deriva el backend.
+ * - Sólo los campos operativos editables de las tablas hijas son aceptados.
+ * - Campos financieros, derivados y documentales permanecen fuera del contrato público.
+ * - El servicio completa internamente el contexto antes de persistir.
  */
 export class PartialUpdateSolicitudDto extends PartialType(
-  OmitType(CreateSolicitudDto, ['integrante_id', 'persona_id', 'expediente_id', 'grupo_id'] as const)
+  OmitType(CreateSolicitudDto, ['integrante_id'] as const)
 ) {}

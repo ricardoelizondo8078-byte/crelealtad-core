@@ -29,6 +29,7 @@ Define el lenguaje visual único de CRELEALTAD CORE. La implementación técnica
 - Colores neutrales y de superficie.
 - Colores semánticos: éxito, advertencia, error, información y deshabilitado.
 - Colores de estados operativos.
+- Tema general gris plata claro para Login, Menú principal y bandejas globales.
 - Temas por módulo.
 - Tipografía: familia, tamaños, pesos y alturas de línea.
 - Espaciado.
@@ -43,6 +44,7 @@ Define el lenguaje visual único de CRELEALTAD CORE. La implementación técnica
 - Ningún archivo de pantalla debe contener colores HEX/RGB directos.
 - Ningún archivo de pantalla define estilos base de botón, input, tarjeta, badge, chip o modal.
 - El color de módulo identifica contexto; no reemplaza estados semánticos.
+- Login, Menú principal y `Pendientes para ti` usan el tema gris plata claro `general`; no heredan el color de un módulo.
 - Todo estado debe incluir texto o icono además del color.
 - Las nuevas variantes se agregan al componente compartido, con nombre semántico y documentación.
 

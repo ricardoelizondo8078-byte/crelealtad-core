@@ -9,34 +9,34 @@ export class SolicitudDocumentosEntity {
   solicitud_id: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  doc_ine_ruta: string;
+  doc_ine_ruta: string | null;
 
   @Column({ type: 'date', nullable: true })
-  doc_ine_fecha: Date;
+  doc_ine_fecha: Date | null;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  doc_comprobante_ruta: string;
+  doc_comprobante_ruta: string | null;
 
   @Column({ type: 'date', nullable: true })
-  doc_comprobante_fecha: Date;
+  doc_comprobante_fecha: Date | null;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  doc_ine_beneficiario_ruta: string;
+  doc_ine_beneficiario_ruta: string | null;
 
   @Column({ type: 'date', nullable: true })
-  doc_ine_beneficiario_fecha: Date;
+  doc_ine_beneficiario_fecha: Date | null;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  doc_solicitud_firmada_ruta: string;
+  doc_solicitud_firmada_ruta: string | null;
 
   @Column({ type: 'date', nullable: true })
-  doc_solicitud_firmada_fecha: Date;
+  doc_solicitud_firmada_fecha: Date | null;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  doc_comprobante_credito_ruta: string;
+  doc_comprobante_credito_ruta: string | null;
 
   @Column({ type: 'date', nullable: true })
-  doc_comprobante_credito_fecha: Date;
+  doc_comprobante_credito_fecha: Date | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;

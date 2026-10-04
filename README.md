@@ -8,6 +8,37 @@ Sistema Integral para la Administración del Ciclo de Crédito de CRELEALTAD.
 
 ## Setup de Desarrollo
 
+### Inicio diario (API + Expo)
+
+Como arranque manual de respaldo, desde la raíz del repositorio:
+
+```bash
+npm run dev
+```
+
+El comando detecta la red activa, inicia NestJS en `3100`, espera su health
+check e inicia Expo en modo LAN/offline para no depender de consultas externas.
+Mobile recibe la URL de la API en memoria; no se escribe ninguna IP en archivos
+del proyecto.
+
+En Windows se puede dejar como configuración de una sola vez:
+
+```powershell
+# Ejecutar como administrador una sola vez.
+.\scripts\configure-dev-firewall.ps1
+
+# Instalar el inicio automático para el usuario actual.
+.\scripts\configure-dev-autostart.ps1
+```
+
+Después, API y Expo se levantan ocultos al iniciar sesión. El iniciador reintenta
+si la red todavía no está lista y reinicia la sesión cuando cambia la IP. Los
+registros quedan en `.runtime/`. Para retirar el inicio automático se usa
+`.\scripts\configure-dev-autostart.ps1 -Remove`.
+
+El modo LAN requiere que laptop y teléfono estén en la misma red y que ésta no
+aísle dispositivos. No edites `.env` ni una IP manualmente.
+
 ### Backend
 
 ```bash

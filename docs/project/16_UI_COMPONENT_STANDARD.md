@@ -1,6 +1,6 @@
 # 16 UI COMPONENT STANDARD — CRELEALTAD CORE
 
-Versión: 1.0.0  
+Versión: 1.4.7
 Estado: VIGENTE — BASE OBLIGATORIA  
 Ámbito: Aplicación móvil React Native / Expo  
 Autoridad documental relacionada: `01_PROJECT_CONSTITUTION.md`, `13_DEVELOPMENT_STANDARDS.md`, `15_UI_UX_STANDARDS.md`
@@ -130,7 +130,20 @@ Uso exclusivo en:
 
 El color de módulo no debe utilizarse para representar estados de negocio.
 
-#### C. Colores de estado operativo
+#### C. Tema general
+
+Uso exclusivo en superficies compartidas antes de entrar a un módulo:
+
+- Login;
+- Menú principal y selector de módulos;
+- bandejas globales compartidas por todos los roles, como `Pendientes para ti`.
+
+El tema `general` usa la paleta gris plata clara aprobada: encabezado `#9CA3AF`, barra y
+acciones `#6B7280`, con texto oscuro o blanco según el contraste de la superficie. No
+sustituye el tema propio de Documentación ni de otro módulo una vez que el usuario entra
+a su flujo.
+
+#### D. Colores de estado operativo
 
 Uso exclusivo para estados. Deben definirse una sola vez en `statusColors`.
 
@@ -311,6 +324,15 @@ Uso:
 
 Debe vivir dentro de un componente oficial de visor, no dentro de cada pantalla documental.
 
+`DocumentViewer` utiliza `ZoomableImage`: permite pellizcar o usar controles táctiles para
+ampliar hasta 4×, desplazar la imagen ampliada y restablecerla al 100 %. Los controles deben
+mantener un área táctil mínima de 44 × 44 y etiquetas accesibles.
+
+`DocumentImageCarousel` presenta documentos de varias caras mediante paginación horizontal.
+Tocar una cara abre un modal opaco de pantalla completa que reutiliza `ZoomableImage`; al
+100 % el gesto horizontal cambia de página y, con zoom, el arrastre recorre la imagen. La
+pantalla consumidora resuelve autorización, orden y disponibilidad antes de entregar las páginas.
+
 ---
 
 ## 8. Encabezados
@@ -326,6 +348,7 @@ Contenido:
 - marca CRELEALTAD;
 - semana;
 - avatar;
+- contador global de pendientes, sólo cuando su valor sea mayor que cero;
 - nombre del usuario;
 - rol.
 
@@ -333,6 +356,8 @@ Reglas:
 
 - no usar menú hamburguesa;
 - no colocar acciones de negocio dentro del encabezado;
+- el contador puede navegar a una bandeja operativa global, pero no ejecutar, aprobar ni resolver la acción de negocio;
+- el contador representa pendientes abiertos y no elementos sin leer; abrirlo no debe disminuir su valor;
 - no cambiar altura, padding o tipografía por pantalla;
 - el botón regresar debe usar icono oficial, no texto improvisado;
 - los datos de usuario deben recibirse desde el contexto de sesión, no por valores predeterminados permanentes.
@@ -360,6 +385,8 @@ Reglas:
 
 Para mostrar grupo, solicitante, ciclo o sección actual se utilizará un componente separado, por ejemplo `ContextHeader` o `StickySectionHeader`.
 
+Estado verificado al 2026-10-02: `ContextHeader` está implementado con tema de módulo, variante de acento institucional y un texto contextual corto opcional al extremo derecho sin desplazar el título centrado; `StickySectionHeader` admite variantes suave y sólida para secciones pegajosas. La variante sólida centraliza tipografía, altura, sombra, extensión lateral y un tono semántico opcional para retiradas.
+
 No se deberá modificar `ScreenTitleBar` para cada caso.
 
 ---
@@ -385,6 +412,8 @@ No se deberá modificar `ScreenTitleBar` para cada caso.
 6. Acciones destructivas requieren confirmación cuando su efecto no sea reversible.
 7. La tarjeta completa puede ser presionable; no agregar botón “Abrir”.
 8. No usar color para distinguir acciones si el componente ya define su jerarquía.
+9. `PrimaryButton.leadingIcon` y `SecondaryButton.leadingIcon` pueden identificar un canal o marca cuando el texto operativo permanece visible; el icono es decorativo y no sustituye la etiqueta accesible. `trailingContent` se reserva para indicadores compactos accesibles que no dependan sólo del color.
+10. `SecondaryButton.moduleTheme` aplica un borde reforzado del color principal del módulo manteniendo fondo blanco. `size="large"` se reserva para acciones de campo equivalentes que requieren un objetivo táctil prominente. `contentLayout="columns"` alinea ícono, título e indicador final cuando varias acciones equivalentes deben conservar las mismas columnas; estas variantes deben usarse desde el componente compartido.
 
 ### 9.3 Posición
 
@@ -406,6 +435,15 @@ No se deberá modificar `ScreenTitleBar` para cada caso.
 - borde;
 - sombra;
 - padding base.
+
+La variante `warning` reutiliza `colors.warningLight` y `colors.warning` para avisos
+destacados que deben coincidir con la semántica visual de una selección amarilla.
+La variante `accent`, acompañada de `moduleTheme`, usa el fondo de acento claro y el borde
+principal del módulo para destacar contexto sin comunicar una advertencia.
+
+La variante `outlined`, acompañada de `moduleTheme`, conserva el fondo normal de la tarjeta y
+refuerza únicamente el borde con el color principal del módulo. Se usa para separar apartados
+operativos sin convertir toda la superficie en un bloque de acento.
 
 Las pantallas no deberán redefinir esas propiedades.
 
@@ -442,6 +480,21 @@ Una tarjeta interactiva deberá incluir:
 - indicador de estado oficial;
 - contenido mínimo para decidir si debe abrirse.
 
+### 10.4 Concentradores de tareas
+
+`TaskMenuButton` representa una tarea o proceso dentro de un concentrador cuando las
+opciones tienen la misma jerarquía y pueden ejecutarse en cualquier orden.
+
+Reglas:
+
+- la tarjeta completa es el objetivo táctil;
+- el título y el icono siempre tienen etiqueta accesible;
+- el componente no calcula avance ni finalización;
+- puede recibir un estado `completed` calculado por su pantalla para mostrar una paloma verde
+  y anunciar `Realizado`, sin convertir ese indicador visual en persistencia;
+- no se usa `PrimaryButton` repetido para simular un menú;
+- orden, disponibilidad y persistencia se resuelven fuera del componente.
+
 ---
 
 ## 11. Estados, badges y franjas laterales
@@ -472,6 +525,14 @@ Reglas:
 - la franja lateral siempre se ubica a la izquierda;
 - un color de módulo no sustituye un estado;
 - el color nunca será la única señal: deberá acompañarse de texto o icono.
+- `StatusBadge.leadingMark` permite anteponer una marca circular breve, como `T`, sin crear badges locales; siempre se acompaña de una etiqueta textual explícita.
+
+### 11.1 Selecciones obligatorias de rol
+
+- `RequiredSelectionBar` presenta una asignación obligatoria fija, su valor actual y la acción Seleccionar/Cambiar sin decidir reglas de negocio.
+- `SingleSelectOption` presenta cada candidata como radio accesible dentro de `BottomSheetSelector`.
+- La pantalla filtra las opciones con datos validados por la API y bloquea su acción final cuando no existe selección válida.
+- Un rol operativo no debe comunicarse únicamente mediante una letra o un color; la marca siempre se acompaña del nombre del rol.
 
 ---
 
@@ -491,6 +552,13 @@ Reglas:
 - `ReadOnlyField`
 
 Todos deberán integrar `FormField` internamente.
+
+Estado verificado al 2026-09-01: `YesNoField` está implementado para confirmaciones binarias,
+admite un valor registrado de sólo lectura y conserva texto, icono y color como señales de
+selección. Las alternativas positiva y negativa conservan su fondo verde y rojo en reposo,
+y la opción elegida usa el mismo color en un tono visualmente más fuerte. `BinaryChoiceDialog`
+concentra resultados binarios en un diálogo compartido sin
+convertir el cierre del diálogo en una respuesta.
 
 ### 12.2 Contrato de campo
 
@@ -537,6 +605,26 @@ Reglas:
 - debe existir estado vacío;
 - cuando la lista sea extensa deberá admitir búsqueda;
 - no cerrar un selector largo si la interacción requiere selección múltiple.
+- cuando una respuesta confirmada continúe siendo editable, el resumen utilizará el patrón del
+  módulo: palomita a la izquierda, valor con texto fuerte, flecha a la derecha, alto mínimo de
+  `40`, borde completo de `2` y fondo suave del color primario. La pregunta o una etiqueta breve debe
+  conservar el contexto y el color no será la única señal de selección.
+- todo selector que exija una acción explícita de confirmación aplicará automáticamente ese resumen
+  al contar con valor; ninguna pantalla deberá habilitarlo pregunta por pregunta. Los campos de
+  escritura manual conservan apariencia de entrada mientras permanezcan editables.
+- cuando el valor confirmado explique una condición negativa que deba permanecer advertida, el
+  mismo patrón cambia a fondo rojo claro, borde y texto rojos, y sustituye la palomita por una
+  tacha; conserva la flecha si todavía puede corregirse.
+- un selector puede declarar valores negativos específicos sin convertir en rojas sus demás
+  opciones. El tono se deriva del valor seleccionado tanto en el pop-up como en el resumen y vuelve
+  al color normal al elegir una alternativa no negativa.
+- los campos de escritura libre distinguen el estado contestado sin aparentar una confirmación de
+  catálogo: vacíos usan fondo blanco y borde gris de `1`; con contenido mantienen el fondo blanco y
+  cambian al borde de `2` del color primario del módulo. Un error prevalece siempre con borde rojo.
+- cuando una selección binaria habilite evidencia física, la evidencia permanecerá oculta o
+  deshabilitada hasta que el servidor confirme la respuesta habilitadora. Una respuesta negativa
+  que sustituya la evidencia deberá exigir y persistir una causa controlada antes de completar el
+  proceso; el resumen del servidor, no el estado local, determina la terminación.
 
 ---
 
@@ -614,8 +702,13 @@ Componentes previstos:
 
 - `AppModal`
 - `ConfirmDialog`
+- `BinaryChoiceDialog`
 - `BottomSheetSelector`
 - `DocumentViewer`
+
+Estado verificado al 2026-09-01: `ConfirmDialog`, `BinaryChoiceDialog`, `BottomSheetSelector`, `DocumentViewer` y
+su visor interno `ZoomableImage` están implementados en la biblioteca compartida;
+`AppModal` genérico continúa pendiente.
 
 Todo modal deberá incluir:
 
@@ -651,6 +744,37 @@ Los mensajes deberán indicar:
 - qué ocurrió;
 - qué puede hacer el usuario;
 - acción de reintento cuando aplique.
+
+### 17.1 Bloqueo global durante procesamiento
+
+Toda operación asíncrona explícita iniciada por la persona usuaria que impida continuar con
+seguridad debe activar el bloqueo global de procesamiento. El autoguardado, las búsquedas derivadas
+de un campo y otras consultas de fondo no bloquean la captura.
+
+Contrato obligatorio:
+
+- la superficie cubre toda la aplicación y captura los toques mientras la operación continúa;
+- muestra un indicador animado y un mensaje operativo breve, como `Cargando…`, `Guardando…` o
+  `Procesando…`;
+- anuncia el estado mediante accesibilidad y trata la superficie como modal;
+- ignora una segunda acción de usuario mientras existe una operación activa;
+- mantiene el bloqueo cuando existen operaciones anidadas o paralelas y lo libera únicamente al
+  concluir la última;
+- libera el bloqueo también ante error mediante una cláusula `finally` o mecanismo equivalente;
+- el autoguardado informa `Guardando`, `Guardado` o `No se pudo guardar` en línea, sin abrir el
+  overlay ni mover el foco del campo actual;
+- no sustituye la idempotencia de API, la cola de sincronización ni los estados locales específicos
+  que explican qué dato se está guardando.
+
+La implementación oficial vive en `ProcessingProvider`, `ProcessingOverlay` y
+`processing-controller.ts`. El cliente HTTP central activa el bloqueo de forma predeterminada y
+admite `showProcessing: false` exclusivamente para autoguardado o trabajo de fondo que ya comunica
+su estado en la pantalla. Cámara, galería, ubicación, almacenamiento local u otra operación
+asíncrona anterior a la petición HTTP deben ejecutarse mediante `useProcessingAction` o
+`useProcessing().run` cuando formen parte de una acción explícita.
+
+No se crearán overlays, spinners bloqueantes ni banderas globales alternativas dentro de una
+pantalla de feature.
 
 ---
 
@@ -765,10 +889,10 @@ Antes de seguir agregando módulos se recomienda implementar, en este orden:
 5. `LoadingState`, `EmptyState`, `ErrorState`.
 6. `SearchField` y `FilterChips`.
 7. `MultiSelectField`.
-8. `ContextHeader`.
+8. Extender `ContextHeader` conforme aparezcan nuevos contextos; su contrato base ya está implementado.
 9. `AutoSaveIndicator`.
-10. `AppModal`, `ConfirmDialog` y `DocumentViewer`.
-11. `BottomActionBar` para formularios largos o selección masiva.
+10. `AppModal`; `ConfirmDialog`, `BottomSheetSelector` y `DocumentViewer` ya están disponibles.
+11. Ampliar `BottomActionBar`, ya implementado para el T6 de confirmación, cuando nuevos formularios requieran variantes.
 
 ---
 

@@ -4,9 +4,9 @@ import {
   IsString,
   IsNumber,
   IsDateString,
-  IsBoolean,
   MaxLength,
   Min,
+  Max,
 } from 'class-validator';
 
 /**
@@ -15,11 +15,16 @@ import {
  * ARQUITECTURA: cada campo coincide EXACTAMENTE con el nombre de columna en PostgreSQL.
  * Las 8 tablas (solicitudes + 7 hijas) están representadas aquí con sus prefijos originales.
  *
- * CAMPOS CORE REQUERIDOS (solicitudes):
- * - integrante_id, persona_id, expediente_id, grupo_id
+ * CAMPO CORE REQUERIDO:
+ * - integrante_id
+ *
+ * persona_id, expediente_id y grupo_id se derivan en el backend desde el integrante.
  *
  * CAMPOS QUE NUNCA VIENEN DEL FRONTEND:
+ * - folio, ciclo_numero, monto_autorizado
  * - numero_credito, credito_id (asignados en desembolso)
+ * - tiene_menos_70_anios (derivado de fecha_nac)
+ * - rutas y fechas documentales (asignadas al confirmar el archivo en servidor)
  *
  * TABLAS HIJAS (todos opcionales porque el wizard guarda por pasos):
  * - solicitudes_datos_personales: 17 cols
@@ -38,34 +43,10 @@ export class CreateSolicitudDto {
   @IsUUID('4', { message: 'integrante_id debe ser un UUID válido' })
   integrante_id: string;
 
-  @IsUUID('4', { message: 'persona_id debe ser un UUID válido' })
-  persona_id: string;
-
-  @IsUUID('4', { message: 'expediente_id debe ser un UUID válido' })
-  expediente_id: string;
-
-  @IsUUID('4', { message: 'grupo_id debe ser un UUID válido' })
-  grupo_id: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(20)
-  folio?: string;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  ciclo_numero?: number;
-
   @IsOptional()
   @IsNumber()
   @Min(0)
   monto_solicitado?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  monto_autorizado?: number;
 
   // ====================================================================
   // TABLA: solicitudes_datos_personales - 17 columnas
@@ -80,17 +61,6 @@ export class CreateSolicitudDto {
   @IsString()
   @MaxLength(50)
   apellido_pat?: string;
-
-  // Legacy: separación errónea de nombres compuestos
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  primer_nombre?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  segundo_nombre?: string;
 
   @IsOptional()
   @IsString()
@@ -193,6 +163,27 @@ export class CreateSolicitudDto {
   @IsString()
   @MaxLength(20)
   dom_telefono?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  dom_latitud?: number | null;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  dom_longitud?: number | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  dom_geocodificacion_fuente?: string | null;
+
+  @IsOptional()
+  @IsDateString()
+  dom_geocodificacion_fecha?: string | null;
 
   // ====================================================================
   // TABLA: solicitudes_negocios - 18 columnas
@@ -364,48 +355,4 @@ export class CreateSolicitudDto {
   @MaxLength(20)
   vive_max_5km_tesorera?: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(20)
-  tiene_menos_70_anios?: string;
-
-  // ====================================================================
-  // TABLA: solicitudes_documentos - 12 columnas
-  // ====================================================================
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  doc_ine_ruta?: string;
-
-  @IsOptional()
-  @IsDateString()
-  doc_ine_fecha?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  doc_comprobante_ruta?: string;
-
-  @IsOptional()
-  @IsDateString()
-  doc_comprobante_fecha?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  doc_ine_beneficiario_ruta?: string;
-
-  @IsOptional()
-  @IsDateString()
-  doc_ine_beneficiario_fecha?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  doc_solicitud_firmada_ruta?: string;
-
-  @IsOptional()
-  @IsDateString()
-  doc_solicitud_firmada_fecha?: string;
 }

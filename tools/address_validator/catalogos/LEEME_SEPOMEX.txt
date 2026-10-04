@@ -1,0 +1,7 @@
+VALIDACIÓN SEPOMEX
+
+Para máxima precisión postal, descarga el Catálogo Nacional de Códigos Postales
+desde el sitio oficial de Correos de México y coloca aquí el archivo TXT o CSV.
+
+La aplicación detectará automáticamente el primer .txt o .csv de esta carpeta.
+No es obligatorio para probar Google; sí es recomendado para la pasada postal final.

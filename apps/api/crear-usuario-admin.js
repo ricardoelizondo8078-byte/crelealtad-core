@@ -5,12 +5,17 @@ const crypto = require('crypto');
 const generateUUID = () => crypto.randomUUID();
 
 (async () => {
+  const pin = process.env.INITIAL_ADMIN_PIN;
+  if (!/^\d{4}$/.test(pin || '') || pin === '1234') {
+    throw new Error('INITIAL_ADMIN_PIN debe contener 4 dígitos y no puede usar el valor temporal 1234');
+  }
+
   const client = new Client({
-    host: 'localhost',
-    port: 5432,
-    user: 'postgres',
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT || 5432),
+    user: process.env.DB_USERNAME || process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || process.env.DB_PASS,
-    database: 'crelealtad'
+    database: process.env.DB_NAME || 'crelealtad'
   });
 
   try {
@@ -51,7 +56,6 @@ const generateUUID = () => crypto.randomUUID();
     const finalSucursalId = sucursalId;
 
     // 4. Hashear el PIN de 4 dígitos (para el nuevo login)
-    const pin = '1234';
     const passwordHash = await bcrypt.hash(pin, 10);
 
     // 5. Crear usuario administrador
@@ -66,11 +70,7 @@ const generateUUID = () => crypto.randomUUID();
     `, [userId, 'Administrador', 'admin@crelealtad.com', passwordHash, finalRolId, finalSucursalId, 'ACTIVO']);
 
     console.log('✅ Usuario administrador creado');
-    console.log('\n📋 Credenciales de acceso:');
-    console.log('   Nombre: Administrador');
-    console.log('   Email: admin@crelealtad.com');
-    console.log('   PIN: 1234');
-    console.log('   Estado: ACTIVO\n');
+    console.log('✅ PIN inicial asignado desde INITIAL_ADMIN_PIN; el valor no se mostrará en consola.');
 
   } catch (error) {
     console.error('❌ Error:', error.message);

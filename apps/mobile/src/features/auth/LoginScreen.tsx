@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -14,59 +14,46 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { apiUrl } from '../../config/api';
-import { useAuth } from '../../context/AuthContext';
-import { colors, fonts, moduleThemes, spacing, radius, shadows } from '../../theme/tokens';
+import { LoginResponse, useAuth } from '../../context/AuthContext';
+import { useProcessingAction } from '../../context/ProcessingContext';
+import { TextInput as AppTextInput } from '../../components/ui';
+import { api, ApiError } from '../../services/api-client';
+import { colors, fonts, moduleThemes, spacing, shadows } from '../../theme/tokens';
 import appConfig from '../../../app.json';
 
-interface Usuario {
-  id: string;
-  nombre: string;
-  email: string;
-}
+const getLoginErrorMessage = (error: unknown): string => {
+  if (!(error instanceof ApiError)) {
+    return 'No se pudo iniciar sesión. Intenta nuevamente.';
+  }
+
+  if (error.status === 0) {
+    return error.message;
+  }
+
+  if (error.status === 401) {
+    return error.message === 'Usuario inactivo o suspendido'
+      ? 'Tu acceso está inactivo. Solicita apoyo a tu coordinador.'
+      : 'Abreviatura o PIN incorrectos.';
+  }
+
+  if (error.status === 429) {
+    return 'Demasiados intentos. Espera un minuto e intenta nuevamente.';
+  }
+
+  return 'No se pudo iniciar sesión. Intenta nuevamente.';
+};
 
 export function LoginScreen() {
   const { login } = useAuth();
   const { height } = useWindowDimensions();
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null);
+  const [abreviatura, setAbreviatura] = useState('');
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loadingUsers, setLoadingUsers] = useState(true);
   const [error, setError] = useState('');
-  const [showUserPicker, setShowUserPicker] = useState(false);
 
-  const greenPrimary = moduleThemes.documentation.primary;
   const isCompact = height < 700;
   const keyHeight = isCompact ? 46 : 52;
   const logoSize = isCompact ? 80 : 96;
-
-  useEffect(() => {
-    console.log('🔵 LoginScreen montado, iniciando carga de usuarios...');
-    loadUsuarios();
-  }, []);
-
-  const loadUsuarios = async () => {
-    try {
-      const url = apiUrl('/auth/login-list');
-      console.log('🔵 Intentando cargar usuarios desde:', url);
-      const response = await fetch(url);
-      console.log('🔵 Response status:', response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('🔵 Usuarios cargados:', data.length);
-        setUsuarios(data);
-      } else {
-        console.error('❌ Error HTTP:', response.status, response.statusText);
-        setError('Error al cargar usuarios');
-      }
-    } catch (err) {
-      console.error('❌ Error cargando usuarios:', err);
-      setError('No se pudo conectar al servidor');
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
 
   const handleNumberPress = (num: string) => {
     if (pin.length < 4) {
@@ -87,8 +74,9 @@ export function LoginScreen() {
   };
 
   const handleLogin = async () => {
-    if (!selectedUsuario) {
-      setError('Por favor selecciona tu nombre.');
+    const identificador = abreviatura.trim();
+    if (!identificador) {
+      setError('Ingresa tu abreviatura.');
       return;
     }
 
@@ -101,28 +89,25 @@ export function LoginScreen() {
     setError('');
 
     try {
-      const response = await fetch(apiUrl('/auth/login'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: selectedUsuario.email,
-          password: pin, // El PIN se envía como password
-        }),
-      });
+      const data = await api.post<LoginResponse>(
+        '/auth/login',
+        {
+          abreviatura: identificador,
+          pin,
+        },
+        { requiresAuth: false },
+      );
 
-      if (!response.ok) {
-        throw new Error('PIN incorrecto.');
-      }
-
-      const data = await response.json();
       await login(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+      setError(getLoginErrorMessage(err));
       setPin(''); // Limpiar PIN al fallar
     } finally {
       setLoading(false);
     }
   };
+
+  const handleLoginPress = useProcessingAction(handleLogin, 'Iniciando sesión…');
 
   const renderPinDots = () => {
     return (
@@ -193,13 +178,13 @@ export function LoginScreen() {
     );
   };
 
-  const canSubmit = selectedUsuario !== null && pin.length === 4 && !loading;
+  const canSubmit = abreviatura.trim().length > 0 && pin.length === 4 && !loading;
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <LinearGradient
-        colors={[colors.greenGradientTop, colors.greenGradientBottom]}
+        colors={[moduleThemes.general.headerBg, moduleThemes.general.titleBarBg]}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.safeArea}>
@@ -231,25 +216,20 @@ export function LoginScreen() {
 
           {/* TARJETA DE LOGIN */}
           <View style={styles.loginCard}>
-            {/* Selector de nombre */}
-            <Text allowFontScaling={false} style={styles.fieldLabel}>SELECCIONA TU NOMBRE</Text>
-            <Pressable
-              style={styles.userSelector}
-              onPress={() => setShowUserPicker(true)}
-              disabled={loadingUsers}
-            >
-              <Text allowFontScaling={false} style={[
-                styles.userSelectorText,
-                !selectedUsuario && styles.userSelectorPlaceholder,
-              ]}>
-                {loadingUsers
-                  ? 'Cargando...'
-                  : selectedUsuario
-                  ? selectedUsuario.nombre
-                  : '— Elige tu nombre —'}
-              </Text>
-              <Text allowFontScaling={false} style={styles.chevron}>▼</Text>
-            </Pressable>
+            <AppTextInput
+              label="ABREVIATURA"
+              value={abreviatura}
+              onChangeText={(value) => {
+                setAbreviatura(value.toUpperCase());
+                setError('');
+              }}
+              placeholder="Ej. ANA_VAZQUEZ"
+              autoCapitalize="characters"
+              autoCorrect={false}
+              editable={!loading}
+              maxLength={100}
+              required
+            />
 
             {/* PIN */}
             <Text allowFontScaling={false} style={[styles.fieldLabel, { marginTop: spacing.lg }]}>
@@ -266,7 +246,7 @@ export function LoginScreen() {
                 styles.loginButton,
                 !canSubmit && styles.loginButtonDisabled,
               ]}
-              onPress={handleLogin}
+              onPress={handleLoginPress}
               disabled={!canSubmit}
             >
               {loading ? (
@@ -285,40 +265,6 @@ export function LoginScreen() {
           </View>
         </ScrollView>
 
-        {/* Modal de selección de usuario */}
-        {showUserPicker && (
-          <Pressable
-            style={styles.modalOverlay}
-            onPress={() => setShowUserPicker(false)}
-          >
-            <Pressable style={styles.pickerCard} onPress={(e) => e.stopPropagation()}>
-              <Text allowFontScaling={false} style={styles.pickerTitle}>Selecciona tu nombre</Text>
-              <ScrollView style={styles.pickerList}>
-                {usuarios.map((usuario) => (
-                  <Pressable
-                    key={usuario.id}
-                    style={({ pressed }) => [
-                      styles.pickerItem,
-                      pressed && styles.pickerItemPressed,
-                      selectedUsuario?.id === usuario.id && styles.pickerItemSelected,
-                    ]}
-                    onPress={() => {
-                      setSelectedUsuario(usuario);
-                      setPin('');
-                      setError('');
-                      setShowUserPicker(false);
-                    }}
-                  >
-                    <Text allowFontScaling={false} style={styles.pickerItemText}>{usuario.nombre}</Text>
-                    {selectedUsuario?.id === usuario.id && (
-                      <Text allowFontScaling={false} style={styles.checkmark}>✓</Text>
-                    )}
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </Pressable>
-          </Pressable>
-        )}
       </SafeAreaView>
     </View>
   );
@@ -375,7 +321,7 @@ const styles = StyleSheet.create({
   appTitle: {
     fontFamily: fonts.extraBold,
     fontSize: 30,
-    color: colors.white,
+    color: moduleThemes.general.headerText,
     letterSpacing: 3,
     textAlign: 'center',
     marginBottom: 4,
@@ -387,12 +333,12 @@ const styles = StyleSheet.create({
   appSubtitle: {
     fontFamily: fonts.regular,
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.65)',
+    color: colors.gray[800],
   },
   appVersion: {
     fontFamily: fonts.medium,
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: colors.gray[800],
     marginLeft: 6,
   },
   loginCard: {
@@ -413,30 +359,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 8,
   },
-  userSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    height: 52,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    marginBottom: 16,
-  },
-  userSelectorText: {
-    fontFamily: fonts.regular,
-    fontSize: 16,
-    color: colors.textPrimary,
-  },
-  userSelectorPlaceholder: {
-    color: colors.textSecondary,
-  },
-  chevron: {
-    fontSize: 20,
-    color: colors.textSecondary,
-  },
   pinDotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -453,8 +375,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   pinDotFilled: {
-    backgroundColor: moduleThemes.documentation.primary,
-    borderColor: moduleThemes.documentation.primary,
+    backgroundColor: moduleThemes.general.primary,
+    borderColor: moduleThemes.general.primary,
   },
   keypad: {
     gap: 10,
@@ -479,11 +401,11 @@ const styles = StyleSheet.create({
   keyText: {
     fontFamily: fonts.extraBold,
     fontSize: 22,
-    color: moduleThemes.documentation.primary,
+    color: moduleThemes.general.primary,
   },
   loginButton: {
     height: 50,
-    backgroundColor: moduleThemes.documentation.primary,
+    backgroundColor: moduleThemes.general.primary,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -506,62 +428,5 @@ const styles = StyleSheet.create({
     color: colors.danger,
     textAlign: 'center',
     marginTop: 10,
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  pickerCard: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    width: '100%',
-    maxWidth: 400,
-    maxHeight: '70%',
-    padding: 20,
-  },
-  pickerTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 18,
-    color: colors.textPrimary,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  pickerList: {
-    maxHeight: 400,
-  },
-  pickerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 8,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-  },
-  pickerItemPressed: {
-    backgroundColor: colors.background,
-  },
-  pickerItemSelected: {
-    backgroundColor: moduleThemes.documentation.headerAccent,
-    borderColor: moduleThemes.documentation.primary,
-  },
-  pickerItemText: {
-    fontFamily: fonts.regular,
-    fontSize: 16,
-    color: colors.textPrimary,
-  },
-  checkmark: {
-    fontFamily: fonts.bold,
-    fontSize: 18,
-    color: moduleThemes.documentation.primary,
   },
 });

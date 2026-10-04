@@ -17,8 +17,13 @@ import { formatPhone, normalizeDigits, normalizePhone, normalizeUppercaseLetters
 
 interface IntegranteFormScreenProps {
   expedienteId: string;
-  onSaved?: () => void;
+  onSaved?: (result: CreatedIntegranteResult) => void;
   onBack?: () => void;
+}
+
+export interface CreatedIntegranteResult {
+  id: string;
+  es_nueva_con_nosotros: boolean;
 }
 
 interface FormErrors {
@@ -124,7 +129,7 @@ export const IntegranteFormScreen: React.FC<IntegranteFormScreenProps> = ({ expe
 
     setIsSubmitting(true);
     try {
-      await api.post('/integrantes', {
+      const result = await api.post<CreatedIntegranteResult>('/integrantes', {
         expedienteId,
         nombre: fullName,
         nombres: nombres.trim(),
@@ -135,7 +140,7 @@ export const IntegranteFormScreen: React.FC<IntegranteFormScreenProps> = ({ expe
       });
 
       Alert.alert('Éxito', 'Integrante guardado correctamente');
-      onSaved?.();
+      onSaved?.(result);
     } catch (error: any) {
       const errorMessage = error.data?.message || error.message || 'Error al guardar integrante';
       Alert.alert('Error', errorMessage);

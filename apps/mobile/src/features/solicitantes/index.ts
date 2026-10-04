@@ -1,1 +1,0 @@
-﻿export { IntegranteFormScreen } from './SolicitanteFormScreen';

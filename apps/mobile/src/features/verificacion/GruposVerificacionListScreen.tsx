@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { AppHeader, Card, ScreenContainer, ScreenTitleBar } from '../../components/ui';
-import { apiUrl } from '../../config/api';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppHeader, Card, ScreenContainer, ScreenState, ScreenTitleBar, StatusCard } from '../../components/ui';
+import { api } from '../../services/api-client';
 import { colors, spacing, typography } from '../../theme/tokens';
 
 export interface GrupoVerificacion {
   id: string;
   nombre: string;
   estado: string;
-  expedienteId?: string;
+  expediente_id: string;
   estado_fecha?: string;
   integrantes_count?: number;
+  es_grupo_nuevo_ciclo_1: boolean;
+  requiere_revision_documental: boolean;
 }
 
 interface GruposVerificacionListScreenProps {
@@ -26,6 +28,8 @@ export const GruposVerificacionListScreen: React.FC<GruposVerificacionListScreen
 }) => {
   const [grupos, setGrupos] = useState<GrupoVerificacion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   const calcularDiasEnEstado = (estadoFecha?: string): number => {
     if (!estadoFecha) {
@@ -43,31 +47,37 @@ export const GruposVerificacionListScreen: React.FC<GruposVerificacionListScreen
   useEffect(() => {
     const loadGrupos = async () => {
       setLoading(true);
+      setErrorMessage(null);
       try {
-        // Cargar grupos que están EN_VERIFICACION
-        const response = await fetch(apiUrl('/grupos?estado=EN_VERIFICACION'));
-        if (!response.ok) {
-          throw new Error('Failed to load grupos en verificación');
-        }
-
-        const data = await response.json();
+        const data = await api.get<GrupoVerificacion[]>('/expedientes/en-verificacion');
         setGrupos(data);
       } catch (error) {
-        Alert.alert('Error', error instanceof Error ? error.message : 'Unexpected error');
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : 'No fue posible consultar los grupos pendientes.',
+        );
       } finally {
         setLoading(false);
       }
     };
 
     loadGrupos();
-  }, [refreshKey]);
+  }, [refreshKey, retryKey]);
 
   return (
     <ScreenContainer moduleTheme="verification">
       <AppHeader showBackButton onBackPress={onBack} moduleTheme="verification" />
       <ScreenTitleBar title="Grupos en Verificación" moduleTheme="verification" />
       {loading ? (
-        <ActivityIndicator style={styles.loader} size="large" />
+        <ScreenState title="Consultando grupos" loading />
+      ) : errorMessage ? (
+        <ScreenState
+          title="No se pudo abrir Verificación"
+          message={errorMessage}
+          actionLabel="Intentar nuevamente"
+          onAction={() => setRetryKey((currentKey) => currentKey + 1)}
+        />
       ) : (
         <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
           <Text allowFontScaling={false} style={styles.subtitle}>
@@ -80,14 +90,32 @@ export const GruposVerificacionListScreen: React.FC<GruposVerificacionListScreen
               </Text>
             </Card>
           ) : (
-            grupos.map((grupo, index) => (
-              <Pressable
-                key={grupo.id}
-                onPress={() => {
-                  onSelectGrupo?.(grupo.expedienteId ?? grupo.id);
-                }}
-              >
-                <Card style={styles.cardWithBorder}>
+            grupos.map((grupo, index) => {
+              const requiereRevisionDocumental = grupo.requiere_revision_documental === true;
+
+              return (
+                <Pressable
+                  key={grupo.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${grupo.nombre}.${requiereRevisionDocumental
+                    ? ' Revisar documentación. Hay integrantes que están en Documentación. El grupo continúa disponible.'
+                    : grupo.es_grupo_nuevo_ciclo_1
+                      ? ' Grupo nuevo, ciclo 1. Estado verificando.'
+                      : ' Estado verificando.'}`}
+                  onPress={() => {
+                    onSelectGrupo?.(grupo.expediente_id);
+                  }}
+                >
+                  <StatusCard
+                    compact
+                    narrowStripe
+                    status={requiereRevisionDocumental
+                      ? 'needsDocumentationGroup'
+                      : grupo.es_grupo_nuevo_ciclo_1
+                        ? 'newGroup'
+                        : 'neutral'}
+                    style={styles.cardWithBorder}
+                  >
                   <View style={styles.cardHeader}>
                     <Text allowFontScaling={false} style={styles.title}>{grupo.nombre}</Text>
                     <Text allowFontScaling={false} style={styles.indexBadge}>
@@ -113,9 +141,10 @@ export const GruposVerificacionListScreen: React.FC<GruposVerificacionListScreen
                       </Text>
                     </View>
                   )}
-                </Card>
-              </Pressable>
-            ))
+                  </StatusCard>
+                </Pressable>
+              );
+            })
           )}
         </ScrollView>
       )}
@@ -124,7 +153,6 @@ export const GruposVerificacionListScreen: React.FC<GruposVerificacionListScreen
 };
 
 const styles = StyleSheet.create({
-  loader: { marginTop: spacing.xl },
   scroll: { flex: 1 },
   list: {
     padding: spacing.lg,

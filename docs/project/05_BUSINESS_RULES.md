@@ -1,8 +1,8 @@
 # 02 Business Rules - Catalogo Normalizado
 
-Version: 1.1.0
+Version: 1.2.0
 Estado: Vigente y auditado
-Fecha de auditoria: 2026-07-10
+Fecha de auditoria: 2026-09-21
 Fuente base: docs/project/01_PROJECT_CONSTITUTION.md + docs/archive/BUSINESS_RULES_INITIAL_DRAFT.md
 
 ## Criterio de normalizacion
@@ -89,10 +89,20 @@ Estado documental: la implementacion actual es parcial; la autoridad funcional s
 Estado documental: la parametrizacion continua siendo la politica oficial; el hardcode actual se documenta como semilla temporal.
 
 3. Entidad Solicitud en API y mobile sin tabla dedicada en schema principal.
-Estado documental: la entidad se conserva como oficial y la brecha de persistencia queda abierta hasta que exista aprobacion tecnica e implementacion.
+Estado documental: RESUELTA. PostgreSQL contiene `solicitudes`, siete tablas hijas y la vista `solicitudes_completo`; la API persiste mediante TypeORM y deriva persona, expediente y grupo desde la integrante.
 
 4. Estados tecnicos en SQL como draft, active y pending versus estados funcionales de negocio.
 Estado documental: los estados del schema actual no sustituyen la semantica funcional definida en esta guia y en la maquina de estados.
+
+5. RN-007 indica que grupo y credito nacen tras el desembolso, mientras el flujo vigente crea el grupo al iniciar Documentacion y reserva el nacimiento del ciclo/credito para el desembolso real.
+Estado documental: ABIERTA. No se modifico RN-007 ni la operacion; requiere decision explicita de Direccion para precisar si "grupo" se refiere al grupo crediticio desembolsado o a su identidad operativa previa.
+
+## Controles tecnicos vigentes asociados
+
+- La edad y `tiene_menos_70_anios` se derivan de `fecha_nac`; no son una declaracion manual de la asesora.
+- `monto_autorizado`, `ciclo_numero`, relaciones y rutas documentales no forman parte de la escritura publica de la solicitud.
+- Una evidencia obligatoria cuenta para completitud solo cuando su manifiesto y archivo existen en almacenamiento de servidor.
+- Para el rol `ASESOR`, la API valida propiedad del expediente en cada ruta directa del recorrido activo.
 
 ## Referencias cruzadas
 

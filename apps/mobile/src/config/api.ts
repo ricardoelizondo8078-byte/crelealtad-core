@@ -1,164 +1,98 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-const DEFAULT_DEV_API_BASE_URL = 'http://192.168.1.83:3100';
-const HEALTH_PATH = '/health';
-const API_NOT_FOUND_MESSAGE = 'No se encontró el servidor de CRELEALTAD en esta red.';
-const COMMON_LAN_HOST_SUFFIXES = ['1', '2', '10', '20', '50', '83', '100', '101', '200', '254'];
-
-const envApiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
-
-let discoveredApiBaseUrl: string | null = envApiBaseUrl && envApiBaseUrl.length > 0 ? envApiBaseUrl : null;
-let discoveryPromise: Promise<string> | null = null;
+const DEFAULT_DEV_API_PORT = '3100';
+const explicitApiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+const apiPort = process.env.EXPO_PUBLIC_API_PORT?.trim() || DEFAULT_DEV_API_PORT;
 
 const normalizeBaseUrl = (baseUrl: string): string => baseUrl.trim().replace(/\/+$/, '');
 
-const parseHostIpFromText = (value: string | undefined): string | null => {
+const parseHostFromUri = (value: string | null | undefined): string | null => {
   if (!value) {
     return null;
   }
 
-  const ipMatch = value.match(/(\d{1,3}(?:\.\d{1,3}){3})/);
-  if (!ipMatch) {
-    return null;
-  }
-
-  return ipMatch[1];
-};
-
-const getExpoDebugHostIp = (): string | null => {
-  const hostUri = Constants.expoConfig?.hostUri;
-  const debuggerHost = (Constants as { manifest2?: { extra?: { expoGo?: { debuggerHost?: string } } } }).manifest2?.extra?.expoGo?.debuggerHost;
-  return parseHostIpFromText(hostUri) ?? parseHostIpFromText(debuggerHost);
-};
-
-const getLanSubnetFromIp = (ip: string | null): string | null => {
-  if (!ip) {
-    return null;
-  }
-
-  const parts = ip.split('.');
-  if (parts.length !== 4) {
-    return null;
-  }
-
-  return `${parts[0]}.${parts[1]}.${parts[2]}`;
-};
-
-const addCandidate = (candidates: string[], candidate: string | null | undefined) => {
-  if (!candidate) {
-    return;
-  }
-
-  const normalized = normalizeBaseUrl(candidate);
-  if (!/^https?:\/\//i.test(normalized)) {
-    return;
-  }
-
-  if (!candidates.includes(normalized)) {
-    candidates.push(normalized);
-  }
-};
-
-const getDiscoveryCandidates = (): string[] => {
-  const candidates: string[] = [];
-
-  // 1) Explicit override always has highest priority.
-  addCandidate(candidates, envApiBaseUrl);
-
-  // 2) Keep current known IP as fallback candidate.
-  addCandidate(candidates, DEFAULT_DEV_API_BASE_URL);
-
-  // 3) Try Expo debug host and its local subnet variations.
-  const expoHostIp = getExpoDebugHostIp();
-  if (expoHostIp) {
-    addCandidate(candidates, `http://${expoHostIp}:3100`);
-
-    const subnet = getLanSubnetFromIp(expoHostIp);
-    if (subnet) {
-      COMMON_LAN_HOST_SUFFIXES.forEach((suffix) => addCandidate(candidates, `http://${subnet}.${suffix}:3100`));
-    }
-  }
-
-  // 4) Web-specific convenience candidates.
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.hostname) {
-    const webHost = window.location.hostname;
-    addCandidate(candidates, `http://${webHost}:3100`);
-  }
-
-  addCandidate(candidates, 'http://localhost:3100');
-  addCandidate(candidates, 'http://127.0.0.1:3100');
-
-  return candidates;
-};
-
-const probeHealth = async (baseUrl: string): Promise<boolean> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
-
   try {
-    const response = await fetch(`${baseUrl}${HEALTH_PATH}`, {
-      method: 'GET',
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      return false;
-    }
-
-    const data = (await response.json()) as { status?: string };
-    return data.status === 'ok';
+    const uri = /^[a-z][a-z\d+.-]*:\/\//i.test(value) ? value : `http://${value}`;
+    return new URL(uri).hostname.replace(/^\[|\]$/g, '');
   } catch {
-    return false;
-  } finally {
-    clearTimeout(timeoutId);
+    return null;
   }
 };
 
-export const getApiDiscoveryErrorMessage = (): string => API_NOT_FOUND_MESSAGE;
+const getExpoDevelopmentHost = (): string | null => {
+  const candidates = [
+    Constants.expoConfig?.hostUri,
+    Constants.expoGoConfig?.debuggerHost,
+    Constants.linkingUri,
+  ];
 
-export const getCurrentApiBaseUrl = (): string | null => discoveredApiBaseUrl;
-
-export const ensureApiBaseUrlDiscovered = async (): Promise<string> => {
-  if (discoveredApiBaseUrl) {
-    return discoveredApiBaseUrl;
-  }
-
-  if (discoveryPromise) {
-    return discoveryPromise;
-  }
-
-  discoveryPromise = (async () => {
-    const candidates = getDiscoveryCandidates();
-
-    for (const candidate of candidates) {
-      const healthy = await probeHealth(candidate);
-      if (healthy) {
-        discoveredApiBaseUrl = candidate;
-        return candidate;
-      }
+  for (const candidate of candidates) {
+    const host = parseHostFromUri(candidate);
+    if (host) {
+      return host;
     }
-
-    throw new Error(API_NOT_FOUND_MESSAGE);
-  })();
-
-  try {
-    return await discoveryPromise;
-  } finally {
-    discoveryPromise = null;
   }
+
+  return null;
+};
+
+const formatHost = (host: string): string => {
+  return host.includes(':') ? `[${host}]` : host;
+};
+
+const isPrivateDevelopmentHost = (host: string): boolean => {
+  const normalizedHost = host.toLowerCase();
+  if (normalizedHost === 'localhost' || normalizedHost === '::1') {
+    return true;
+  }
+
+  const ipv4Parts = normalizedHost.split('.').map((part) => Number(part));
+  if (ipv4Parts.length === 4 && ipv4Parts.every((part) => Number.isInteger(part))) {
+    const [first, second] = ipv4Parts;
+    return first === 10
+      || first === 127
+      || (first === 172 && second >= 16 && second <= 31)
+      || (first === 192 && second === 168);
+  }
+
+  return normalizedHost.startsWith('fc')
+    || normalizedHost.startsWith('fd')
+    || normalizedHost.startsWith('fe80:');
+};
+
+const getWebDevelopmentHost = (): string | null => {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') {
+    return null;
+  }
+
+  return window.location?.hostname || null;
 };
 
 export const API_BASE_URL = (): string => {
-  // SIMPLIFICADO: Usar siempre la variable de entorno o el default, SIN discovery
-  const baseUrl = normalizeBaseUrl(envApiBaseUrl || DEFAULT_DEV_API_BASE_URL);
-  console.log('🔵 API_BASE_URL:', baseUrl);
-  return baseUrl;
+  if (explicitApiBaseUrl) {
+    return normalizeBaseUrl(explicitApiBaseUrl);
+  }
+
+  if (!__DEV__) {
+    throw new Error('Falta configurar EXPO_PUBLIC_API_BASE_URL para esta compilación.');
+  }
+
+  const developmentHost = getWebDevelopmentHost() ?? getExpoDevelopmentHost();
+  if (!developmentHost) {
+    throw new Error('Expo no informó la dirección de la laptop para conectar con la API.');
+  }
+
+  if (!isPrivateDevelopmentHost(developmentHost)) {
+    throw new Error(
+      'Expo está usando un túnel. Configura EXPO_PUBLIC_API_BASE_URL con la URL remota segura de la API.',
+    );
+  }
+
+  return `http://${formatHost(developmentHost)}:${apiPort}`;
 };
 
 export const apiUrl = (path: string) => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  const fullUrl = `${API_BASE_URL()}${normalizedPath}`;
-  console.log('🔵 apiUrl generada:', fullUrl);
-  return fullUrl;
+  return `${API_BASE_URL()}${normalizedPath}`;
 };

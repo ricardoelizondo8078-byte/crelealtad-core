@@ -4,10 +4,10 @@
     "slug": "crelealtad-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -23,17 +23,19 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
         "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/logo.png"
     },
     "plugins": [
       "@react-native-community/datetimepicker",
@@ -49,7 +51,15 @@
         {
           "photosPermission": "Esta aplicación necesita acceso a tu galería de fotos para guardar las fotos tomadas."
         }
-      ]
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "CRELEALTAD utiliza tu ubicación al confirmar una llamada o una visita al vecino y para convertir domicilios escritos en coordenadas aproximadas."
+        }
+      ],
+      "expo-splash-screen",
+      "expo-secure-store"
     ]
   }
 }

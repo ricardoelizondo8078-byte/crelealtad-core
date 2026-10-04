@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, typography } from '../../theme/tokens';
 
 interface FormFieldProps {
-  label: string;
+  label: React.ReactNode;
   required?: boolean;
   helperText?: string;
   errorText?: string;
@@ -19,10 +19,12 @@ export const FormField: React.FC<FormFieldProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Text allowFontScaling={false} style={styles.label}>
-        {label}
-        {required ? ' *' : ''}
-      </Text>
+      {label != null && label !== '' ? (
+        <Text allowFontScaling={false} style={styles.label}>
+          {label}
+          {required ? ' *' : ''}
+        </Text>
+      ) : null}
       {children}
       {helperText && typeof helperText === 'string' ? (
         <Text allowFontScaling={false} style={styles.helper}>{helperText}</Text>

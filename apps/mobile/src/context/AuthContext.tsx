@@ -1,17 +1,27 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { api } from '../services/api-client';
+import {
+  clearStoredSession,
+  getStoredToken,
+  saveSession,
+  saveStoredUser,
+  subscribeToSessionInvalidation,
+} from '../services/session-storage';
+import { EffectivePermissions, hasPermission } from '../security/permission-checker';
 
-interface Usuario {
+export interface Usuario {
   id: string;
-  email: string;
+  abreviatura: string;
   nombre: string;
-  apellido_pat: string;
-  apellido_mat: string;
-  rol: string;
-  zona_id?: string;
+  rol_id: string;
+  rol_nombre: string;
+  sucursal_id: string;
+  estado: string;
+  requiere_cambio_pin: boolean;
+  permisos: EffectivePermissions;
 }
 
-interface LoginResponse {
+export interface LoginResponse {
   usuario: Usuario;
   token: string;
 }
@@ -22,54 +32,74 @@ interface AuthContextData {
   loading: boolean;
   login: (data: LoginResponse) => Promise<void>;
   logout: () => Promise<void>;
+  tienePermiso: (modulo: string, accion: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
-const STORAGE_KEY_USER = 'crelealtad:usuario:v2';
-const STORAGE_KEY_TOKEN = process.env.REQUIRED_SECRET;
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false); // No cargamos de AsyncStorage al inicio
+  const [loading, setLoading] = useState(true);
 
-  // NO cargamos sesión guardada - por seguridad siempre inicia sin sesión
-  // Esto obliga a hacer login cada vez que se abre la app desde cero
+  useEffect(() => {
+    let activo = true;
+    const unsubscribe = subscribeToSessionInvalidation(() => {
+      if (!activo) return;
+      setToken(null);
+      setUsuario(null);
+    });
+
+    const restaurarSesion = async () => {
+      try {
+        const tokenGuardado = await getStoredToken();
+        if (!tokenGuardado) return;
+
+        const usuarioVigente = await api.get<Usuario>('/auth/me');
+        if (!activo) return;
+
+        await saveStoredUser(usuarioVigente);
+        setToken(tokenGuardado);
+        setUsuario(usuarioVigente);
+      } catch {
+        await clearStoredSession();
+        if (activo) {
+          setToken(null);
+          setUsuario(null);
+        }
+      } finally {
+        if (activo) setLoading(false);
+      }
+    };
+
+    void restaurarSesion();
+    return () => {
+      activo = false;
+      unsubscribe();
+    };
+  }, []);
 
   const login = async (data: LoginResponse) => {
-    try {
-      // Guardar en memoria (estado)
-      setUsuario(data.usuario);
-      setToken(data.token);
-
-      // Guardar token en AsyncStorage para que el api-client pueda accederlo
-      await AsyncStorage.setItem(STORAGE_KEY_TOKEN, data.token);
-      await AsyncStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.usuario));
-    } catch (error) {
-      console.error('Error saving auth:', error);
-      throw error;
-    }
+    await saveSession(data.token, data.usuario);
+    setUsuario(data.usuario);
+    setToken(data.token);
   };
 
   const logout = async () => {
-    try {
-      // Limpiar estado en memoria
-      setUsuario(null);
-      setToken(null);
-
-      // Limpiar AsyncStorage por si acaso (limpieza de sesiones antiguas)
-      await Promise.all([
-        AsyncStorage.removeItem(STORAGE_KEY_USER),
-        AsyncStorage.removeItem(STORAGE_KEY_TOKEN)
-      ]);
-    } catch (error) {
-      console.error('Error clearing auth:', error);
-      throw error;
-    }
+    setUsuario(null);
+    setToken(null);
+    await clearStoredSession();
   };
 
-  return <AuthContext.Provider value={{ usuario, token, loading, login, logout }}>{children}</AuthContext.Provider>;
+  const tienePermiso = (modulo: string, accion: string) => {
+    return hasPermission(usuario?.permisos, modulo, accion);
+  };
+
+  return (
+    <AuthContext.Provider value={{ usuario, token, loading, login, logout, tienePermiso }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

@@ -5,17 +5,23 @@ import { JwtService } from '@nestjs/jwt';
 import { Usuario, UsuarioEstado } from '../catalogos/entities/usuario.entity';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import { PermisosRol } from '../catalogos/entities/rol.entity';
+import { registrarAuditoria } from '../common/audit-log';
+import { resolverPermisosEfectivos } from './permissions.utils';
 
 export interface LoginResponse {
   usuario: {
     id: string;
     nombre: string;
-    email: string;
+    abreviatura: string;
     rol_id: string;
+    rol_nombre: string;
     sucursal_id: string;
     estado: string;
+    requiere_cambio_pin: boolean;
+    permisos: PermisosRol;
   };
-  token: string; // Por ahora será un token simple
+  token: string;
 }
 
 @Injectable()
@@ -26,79 +32,66 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async getLoginList(): Promise<{ id: string; nombre: string; email: string }[]> {
-    const usuarios = await this.usuariosRepo
-      .createQueryBuilder('usuario')
-      .select(['usuario.id', 'usuario.nombre', 'usuario.email'])
-      .where('usuario.estado = :estado', { estado: UsuarioEstado.ACTIVO })
-      .andWhere('usuario.nombre IS NOT NULL')
-      .andWhere('usuario.nombre != :empty', { empty: '' })
-      .orderBy('usuario.nombre', 'ASC')
-      .getMany();
-
-    return usuarios;
-  }
-
   async login(dto: LoginDto): Promise<LoginResponse> {
-    // ⚠️ TEMPORAL - SOLO DESARROLLO ⚠️
-    // TODO: Implementar PINs numéricos individuales por usuario (encriptados)
-    // Este bypass con PIN 1234 debe ser removido antes de producción
-    const isDevelopment = process.env.NODE_ENV !== 'production';
-    const DEV_PIN = '1234';
-
-    // Buscar usuario por email
-    const usuario = await this.usuariosRepo.findOne({
-      where: { email: dto.email },
-    });
+    const abreviatura = dto.abreviatura.trim().toUpperCase();
+    const usuario = await this.usuariosRepo
+      .createQueryBuilder('usuario')
+      .leftJoinAndSelect('usuario.rol', 'rol')
+      .where('UPPER(usuario.abreviatura) = :abreviatura', { abreviatura })
+      .getOne();
 
     if (!usuario) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // ⚠️ BYPASS TEMPORAL DE DESARROLLO ⚠️
-    // En desarrollo, acepta PIN 1234 para cualquier usuario
-    // En producción, solo valida con bcrypt
-    let passwordValida = false;
-
-    if (isDevelopment && dto.password === DEV_PIN) {
-      console.warn('⚠️ [DEV] Autenticación con PIN temporal 1234 - NO USAR EN PRODUCCIÓN');
-      passwordValida = true;
-    } else {
-      // Verificación de contraseña real con bcrypt
-      passwordValida = await bcrypt.compare(dto.password, usuario.password_hash);
-    }
+    const passwordValida = await bcrypt.compare(dto.pin, usuario.password_hash);
 
     if (!passwordValida) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
     // Verificar que el usuario esté activo
-    if (usuario.estado !== 'ACTIVO') {
+    if (usuario.estado !== 'ACTIVO' || usuario.rol?.estado !== 'ACTIVO') {
       throw new UnauthorizedException('Usuario inactivo o suspendido');
     }
-
-    // Actualizar último login
-    await this.usuariosRepo.update(usuario.id, {
-      ultimo_login: new Date(),
-    });
 
     // Generar JWT token
     const payload = {
       sub: usuario.id,
-      email: usuario.email,
+      abreviatura: usuario.abreviatura,
       rol: usuario.rol_id,
     };
 
     const token = this.jwtService.sign(payload);
+    const loginAt = new Date();
+
+    await this.usuariosRepo.manager.transaction(async (manager) => {
+      await manager.update(Usuario, usuario.id, { ultimo_login: loginAt });
+      await registrarAuditoria(manager, {
+        tabla: 'usuarios',
+        registroId: usuario.id,
+        accion: 'LOGIN',
+        usuarioId: usuario.id,
+        datosDespues: {
+          resultado: 'EXITOSO',
+          rol_id: usuario.rol_id,
+          sucursal_id: usuario.sucursal_id,
+          requiere_cambio_pin: usuario.requiere_cambio_pin,
+        },
+      });
+    });
 
     return {
       usuario: {
         id: usuario.id,
         nombre: usuario.nombre,
-        email: usuario.email,
+        abreviatura: usuario.abreviatura!,
         rol_id: usuario.rol_id,
+        rol_nombre: usuario.rol.nombre,
         sucursal_id: usuario.sucursal_id,
         estado: usuario.estado,
+        requiere_cambio_pin: usuario.requiere_cambio_pin,
+        permisos: resolverPermisosEfectivos(usuario),
       },
       token,
     };
@@ -109,9 +102,14 @@ export class AuthService {
       const payload = this.jwtService.verify(token);
       const usuario = await this.usuariosRepo.findOne({
         where: { id: payload.sub },
+        relations: { rol: true },
       });
 
-      if (!usuario || usuario.estado !== UsuarioEstado.ACTIVO) {
+      if (
+        !usuario ||
+        usuario.estado !== UsuarioEstado.ACTIVO ||
+        usuario.rol?.estado !== 'ACTIVO'
+      ) {
         return null;
       }
 
@@ -120,4 +118,5 @@ export class AuthService {
       return null;
     }
   }
+
 }

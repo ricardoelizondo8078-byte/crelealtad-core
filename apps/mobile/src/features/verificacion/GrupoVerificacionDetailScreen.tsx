@@ -1,10 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppHeader, Card, ScreenContainer, ScreenTitleBar, SectionTitle } from '../../components/ui';
-import { apiUrl } from '../../config/api';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AppHeader, Card, ContextHeader, IntegranteCard, ScreenContainer, ScreenTitleBar, SectionTitle } from '../../components/ui';
+import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api-client';
+import {
+  completarDistanciasAproximadas,
+  DISTANCIA_MAXIMA_TESORERA_KM,
+} from '../../services/domicilio-distance';
 import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
-import { formatPhone } from '../../utils/input';
+import {
+  getLocalVerificationProgress,
+  VERIFICATION_TOTAL_STEPS,
+} from './verificacion-progress.storage';
+import { VERIFICACION_READ_REQUEST_OPTIONS } from './verificacion-api-context';
+
+const parseCycleNumber = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
 
 interface GrupoInfo {
   id: string;
@@ -16,10 +30,18 @@ interface GrupoInfo {
 interface IntegranteVerificacion {
   id: string;
   nombre: string;
-  telefono: string;
-  montoSolicitado: number;
+  telefono: string | null;
+  montoSolicitado: number | null;
+  montoAutorizadoAnterior: number | null;
+  esNuevaConNosotros: boolean;
+  tieneHistorialInterno: boolean | null;
+  edad: number | null;
+  superaLimiteEdad: boolean;
+  distanciaTesoreraAproxKm: number | null;
   estadoVerificacion: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | null;
   esTesorera: boolean;
+  completedSteps: number;
+  needsDocumentation: boolean;
 }
 
 interface GrupoVerificacionDetailScreenProps {
@@ -35,67 +57,102 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
   onSelectIntegrante,
   onGrupoLoaded
 }) => {
+  const { usuario } = useAuth();
   const [grupo, setGrupo] = useState<GrupoInfo | null>(null);
   const [integrantes, setIntegrantes] = useState<IntegranteVerificacion[]>([]);
+  const [cicloNumeroActual, setCicloNumeroActual] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
+      setCicloNumeroActual(null);
       try {
-        // Cargar expediente
-        const expResponse = await fetch(apiUrl(`/expedientes/${expedienteId}`));
-        if (!expResponse.ok) {
-          throw new Error('Failed to load expediente');
-        }
-        const expData = await expResponse.json();
+        const expData = await api.get<any>(
+          `/expedientes/${expedienteId}`,
+          VERIFICACION_READ_REQUEST_OPTIONS,
+        );
 
-        // Cargar grupo
-        if (expData.grupo_id) {
-          const grupoResponse = await fetch(apiUrl(`/grupos/${expData.grupo_id}`));
-          if (grupoResponse.ok) {
-            const grupoData = await grupoResponse.json();
-            setGrupo(grupoData);
-            onGrupoLoaded?.(grupoData.nombre);
-          }
-        }
-
-        // Cargar integrantes
-        const integrantesResponse = await fetch(apiUrl(`/integrantes/expediente/${expedienteId}`));
-        if (!integrantesResponse.ok) {
-          throw new Error('Failed to load integrantes');
+        if (expData.grupo) {
+          const grupoData = {
+            id: expData.grupo.id,
+            nombre: expData.grupo.nombre,
+            estado: expData.grupo.estado,
+            expedienteId,
+          };
+          setGrupo(grupoData);
+          onGrupoLoaded?.(grupoData.nombre);
         }
 
-        const integrantesData = await integrantesResponse.json();
+        const integrantesData = await api.get<any[]>(
+          `/integrantes/expediente/${expedienteId}`,
+          VERIFICACION_READ_REQUEST_OPTIONS,
+        );
 
-        // TODO: Cargar estado de verificación de cada integrante
-        const enriched = integrantesData.map((int: any) => ({
-          ...int,
-          estadoVerificacion: int.estado_verificacion || 'PENDIENTE',
-          esTesorera: int.es_tesorera || false,
+        const integrantesActivas = integrantesData
+          .filter((int: any) => int.estado !== 'RETIRADA');
+        const ciclosPorIntegrante = integrantesActivas.map((int: any) => (
+          parseCycleNumber(int.cicloNumeroActual ?? int.ciclo)
+        ));
+        const ciclosActuales = Array.from(new Set(
+          ciclosPorIntegrante.filter((ciclo): ciclo is number => ciclo != null),
+        ));
+        setCicloNumeroActual(
+          ciclosPorIntegrante.length > 0
+            && ciclosPorIntegrante.every((ciclo) => ciclo != null)
+            && ciclosActuales.length === 1
+            ? ciclosActuales[0]
+            : null,
+        );
+        const integrantesConDistancias = await completarDistanciasAproximadas(integrantesActivas);
+
+        const enriched = await Promise.all(integrantesConDistancias.map(async (int: any) => {
+          const progress = usuario?.id
+            ? await getLocalVerificationProgress(usuario.id, int.id)
+            : null;
+
+          return {
+            ...int,
+            montoSolicitado: int.montoSolicitado == null
+              ? null
+              : Number(int.montoSolicitado),
+            montoAutorizadoAnterior: int.montoAutorizadoAnterior == null
+              ? null
+              : Number(int.montoAutorizadoAnterior),
+            esNuevaConNosotros: int.es_nueva_con_nosotros === true,
+            tieneHistorialInterno: typeof int.tiene_historial_interno === 'boolean'
+              ? int.tiene_historial_interno
+              : null,
+            edad: Number.isFinite(Number(int.edad)) ? Number(int.edad) : null,
+            superaLimiteEdad: int.supera_limite_edad === true,
+            distanciaTesoreraAproxKm: int.distancia_tesorera_aprox_km != null
+              && Number.isFinite(Number(int.distancia_tesorera_aprox_km))
+              ? Number(int.distancia_tesorera_aprox_km)
+              : null,
+            estadoVerificacion: int.estado === 'AUTORIZADA'
+              ? 'APROBADO'
+              : int.estado === 'RECHAZADA'
+                ? 'RECHAZADO'
+                : 'PENDIENTE',
+            esTesorera: int.es_tesorera || int.esTesorera || false,
+            completedSteps: int.estado === 'DOCUMENTANDO' ? 0 : progress?.completedSteps ?? 0,
+            needsDocumentation: int.estado === 'DOCUMENTANDO',
+          };
         }));
 
         setIntegrantes(enriched);
       } catch (error) {
-        Alert.alert('Error', error instanceof Error ? error.message : 'Unexpected error');
+        Alert.alert(
+          'No se pudo abrir el grupo',
+          error instanceof Error ? error.message : 'Revisa tu conexión e intenta nuevamente.',
+        );
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, [expedienteId]);
-
-  const getEstadoColor = (estado: string | null) => {
-    switch (estado) {
-      case 'APROBADO':
-        return { bg: colors.successSoft, border: colors.success, text: colors.success };
-      case 'RECHAZADO':
-        return { bg: colors.dangerSoft, border: colors.error, text: colors.error };
-      default:
-        return { bg: colors.gray[100], border: colors.gray[400], text: colors.gray[500] };
-    }
-  };
+  }, [expedienteId, usuario?.id]);
 
   const aprobados = integrantes.filter((int) => int.estadoVerificacion === 'APROBADO').length;
   const rechazados = integrantes.filter((int) => int.estadoVerificacion === 'RECHAZADO').length;
@@ -110,12 +167,12 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
       <AppHeader showBackButton onBackPress={onBack} moduleTheme="verification" />
       <ScreenTitleBar title="Verificación de Grupo" moduleTheme="verification" />
 
-      {/* Banner del grupo */}
-      <View style={styles.grupoBanner}>
-        <Text allowFontScaling={false} style={styles.grupoBannerText}>
-          {grupo?.nombre || 'Cargando...'}
-        </Text>
-      </View>
+      <ContextHeader
+        title={grupo?.nombre || 'Cargando...'}
+        trailingText={cicloNumeroActual == null ? 'CICLO N/D' : `CICLO ${cicloNumeroActual}`}
+        moduleTheme="verification"
+        tone="brandAccent"
+      />
 
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" />
@@ -153,7 +210,7 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
               </View>
               <View style={[styles.kpiBubble, styles.kpiBubbleDanger]}>
                 <Text allowFontScaling={false} style={styles.kpiValue}>{rechazados}</Text>
-                <Text allowFontScaling={false} style={styles.kpiLabel}>Rechazados</Text>
+                <Text allowFontScaling={false} style={styles.kpiLabel}>No aprobadas</Text>
               </View>
             </View>
 
@@ -193,53 +250,45 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
                 No hay integrantes en este grupo.
               </Text>
             ) : (
-              integrantes.map((integrante, index) => {
-                const estadoColor = getEstadoColor(integrante.estadoVerificacion);
-                return (
-                  <Pressable
-                    key={integrante.id}
-                    onPress={() => {
-                      onSelectIntegrante?.(integrante.id, index + 1, integrantes.length);
-                    }}
-                  >
-                    <Card style={styles.integranteCard}>
-                      {/* Badge de posición */}
-                      <View style={styles.positionBadge}>
-                        <Text allowFontScaling={false} style={styles.positionBadgeText}>
-                          {index + 1}/{integrantes.length}
-                        </Text>
-                      </View>
-
-                      {/* Badge de estado */}
-                      <View style={[
-                        styles.statusPill,
-                        { backgroundColor: estadoColor.bg, borderColor: estadoColor.border }
-                      ]}>
-                        <Text allowFontScaling={false} style={[styles.statusPillText, { color: estadoColor.text }]}>
-                          {integrante.estadoVerificacion || 'PENDIENTE'}
-                        </Text>
-                      </View>
-
-                      {/* Icono de tesorera */}
-                      {integrante.esTesorera && (
-                        <View style={styles.tesoreraIcon}>
-                          <Text allowFontScaling={false} style={styles.tesoreraIconText}>👑</Text>
-                        </View>
-                      )}
-
-                      <Text allowFontScaling={false} style={styles.integranteName}>
-                        {integrante.nombre || 'Sin nombre'}
-                      </Text>
-                      <Text allowFontScaling={false} style={styles.integranteMeta}>
-                        Teléfono: {formatPhone(integrante.telefono ?? '')}
-                      </Text>
-                      <Text allowFontScaling={false} style={styles.integranteMeta}>
-                        Monto: {formatCurrency(integrante.montoSolicitado ?? 0)}
-                      </Text>
-                    </Card>
-                  </Pressable>
-                );
-              })
+              integrantes.map((integrante, index) => (
+                <IntegranteCard
+                  key={integrante.id}
+                  name={integrante.nombre || 'Sin nombre'}
+                  position={index + 1}
+                  total={integrantes.length}
+                  phone={integrante.telefono}
+                  age={integrante.edad}
+                  ageWarning={integrante.superaLimiteEdad}
+                  completedSteps={integrante.completedSteps}
+                  totalSteps={VERIFICATION_TOTAL_STEPS}
+                  previousCreditAmount={integrante.montoAutorizadoAnterior}
+                  requestedAmount={integrante.montoSolicitado}
+                  distanceToTreasurerLabel={integrante.distanciaTesoreraAproxKm == null
+                    ? 'DIST. N/D'
+                    : `DIST. ${integrante.distanciaTesoreraAproxKm.toFixed(1)} KM`}
+                  distanceToTreasurerWarning={integrante.distanciaTesoreraAproxKm != null
+                    && integrante.distanciaTesoreraAproxKm > DISTANCIA_MAXIMA_TESORERA_KM}
+                  isNewMember={integrante.esNuevaConNosotros}
+                  status={integrante.estadoVerificacion === 'RECHAZADO'
+                    ? 'rejected'
+                    : integrante.needsDocumentation
+                      ? 'needsDocumentation'
+                      : 'neutral'}
+                  roleLabel={integrante.esTesorera ? 'Tesorera' : undefined}
+                  roleMark={integrante.esTesorera ? 'T' : undefined}
+                  style={styles.integranteCard}
+                  accessibilityLabel={`${integrante.nombre || 'Integrante'}, ${index + 1} de ${integrantes.length}.${integrante.esTesorera ? ' Tesorera del grupo.' : ''}${integrante.esNuevaConNosotros ? ' Integrante nueva con CRELEALTAD.' : ''}${integrante.estadoVerificacion === 'RECHAZADO' ? ' No aprobada.' : integrante.needsDocumentation ? ' Revisar documentación.' : ''} Edad: ${integrante.edad == null ? 'sin registro' : `${integrante.edad} años`}.${integrante.superaLimiteEdad ? ' Supera el límite de 70 años.' : ''}${integrante.distanciaTesoreraAproxKm == null ? '' : ` Distancia aproximada en línea recta al domicilio de la tesorera: ${integrante.distanciaTesoreraAproxKm.toFixed(1)} kilómetros.`} Avance de verificación ${integrante.completedSteps} de ${VERIFICATION_TOTAL_STEPS}. Crédito anterior ${
+                    integrante.montoAutorizadoAnterior == null
+                      ? 'sin registro'
+                      : formatCurrency(integrante.montoAutorizadoAnterior)
+                  }. Monto solicitado ${integrante.montoSolicitado == null
+                    ? 'sin captura'
+                    : formatCurrency(integrante.montoSolicitado)}. Monto verificado pendiente. Estado ${integrante.estadoVerificacion || 'PENDIENTE'}.`}
+                  onPress={() => {
+                    onSelectIntegrante?.(integrante.id, index + 1, integrantes.length);
+                  }}
+                />
+              ))
             )}
           </View>
         </ScrollView>
@@ -255,23 +304,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: 0,
     paddingBottom: spacing.xl
-  },
-  grupoBanner: {
-    backgroundColor: moduleThemes.verification.headerBg,
-    paddingVertical: 6,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: moduleThemes.verification.titleBarBg,
-  },
-  grupoBannerText: {
-    color: '#FDE047', // Amarillo brillante
-    fontSize: 18,
-    fontWeight: '700',
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   mainCard: {
     marginTop: spacing.lg,
@@ -364,53 +396,6 @@ const styles = StyleSheet.create({
   empty: { color: colors.textSecondary, ...typography.body },
   integranteCard: {
     marginBottom: spacing.sm,
-    padding: spacing.md,
-    borderWidth: 2,
-    borderColor: colors.gray[900],
-  },
-  positionBadge: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    backgroundColor: 'transparent',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-  },
-  positionBadgeText: {
-    color: colors.gray[900],
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  statusPill: {
-    position: 'absolute',
-    bottom: spacing.sm,
-    right: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-  },
-  statusPillText: {
-    ...typography.caption,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  tesoreraIcon: {
-    position: 'absolute',
-    top: spacing.sm,
-    left: spacing.sm,
-  },
-  tesoreraIconText: {
-    fontSize: 24,
-  },
-  integranteName: {
-    ...typography.bodyStrong,
-    color: colors.textPrimary,
-  },
-  integranteMeta: {
-    marginTop: spacing.xs,
-    color: colors.textSecondary,
-    ...typography.body
   },
   continueButton: {
     flex: 1,

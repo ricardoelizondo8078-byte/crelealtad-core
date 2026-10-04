@@ -38,6 +38,18 @@ export class SolicitudDomiciliosEntity {
   @Column({ type: 'varchar', length: 20, nullable: true })
   dom_telefono: string;
 
+  @Column({ type: 'numeric', precision: 10, scale: 7, nullable: true })
+  dom_latitud: number | null;
+
+  @Column({ type: 'numeric', precision: 11, scale: 7, nullable: true })
+  dom_longitud: number | null;
+
+  @Column({ type: 'varchar', length: 40, nullable: true })
+  dom_geocodificacion_fuente: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  dom_geocodificacion_fecha: Date | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 

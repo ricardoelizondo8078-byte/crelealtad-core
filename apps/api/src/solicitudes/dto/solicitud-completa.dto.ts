@@ -4,7 +4,7 @@
  * solicitud_id de las hijas se excluye.
  */
 export interface SolicitudCompletaDto {
-  // Core (13 columnas)
+  // Core (14 columnas)
   id: string;
   folio: string;
   integrante_id: string;
@@ -15,6 +15,7 @@ export interface SolicitudCompletaDto {
   ciclo_numero: number | null;
   numero_credito: number | null;
   monto_solicitado: number | null;
+  monto_solicitado_confirmado_at: Date | null;
   monto_autorizado: number | null;
   created_at: Date;
   updated_at: Date;
@@ -48,7 +49,10 @@ export interface SolicitudCompletaDto {
   dom_codigo_postal?: string;
   dom_cp_id?: string;
   dom_telefono?: string;
-
+  dom_latitud?: number | null;
+  dom_longitud?: number | null;
+  dom_geocodificacion_fuente?: string | null;
+  dom_geocodificacion_fecha?: Date | null;
   // Negocios (14 columnas - excluye id, solicitud_id, created_at, updated_at)
   negocio_giro?: string;
   negocio_domicilio?: string;

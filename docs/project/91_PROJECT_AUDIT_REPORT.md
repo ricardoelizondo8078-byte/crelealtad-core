@@ -4,6 +4,8 @@ Version: 1.1.0
 Fecha: 2026-07-10
 Tipo: Auditoria integral documental y tecnica de solo lectura
 
+> Estado: snapshot historico. Sus cifras y hallazgos tecnicos fueron superados por la auditoria del 2026-08-13. Para el estado vigente consultar `03_PROJECT_STATUS.md`, `08_ENTITY_CATALOG.md`, `10_DATABASE_PRINCIPLES.md`, `11_ARCHITECTURE_GUIDE.md` y `20_MODULE_CATALOG.md`.
+
 ## Resumen ejecutivo
 
 Se audito el repositorio completo: README, docs, database, apps, packages, scripts y assets. El resultado confirma una base documental madura y una implementacion tecnica semilla. No se detectaron contradicciones funcionales que deban resolverse unilateralmente; si se confirmaron brechas tecnicas y documentales que ya quedan registradas como pendientes.

@@ -1,0 +1,11 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+cache/*.sqlite3
+logs/*.log
+logs/*.jsonl
+input/*.xlsx
+output/*.xlsx
+catalogos/*.txt
+!catalogos/LEEME_SEPOMEX.txt

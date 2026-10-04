@@ -1,0 +1,11 @@
+Google Address Validation API:
+https://developers.google.com/maps/documentation/address-validation/overview
+
+Cobertura:
+https://developers.google.com/maps/documentation/address-validation/coverage
+
+Geocoding API:
+https://developers.google.com/maps/documentation/geocoding
+
+Catálogo Nacional de Códigos Postales - Correos de México:
+https://www.correosdemexico.gob.mx/SSLServicios/ConsultaCP/Descarga.aspx

@@ -1,15 +1,27 @@
 ﻿import React, { useEffect, useState, useCallback } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppHeader, Card, PrimaryButton, ScreenContainer, ScreenTitleBar, SectionTitle } from '../../components/ui';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  AppHeader,
+  Card,
+  IntegranteCard,
+  PrimaryButton,
+  ScreenContainer,
+  ScreenTitleBar,
+  StickySectionHeader,
+} from '../../components/ui';
 import { api } from '../../services/api-client';
+import {
+  completarDistanciasAproximadas,
+  DISTANCIA_MAXIMA_TESORERA_KM,
+} from '../../services/domicilio-distance';
 import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
-import { formatPhone } from '../../utils/input';
-import { llamar } from '../../utils/phone';
+import { esRutaDocumentoServidor } from '../../utils/documents';
+import { MAX_SOLICITUD_AMOUNT } from '../../config/parameters';
 import { DocumentosScreen } from '../documentos';
 import { IntegranteFormScreen } from '../integrantes';
 import { SolicitudFormScreen } from '../solicitudes';
-import { VerificacionSelectionScreen } from './VerificacionSelectionScreen';
+import { ConfirmarIntegrantesScreen } from './ConfirmarIntegrantesScreen';
 
 export interface ExpedienteDetail {
   id: string;
@@ -17,6 +29,7 @@ export interface ExpedienteDetail {
   estado: string;
   grupo_id: string;
   estado_fecha?: string;
+  tesorera_integrante_id?: string | null;
 }
 
 interface GrupoInfo {
@@ -28,13 +41,45 @@ interface IntegranteStatusViewModel {
   id: string;
   nombre: string;
   telefono: string;
-  montoSolicitado: number;
+  montoSolicitado: number | null;
+  montoAutorizadoAnterior: number | null;
+  comparacionMontoDisponible: boolean;
+  cicloNumeroActual: number | null;
+  es_nueva_con_nosotros: boolean;
+  edad: number | null;
+  supera_limite_edad: boolean;
+  distancia_tesorera_aprox_km: number | null;
+  montoMaximoSolicitable?: number;
+  estado: string;
+  motivo_retiro?: 'DESCANSA_RENOVACION' | 'DOCUMENTACION_INCOMPLETA' | 'DECIDIO_NO_CONTINUAR' | 'OTRO' | null;
+  motivo_retiro_detalle?: string | null;
+  es_tesorera: boolean;
   solicitudStatus: 'Capturada' | 'Pendiente';
   documentosStatus: 'Capturados' | 'Pendientes';
-  overallStatus: 'Completa' | 'Pendiente';
+  overallStatus: 'Completa' | 'Pendiente' | 'Retirada';
   pasoActual: number; // Siguiente paso a llenar (1-7)
   pasoCompletado: number; // Último paso completado (0-7) para la barra de progreso
 }
+
+type TendenciaMonto = 'aumenta' | 'disminuye' | 'sin_cambio' | 'sin_captura' | 'sin_comparacion';
+
+const compararMontos = (
+  montoSolicitado: number | null,
+  montoAutorizadoAnterior: number | null,
+  comparacionDisponible: boolean,
+): { tendencia: TendenciaMonto; diferencia: number } => {
+  if (montoSolicitado === null) {
+    return { tendencia: 'sin_captura', diferencia: 0 };
+  }
+  if (!comparacionDisponible || montoAutorizadoAnterior === null) {
+    return { tendencia: 'sin_comparacion', diferencia: 0 };
+  }
+
+  const diferencia = montoSolicitado - montoAutorizadoAnterior;
+  if (diferencia > 0) return { tendencia: 'aumenta', diferencia };
+  if (diferencia < 0) return { tendencia: 'disminuye', diferencia };
+  return { tendencia: 'sin_cambio', diferencia: 0 };
+};
 
 interface ExpedienteDetailScreenProps {
   expedienteId: string;
@@ -45,6 +90,7 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
   const [expediente, setExpediente] = useState<ExpedienteDetail | null>(null);
   const [grupo, setGrupo] = useState<GrupoInfo | null>(null);
   const [integrantes, setIntegrantes] = useState<IntegranteStatusViewModel[]>([]);
+  const [integrantesNuevasConfirmadas, setIntegrantesNuevasConfirmadas] = useState<Set<string>>(() => new Set());
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedintegranteId, setSelectedintegranteId] = useState<string | null>(null);
@@ -52,7 +98,7 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
   const [selectedSolicitantePosition, setSelectedSolicitantePosition] = useState<number | null>(null);
   const [activeSolicitanteView, setActiveSolicitanteView] = useState<'solicitud' | 'documentos' | null>(null);
   const [initialStep, setInitialStep] = useState<number | undefined>(undefined);
-  const [showVerificacionSelection, setShowVerificacionSelection] = useState(false);
+  const [showVerificationSelection, setShowVerificationSelection] = useState(false);
 
   const calcularDiasEnEstado = (estadoFecha?: string): number => {
     if (!estadoFecha) return 0;
@@ -66,15 +112,12 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
   const loadExpediente = async () => {
     try {
       const data = await api.get<any>(`/expedientes/${expedienteId}`);
-      console.log('Expediente data:', JSON.stringify(data));
       setExpediente(data);
 
       // Cargar información del grupo
       if (data.grupo_id) {
-        console.log('Cargando grupo con ID:', data.grupo_id);
         try {
           const grupoData = await api.get<any>(`/grupos/${data.grupo_id}`);
-          console.log('Grupo data:', JSON.stringify(grupoData));
           setGrupo(grupoData);
         } catch {
           // Si falla, no mostramos el nombre del grupo
@@ -85,11 +128,15 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
     }
   };
 
-  const loadSolicitantes = async () => {
+  const loadSolicitantes = async (integranteNuevaId?: string) => {
     try {
-      const data = await api.get<any>(`/integrantes/expediente/${expedienteId}`);
+      const data = await api.get<any[]>(`/integrantes/expediente/${expedienteId}`);
+      const dataConDistancias = await completarDistanciasAproximadas(data);
       const enriched = await Promise.all(
-        data.map(async (integrante: any) => {
+        dataConDistancias.map(async (integrante: any) => {
+          const esNuevaConfirmada = integrante.es_nueva_con_nosotros === true
+            || integrante.id === integranteNuevaId
+            || integrantesNuevasConfirmadas.has(integrante.id);
           try {
             let solicitud = null;
             try {
@@ -97,19 +144,27 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
             } catch {
               // No tiene solicitud todavía
             }
-            const hasSolicitud = Boolean(solicitud);
+            const montoMaximoSolicitable = Number(integrante.montoMaximoSolicitable)
+              || MAX_SOLICITUD_AMOUNT;
+            const montoSolicitado = Number(solicitud?.monto_solicitado);
+            const montoSolicitadoConfirmado = Boolean(solicitud?.monto_solicitado_confirmado_at)
+              && Number.isFinite(montoSolicitado)
+              && montoSolicitado > 0;
+            const montoSolicitadoValido = montoSolicitadoConfirmado
+              && montoSolicitado <= montoMaximoSolicitable;
 
             // Verificar documentos OBLIGATORIOS directamente desde la solicitud
-            // Los 4 documentos obligatorios son: INE, Comprobante Domicilio, INE Beneficiario, Solicitud Firmada
+            // Los 3 documentos obligatorios son: INE, Comprobante Domicilio y Solicitud Firmada.
             const requiredDocumentsCaptured = solicitud ? (
-              Boolean(solicitud.doc_ine_ruta) &&
-              Boolean(solicitud.doc_comprobante_ruta) &&
-              Boolean(solicitud.doc_ine_beneficiario_ruta) &&
-              Boolean(solicitud.doc_solicitud_firmada_ruta)
+              esRutaDocumentoServidor(solicitud.doc_ine_ruta) &&
+              esRutaDocumentoServidor(solicitud.doc_comprobante_ruta) &&
+              esRutaDocumentoServidor(solicitud.doc_solicitud_firmada_ruta)
             ) : false;
 
             // BUG 2 FIX: Solo marcar como "Capturada" si el estado es SUJETA_CREDITO
-            const solicitudCapturada = integrante.estado === 'SUJETA_CREDITO';
+            const solicitudCapturada = ['SUJETA_CREDITO', 'EN_VERIFICACION', 'AUTORIZADA'].includes(integrante.estado)
+              && montoSolicitadoValido;
+            const retirada = integrante.estado === 'RETIRADA';
 
             // Calcular paso actual (1-7)
             // Determinar el último paso COMPLETADO (para la barra de progreso)
@@ -137,7 +192,11 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
                         pasoCompletado = 5;
 
                         // Paso 6 completo: tiene validaciones
-                        if (solicitud.tiene_medidor_luz !== null && solicitud.vive_max_5km_tesorera !== null) {
+                        if (
+                          ['SI', 'NO'].includes(solicitud.tiene_medidor_luz) &&
+                          ['SI', 'NO'].includes(solicitud.vive_max_5km_tesorera) &&
+                          montoSolicitadoValido
+                        ) {
                           pasoCompletado = 6;
 
                           // Paso 7 completo: tiene documentos
@@ -157,18 +216,39 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
 
             return {
               ...integrante,
+              montoSolicitado: montoSolicitadoConfirmado ? montoSolicitado : null,
+              montoAutorizadoAnterior: integrante.montoAutorizadoAnterior == null
+                ? null
+                : Number(integrante.montoAutorizadoAnterior),
+              comparacionMontoDisponible: integrante.comparacionMontoDisponible === true,
+              cicloNumeroActual: integrante.cicloNumeroActual == null
+                ? null
+                : Number(integrante.cicloNumeroActual),
+              es_nueva_con_nosotros: esNuevaConfirmada,
+              edad: Number.isFinite(Number(integrante.edad)) ? Number(integrante.edad) : null,
+              supera_limite_edad: integrante.supera_limite_edad === true,
+              distancia_tesorera_aprox_km: integrante.distancia_tesorera_aprox_km != null
+                && Number.isFinite(Number(integrante.distancia_tesorera_aprox_km))
+                ? Number(integrante.distancia_tesorera_aprox_km)
+                : null,
+              montoMaximoSolicitable,
               solicitudStatus: solicitudCapturada ? 'Capturada' : 'Pendiente',
               documentosStatus: requiredDocumentsCaptured ? 'Capturados' : 'Pendientes',
-              overallStatus: solicitudCapturada && requiredDocumentsCaptured ? 'Completa' : 'Pendiente',
+              overallStatus: retirada
+                ? 'Retirada'
+                : solicitudCapturada && requiredDocumentsCaptured
+                  ? 'Completa'
+                  : 'Pendiente',
               pasoActual: pasoSiguiente, // Para abrir en el paso correcto
               pasoCompletado, // Para mostrar el progreso en la barra
             } as IntegranteStatusViewModel;
           } catch {
             return {
               ...integrante,
+              es_nueva_con_nosotros: esNuevaConfirmada,
               solicitudStatus: 'Pendiente',
               documentosStatus: 'Pendientes',
-              overallStatus: 'Pendiente',
+              overallStatus: integrante.estado === 'RETIRADA' ? 'Retirada' : 'Pendiente',
               pasoActual: 1,
               pasoCompletado: 0,
             } as IntegranteStatusViewModel;
@@ -192,14 +272,18 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
     loadAll();
   }, [expedienteId]);
 
-  const handleSaved = async () => {
+  const handleSaved = async (created?: { id: string; es_nueva_con_nosotros: boolean }) => {
+    const integranteNuevaId = created?.es_nueva_con_nosotros ? created.id : undefined;
+    if (integranteNuevaId) {
+      setIntegrantesNuevasConfirmadas((current) => new Set(current).add(integranteNuevaId));
+    }
     setShowForm(false);
     setSelectedintegranteId(null);
     setSelectedintegranteNombre(null);
     setSelectedSolicitantePosition(null);
     setActiveSolicitanteView(null);
     setInitialStep(undefined);
-    await loadSolicitantes();
+    await loadSolicitantes(integranteNuevaId);
   };
 
   // BUG 1 FIX: Actualización inmediata mientras edita
@@ -218,67 +302,36 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
     );
   }, []);
 
-  const handleSendToVerification = async () => {
-    const completadas = integrantes.filter((integrante) => integrante.overallStatus === 'Completa').length;
-
-    if (completadas < 1) {
-      Alert.alert('No se puede enviar a verificación', 'Se requiere al menos 1 integrante completa.');
+  const handleSendToVerification = () => {
+    if (integrantes.length === 0) {
+      Alert.alert('No se puede enviar a verificación', 'El expediente no tiene integrantes.');
       return;
     }
-
-    // Abrir pantalla de selección
-    setShowVerificacionSelection(true);
+    setShowVerificationSelection(true);
   };
 
-  const handleConfirmVerificacion = async (
-    integrantesAprobados: string[],
-    integrantesRechazados: { id: string; motivo: string }[]
-  ) => {
-    try {
-      // TODO: Implementar endpoint que reciba la selección de integrantes
-      const response = await api.patch<any>(`/expedientes/${expedienteId}/send-to-verification`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          integrantesAprobados,
-          integrantesRechazados,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send expediente to verification');
-      }
-
-      const data = await response.json();
-      setExpediente(data);
-      setShowVerificacionSelection(false);
-      Alert.alert(
-        'Expediente enviado',
-        `${integrantesAprobados.length} integrante(s) enviados a verificación.`
-      );
-      loadExpediente(); // Recargar expediente
-    } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Error al enviar a verificación');
-    }
-  };
-
-  // Mostrar pantalla de selección para verificación
-  if (showVerificacionSelection) {
+  if (showVerificationSelection) {
     return (
-      <VerificacionSelectionScreen
+      <ConfirmarIntegrantesScreen
         expedienteId={expedienteId}
-        grupoNombre={grupo?.nombre || 'Grupo'}
-        integrantes={integrantes.map((int) => ({
-          id: int.id,
-          nombre: int.nombre,
-          montoSolicitado: int.montoSolicitado,
-          estaCompleta: int.overallStatus === 'Completa',
-        }))}
-        onBack={() => {
-          setShowVerificacionSelection(false);
-          loadExpediente(); // Recargar expediente para mostrar cambios
+        grupoNombre={grupo?.nombre}
+        integrantes={integrantes}
+        onBack={() => setShowVerificationSelection(false)}
+        onRefresh={loadSolicitantes}
+        onContinueCapture={(integrante) => {
+          const index = integrantes.findIndex((item) => item.id === integrante.id);
+          setShowVerificationSelection(false);
+          setSelectedintegranteId(integrante.id);
+          setSelectedintegranteNombre(integrante.nombre);
+          setSelectedSolicitantePosition(index >= 0 ? index + 1 : null);
+          setInitialStep(integrante.pasoActual);
+          setActiveSolicitanteView('solicitud');
         }}
-        onConfirm={handleConfirmVerificacion}
+        onSent={(data) => {
+          setShowVerificationSelection(false);
+          setExpediente(data as ExpedienteDetail);
+          void Promise.all([loadExpediente(), loadSolicitantes()]);
+        }}
       />
     );
   }
@@ -293,9 +346,6 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
         integrantesTotal={integrantes.length || undefined}
         initialStep={initialStep}
         onSaved={handleSaved}
-        onSavedGoToDocumentos={() => {
-          setActiveSolicitanteView('documentos');
-        }}
         onBack={handleSaved}
         onDataChange={(data) => handleDataChange(selectedintegranteId, data)}
       />
@@ -321,8 +371,47 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
   }
 
   const completadas = integrantes.filter((integrante) => integrante.overallStatus === 'Completa').length;
-  const pendientes = integrantes.length - completadas;
-  const retiradas = 0;
+  const retiradas = integrantes.filter((integrante) => integrante.overallStatus === 'Retirada').length;
+  const noAprobadas = integrantes.filter((integrante) => integrante.estado === 'RECHAZADA').length;
+  const pendientes = integrantes.length - completadas - retiradas - noAprobadas;
+  const ciclosActuales = [...new Set(
+    integrantes
+      .map((integrante) => integrante.cicloNumeroActual)
+      .filter((ciclo): ciclo is number => typeof ciclo === 'number' && Number.isInteger(ciclo) && ciclo > 0),
+  )];
+  const cicloActual = ciclosActuales.length === 1 ? ciclosActuales[0] : null;
+  const integrantesCicloAnterior = integrantes.filter((integrante) => (
+    integrante.comparacionMontoDisponible
+    && integrante.montoAutorizadoAnterior !== null
+  ));
+  const montoPrestadoAnterior = integrantesCicloAnterior.reduce(
+    (total, integrante) => total + (integrante.montoAutorizadoAnterior ?? 0),
+    0,
+  );
+  const montoDocumentado = integrantes
+    .filter((integrante) => integrante.overallStatus === 'Completa')
+    .reduce((total, integrante) => total + (integrante.montoSolicitado ?? 0), 0);
+  const diferenciaIntegrantes = completadas - integrantesCicloAnterior.length;
+  const diferenciaDocumentada = montoDocumentado - montoPrestadoAnterior;
+  const mostrarComparativoCiclos = cicloActual !== null
+    && cicloActual >= 2
+    && integrantesCicloAnterior.length > 0;
+  const indicadorDiferencia = diferenciaDocumentada > 0
+    ? `↑ ${formatCurrency(diferenciaDocumentada)}`
+    : diferenciaDocumentada < 0
+      ? `↓ ${formatCurrency(Math.abs(diferenciaDocumentada))}`
+      : `= ${formatCurrency(0)}`;
+  const integrantesDiferenciaAbsoluta = Math.abs(diferenciaIntegrantes);
+  const indicadorDiferenciaIntegrantes = diferenciaIntegrantes > 0
+    ? `↑ ${integrantesDiferenciaAbsoluta} ${integrantesDiferenciaAbsoluta === 1 ? 'Sra.' : 'Sras.'}`
+    : diferenciaIntegrantes < 0
+      ? `↓ ${integrantesDiferenciaAbsoluta} ${integrantesDiferenciaAbsoluta === 1 ? 'Sra.' : 'Sras.'}`
+      : '= 0 Sras.';
+  const indicadorDiferenciaIntegrantesAccesible = diferenciaIntegrantes > 0
+    ? `aumenta ${integrantesDiferenciaAbsoluta} ${integrantesDiferenciaAbsoluta === 1 ? 'integrante' : 'integrantes'}`
+    : diferenciaIntegrantes < 0
+      ? `disminuye ${integrantesDiferenciaAbsoluta} ${integrantesDiferenciaAbsoluta === 1 ? 'integrante' : 'integrantes'}`
+      : 'sin diferencia de integrantes';
 
   return (
     <ScreenContainer>
@@ -337,7 +426,11 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" />
       ) : expediente ? (
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          stickyHeaderIndices={[2]}
+        >
           <Card style={styles.mainCard}>
             {/* Botones en la parte superior */}
             <View style={styles.buttonsRow}>
@@ -397,74 +490,190 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
                 <Text allowFontScaling={false} style={styles.kpiValue}>{pendientes}</Text>
                 <Text allowFontScaling={false} style={styles.kpiLabel}>Pendiente</Text>
               </View>
-              <View style={[styles.kpiBubble, styles.kpiBubbleDanger]}>
+              <View style={[styles.kpiBubble, styles.kpiBubbleWithdrawn]}>
                 <Text allowFontScaling={false} style={styles.kpiValue}>{retiradas}</Text>
                 <Text allowFontScaling={false} style={styles.kpiLabel}>Retirada</Text>
+              </View>
+              <View style={[styles.kpiBubble, styles.kpiBubbleDanger]}>
+                <Text allowFontScaling={false} style={styles.kpiValue}>{noAprobadas}</Text>
+                <Text allowFontScaling={false} style={styles.kpiLabel}>No aprobada</Text>
               </View>
             </View>
           </Card>
 
-          <View style={styles.section}>
-            <SectionTitle title="integrantes" />
+          <View collapsable={false}>
+            {mostrarComparativoCiclos ? (
+              <Card style={styles.cycleComparisonCard}>
+              <View
+                accessible
+                accessibilityLabel={`Ciclo ${cicloActual - 1}, anterior: ${integrantesCicloAnterior.length} integrantes, prestado ${formatCurrency(montoPrestadoAnterior)}. Ciclo ${cicloActual}, documentando: ${completadas} de ${integrantes.length} completas, monto documentado ${formatCurrency(montoDocumentado)}. Diferencia: ${indicadorDiferenciaIntegrantesAccesible} y ${indicadorDiferencia}.`}
+              >
+                <View style={styles.cycleColumns}>
+                  <View style={styles.cycleColumn}>
+                    <View style={styles.cycleHeadingRow}>
+                      <Text allowFontScaling={false} style={styles.cycleHeading}>Ciclo {cicloActual - 1}</Text>
+                      <Text allowFontScaling={false} style={styles.cycleContext}>(anterior)</Text>
+                    </View>
+                    <Text allowFontScaling={false} style={styles.cycleMetric}>
+                      {integrantesCicloAnterior.length} {integrantesCicloAnterior.length === 1 ? 'integrante' : 'integrantes'}
+                    </Text>
+                    <View style={styles.cycleAmountRow}>
+                      <Text allowFontScaling={false} style={styles.cycleAmountLabel}>Prestado</Text>
+                      <Text allowFontScaling={false} style={styles.cycleAmountValue}>{formatCurrency(montoPrestadoAnterior)}</Text>
+                    </View>
+                  </View>
+
+                  <View style={[styles.cycleColumn, styles.currentCycleColumn]}>
+                    <View style={styles.cycleHeadingRow}>
+                      <Text allowFontScaling={false} style={styles.cycleHeading}>Ciclo {cicloActual}</Text>
+                      <Text allowFontScaling={false} style={styles.currentCycleContext}>(documentando)</Text>
+                    </View>
+                    <Text allowFontScaling={false} style={styles.cycleMetric}>
+                      {completadas} de {integrantes.length} completas
+                    </Text>
+                    <View style={styles.cycleAmountRow}>
+                      <Text allowFontScaling={false} style={styles.cycleAmountLabel}>Monto documentado</Text>
+                      <Text allowFontScaling={false} style={styles.cycleAmountValue}>{formatCurrency(montoDocumentado)}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.cycleDifferenceRow}>
+                  <Text allowFontScaling={false} style={styles.cycleDifferenceLabel}>Diferencia</Text>
+                  <Text
+                    allowFontScaling={false}
+                    style={[
+                      styles.cycleDifferenceValue,
+                      diferenciaIntegrantes > 0 && styles.montoAumenta,
+                      diferenciaIntegrantes < 0 && styles.montoDisminuye,
+                    ]}
+                  >
+                    {indicadorDiferenciaIntegrantes}
+                  </Text>
+                  <Text
+                    allowFontScaling={false}
+                    style={[
+                      styles.cycleDifferenceValue,
+                      diferenciaDocumentada > 0 && styles.montoAumenta,
+                      diferenciaDocumentada < 0 && styles.montoDisminuye,
+                    ]}
+                  >
+                    {indicadorDiferencia}
+                  </Text>
+                </View>
+              </View>
+              </Card>
+            ) : null}
+          </View>
+
+          <StickySectionHeader
+            title="Integrantes"
+            moduleTheme="documentation"
+            variant="solid"
+            fullBleed
+          />
+
+          <View style={styles.integrantesList}>
             {integrantes.length === 0 ? (
               <Text allowFontScaling={false} style={styles.empty}>Aún no hay integrantes para este expediente.</Text>
             ) : (
-              integrantes.map((integrante, index) => (
-                <Pressable
-                  key={integrante.id}
-                  onPress={() => {
-                    if (expediente.estado !== 'EN_DOCUMENTACION') {
-                      Alert.alert(
-                        'Expediente en verificación',
-                        'No se pueden modificar los datos mientras el expediente está en verificación.',
-                        [{ text: 'Entendido' }]
-                      );
-                      return;
-                    }
-                    setSelectedintegranteId(integrante.id);
-                    setSelectedintegranteNombre(integrante.nombre);
-                    setSelectedSolicitantePosition(index + 1);
-                    setInitialStep(integrante.pasoActual);
-                    setActiveSolicitanteView('solicitud');
-                  }}
-                >
-                  <Card style={[
-                    styles.integranteCard,
-                    expediente.estado !== 'EN_DOCUMENTACION' && styles.integranteCardDisabled
-                  ]}>
-                    {/* Número de posición en esquina superior izquierda */}
-                    <View style={styles.positionBadge}>
-                      <Text allowFontScaling={false} style={styles.positionBadgeText}>{index + 1}/{integrantes.length}</Text>
-                    </View>
+              integrantes.map((integrante, index) => {
+                const requiereRevisionDocumental = expediente.estado === 'EN_VERIFICACION'
+                  && integrante.estado === 'DOCUMENTANDO';
+                const comparacion = compararMontos(
+                  integrante.montoSolicitado,
+                  integrante.montoAutorizadoAnterior,
+                  integrante.comparacionMontoDisponible,
+                );
+                const etiquetaComparacion = comparacion.tendencia === 'aumenta'
+                  ? `↑ AUMENTA ${formatCurrency(Math.abs(comparacion.diferencia))}`
+                  : comparacion.tendencia === 'disminuye'
+                    ? `↓ DISMINUYE ${formatCurrency(Math.abs(comparacion.diferencia))}`
+                    : comparacion.tendencia === 'sin_cambio'
+                      ? '= MISMO MONTO'
+                      : comparacion.tendencia === 'sin_captura'
+                        ? 'PENDIENTE DE CAPTURA'
+                        : '↔ SIN MONTO ANTERIOR';
+                const indicadorComparacion = comparacion.tendencia === 'aumenta'
+                  ? `↑ ${formatCurrency(Math.abs(comparacion.diferencia))}`
+                  : comparacion.tendencia === 'disminuye'
+                    ? `↓ ${formatCurrency(Math.abs(comparacion.diferencia))}`
+                    : comparacion.tendencia === 'sin_cambio'
+                      ? '= $ 0'
+                      : null;
 
-                    {/* Burbuja de estado en esquina superior derecha */}
-                    <View style={[styles.statusPill, integrante.overallStatus === 'Completa' ? styles.statusPillComplete : styles.statusPillPending]}>
-                      <Text allowFontScaling={false} style={styles.statusPillText}>{integrante.overallStatus || 'Pendiente'}</Text>
-                    </View>
-
-                    <Text allowFontScaling={false} style={styles.integranteName}>{integrante.nombre || 'Sin nombre'}</Text>
-
-                    {/* Barra de progreso compacta */}
-                    <View style={styles.progressContainer}>
-                      <Text allowFontScaling={false} style={styles.progressLabel}>
-                        {integrante.pasoCompletado === 7 ? 'Completo 7/7' : `${integrante.pasoCompletado ?? 0} de 7 completos`}
-                      </Text>
-                      <View style={styles.progressBarContainer}>
-                        <View
-                          style={[
-                            styles.progressBarFill,
-                            (integrante.pasoCompletado ?? 0) >= 7 ? styles.progressBarComplete : styles.progressBarIncomplete,
-                            { width: `${((integrante.pasoCompletado ?? 0) / 7) * 100}%` },
-                          ]}
-                        />
-                      </View>
-                    </View>
-
-                    <Text allowFontScaling={false} style={styles.integranteMeta}>Teléfono: {formatPhone(integrante.telefono ?? '')}</Text>
-                    <Text allowFontScaling={false} style={styles.integranteMeta}>Monto: {formatCurrency(integrante.montoSolicitado ?? 0)}</Text>
-                  </Card>
-                </Pressable>
-              ))
+                return (
+                  <IntegranteCard
+                    key={integrante.id}
+                    name={integrante.nombre || 'Sin nombre'}
+                    position={index + 1}
+                    total={integrantes.length}
+                    phone={integrante.telefono}
+                    age={integrante.edad}
+                    ageWarning={integrante.supera_limite_edad}
+                    completedSteps={integrante.pasoCompletado ?? 0}
+                    previousCreditAmount={integrante.montoAutorizadoAnterior}
+                    requestedAmount={integrante.montoSolicitado}
+                    distanceToTreasurerLabel={integrante.distancia_tesorera_aprox_km == null
+                      ? 'DIST. N/D'
+                      : `DIST. ${integrante.distancia_tesorera_aprox_km.toFixed(1)} KM`}
+                    distanceToTreasurerWarning={integrante.distancia_tesorera_aprox_km != null
+                      && integrante.distancia_tesorera_aprox_km > DISTANCIA_MAXIMA_TESORERA_KM}
+                    isNewMember={integrante.es_nueva_con_nosotros}
+                    status={integrante.estado === 'RETIRADA'
+                      ? 'withdrawn'
+                      : integrante.estado === 'RECHAZADA'
+                        ? 'rejected'
+                        : requiereRevisionDocumental
+                          ? 'needsDocumentation'
+                          : 'neutral'}
+                    amountNote={indicadorComparacion ? {
+                      label: indicadorComparacion,
+                      tone: comparacion.tendencia === 'aumenta'
+                        ? 'positive'
+                        : comparacion.tendencia === 'disminuye'
+                          ? 'negative'
+                          : 'neutral',
+                    } : null}
+                    muted={expediente.estado !== 'EN_DOCUMENTACION' && !requiereRevisionDocumental}
+                    style={styles.integranteCard}
+                    accessibilityLabel={`${integrante.nombre || 'Integrante'}.${integrante.es_nueva_con_nosotros ? ' Integrante nueva con CRELEALTAD.' : ''}${integrante.estado === 'RECHAZADA' ? ' No aprobada.' : requiereRevisionDocumental ? ' Revisar documentación.' : ''} Edad: ${integrante.edad == null ? 'sin registro' : `${integrante.edad} años`}.${integrante.supera_limite_edad ? ' Supera el límite de 70 años.' : ''}${integrante.distancia_tesorera_aprox_km == null ? '' : ` Distancia aproximada en línea recta al domicilio de la tesorera: ${integrante.distancia_tesorera_aprox_km.toFixed(1)} kilómetros.`} Crédito anterior: ${
+                      integrante.montoAutorizadoAnterior == null
+                        ? 'sin monto anterior'
+                        : formatCurrency(integrante.montoAutorizadoAnterior)
+                    }. Solicita este ciclo: ${integrante.montoSolicitado == null
+                      ? 'pendiente de captura'
+                      : formatCurrency(integrante.montoSolicitado)}. Monto verificado pendiente. ${etiquetaComparacion}.`}
+                    onPress={() => {
+                      if (integrante.estado === 'RETIRADA') {
+                        setShowVerificationSelection(true);
+                        return;
+                      }
+                      if (integrante.estado === 'RECHAZADA') {
+                        Alert.alert(
+                          'Integrante no aprobada',
+                          'La información permanece disponible para consulta, pero no puede modificarse desde Documentación.',
+                          [{ text: 'Entendido' }],
+                        );
+                        return;
+                      }
+                      if (expediente.estado !== 'EN_DOCUMENTACION' && !requiereRevisionDocumental) {
+                        Alert.alert(
+                          'Expediente en verificación',
+                          'No se pueden modificar los datos mientras el expediente está en verificación.',
+                          [{ text: 'Entendido' }]
+                        );
+                        return;
+                      }
+                      setSelectedintegranteId(integrante.id);
+                      setSelectedintegranteNombre(integrante.nombre);
+                      setSelectedSolicitantePosition(index + 1);
+                      setInitialStep(integrante.pasoActual);
+                      setActiveSolicitanteView('solicitud');
+                    }}
+                  />
+                );
+              })
             )}
           </View>
         </ScrollView>
@@ -499,6 +708,90 @@ const styles = StyleSheet.create({
   mainCard: {
     marginBottom: spacing.lg,
     padding: spacing.md,
+  },
+  cycleComparisonCard: {
+    marginBottom: spacing.sm,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  cycleColumns: {
+    flexDirection: 'row',
+  },
+  cycleColumn: {
+    flex: 1,
+    minWidth: 0,
+    padding: spacing.md,
+  },
+  currentCycleColumn: {
+    backgroundColor: colors.successSoft,
+    borderLeftWidth: 1,
+    borderLeftColor: colors.borderSoft,
+  },
+  cycleHeadingRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    flexWrap: 'wrap',
+    columnGap: spacing.xs,
+  },
+  cycleHeading: {
+    color: colors.textPrimary,
+    ...typography.bodyStrong,
+  },
+  cycleContext: {
+    color: colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  currentCycleContext: {
+    color: colors.primary,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  cycleMetric: {
+    marginTop: spacing.xs,
+    color: colors.textPrimary,
+    ...typography.caption,
+  },
+  cycleAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  cycleAmountLabel: {
+    flexShrink: 1,
+    color: colors.textPrimary,
+    fontSize: 11,
+    fontWeight: '400',
+  },
+  cycleAmountValue: {
+    flexShrink: 0,
+    color: colors.textPrimary,
+    ...typography.caption,
+  },
+  cycleDifferenceRow: {
+    minHeight: 38,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    columnGap: spacing.sm,
+    rowGap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft,
+  },
+  cycleDifferenceLabel: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  cycleDifferenceValue: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
   },
   buttonsRow: {
     flexDirection: 'row',
@@ -579,6 +872,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#D1D5DB',
     borderColor: '#6B7280',
   },
+  kpiBubbleWithdrawn: {
+    backgroundColor: colors.gray[200],
+    borderColor: colors.gray[600],
+  },
   kpiBubbleDanger: {
     backgroundColor: colors.dangerSoft,
     borderColor: '#EF4444',
@@ -597,82 +894,17 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
-  section: { marginTop: spacing.sm },
+  integrantesList: {
+    marginTop: spacing.sm,
+  },
   empty: { color: colors.textSecondary, ...typography.body },
   integranteCard: {
     marginBottom: spacing.sm,
-    padding: spacing.md,
-    borderWidth: 2,
-    borderColor: '#000000',
   },
-  integranteCardDisabled: {
-    opacity: 0.6,
-    backgroundColor: colors.gray[100],
+  montoAumenta: {
+    color: colors.success,
   },
-  integranteName: { ...typography.bodyStrong, color: colors.textPrimary },
-  integranteMeta: { marginTop: spacing.xs, color: colors.textSecondary, ...typography.body },
-  statusPill: {
-    position: 'absolute',
-    bottom: spacing.sm,
-    right: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-  },
-  statusPillComplete: {
-    backgroundColor: colors.successSoft,
-    borderWidth: 2,
-    borderColor: '#10B981',
-  },
-  statusPillPending: {
-    backgroundColor: '#D1D5DB',
-    borderWidth: 2,
-    borderColor: '#6B7280',
-  },
-  statusPillText: { ...typography.caption, fontWeight: '700', color: colors.textPrimary },
-  progressContainer: {
-    marginTop: spacing.xs,
-    marginBottom: spacing.xs,
-  },
-  progressLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    fontWeight: '600',
-    fontSize: 10,
-    marginBottom: 4,
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: '#E5E7EB',
-    borderRadius: radius.pill,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: radius.pill,
-  },
-  progressBarIncomplete: {
-    backgroundColor: '#FDE047',
-  },
-  progressBarComplete: {
-    backgroundColor: '#10B981',
-  },
-  positionBadge: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    backgroundColor: 'transparent',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-  },
-  positionBadgeText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  checkmark: {
-    color: '#10B981',
-    fontSize: 16,
-    fontWeight: '700',
+  montoDisminuye: {
+    color: colors.danger,
   },
 });

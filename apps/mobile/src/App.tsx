@@ -1,45 +1,106 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { useFonts, Montserrat_700Bold, Montserrat_800ExtraBold, Montserrat_900Black } from '@expo-google-fonts/montserrat';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
-import { Card, PrimaryButton, ScreenContainer, SecondaryButton, SectionTitle } from './components/ui';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { PendingReviewsProvider, usePendingReviews } from './context/PendingReviewsContext';
+import { ProcessingProvider } from './context/ProcessingContext';
 import { LoginScreen } from './features/auth';
 import { ExpedienteDetailScreen, ExpedientesListScreen } from './features/expedientes';
 import { CreateGroupScreen } from './features/grupos';
+import {
+  buildOperationalModuleOptions,
+  DocumentationHomeScreen,
+  ModuleMenuScreen,
+  useOperationalAccess,
+} from './features/inicio';
 import { GruposVerificacionListScreen, GrupoVerificacionDetailScreen, IntegranteVerificacionScreen } from './features/verificacion';
-import { colors, spacing, typography } from './theme/tokens';
+import { RenovacionScreen } from './features/renovaciones';
+import { PendingReviewOverlay } from './features/pendientes';
 
 // Mantener splash screen visible hasta que las fuentes carguen
 SplashScreen.preventAutoHideAsync();
 
-type AppScreen = 'home' | 'create-group' | 'expedientes' | 'verificacion';
+type AppScreen = 'modules' | 'documentation' | 'create-group' | 'expedientes' | 'renovacion' | 'verificacion';
 
 function AppContent() {
-  const { usuario, loading: authLoading } = useAuth();
-  const [screen, setScreen] = useState<AppScreen>('home');
+  const { usuario, loading: authLoading, logout } = useAuth();
+  const { requestedExpedienteId, consumeRequestedExpediente } = usePendingReviews();
+  const {
+    canCreateGroup: puedeCrearGrupo,
+    canViewExpedientes: puedeVerExpedientes,
+    canViewVerification: puedeVerVerificacion,
+    canRenew: puedeRenovar,
+    canOpenDocumentation: puedeAbrirDocumentacion,
+  } = useOperationalAccess();
+  const [screen, setScreen] = useState<AppScreen>('modules');
   const [selectedExpedienteId, setSelectedExpedienteId] = useState<string | null>(null);
   const [expedientesRefreshKey, setExpedientesRefreshKey] = useState(0);
+  const [newlyCreatedExpedienteId, setNewlyCreatedExpedienteId] = useState<string | null>(null);
   const [selectedGrupoVerificacionId, setSelectedGrupoVerificacionId] = useState<string | null>(null);
   const [selectedIntegranteVerificacionId, setSelectedIntegranteVerificacionId] = useState<string | null>(null);
   const [integranteVerificacionPosition, setIntegranteVerificacionPosition] = useState<number | undefined>(undefined);
   const [integranteVerificacionTotal, setIntegranteVerificacionTotal] = useState<number | undefined>(undefined);
   const [grupoVerificacionNombre, setGrupoVerificacionNombre] = useState<string | null>(null);
   const [verificacionRefreshKey, setVerificacionRefreshKey] = useState(0);
+  const [expedienteOpenedFromPending, setExpedienteOpenedFromPending] = useState(false);
+
+  useEffect(() => {
+    if (!usuario) return;
+    setSelectedExpedienteId(null);
+    setNewlyCreatedExpedienteId(null);
+    setSelectedGrupoVerificacionId(null);
+    setSelectedIntegranteVerificacionId(null);
+    setIntegranteVerificacionPosition(undefined);
+    setIntegranteVerificacionTotal(undefined);
+    setGrupoVerificacionNombre(null);
+    setExpedienteOpenedFromPending(false);
+    setScreen('modules');
+  }, [usuario?.id]);
+
+  useEffect(() => {
+    if (!requestedExpedienteId) return;
+
+    if (puedeVerExpedientes) {
+      setSelectedGrupoVerificacionId(null);
+      setSelectedIntegranteVerificacionId(null);
+      setGrupoVerificacionNombre(null);
+      setNewlyCreatedExpedienteId(null);
+      setSelectedExpedienteId(requestedExpedienteId);
+      setExpedienteOpenedFromPending(true);
+      setScreen('expedientes');
+    }
+
+    consumeRequestedExpediente();
+  }, [consumeRequestedExpediente, puedeVerExpedientes, requestedExpedienteId]);
 
   const handleBackToList = () => {
     setSelectedExpedienteId(null);
+    if (expedienteOpenedFromPending) {
+      setExpedienteOpenedFromPending(false);
+      setScreen('modules');
+      return;
+    }
     setScreen('expedientes');
     setExpedientesRefreshKey((currentKey) => currentKey + 1);
   };
 
-  const handleBackToHome = () => {
+  const handleBackToModuleMenu = () => {
     setSelectedExpedienteId(null);
     setSelectedGrupoVerificacionId(null);
     setSelectedIntegranteVerificacionId(null);
     setGrupoVerificacionNombre(null);
-    setScreen('home');
+    setScreen('modules');
+  };
+
+  const handleSelectExpediente = (expedienteId: string) => {
+    setExpedienteOpenedFromPending(false);
+    setSelectedExpedienteId(expedienteId);
+  };
+
+  const handleBackToDocumentation = () => {
+    setSelectedExpedienteId(null);
+    setScreen('documentation');
   };
 
   const handleBackToVerificacionList = () => {
@@ -64,13 +125,17 @@ function AppContent() {
     setIntegranteVerificacionTotal(total);
   };
 
+  if (authLoading) {
+    return null;
+  }
+
   // Mostrar login si no hay usuario autenticado
-  if (!authLoading && !usuario) {
+  if (!usuario) {
     return <LoginScreen />;
   }
 
   // Pantalla de verificación de integrante
-  if (selectedIntegranteVerificacionId && selectedGrupoVerificacionId) {
+  if (puedeVerVerificacion && selectedIntegranteVerificacionId && selectedGrupoVerificacionId) {
     return (
       <IntegranteVerificacionScreen
         integranteId={selectedIntegranteVerificacionId}
@@ -78,13 +143,12 @@ function AppContent() {
         integrantePosition={integranteVerificacionPosition}
         integrantesTotal={integranteVerificacionTotal}
         onBack={handleBackToGrupoVerificacion}
-        onComplete={handleBackToVerificacionList}
       />
     );
   }
 
   // Pantalla de detalle de grupo en verificación
-  if (selectedGrupoVerificacionId) {
+  if (puedeVerVerificacion && selectedGrupoVerificacionId) {
     return (
       <GrupoVerificacionDetailScreen
         expedienteId={selectedGrupoVerificacionId}
@@ -96,15 +160,18 @@ function AppContent() {
   }
 
   // Pantalla de detalle de expediente (documentación)
-  if (selectedExpedienteId) {
+  if (puedeVerExpedientes && selectedExpedienteId) {
     return <ExpedienteDetailScreen expedienteId={selectedExpedienteId} onBack={handleBackToList} />;
   }
 
-  if (screen === 'create-group') {
+  if (puedeCrearGrupo && screen === 'create-group') {
     return (
       <CreateGroupScreen
-        onBack={handleBackToHome}
-        onCreated={() => {
+        onBack={handleBackToDocumentation}
+        onCreated={(result) => {
+          setNewlyCreatedExpedienteId(
+            result.es_grupo_nuevo_ciclo_1 ? result.expedienteId : null,
+          );
           setScreen('expedientes');
           setExpedientesRefreshKey((currentKey) => currentKey + 1);
         }}
@@ -112,46 +179,68 @@ function AppContent() {
     );
   }
 
-  if (screen === 'expedientes') {
-    return <ExpedientesListScreen onSelectExpediente={setSelectedExpedienteId} refreshKey={expedientesRefreshKey} onBack={handleBackToHome} />;
-  }
-
-  if (screen === 'verificacion') {
+  if (puedeVerExpedientes && screen === 'expedientes') {
     return (
-      <GruposVerificacionListScreen
-        onSelectGrupo={setSelectedGrupoVerificacionId}
-        refreshKey={verificacionRefreshKey}
-        onBack={handleBackToHome}
+      <ExpedientesListScreen
+        onSelectExpediente={handleSelectExpediente}
+        refreshKey={expedientesRefreshKey}
+        newlyCreatedExpedienteId={newlyCreatedExpedienteId}
+        onBack={handleBackToDocumentation}
       />
     );
   }
 
-  return (
-    <ScreenContainer contentStyle={styles.container}>
-      <Card style={styles.heroCard}>
-        <Text allowFontScaling={false} style={styles.title}>MVP Prototipo - Flujo de Documentacion</Text>
-        <Text allowFontScaling={false} style={styles.subtitle}>Usa estas acciones para recorrer la revisión funcional end-to-end.</Text>
-      </Card>
+  if (puedeVerVerificacion && screen === 'verificacion') {
+    return (
+      <GruposVerificacionListScreen
+        onSelectGrupo={setSelectedGrupoVerificacionId}
+        refreshKey={verificacionRefreshKey}
+        onBack={handleBackToModuleMenu}
+      />
+    );
+  }
 
-      <PrimaryButton title="1. Crear grupo" onPress={() => setScreen('create-group')} moduleTheme="documentation" />
+  if (puedeRenovar && screen === 'renovacion') {
+    return (
+      <RenovacionScreen
+        onBack={handleBackToDocumentation}
+        onCreated={(expedienteId) => {
+          setExpedienteOpenedFromPending(false);
+          setSelectedExpedienteId(expedienteId);
+          setScreen('expedientes');
+          setExpedientesRefreshKey((currentKey) => currentKey + 1);
+        }}
+      />
+    );
+  }
 
-      <SecondaryButton title="2. Ir a Mis expedientes" onPress={() => setScreen('expedientes')} />
+  if (puedeAbrirDocumentacion && screen === 'documentation') {
+    return (
+      <DocumentationHomeScreen
+        canCreateGroup={puedeCrearGrupo}
+        canRenew={puedeRenovar}
+        canViewExpedientes={puedeVerExpedientes}
+        onBack={handleBackToModuleMenu}
+        onCreateGroup={() => setScreen('create-group')}
+        onRenew={() => setScreen('renovacion')}
+        onViewExpedientes={() => setScreen('expedientes')}
+      />
+    );
+  }
 
-      <PrimaryButton title="3. Verificación de grupos" onPress={() => setScreen('verificacion')} moduleTheme="verification" />
-
-      <Card>
-        <SectionTitle title="Guia rapida de revision" />
-        <Text allowFontScaling={false} style={styles.checklistItem}>1. Crear grupo</Text>
-        <Text allowFontScaling={false} style={styles.checklistItem}>2. Mis expedientes</Text>
-        <Text allowFontScaling={false} style={styles.checklistItem}>3. Abrir expediente</Text>
-        <Text allowFontScaling={false} style={styles.checklistItem}>4. Agregar integrante</Text>
-        <Text allowFontScaling={false} style={styles.checklistItem}>5. Capturar solicitud</Text>
-        <Text allowFontScaling={false} style={styles.checklistItem}>6. Capturar documentos</Text>
-        <Text allowFontScaling={false} style={styles.checklistItem}>7. Ver estado del expediente</Text>
-        <Text allowFontScaling={false} style={styles.checklistItem}>8. Enviar a verificacion</Text>
-      </Card>
-    </ScreenContainer>
+  const modules = buildOperationalModuleOptions(
+    {
+      canOpenDocumentation: puedeAbrirDocumentacion,
+      canViewVerification: puedeVerVerificacion,
+    },
+    {
+      openDocumentation: () => setScreen('documentation'),
+      openVerification: () => setScreen('verificacion'),
+    },
+    __DEV__,
   );
+
+  return <ModuleMenuScreen modules={modules} onLogout={logout} />;
 }
 
 export default function App() {
@@ -175,42 +264,13 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ProcessingProvider>
+      <AuthProvider>
+        <PendingReviewsProvider>
+          <AppContent />
+          <PendingReviewOverlay />
+        </PendingReviewsProvider>
+      </AuthProvider>
+    </ProcessingProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  statusContainer: {
-    padding: spacing.xl,
-    justifyContent: 'center',
-  },
-  loader: {
-    marginTop: spacing.md,
-  },
-  errorTitle: {
-    ...typography.sectionTitle,
-    color: '#B42318',
-    marginBottom: spacing.sm,
-  },
-  container: {
-    padding: spacing.xl,
-    justifyContent: 'center',
-    gap: spacing.md,
-  },
-  heroCard: { marginBottom: spacing.xs },
-  title: {
-    ...typography.title,
-    color: colors.textPrimary,
-  },
-  subtitle: {
-    marginTop: spacing.sm,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
-  checklistItem: {
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-});

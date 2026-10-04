@@ -1,12 +1,16 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
-import { moduleThemes, ModuleThemeKey, radius, spacing, typography } from '../../theme/tokens';
+import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { useProcessingAction } from '../../context/ProcessingContext';
+import { moduleThemes, ModuleThemeKey, radius, spacing, touchTargets, typography } from '../../theme/tokens';
 
 interface PrimaryButtonProps {
   title: string;
-  onPress?: () => void;
+  onPress?: () => void | Promise<void>;
   disabled?: boolean;
   moduleTheme?: ModuleThemeKey;
+  leadingIcon?: React.ReactNode;
+  trailingContent?: React.ReactNode;
+  accessibilityLabel?: string;
   style?: ViewStyle;
 }
 
@@ -15,14 +19,20 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   onPress,
   disabled = false,
   moduleTheme = 'documentation',
+  leadingIcon,
+  trailingContent,
+  accessibilityLabel,
   style,
 }) => {
   const theme = moduleThemes[moduleTheme];
+  const handlePress = useProcessingAction(onPress);
 
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={onPress}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
+      onPress={handlePress}
       disabled={disabled}
       style={({ pressed }) => [
         styles.button,
@@ -30,7 +40,13 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
         style,
       ]}
     >
-      <Text allowFontScaling={false} style={[styles.text, { color: theme.primaryText }]}>{title || ''}</Text>
+      <View style={styles.content}>
+        {leadingIcon}
+        <Text allowFontScaling={false} style={[styles.text, { color: theme.primaryText }]}>
+          {title || ''}
+        </Text>
+        {trailingContent}
+      </View>
     </Pressable>
   );
 };
@@ -38,9 +54,17 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
 const styles = StyleSheet.create({
   button: {
     flex: 1,
+    minHeight: touchTargets.primary,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
   },
   text: {
     ...typography.bodyStrong,

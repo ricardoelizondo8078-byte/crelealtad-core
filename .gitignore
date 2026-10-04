@@ -10,8 +10,14 @@ yarn-error.log*
 .env
 apps/mobile/.env
 apps/api/.env
+apps/api/.env.test
 coverage/
+runtime-data/
+apps/api/runtime-data/
 .vscode/
+.runtime/
+.claude/settings.local.json
+**/.claude/settings.local.json
 
 # Logs y archivos temporales
 *.log
@@ -19,6 +25,24 @@ api-log.txt
 api-test.log
 query-*.sql
 test-payload-*.json
+
+# Respaldos locales: pueden contener datos y credenciales operativas.
+database/backups/
+*.backup
+*.dump
+
+# Fuentes de datos locales y proyectos auxiliares independientes.
+BASE EXCEL SEM 366/
+tools/address_validator.zip
+entrevista-verificacion-movil-site/
+
+# Artefactos locales de herramientas y ejecuciones temporales.
+.codex-runtime/
+tmp/
+output/
+outputs/
+work/
+~$*
 
 # Spec-Kit
 .specify/feature.json

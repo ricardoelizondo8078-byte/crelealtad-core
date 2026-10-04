@@ -18,7 +18,4 @@ export class CreateGrupoDto {
   @IsDateString({}, { message: 'fecha_inicio debe ser una fecha válida' })
   fecha_inicio?: string;
 
-  @IsOptional()
-  @IsString()
-  created_by?: string;
 }

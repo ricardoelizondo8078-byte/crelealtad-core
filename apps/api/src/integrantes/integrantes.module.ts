@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { IntegranteEntity } from './integrante.entity';
 import { IntegrantesController } from './integrantes.controller';
@@ -9,7 +9,7 @@ import { SolicitudesModule } from '../solicitudes/solicitudes.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([IntegranteEntity, PersonaEntity]),
-    forwardRef(() => SolicitudesModule),
+    SolicitudesModule,
   ],
   controllers: [IntegrantesController],
   providers: [IntegrantesService],

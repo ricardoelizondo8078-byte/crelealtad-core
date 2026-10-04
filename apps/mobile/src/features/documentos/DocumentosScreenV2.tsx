@@ -1,22 +1,25 @@
-﻿import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, View, ScrollView, Modal, TouchableOpacity, Linking } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { AppHeader, Card, PrimaryButton, ScreenContainer, ScreenTitleBar, SecondaryButton } from '../../components/ui';
+import {
+  AppHeader,
+  Card,
+  DocumentCard,
+  DocumentViewer,
+  PrimaryButton,
+  ScreenContainer,
+  ScreenTitleBar,
+} from '../../components/ui';
 import { apiUrl } from '../../config/api';
-import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
+import { api, getAuthorizationHeaders, getDocumentUploadTimeoutMs } from '../../services/api-client';
+import { colors, spacing, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
 import { formatPhone } from '../../utils/input';
+import { esRutaDocumentoServidor } from '../../utils/documents';
+import { appendDocumentFile } from '../../services/document-upload';
 
-type DocumentoClave =
-  | 'solicitud_fisica'
-  | 'ine'
-  | 'comprobante'
-  | 'comprobante_domicilio'
-  | 'ine_beneficiario'
-  | 'solicitud_firmada'
-  | 'comprobante_credito_externo';
-
-type DocumentoEstado = 'Pendiente' | 'Capturado';
+type DocumentoClave = 'ine' | 'comprobante' | 'ine_beneficiario' | 'solicitud_firmada' | 'comprobante_credito';
+type DocumentoEstado = 'Pendiente' | 'Subiendo' | 'Sincronizado' | 'Error' | 'Opcional';
 
 interface DocumentoItem {
   id: string;
@@ -24,19 +27,38 @@ interface DocumentoItem {
   nombre: string;
   requerido: boolean;
   estado: DocumentoEstado;
+  ruta?: string;
+  nota?: string;
 }
 
 interface IntegranteInfo {
   id: string;
   nombre: string;
-  telefono: string;
-  montoSolicitado: number;
-  expedienteId?: string;
+  telefono?: string | null;
+  montoSolicitado?: number;
+  expediente_id?: string;
 }
 
-interface GrupoInfo {
+interface GrupoInfo { id: string; nombre: string }
+interface ExpedienteInfo { id: string; grupo_id: string }
+
+interface SolicitudDocumentosInfo {
+  doc_ine_ruta?: string;
+  doc_comprobante_ruta?: string;
+  doc_ine_beneficiario_ruta?: string;
+  doc_solicitud_firmada_ruta?: string;
+  doc_comprobante_credito_ruta?: string;
+}
+
+interface DocumentoRemoto {
   id: string;
-  name: string;
+  ruta: string;
+  archivos: Array<{ indice: number; mime_type: string; url: string }>;
+}
+
+interface ViewerState {
+  title: string;
+  pages: Array<{ uri: string; headers: Record<string, string>; mimeType: string }>;
 }
 
 interface DocumentosScreenProps {
@@ -49,6 +71,27 @@ interface DocumentosScreenProps {
   onBack?: () => void;
 }
 
+const DEFINICIONES: Array<Pick<DocumentoItem, 'clave' | 'nombre' | 'nota' | 'requerido'>> = [
+  { clave: 'ine', nombre: 'INE', nota: 'Captura frente y reverso', requerido: true },
+  { clave: 'comprobante', nombre: 'Comprobante de domicilio', requerido: true },
+  { clave: 'solicitud_firmada', nombre: 'Solicitud firmada', requerido: true },
+  { clave: 'ine_beneficiario', nombre: 'INE de beneficiario', requerido: false },
+  {
+    clave: 'comprobante_credito',
+    nombre: 'Comprobante de línea de crédito',
+    nota: 'Puedes agregar todas las fotos necesarias',
+    requerido: false,
+  },
+];
+
+const RUTAS: Record<DocumentoClave, keyof SolicitudDocumentosInfo> = {
+  ine: 'doc_ine_ruta',
+  comprobante: 'doc_comprobante_ruta',
+  ine_beneficiario: 'doc_ine_beneficiario_ruta',
+  solicitud_firmada: 'doc_solicitud_firmada_ruta',
+  comprobante_credito: 'doc_comprobante_credito_ruta',
+};
+
 export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
   integranteId,
   integranteNombre,
@@ -59,689 +102,267 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
   onBack,
 }) => {
   const [documentos, setDocumentos] = useState<DocumentoItem[]>([]);
+  const [pendientesSesion, setPendientesSesion] = useState<Partial<Record<DocumentoClave, ImagePicker.ImagePickerAsset[]>>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [integrante, setIntegrante] = useState<IntegranteInfo | null>(null);
   const [grupo, setGrupo] = useState<GrupoInfo | null>(null);
-  const [viewingDocumento, setViewingDocumento] = useState<DocumentoItem | null>(null);
-  const [showViewer, setShowViewer] = useState(false);
+  const [viewer, setViewer] = useState<ViewerState | null>(null);
 
-  const loadDocumentos = async () => {
+  const loadDocumentos = useCallback(async () => {
+    const data = await api.get<SolicitudDocumentosInfo | null>(`/solicitudes/integrante/${integranteId}`);
+    setDocumentos(DEFINICIONES.map((definition) => {
+      const ruta = data?.[RUTAS[definition.clave]];
+      const sincronizado = esRutaDocumentoServidor(ruta);
+      return {
+        ...definition,
+        id: `${integranteId}-${definition.clave}`,
+        estado: sincronizado ? 'Sincronizado' : definition.requerido ? 'Pendiente' : 'Opcional',
+        ruta: sincronizado ? ruta : undefined,
+      };
+    }));
+  }, [integranteId]);
+
+  const loadContext = useCallback(async () => {
+    const integranteData = await api.get<IntegranteInfo>(`/integrantes/${integranteId}`);
+    setIntegrante(integranteData);
+    if (!integranteData.expediente_id) return;
+    const expediente = await api.get<ExpedienteInfo>(`/expedientes/${integranteData.expediente_id}`);
+    if (!expediente.grupo_id) return;
+    setGrupo(await api.get<GrupoInfo>(`/grupos/${expediente.grupo_id}`));
+  }, [integranteId]);
+
+  const loadScreen = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
-      // Los documentos ahora son campos en la tabla solicitudes
-      const response = await fetch(apiUrl(`/solicitudes/integrante/${integranteId}`));
-      if (!response.ok) {
-        throw new Error('Failed to load solicitud');
-      }
-
-      const data = await response.json();
-
-      // Mapear campos doc_*_ruta a formato de documentos
-      const docs: DocumentoItem[] = [
-        {
-          id: `${integranteId}-ine`,
-          clave: 'ine',
-          nombre: 'INE',
-          requerido: true,
-          estado: (data.doc_ine_ruta ? 'Capturado' : 'Pendiente') as DocumentoEstado,
-        },
-        {
-          id: `${integranteId}-comprobante`,
-          clave: 'comprobante',
-          nombre: 'Comprobante de domicilio',
-          requerido: true,
-          estado: (data.doc_comprobante_ruta ? 'Capturado' : 'Pendiente') as DocumentoEstado,
-        },
-        {
-          id: `${integranteId}-ine_beneficiario`,
-          clave: 'ine_beneficiario',
-          nombre: 'INE Beneficiario',
-          requerido: true,
-          estado: (data.doc_ine_beneficiario_ruta ? 'Capturado' : 'Pendiente') as DocumentoEstado,
-        },
-        {
-          id: `${integranteId}-solicitud_firmada`,
-          clave: 'solicitud_firmada',
-          nombre: 'Solicitud firmada',
-          requerido: true,
-          estado: (data.doc_solicitud_firmada_ruta ? 'Capturado' : 'Pendiente') as DocumentoEstado,
-        },
-      ];
-
-      setDocumentos(docs);
+      await Promise.all([loadContext(), loadDocumentos()]);
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Unexpected error');
+      setLoadError(error instanceof Error ? error.message : 'No se pudo cargar la documentación.');
     } finally {
       setLoading(false);
     }
+  }, [loadContext, loadDocumentos]);
+
+  useEffect(() => { void loadScreen(); }, [loadScreen]);
+
+  const setDocumentoEstado = (clave: DocumentoClave, estado: DocumentoEstado, ruta?: string) => {
+    setDocumentos((current) => current.map((item) => item.clave === clave ? { ...item, estado, ruta: ruta ?? item.ruta } : item));
   };
 
-  const loadIntegranteInfo = async () => {
+  const subirDocumento = async (documento: DocumentoItem, assets: ImagePicker.ImagePickerAsset[]) => {
+    setPendientesSesion((current) => ({ ...current, [documento.clave]: assets }));
+    setDocumentoEstado(documento.clave, 'Subiendo');
+
     try {
-      console.log('📱 Cargando integrante:', integranteId);
-      const response = await fetch(apiUrl(`/integrantes/${integranteId}`));
-      console.log('📱 Respuesta integrante:', response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📱 Datos integrante:', data);
-        setIntegrante(data);
-
-        // Cargar expediente para obtener el groupId
-        if (data.expedienteId) {
-          console.log('📱 Cargando expediente:', data.expedienteId);
-          const expResponse = await fetch(apiUrl(`/expedientes/${data.expedienteId}`));
-          if (expResponse.ok) {
-            const expData = await expResponse.json();
-            console.log('📱 Datos expediente:', expData);
-
-            // Cargar grupo
-            if (expData.groupId) {
-              console.log('📱 Cargando grupo:', expData.groupId);
-              const grupoResponse = await fetch(apiUrl(`/grupos/${expData.groupId}`));
-              if (grupoResponse.ok) {
-                const grupoData = await grupoResponse.json();
-                console.log('📱 Datos grupo:', grupoData);
-                setGrupo(grupoData);
-              }
-            }
-          }
-        }
+      const formData = new FormData();
+      for (let index = 0; index < assets.length; index += 1) {
+        const asset = assets[index];
+        if (!asset) continue;
+        const extension = asset.uri.split('?')[0].split('.').pop()?.toLowerCase() || 'jpg';
+        const normalizedExtension = extension === 'png' ? 'png' : extension === 'pdf' ? 'pdf' : 'jpg';
+        await appendDocumentFile(
+          formData,
+          asset.uri,
+          `${documento.clave}-${index + 1}.${normalizedExtension}`,
+        );
       }
+
+      const remoto = await api.post<DocumentoRemoto>(
+        `/solicitudes/integrante/${integranteId}/documentos/${documento.clave}`,
+        formData,
+        { timeoutMs: getDocumentUploadTimeoutMs(assets.length) },
+      );
+      setPendientesSesion((current) => ({ ...current, [documento.clave]: undefined }));
+      setDocumentoEstado(documento.clave, 'Sincronizado', remoto.ruta);
     } catch (error) {
-      console.error('❌ Error loading integrante:', error);
+      setDocumentoEstado(documento.clave, 'Error');
+      Alert.alert('No se pudo subir', error instanceof Error ? error.message : 'Revisa tu conexión e intenta nuevamente.');
     }
   };
 
-  useEffect(() => {
-    const loadData = async () => {
-      console.log('📱 Cargando integrante:', integranteId);
-      const response = await fetch(apiUrl(`/integrantes/${integranteId}`));
-      console.log('📱 Respuesta integrante:', response.status);
+  const capturarCamara = async (documento: DocumentoItem) => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (permission.status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Activa el acceso a la cámara para capturar el documento.');
+      return;
+    }
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📱 Datos integrante:', data);
-        setIntegrante({
-          id: data.id,
-          nombre: data.nombre,
-          telefono: data.telefono,
-          montoSolicitado: data.montoSolicitado,
+    const assets: ImagePicker.ImagePickerAsset[] = [];
+    if (documento.clave === 'comprobante_credito') {
+      let agregarOtra = true;
+      while (agregarOtra) {
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'],
+          allowsEditing: false,
+          quality: 0.85,
+        });
+        if (result.canceled || !result.assets[0]) {
+          if (assets.length === 0) return;
+          break;
+        }
+        assets.push(result.assets[0]);
+        agregarOtra = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Foto agregada',
+            `${assets.length} ${assets.length === 1 ? 'foto seleccionada' : 'fotos seleccionadas'}.`,
+            [
+              { text: 'Terminar', onPress: () => resolve(false) },
+              { text: 'Agregar otra', onPress: () => resolve(true) },
+            ],
+            { cancelable: false },
+          );
         });
       }
-    };
-
-    loadData();
-    loadDocumentos();
-  }, [integranteId, loadDocumentos]);
-
-  const handleLlamarIntegrante = (telefono: string, nombre: string) => {
-    Alert.alert(
-      'Realizar llamada',
-      `¿Deseas llamar a ${nombre}?\n\n${formatPhone(telefono)}`,
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: '📞 Llamar',
-          onPress: () => {
-            const cleanPhone = telefono.replace(/\D/g, '');
-            Linking.openURL(`tel:${cleanPhone}`);
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
-  const handleCapturarDocumento = async (documento: DocumentoItem) => {
-    // Preguntar si quiere usar cámara o galería
-    Alert.alert(
-      'Capturar documento',
-      '¿Cómo deseas capturar el documento?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: '📷 Cámara',
-          onPress: () => capturarConCamara(documento),
-        },
-        {
-          text: '🖼️ Galería',
-          onPress: () => seleccionarDeGaleria(documento),
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
-  const capturarConCamara = async (documento: DocumentoItem) => {
-    // Solicitar permisos de cámara
-    const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-
-    if (cameraStatus !== 'granted') {
-      Alert.alert('Permiso requerido', 'Se necesita acceso a la cámara para capturar documentos.');
+      await subirDocumento(documento, assets);
       return;
     }
 
-    // Si es INE, capturar frente y reverso
-    if (documento.clave === 'ine') {
-      await capturarINE(documento);
-      return;
+    const pages = documento.clave === 'ine' ? 2 : 1;
+    for (let index = 0; index < pages; index += 1) {
+      if (pages === 2) Alert.alert('INE', index === 0 ? 'Captura el frente.' : 'Captura el reverso.');
+      const result = await ImagePicker.launchCameraAsync({ allowsEditing: false, quality: 0.85 });
+      if (result.canceled || !result.assets[0]) return;
+      assets.push(result.assets[0]);
     }
-
-    // Para otros documentos, captura simple
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: false,
-      quality: 0.9,
-      base64: false,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      // TODO: Convertir a PDF aquí en el futuro
-      await actualizarDocumento(documento, 'Capturado');
-    }
+    await subirDocumento(documento, assets);
   };
 
-  const seleccionarDeGaleria = async (documento: DocumentoItem) => {
-    // Solicitar permisos de galería
-    const { status: galleryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (galleryStatus !== 'granted') {
-      Alert.alert('Permiso requerido', 'Se necesita acceso a la galería para seleccionar imágenes.');
+  const seleccionarGaleria = async (documento: DocumentoItem) => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permission.status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Activa el acceso a tus imágenes para seleccionar el documento.');
       return;
     }
-
-    // Seleccionar imagen de la galería
+    const permiteMultiples = documento.clave === 'ine'
+      || documento.clave === 'comprobante_credito';
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false,
-      quality: 0.9,
-      base64: false,
+      mediaTypes: ['images'],
+      allowsMultipleSelection: permiteMultiples,
+      selectionLimit: documento.clave === 'ine'
+        ? 2
+        : documento.clave === 'comprobante_credito'
+          ? 0
+          : 1,
+      orderedSelection: permiteMultiples,
+      quality: 0.85,
     });
-
-    if (!result.canceled && result.assets[0]) {
-      // TODO: Convertir a PDF aquí en el futuro
-      await actualizarDocumento(documento, 'Capturado');
-    }
-  };
-
-  const capturarINE = async (documento: DocumentoItem) => {
-    // Capturar frente del INE
-    Alert.alert('INE - Frente', 'Toma una foto del frente de tu INE');
-
-    const frenteResult = await ImagePicker.launchCameraAsync({
-      allowsEditing: false,
-      quality: 0.9,
-      base64: false,
-    });
-
-    if (frenteResult.canceled) {
+    if (result.canceled || !result.assets.length) return;
+    if (documento.clave === 'ine' && result.assets.length !== 2) {
+      Alert.alert('Falta una imagen', 'Selecciona el frente y el reverso del INE.');
       return;
     }
-
-    // Capturar reverso del INE
-    Alert.alert('INE - Reverso', 'Ahora toma una foto del reverso de tu INE');
-
-    const reversoResult = await ImagePicker.launchCameraAsync({
-      allowsEditing: false,
-      quality: 0.9,
-      base64: false,
-    });
-
-    if (!reversoResult.canceled && reversoResult.assets[0]) {
-      // TODO: Guardar ambas imágenes y convertir a PDF
-      await actualizarDocumento(documento, 'Capturado');
-    }
+    await subirDocumento(documento, result.assets);
   };
 
-  const actualizarDocumento = async (documento: DocumentoItem, estado: DocumentoEstado) => {
+  const elegirOrigen = (documento: DocumentoItem): void | Promise<void> => {
+    const pendientes = pendientesSesion[documento.clave];
+    if (documento.estado === 'Error' && pendientes?.length) {
+      return subirDocumento(documento, pendientes);
+    }
+    Alert.alert('Agregar documento', 'Elige el origen de las imágenes.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Cámara',
+        onPress: () => {
+          // Cámara y galería son superficies nativas: el overlay global puede
+          // bloquear sus controles o quedar encima al regresar a la aplicación.
+          void capturarCamara(documento);
+        },
+      },
+      {
+        text: 'Galería',
+        onPress: () => {
+          void seleccionarGaleria(documento);
+        },
+      },
+    ]);
+    return undefined;
+  };
+
+  const verDocumento = async (documento: DocumentoItem) => {
+    if (!documento.ruta) return;
     try {
-      // Mapear clave del documento a campos en solicitudes
-      const fieldMap: Record<string, { ruta: string; fecha: string }> = {
-        'ine': { ruta: 'doc_ine_ruta', fecha: 'doc_ine_fecha' },
-        'INE': { ruta: 'doc_ine_ruta', fecha: 'doc_ine_fecha' },
-        'comprobante': { ruta: 'doc_comprobante_ruta', fecha: 'doc_comprobante_fecha' },
-        'COMPROBANTE': { ruta: 'doc_comprobante_ruta', fecha: 'doc_comprobante_fecha' },
-        'ine_beneficiario': { ruta: 'doc_ine_beneficiario_ruta', fecha: 'doc_ine_beneficiario_fecha' },
-        'INE_BENEFICIARIO': { ruta: 'doc_ine_beneficiario_ruta', fecha: 'doc_ine_beneficiario_fecha' },
-        'solicitud_firmada': { ruta: 'doc_solicitud_firmada_ruta', fecha: 'doc_solicitud_firmada_fecha' },
-        'SOLICITUD_FIRMADA': { ruta: 'doc_solicitud_firmada_ruta', fecha: 'doc_solicitud_firmada_fecha' },
-      };
-
-      const fields = fieldMap[documento.clave];
-      if (!fields) {
-        throw new Error(`Documento desconocido: ${documento.clave}`);
-      }
-
-      const rutaTemporal = `mobile-temp:documento-${documento.clave}-${Date.now()}`;
-      const fechaCaptura = new Date().toISOString().split('T')[0];
-
-      // Actualizar campos en solicitudes
-      const response = await fetch(apiUrl(`/solicitudes/${integranteId}`), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          [fields.ruta]: rutaTemporal,
-          [fields.fecha]: fechaCaptura,
-        }),
+      const [remoto, headers] = await Promise.all([
+        api.get<DocumentoRemoto>(documento.ruta),
+        getAuthorizationHeaders(),
+      ]);
+      setViewer({
+        title: documento.nombre,
+        pages: remoto.archivos.map((archivo) => ({ uri: apiUrl(archivo.url), headers, mimeType: archivo.mime_type })),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to update documento');
-      }
-
-      await loadDocumentos();
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Unexpected error');
+      Alert.alert('No se pudo abrir', error instanceof Error ? error.message : 'Intenta nuevamente.');
     }
   };
+
+  const requeridos = documentos.filter((documento) => documento.requerido);
+  const completos = requeridos.filter((documento) => documento.estado === 'Sincronizado').length;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer moduleTheme="documentation">
       <AppHeader showBackButton onBackPress={onBack} moduleTheme="documentation" />
-      <ScreenTitleBar title="🔥 DOCUMENTOS NUEVO 🔥" moduleTheme="documentation" />
-
+      <ScreenTitleBar title="Documentos" moduleTheme="documentation" />
       {loading ? (
-        <ActivityIndicator style={styles.loader} size="large" />
-      ) : (
-        <>
-          {/* Banner del grupo - FIJO */}
-          <View style={styles.grupoBanner}>
-            <Text allowFontScaling={false} style={styles.grupoBannerText}>
-              {grupo?.name || groupName || 'Cargando grupo...'}
-            </Text>
-          </View>
-
-          {/* Tarjeta del integrante - FIJA */}
-          <View style={styles.fixedSolicitanteContainer}>
-            <Card style={styles.integranteCard}>
-              <View style={styles.integranteHeader}>
-                {/* Nombre a la izquierda */}
-                <Text allowFontScaling={false} style={styles.integranteName}>
-                  {integrante?.nombre || integranteNombre || 'Cargando...'}
-                </Text>
-
-                {/* Número a la derecha */}
-                {integrantePosition && integrantesTotal && (
-                  <Text allowFontScaling={false} style={styles.positionText}>
-                    {integrantePosition}/{integrantesTotal}
-                  </Text>
-                )}
-              </View>
-
-              {/* Teléfono y Monto */}
-              {integrante && (
-                <View style={styles.contactInfoRow}>
-                  {/* Teléfono con ícono - CLICKEABLE */}
-                  <TouchableOpacity
-                    style={styles.phoneButton}
-                    onPress={() => handleLlamarIntegrante(integrante.telefono, integrante.nombre)}
-                  >
-                    <Text allowFontScaling={false} style={styles.phoneIcon}>📞</Text>
-                    <Text allowFontScaling={false} style={styles.phoneText}>{formatPhone(integrante.telefono)}</Text>
-                  </TouchableOpacity>
-
-                  {/* Monto */}
-                  <View style={styles.montoContainer}>
-                    <Text allowFontScaling={false} style={styles.montoIcon}>💰</Text>
-                    <Text allowFontScaling={false} style={styles.montoText}>{formatCurrency(integrante.montoSolicitado)}</Text>
-                  </View>
-                </View>
-              )}
-            </Card>
-          </View>
-
-          {/* Lista de documentos - SCROLLABLE */}
-          <ScrollView style={styles.scroll}>
-            <View style={styles.content}>
-              <Text allowFontScaling={false} style={styles.sectionTitle}>Documentos requeridos</Text>
-
-            {documentos.map((documento) => (
-              <Card key={documento.id} style={styles.documentoCard}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.documentInfo}>
-                    <Text allowFontScaling={false} style={styles.name}>{documento.nombre}</Text>
-                    <Text allowFontScaling={false} style={styles.meta}>{documento.requerido ? 'Requerido' : 'Opcional'}</Text>
-                    {documento.clave === 'ine' && (
-                      <Text allowFontScaling={false} style={styles.ineNote}>📸 Frente y reverso</Text>
-                    )}
-                  </View>
-                  <View
-                    style={[
-                      styles.badge,
-                      documento.estado === 'Capturado' ? styles.badgeCaptured : styles.badgePending,
-                    ]}
-                  >
-                    <Text allowFontScaling={false} style={styles.badgeText}>{documento.estado}</Text>
-                  </View>
-                </View>
-
-                {/* Botones según estado */}
-                {documento.estado === 'Capturado' ? (
-                  <View style={styles.actionsRow}>
-                    <View style={styles.actionButton}>
-                      <SecondaryButton
-                        title="👁️ Ver"
-                        onPress={() => {
-                          setViewingDocumento(documento);
-                          setShowViewer(true);
-                        }}
-                      />
-                    </View>
-                    <View style={styles.actionButton}>
-                      <SecondaryButton
-                        title="📷 Recapturar"
-                        onPress={() => handleCapturarDocumento(documento)}
-                      />
-                    </View>
-                  </View>
-                ) : (
-                  <View style={{ marginTop: spacing.sm }}>
-                    <PrimaryButton
-                      title="📷 Capturar"
-                      onPress={() => handleCapturarDocumento(documento)}
-                      moduleTheme="documentation"
-                    />
-                  </View>
-                )}
-              </Card>
-            ))}
-
-              <PrimaryButton title="Volver al expediente" onPress={onSaved} moduleTheme="documentation" />
-            </View>
-          </ScrollView>
-        </>
-      )}
-
-      {/* Modal para ver documento - VERSIÓN 2.0 - SOLO X ARRIBA */}
-      <Modal visible={showViewer} transparent animationType="fade" onRequestClose={() => setShowViewer(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text allowFontScaling={false} style={styles.modalTitle}>{viewingDocumento?.nombre}</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  console.log('✕ CERRAR MODAL - VERSIÓN 2.0');
-                  setShowViewer(false);
-                }}
-                style={styles.closeButton}
-              >
-                <Text allowFontScaling={false} style={styles.closeButtonText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.imageContainer}>
-              {/* TODO: Aquí irán las imágenes cuando se implementeel almacenamiento */}
-              <View style={styles.placeholder}>
-                <Text allowFontScaling={false} style={styles.placeholderText}>📄</Text>
-                <Text allowFontScaling={false} style={styles.placeholderSubtext}>
-                  Documento capturado{'\n'}
-                  {viewingDocumento?.clave === 'ine' ? '(Frente y Reverso)' : ''}
-                </Text>
-                <Text allowFontScaling={false} style={styles.placeholderNote}>
-                  💡 Próximamente podrás ver las imágenes guardadas aquí
-                </Text>
-                <Text allowFontScaling={false} style={{ color: 'red', marginTop: 20, textAlign: 'center', fontSize: 12 }}>
-                  VERSIÓN 2.0 - SIN BOTÓN ABAJO
-                </Text>
-              </View>
-            </View>
-          </View>
+        <View style={styles.centerState}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text allowFontScaling={false} style={styles.stateText}>Cargando documentación…</Text>
         </View>
-      </Modal>
+      ) : loadError ? (
+        <View style={styles.centerState}>
+          <Text allowFontScaling={false} style={styles.errorTitle}>No se pudo cargar</Text>
+          <Text allowFontScaling={false} style={styles.stateText}>{loadError}</Text>
+          <PrimaryButton title="Intentar nuevamente" onPress={loadScreen} />
+        </View>
+      ) : (
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+          <Card style={styles.contextCard}>
+            <Text allowFontScaling={false} style={styles.groupName}>{grupo?.nombre || groupName || 'Grupo'}</Text>
+            <View style={styles.contextRow}>
+              <Text allowFontScaling={false} style={styles.personName}>{integrante?.nombre || integranteNombre || 'Integrante'}</Text>
+              {integrantePosition && integrantesTotal ? <Text allowFontScaling={false} style={styles.position}>{integrantePosition}/{integrantesTotal}</Text> : null}
+            </View>
+            <Text allowFontScaling={false} style={styles.meta}>
+              {[integrante?.telefono ? formatPhone(integrante.telefono) : null, formatCurrency(integrante?.montoSolicitado || 0)].filter(Boolean).join(' · ')}
+            </Text>
+            <Text allowFontScaling={false} style={styles.progress}>{completos} de {requeridos.length} obligatorios sincronizados</Text>
+          </Card>
+
+          <Text allowFontScaling={false} style={styles.sectionTitle}>Pendientes primero</Text>
+          {[...documentos].sort((a, b) => Number(a.estado === 'Sincronizado') - Number(b.estado === 'Sincronizado')).map((documento) => (
+            <DocumentCard
+              key={documento.id}
+              name={documento.nombre}
+              required={documento.requerido}
+              hint={documento.nota}
+              statusLabel={documento.estado}
+              statusTone={documento.estado === 'Sincronizado' ? 'success' : documento.estado === 'Subiendo' ? 'progress' : documento.estado === 'Error' ? 'error' : 'pending'}
+              primaryLabel={documento.estado === 'Error' ? 'Reintentar' : documento.estado === 'Sincronizado' ? 'Reemplazar' : documento.estado === 'Subiendo' ? 'Subiendo…' : 'Capturar'}
+              onPrimary={() => elegirOrigen(documento)}
+              onView={documento.estado === 'Sincronizado' ? () => verDocumento(documento) : undefined}
+              disabled={documento.estado === 'Subiendo'}
+            />
+          ))}
+          <PrimaryButton title="Volver al expediente" onPress={onSaved || onBack} />
+        </ScrollView>
+      )}
+      <DocumentViewer visible={Boolean(viewer)} title={viewer?.title || ''} pages={viewer?.pages || []} onClose={() => setViewer(null)} />
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  loader: { marginTop: spacing.xl },
-  content: {
-    padding: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  grupoBanner: {
-    backgroundColor: moduleThemes.documentation.headerBg,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: moduleThemes.documentation.titleBarBg,
-  },
-  grupoBannerText: {
-    color: '#FDE047',
-    fontSize: 15,
-    fontWeight: '700',
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  fixedSolicitanteContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    backgroundColor: colors.background,
-  },
-  integranteCard: {
-    padding: spacing.md,
-    borderWidth: 2,
-    borderColor: '#000000',
-    marginBottom: 0,
-  },
-  integranteHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  integranteName: {
-    ...typography.bodyStrong,
-    color: colors.textPrimary,
-    fontSize: 18,
-    flex: 1,
-    textAlign: 'left',
-  },
-  positionText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#666',
-    textAlign: 'right',
-  },
-  contactInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.xs,
-    paddingTop: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    gap: spacing.sm,
-  },
-  phoneButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    borderRadius: radius.md,
-    flex: 1.3,
-    gap: spacing.xs,
-  },
-  phoneIcon: {
-    fontSize: 20,
-  },
-  phoneText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1E40AF',
-  },
-  montoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F0FDF4',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    borderRadius: radius.md,
-    gap: spacing.xs,
-    flex: 1,
-  },
-  montoIcon: {
-    fontSize: 18,
-  },
-  montoText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#15803D',
-  },
-  statusPill: {
-    alignSelf: 'flex-start',
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-  },
-  statusPillComplete: {
-    backgroundColor: colors.successSoft,
-    borderWidth: 2,
-    borderColor: '#10B981',
-  },
-  statusPillPending: {
-    backgroundColor: '#FEF3C7',
-    borderWidth: 2,
-    borderColor: '#F59E0B',
-  },
-  statusPillText: { ...typography.caption, fontWeight: '700', color: colors.textPrimary },
-  sectionTitle: {
-    ...typography.sectionTitle,
-    color: colors.textPrimary,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  subtitle: { color: colors.textSecondary, marginBottom: spacing.md, ...typography.body },
-  cardPressable: { marginBottom: spacing.sm },
-  documentoCard: {
-    borderWidth: 2,
-    borderColor: '#000000',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: spacing.md,
-  },
-  documentInfo: {
-    flex: 1,
-  },
-  name: { ...typography.bodyStrong, color: colors.textPrimary },
-  meta: { marginTop: spacing.xs, color: colors.textSecondary, ...typography.caption },
-  ineNote: {
-    marginTop: spacing.xs,
-    color: moduleThemes.documentation.headerBg,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  capturedNote: {
-    marginTop: spacing.sm,
-    color: '#10B981',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  badge: {
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  badgeCaptured: {
-    backgroundColor: colors.successSoft,
-    borderWidth: 2,
-    borderColor: '#10B981',
-  },
-  badgePending: {
-    backgroundColor: '#FEF3C7',
-    borderWidth: 2,
-    borderColor: '#F59E0B',
-  },
-  badgeText: { color: colors.textPrimary, ...typography.caption, fontWeight: '700' },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
-    zIndex: 9999,
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: radius.lg,
-    width: '100%',
-    maxHeight: '90%',
-    overflow: 'hidden',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: spacing.lg,
-    backgroundColor: moduleThemes.documentation.headerBg,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-  },
-  modalTitle: {
-    ...typography.sectionTitle,
-    color: 'white',
-    flex: 1,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 16,
-  },
-  closeButtonText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  imageContainer: {
-    flex: 1,
-    padding: spacing.lg,
-  },
-  placeholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl * 2,
-  },
-  placeholderText: {
-    fontSize: 80,
-    marginBottom: spacing.md,
-  },
-  placeholderSubtext: {
-    ...typography.bodyStrong,
-    color: colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  placeholderNote: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
+  content: { padding: spacing.lg, paddingBottom: spacing.xl },
+  centerState: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.md, padding: spacing.xl },
+  stateText: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
+  errorTitle: { ...typography.sectionTitle, color: colors.danger },
+  contextCard: { marginBottom: spacing.lg },
+  groupName: { ...typography.caption, color: colors.primary, textTransform: 'uppercase' },
+  contextRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
+  personName: { ...typography.sectionTitle, color: colors.textPrimary, flex: 1 },
+  position: { ...typography.bodyStrong, color: colors.textSecondary },
+  meta: { ...typography.body, color: colors.textSecondary, marginTop: spacing.xs },
+  progress: { ...typography.bodyStrong, color: colors.primary, marginTop: spacing.md },
+  sectionTitle: { ...typography.sectionTitle, color: colors.textPrimary, marginBottom: spacing.md },
 });
