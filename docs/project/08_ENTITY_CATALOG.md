@@ -1,6 +1,6 @@
 # 08 Entity Catalog — Catálogo Integral de Entidades
 
-Versión: 2.14.0
+Versión: 2.15.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 Fuente: PostgreSQL `crelealtad`, entidades TypeORM, API y mobile activos
@@ -31,7 +31,8 @@ Implementación para asesores: abreviatura operativa como identificador de login
 Integridad de estado: `ACTIVO`, `INACTIVO`, `SUSPENDIDO` y `BLOQUEADO`, protegidos por `ck_usuarios_estado`.
 Cobertura de carga: 49 usuarios vinculados a 49 registros de `empleados` y 49 registros de datos laborales.
 Brecha: el cambio inicial obligatorio de PIN ya está implementado; faltan administración de
-usuarios, recuperación o restablecimiento auditable, cambio voluntario y matriz funcional definitiva.
+usuarios, recuperación o restablecimiento auditable, cambio voluntario e implementación de la
+matriz funcional aprobada en DEC-175.
 
 ## 3. Rol
 
@@ -39,7 +40,8 @@ Objetivo: agrupar módulos y acciones permitidas.
 Persistencia: `roles`, con permisos JSONB.
 Cobertura: datos iniciales, rol incluido en JWT y permisos evaluados por el guard global contra un catálogo técnico central. La migración 035 valida en PostgreSQL la forma JSONB y que módulos/acciones contengan texto.
 Integridad de estado: `ACTIVO` e `INACTIVO`, protegidos por `ck_roles_estado`.
-Brecha: matriz funcional definitiva y alcance territorial pendientes.
+Brecha: la matriz funcional y sus alcances fueron aprobados en DEC-175; faltan contrato v2,
+migración, aplicación territorial y retiro controlado de DEC-023.
 
 ## 4. Empleado
 

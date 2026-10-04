@@ -1,6 +1,6 @@
 # 10 Database Principles — Principios de Base de Datos
 
-Versión: 2.14.0
+Versión: 2.15.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -153,8 +153,8 @@ Las cinco FK críticas de `solicitudes` hacia persona, expediente, grupo, crédi
 - La migración 035 exige que ambos contratos tengan objeto, arreglos y elementos textuales; la API filtra contra un catálogo único y deniega por defecto cualquier valor desconocido.
 - No existe tabla puente `usuarios_roles`; el modelo vigente asigna un rol por usuario.
 - No existen tablas separadas `permisos` o `rol_permisos`.
-- La API evalúa los permisos JSONB mediante un guard global. Para `ASESOR`, también valida por recurso la cadena `usuario → empleado → expediente` en grupos, expedientes, integrantes, solicitudes y documentos. La matriz funcional completa y el alcance por sucursal/zona continúan pendientes de aprobación e implementación.
-- DEC-023 agrega temporalmente `verificacion:leer` al rol `ASESOR` mediante la migración 010, con registro antes/después en `audit_log` y rollback condicionado; no sustituye la matriz restrictiva definitiva requerida antes de producción.
+- La API evalúa los permisos JSONB mediante un guard global. Para `ASESOR`, también valida por recurso la cadena `usuario → empleado → expediente` en grupos, expedientes, integrantes, solicitudes y documentos. DEC-175 aprobó la matriz funcional y el alcance objetivo; su contrato v2 y los filtros por sucursal/zona continúan pendientes de implementación.
+- DEC-023 agrega temporalmente `verificacion:leer` al rol `ASESOR` mediante la migración 010, con registro antes/después en `audit_log` y rollback condicionado; no sustituye la aplicación técnica de DEC-175 requerida antes de producción.
 - No hay RLS activo; el alcance por sucursal/zona debe implementarse y probarse antes de producción.
 
 ## Integridad de estados cerrados
@@ -206,7 +206,7 @@ Brecha constitucional:
 1. RLS inexistente.
 2. Auditoría parcial: el recorrido de Documentación está cubierto en sus altas y cambios principales, pero faltan módulos futuros y gobierno transversal.
 3. Sin triggers de auditoría o integridad adicional.
-4. Matriz funcional de permisos y alcance territorial pendientes, aunque la aplicación técnica del JSONB ya existe.
+4. Matriz funcional y alcance territorial aprobados por DEC-175, pero todavía no implementados; el JSONB vigente conserva listas independientes y comodines temporales.
 5. Tabla de respaldo mezclada con entidades operativas.
 6. Las tres validaciones SI/NO en solicitudes siguen siendo decisión funcional abierta.
 7. Algunas relaciones usan `NO ACTION`; cualquier cambio a la política de borrado requiere revisión contra decisiones cerradas.

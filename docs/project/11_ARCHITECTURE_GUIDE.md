@@ -1,6 +1,6 @@
 # 11 Architecture Guide — Guía de Arquitectura
 
-Versión: 2.16.0
+Versión: 2.17.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -84,7 +84,7 @@ Fecha de auditoría: 2026-10-04
 ### Brechas backend
 
 - Existe un guard global y un decorador de permisos por módulo/acción; toda ruta protegida sin clasificación explícita queda bloqueada. El vocabulario autorizable vive en `auth/permission.contract.ts`, por lo que un identificador nuevo requiere una ampliación central y comprobable, no cadenas dispersas.
-- El alcance por responsable está aplicado de extremo a extremo para `ASESOR` en el recorrido activo. El alcance por sucursal/zona y la matriz de los demás roles siguen pendientes.
+- El alcance por responsable está aplicado de extremo a extremo para `ASESOR` en el recorrido activo. DEC-175 aprobó la matriz y los alcances `PROPIO`, `SUCURSAL`, `ZONA` y `GLOBAL`; el evaluador por pares y los filtros de sucursal/zona siguen pendientes de implementación.
 - Cada asesor valida su PIN contra su propio hash bcrypt; no existe bypass universal. Durante pruebas, los 49 asesores comparten temporalmente el valor aprobado `1234` y tienen `requiere_cambio_pin = true`. El guard global bloquea endpoints funcionales para esas sesiones y sólo permite perfil/cambio de PIN; `POST /auth/cambiar-pin` verifica el PIN actual, guarda el hash nuevo y desactiva la marca dentro de una transacción auditada.
 - El middleware registra únicamente metadatos operativos de la petición; no serializa body, parámetros, cabeceras ni valores rechazados por validación.
 - `JWT_SECRET` es obligatorio cuando `NODE_ENV=production`; el valor local de desarrollo no permite iniciar producción.

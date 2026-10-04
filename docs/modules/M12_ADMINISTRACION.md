@@ -1,19 +1,20 @@
 # M12 Administración — Especificación y matriz de acceso propuesta
 
-Versión: 0.1.0
-Estado: Propuesto; pendiente de aprobación funcional de Dirección
+Versión: 1.0.0
+Estado: Aprobado por Dirección mediante DEC-175; implementación técnica pendiente
 Fecha de diseño: 2026-10-04
 
 ## 1. Identidad
 
 - Nombre oficial: Administración.
 - Código: M12.
-- Estado funcional: propuesta versionada; no aplicada al runtime.
+- Estado funcional: matriz aprobada; no aplicada todavía al runtime.
 - Responsable operativo propuesto: Dirección para la política y Gerencia para las solicitudes dentro de su alcance.
 - Responsable técnico propuesto: Administración del sistema para ejecutar cambios previamente autorizados.
 - Roles usuarios: `ADMINISTRADOR`, `GERENTE` y `COORDINADOR` con capacidades distintas; los demás roles sólo conservan autoservicio de su propia sesión fuera de M12.
 
-Esta especificación no cambia permisos, datos, esquema, rutas ni navegación. La matriz sólo podrá pasar a `Aprobada` mediante una decisión explícita de Dirección.
+Esta especificación quedó aprobada mediante DEC-175. La aprobación no cambia por sí sola permisos,
+datos, esquema, rutas ni navegación; su implementación conserva el plan controlado de la sección 20.
 
 ## 2. Objetivo y resultado observable
 
@@ -312,13 +313,13 @@ APROBADA → CANCELADA antes de ejecutar
 - [x] M12 separa solicitar, aprobar y ejecutar.
 - [x] El alcance territorial falla cerrado.
 - [x] No se modificaron permisos ni datos al diseñar.
-- [ ] Dirección aprueba expresamente la matriz y las decisiones abiertas.
-- [ ] La aprobación se registra en `docs/DECISIONES.md` y `docs/project/23_DECISION_LOG.md`.
+- [x] Dirección aprueba expresamente la matriz y las decisiones abiertas.
+- [x] La aprobación se registra en `docs/DECISIONES.md` y `docs/project/23_DECISION_LOG.md`.
 - [ ] La implementación se divide en migración de contrato, backend, mobile y pruebas.
 
-## 19. Decisiones abiertas para aprobación
+## 19. Decisiones aprobadas mediante DEC-175
 
-Se recomienda aprobar en conjunto estas reglas:
+Dirección aprobó en conjunto estas reglas el 2026-10-04:
 
 1. Adoptar capacidades por par módulo–acción y retirar el producto cartesiano y los comodines en producción.
 2. Adoptar `PROPIO`, `SUCURSAL`, `ZONA` y `GLOBAL`, con fallo cerrado cuando falte asignación.

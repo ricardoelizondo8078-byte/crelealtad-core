@@ -1,6 +1,6 @@
 # 20 Module Catalog — Catálogo de Módulos
 
-Versión: 2.21.0
+Versión: 2.22.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -38,7 +38,7 @@ Verificado:
 Pendientes críticos:
 
 - Alcance por sucursal/zona.
-- Aprobación funcional de la matriz completa rol–módulo–acción.
+- Implementación de la matriz rol–módulo–acción y alcances aprobada por DEC-175.
 - Implementar recuperación administrativa/cambio voluntario de PIN y completar la sustitución individual del valor temporal compartido.
 - Operar los secretos de despliegue mediante el gestor productivo aprobado.
 - Manejo global de expiración durante una sesión ya abierta.
@@ -81,7 +81,7 @@ Pendientes críticos:
 - Implementar cola offline, idempotencia, reanudación y reconciliación.
 - Retirar o migrar definitivamente rutas, alias y variantes legacy excluidas.
 - Ampliar la trazabilidad a módulos posteriores y excepciones aún no implementadas.
-- Aprobar la matriz funcional completa de asesora/coordinación y aplicar su alcance territorial.
+- Implementar la matriz aprobada de asesora/coordinación y su alcance territorial.
 - Parametrizar políticas todavía embebidas.
 
 ## M03 Verificación — Parcial funcional
@@ -133,7 +133,7 @@ Pendientes críticos:
 - Tratamiento operativo de no coincidencias y creación real de una cita para `Agendó visita`; respuestas, acción y evidencia ya se conservan sin declarar conclusión cuando el resultado queda pendiente.
 - Tratamiento posterior específico para cada resultado de `Visita al vecino`; su terminación básica ya exige respuesta y segunda evidencia confirmadas.
 - Mínimo parametrizado de integrantes cuando M11 defina el producto aplicable; retiro, cero pendientes y al menos una completa ya se validan en servidor.
-- Aprobar la matriz funcional completa de VERIFICADOR y aplicar su alcance territorial.
+- Implementar la matriz aprobada de `VERIFICADOR` y su alcance territorial.
 - Criterio funcional de conclusión de Entrevista y cola offline durable; sus respuestas y evidencias ya cuentan con persistencia y recuperación de servidor.
 - Crear o asignar usuarios operativos al rol autorizado; al 2026-08-29 no hay usuarios activos `VERIFICADOR` en la base local.
 
@@ -249,17 +249,16 @@ Verificado:
 - Tablas `usuarios`, `roles`, `empleados` y sus tablas hijas, `sucursales` y `zonas`.
 - Ocho roles institucionales y un rol técnico aislado de prueba inventariados en la base local; el rol adicional no redefine la matriz objetivo.
 - `roles.permisos` y el reemplazo opcional `usuarios.permisos_personalizados` se aplican en la API y el inicio móvil mediante un contrato común de módulo/acción. El catálogo de identificadores está centralizado y la migración 035 valida el formato JSONB sin otorgar permisos nuevos.
-- La especificación propuesta `docs/modules/M12_ADMINISTRACION.md` registra el inventario agregado real y diseña la matriz inicial de los doce módulos y ocho roles institucionales. Separa par módulo–acción, alcance territorial, condición operativa y doble control.
-- La propuesta deja M04–M10 denegados hasta que cada módulo cuente con especificación aprobada, retira los comodines del objetivo productivo y no convierte DEC-023 en permiso definitivo.
-- El contrato actual de listas independientes genera un producto cartesiano entre módulos y acciones; la propuesta v0.1 exige capacidades explícitas por par antes de escalar M12.
+- DEC-175 aprueba `docs/modules/M12_ADMINISTRACION.md` v1.0 como matriz inicial de los doce módulos y ocho roles institucionales. Separa par módulo–acción, alcance territorial, condición operativa y doble control.
+- La matriz deja M04–M10 denegados hasta que cada módulo cuente con especificación aprobada, retira los comodines del objetivo productivo y no convierte DEC-023 en permiso definitivo.
+- El contrato actual de listas independientes genera un producto cartesiano entre módulos y acciones; DEC-175 exige capacidades explícitas por par antes de escalar M12.
 
 Pendiente:
 
 - API y UI administrativas.
-- Aprobación explícita de Dirección de la propuesta v0.1 rol–módulo–acción, alcance, excepciones y doble control.
 - Migración al contrato por pares, sin comodines productivos, probada primero en `crelealtad_test` y aplicada sólo con respaldo y plan de reversión.
 - Alta/baja lógica, reasignación, alcance y auditoría.
-- API y pantallas para otorgar y revocar permisos, sujetas a aprobación de la matriz y auditoría reforzada.
+- API y pantallas para otorgar y revocar permisos conforme a DEC-175 y con auditoría reforzada.
 
 ## Dependencias transversales prioritarias
 

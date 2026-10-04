@@ -1,5 +1,24 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-04] - Aprobación de la matriz institucional de acceso
+
+### Gobierno y seguridad
+
+- Dirección aprobó como DEC-175 la especificación `docs/modules/M12_ADMINISTRACION.md` v1.0 y sus
+  ocho reglas: permisos por par, cuatro alcances, retiro futuro de DEC-023, módulos M04–M10
+  denegados hasta especificación, doble control M11/M12, excepciones restrictivas, Administración
+  sin herencia operativa y decisión separada para roles faltantes de Análisis y Control interno.
+- Seguridad, Arquitectura, Principios de base de datos, Catálogo de entidades, Estado, Catálogo de
+  módulos y las especificaciones M01–M03 distinguen ahora la matriz aprobada de su implementación
+  técnica todavía pendiente.
+- La aprobación no cambió PostgreSQL, permisos, API ni mobile. DEC-023 continúa vigente hasta que
+  el contrato v2 se pruebe en `crelealtad_test`, se respalde la base y se ejecute un corte controlado.
+
+### Verificado
+
+- DEC-175 quedó registrado en `docs/DECISIONES.md` y `docs/project/23_DECISION_LOG.md`.
+- Las referencias vigentes ya no presentan la matriz como decisión funcional pendiente.
+
 ## [2026-10-04] - Diseño de matriz de acceso y gobierno de M12
 
 ### Administración y seguridad

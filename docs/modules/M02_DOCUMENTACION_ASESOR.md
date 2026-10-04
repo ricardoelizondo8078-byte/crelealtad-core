@@ -187,5 +187,5 @@ La bandeja y el detalle de grupos aplican alcance por responsable para `ASESOR`.
 - Proveedor durable de almacenamiento para producción.
 - Cola offline, idempotencia entre reinicios y política de conflictos.
 - Catálogo parametrizable y versionamiento documental en PostgreSQL.
-- Alcance territorial y por responsable.
+- Aplicación completa del alcance por responsable y territorial aprobado en DEC-175.
 - Fuente operativa para reconciliar `asesora_id` en los 578 expedientes históricos.

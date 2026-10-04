@@ -6,7 +6,7 @@
 - Código: M03-VERIFICACION.
 - Estado: parcial funcional; consulta, devolución documental, bandeja personal, concentrador individual, proceso `Llamada` persistente, confirmación telefónica de Entrevista con evidencia, `Visita al vecino` con fachada, confirmación, segunda evidencia y terminación condicionada, `Imágenes del domicilio` persistentes y geolocalizadas, y captura general de `Entrevista` autoguardada con evidencias geolocalizadas; su criterio de cierre continúa pendiente.
 - Responsable operativo: por definir por CRELEALTAD.
-- Roles usuarios: durante DEC-023, todos los usuarios activos con acceso efectivo al módulo; `ASESOR` y `VERIFICADOR` disponen de la acción específica `verificacion:registrar` para los intentos de llamada. La matriz restrictiva definitiva sigue pendiente.
+- Roles usuarios: durante DEC-023, todos los usuarios activos con acceso efectivo al módulo; `ASESOR` y `VERIFICADOR` disponen de la acción específica `verificacion:registrar` para los intentos de llamada. DEC-175 aprueba que el objetivo productivo quede en `VERIFICADOR` con lectura supervisora de Coordinación/Gerencia; la migración y el corte aún están pendientes.
 - Arquitectura móvil activa: el coordinador individual delega Revisión documental, Llamada, Visita
   al vecino, Imágenes del domicilio y todas las secciones de Entrevista —Preguntas generales,
   Historial crediticio, Datos personales, Ingresos y Encuestas— a componentes tipados. Los visores
@@ -92,7 +92,7 @@
 
 ### No incluye
 
-- Matriz restrictiva definitiva, alta/asignación de usuarios verificadores o alcance territorial.
+- Implementación de la matriz DEC-175, alta/asignación de usuarios verificadores y alcance territorial.
 - Asignación territorial o de expedientes a una persona verificadora.
 - Criterio de conclusión general de Entrevista, campos finales obligatorios, dictamen o transición; sus respuestas y evidencias ya persisten, pero no se infiere una paloma a partir del borrador.
 - Creación real de una cita a partir de `Agendó visita`; la acción queda registrada, pero todavía no existe agenda.

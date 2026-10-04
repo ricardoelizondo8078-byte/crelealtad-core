@@ -1,6 +1,6 @@
 # 12 Security Model - Modelo de Seguridad
 
-Version: 1.11.0
+Version: 1.12.0
 Estado: Vigente
 Fecha de actualizacion: 2026-10-04
 
@@ -68,10 +68,18 @@ La autorizacion se evalua en dos niveles independientes:
 
 Los módulos y acciones aceptados por el código se declaran en un catálogo técnico único. Los permisos
 JSONB se normalizan con denegación por defecto y la migración 035 impide arreglos con elementos no
-textuales tanto en roles como en excepciones individuales. Esto valida el contrato técnico, pero no
-aprueba ni sustituye la matriz funcional definitiva.
+textuales tanto en roles como en excepciones individuales. Esto valida el contrato técnico actual,
+pero no implementa la matriz funcional aprobada por DEC-175.
 
-Conocer un UUID no concede acceso. La navegacion filtrada ayuda a la usuaria, pero nunca sustituye estas comprobaciones de servidor. El alcance por sucursal/zona y el contrato exacto para otros roles permanecen pendientes de aprobacion funcional.
+DEC-175 aprueba capacidades por par módulo-acción y los alcances `PROPIO`, `SUCURSAL`, `ZONA` y
+`GLOBAL`, sin comodines productivos. También aprueba doble control para M11/M12, excepciones
+restrictivas por defecto y Administración sin herencia de permisos operativos o financieros. El
+contrato v2, la migración y los filtros territoriales aún no están aplicados; hasta entonces el
+runtime conserva el contrato anterior y DEC-023.
+
+Conocer un UUID no concede acceso. La navegacion filtrada ayuda a la usuaria, pero nunca sustituye
+estas comprobaciones de servidor. Una asignación territorial ausente debe fallar cerrado durante la
+implementación de DEC-175.
 
 Los DTO de solicitud tambien aplican minimo privilegio sobre datos: relaciones internas, ciclo, monto autorizado y rutas/fechas documentales son exclusivos del servidor. Campos desconocidos se rechazan y una evidencia sólo existe cuando el almacenamiento confirma manifiesto y archivo.
 
@@ -97,7 +105,7 @@ Esta excepcion:
 - No habilita usuarios inactivos ni rutas anonimas.
 - No retira JWT, el guard global ni la clasificacion modulo-accion de cada endpoint.
 - No habilita modulos `Proximamente`, dictamenes o transiciones aun no implementadas.
-- Debe sustituirse por la matriz restrictiva definitiva y el alcance territorial antes de produccion.
+- Debe sustituirse mediante la implementación controlada de DEC-175 antes de produccion.
 - Conserva auditoria antes/despues y rollback condicionado para no pisar cambios posteriores.
 
 Una restricción individual autorizada no cambia el rol operativo ni su alcance de datos.

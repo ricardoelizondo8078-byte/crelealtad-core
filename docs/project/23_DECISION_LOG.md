@@ -1,6 +1,6 @@
 # 13 Decision Log - Registro de Decisiones
 
-Version: 1.125.0
+Version: 1.126.0
 Estado: Vigente
 Fecha de actualizacion: 2026-10-04
 
@@ -188,6 +188,7 @@ Fecha de actualizacion: 2026-10-04
 - DEC-169 | 2026-10-03 | Después de confirmar la primera fotografía de fachada, `Imágenes del domicilio` pregunta `¿TIENE MEDIDOR DE LUZ?`; `Sí` habilita y exige la fotografía del medidor, mientras `No` abre un pop-up desplazable y exige una de cinco causas controladas, cuya confirmación sustituye esa fotografía para el cierre | Representar correctamente domicilios sin medidor sin forzar evidencia inexistente, conservar trazabilidad y evitar que una respuesta local simule la terminación del proceso | Alto | Verificación, Entrevista, Mobile, API, PostgreSQL, UX, Auditoría | Dirección | Aprobada e implementada en mobile/API; migración 030 validada con ida/vuelta en `crelealtad_test` y aplicada en `crelealtad` después del respaldo verificado `crelealtad-pre-030-20261003.backup`.
 - DEC-172 | 2026-10-03 | El comprobante de línea de crédito del Paso 7 admite todas las fotografías necesarias dentro de una sola versión documental, mediante selección múltiple o capturas consecutivas; conserva 10 MB por archivo, orden, consulta y reemplazo con historial, y reutiliza el carrusel lateral y visor opaco de pantalla completa con zoom de Verificaciones, mientras los demás documentos mantienen su cantidad vigente | Evitar que comprobantes compuestos por varias hojas queden incompletos o divididos sin ampliar innecesariamente el resto del contrato documental | Medio | Documentación, Solicitudes, Mobile, API, Evidencias, UX | Dirección | Aprobada e implementada sin cambio de esquema; el documento continúa siendo opcional para completitud.
 - DEC-174 | 2026-10-04 | `Evidencia de otra financiera` muestra primero todas las imágenes vigentes del comprobante de línea de crédito capturado en Documentación y permite agregar fotografías propias de Entrevista sin copiar ni sustituir el documento original | Reutilizar la evidencia ya disponible, evitar capturas duplicadas y conservar separadas la fuente documental y las evidencias geolocalizadas agregadas durante la visita | Medio | Documentación, Verificación, Entrevista, Mobile, Evidencias, UX | Dirección | Aprobada e implementada sin cambio de esquema ni duplicación de archivos.
+- DEC-175 | 2026-10-04 | Se aprueba la matriz institucional inicial de M12: capacidades por par módulo–acción, alcances `PROPIO`/`SUCURSAL`/`ZONA`/`GLOBAL`, sin comodines productivos, M04–M10 bloqueados hasta sus especificaciones, doble control en M11/M12, excepciones restrictivas y Administración sin herencia operativa o financiera | Aplicar menor privilegio, eliminar combinaciones ambiguas y preparar una autorización escalable y auditable | Alto | Todos, Seguridad, M01, M11, M12, API, Mobile, PostgreSQL | Dirección | Aprobada; implementación técnica pendiente y DEC-023 continúa temporalmente vigente hasta el corte controlado.
 
 ## Contradicciones documentadas
 
@@ -366,6 +367,10 @@ Tratamiento vigente: ABIERTA. La auditoria no modifico la regla ni el flujo. Dir
 - Dirección aprobó expresamente DEC-174 el 2026-10-04 para presentar en `Evidencia de otra
   financiera` todas las imágenes vigentes del comprobante de línea de crédito de Documentación y
   permitir agregar evidencia de Entrevista sin copiar los archivos documentales.
+- Dirección aprobó expresamente DEC-175 el 2026-10-04 como matriz institucional inicial de acceso:
+  pares módulo–acción, alcance territorial, denegación de módulos sin especificación, doble control
+  en M11/M12, excepciones restrictivas y ausencia de permisos operativos heredados para
+  Administración. La implementación técnica queda pendiente de migración y pruebas controladas.
 - Toda contradiccion funcional futura debe documentarse y escalarse sin resolverse unilateralmente.
 
 ## Referencias cruzadas

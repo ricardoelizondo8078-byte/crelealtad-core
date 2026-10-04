@@ -3189,5 +3189,46 @@ un solo conjunto ordenado sin obligar a omitir evidencia ni alterar el contrato 
 
 ---
 
-**Última actualización**: 2026-10-03
+## 2026-10-04 | Matriz institucional de acceso y gobierno de Administración (DEC-175)
+
+**DECISION**: Se aprueba la versión 1.0 de `docs/modules/M12_ADMINISTRACION.md` como matriz
+institucional inicial de acceso. La autorización productiva se modelará mediante capacidades por
+par módulo–acción, alcance de datos y condición operativa. Los alcances oficiales son `PROPIO`,
+`SUCURSAL`, `ZONA` y `GLOBAL`; la falta de una asignación válida deniega el acceso y nunca amplía el
+alcance.
+
+La matriz aprobada establece:
+
+1. El contrato productivo elimina el producto cartesiano entre listas independientes y no utiliza
+   comodines de módulo o acción.
+2. `ASESOR` conserva M02 Documentación con alcance propio y no recibe M03 Verificación al terminar
+   la excepción temporal DEC-023.
+3. `VERIFICADOR` opera M03 con lectura y registro por sucursal; Coordinación y Gerencia sólo reciben
+   la lectura supervisora indicada en la matriz.
+4. M04 a M10 permanecen denegados hasta que la especificación de cada módulo apruebe sus pares,
+   alcances y segregación. Esto incluye resolver por separado los roles faltantes de
+   Análisis/Autorización y Control interno/Auditoría antes de M04.
+5. M11 Parámetros y M12 Administración utilizan doble control: Gerencia decide funcionalmente y
+   Administración publica técnicamente. Nadie solicita, aprueba o ejecuta su propia elevación.
+6. Las excepciones individuales son restrictivas por defecto. Una ampliación exige justificación,
+   aprobación independiente, vigencia y expiración automática.
+7. `ADMINISTRADOR` gobierna identidad y acceso, pero no hereda permisos operativos, financieros o
+   de riesgo.
+8. El cambio de rol, alcance, estado o permisos invalida las sesiones afectadas y conserva
+   auditoría de solicitud, decisión, ejecución, antes, después y resultado.
+
+La aprobación no modifica por sí sola PostgreSQL, API o mobile. Su implementación requiere contrato
+v2 compatible, migración aditiva, pruebas de permiso y territorio, ensayo en `crelealtad_test`,
+respaldo verificado, plan de reversión y corte controlado. DEC-023 continúa vigente sólo durante el
+desarrollo hasta que ese corte sea aprobado y verificado.
+
+**MOTIVO**: Aplicar menor privilegio y segregación de funciones sin inventar accesos para módulos
+incompletos, evitar combinaciones futuras no intencionales y dar una base escalable y auditable a
+M12 y a los módulos posteriores.
+
+**ESTADO**: CERRADA Y APROBADA; IMPLEMENTACIÓN TÉCNICA PENDIENTE
+
+---
+
+**Última actualización**: 2026-10-04
 **Responsable**: Ricardo Elizondo (ricardoelizondo8078@gmail.com)

@@ -33,7 +33,7 @@
 - Recuperacion de PIN.
 - Cambio voluntario posterior desde Administración.
 - Inactivacion automatica por grupos activos.
-- Matriz funcional completa para roles y módulos futuros.
+- Implementación del contrato por pares y alcances aprobado en DEC-175 para roles y módulos futuros.
 - Persistencia de comisiones.
 
 ## 4. Flujo operativo
