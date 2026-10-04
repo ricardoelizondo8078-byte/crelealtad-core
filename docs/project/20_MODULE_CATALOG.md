@@ -94,7 +94,9 @@ Verificado:
 - Detalle de grupo e integrantes.
 - Pantalla extensa de verificación de integrante con captura fotográfica.
 - El coordinador individual delega Revisión documental, Llamada, Visita al vecino, Imágenes del
-  domicilio, Preguntas generales e Historial crediticio con sus evidencias a componentes tipados.
+  domicilio y las secciones de Preguntas generales, Historial crediticio, Datos personales,
+  Ingresos y Encuestas de Entrevista a componentes tipados; visores y diálogos de documentos,
+  evidencias y llamadas también están aislados, con hooks para el formulario y el visor.
 - Concentrador individual posterior a la revisión documental con cuatro procesos equivalentes que pueden abrirse en cualquier orden: `Llamada`, `Visita al vecino`, `Imágenes del domicilio` y `Entrevista`.
 - `Visita al vecino` comienza con una fotografía de fachada tomada únicamente desde la cámara y una ubicación actual; el resto de la pantalla permanece bloqueado hasta que el servidor confirma la evidencia.
 - `Visita al vecino` consulta el frente y reverso del INE vigente mediante gesto lateral y abre la cara tocada en un visor opaco de pantalla completa con zoom, sin crear evidencia ni conclusión del proceso.

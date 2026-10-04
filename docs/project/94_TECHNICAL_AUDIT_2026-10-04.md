@@ -26,10 +26,10 @@ restricciones y conteos de integridad.
 | Datos | Cinco FKs faltantes agregadas con cero huérfanos; siete catálogos de estado cerrados protegidos mediante `CHECK`. |
 | Migraciones | Ledger por SHA-256 y ejecutor transaccional activo hasta 036 en prueba y base local real; cero pendientes o drift. |
 | Recuperación | Respaldos custom previos a 033/034, 035 y 036 creados y validados. |
-| Calidad | TypeScript API/mobile, build Nest, 41 suites/218 pruebas API y 5 suites/17 pruebas mobile aprobadas; ESLint mobile sin errores y export Android con Hermes verificado. |
+| Calidad | TypeScript API/mobile, build Nest, 41 suites/218 pruebas API y 6 suites/19 pruebas mobile aprobadas; ESLint mobile sin errores y export Android con Hermes verificado. |
 | Autorización | Catálogo técnico único, normalización cerrada y constraints JSONB; no sustituye la matriz funcional pendiente. |
 | Trazabilidad | Login exitoso actualiza su marca y `audit_log` en una sola transacción sin copiar credenciales. |
-| Modularidad mobile | Catálogo de módulos, acceso y claves idempotentes extraídos; Verificación delega procesos, Preguntas generales e Historial crediticio, y Solicitud delega siete pasos, validaciones puras y visores documentales. |
+| Modularidad mobile | Catálogo de módulos, acceso y claves idempotentes extraídos; Verificación delega procesos, todas las secciones de Entrevista, visores y diálogos, con hooks de formulario/visor; Solicitud delega siete pasos, validaciones puras y visores documentales. |
 | Integridad de estados | Migración 036 aplicada con rollback probado: roles, usuarios, personas, productos, créditos, ciclos y pagos rechazan vocabulario fuera de contrato; grupos/expedientes y estados aún abiertos se conservaron sin inferencias. |
 | Documentación canónica | Reglas, manual, flujo, catálogo de entidades y máquina de estados sincronizados contra Constitución, código y PostgreSQL; contrato objetivo, cobertura actual y brechas abiertas quedaron separados. |
 
@@ -62,8 +62,8 @@ rutas ficticias ni permisos inventados.
 3. Sustituir filesystem local por almacenamiento durable con respaldo, monitoreo y carga reanudable.
 4. Diseñar la cola offline antes de ampliar masivamente formularios: persistencia, reintento con
    backoff, idempotencia, deduplicación y política explícita de conflictos.
-5. Continuar la división ya iniciada: extraer estado compartido y las secciones restantes de
-   Entrevista, y dividir `IntegrantesService` y `VerificacionLlamadasService` por casos de uso.
+5. Mantener acotados los coordinadores móviles y dividir `IntegrantesService` y
+   `VerificacionLlamadasService` por casos de uso antes de ampliar sus responsabilidades.
 6. Ampliar la suite mobile inicial y agregar recorridos end-to-end de permiso insuficiente,
    reinicio, reconexión y archivos; reducir las 42 advertencias heredadas de hooks/refs mediante
    refactors focalizados.

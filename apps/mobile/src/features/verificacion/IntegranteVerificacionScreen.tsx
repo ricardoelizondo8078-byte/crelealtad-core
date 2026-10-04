@@ -2,15 +2,12 @@ import React, { useEffect, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Dimensions,
   Image,
   Keyboard,
   KeyboardAvoidingView,
-  Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,20 +15,12 @@ import {
   View
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import * as ImagePicker from 'expo-image-picker';
 import {
   AppHeader,
-  BinaryChoiceDialog,
-  BottomSheetSelector,
   Card,
   ContextHeader,
   CreditAmountsSummary,
-  DocumentImageCarousel,
-  DocumentViewer,
-  MultiSelectField,
-  PhoneCallField,
-  PickerField,
   PrimaryButton,
   ScreenContainer,
   ScreenTitleBar,
@@ -40,10 +29,8 @@ import {
   SelectorField,
   StatusCard,
   StatusBadge,
-  StickySectionHeader,
   StatusTab,
   TextInput as UiTextInput,
-  ZoomableImage,
 } from '../../components/ui';
 import type {
   DocumentImageCarouselPage,
@@ -61,7 +48,6 @@ import {
 import { useDebounce } from '../../hooks/useDebounce';
 import {
   colors,
-  iconSizes,
   moduleThemes,
   radius,
   spacing,
@@ -96,7 +82,15 @@ import { ImagenesDomicilioSection } from './ImagenesDomicilioSection';
 import { VisitaVecinoSection } from './VisitaVecinoSection';
 import { EntrevistaPreguntasGeneralesSection } from './EntrevistaPreguntasGeneralesSection';
 import { EntrevistaHistorialCrediticioSection } from './EntrevistaHistorialCrediticioSection';
+import { EntrevistaDatosPersonalesSection } from './EntrevistaDatosPersonalesSection';
+import { EntrevistaIngresosSection } from './EntrevistaIngresosSection';
+import { EntrevistaEncuestasSection } from './EntrevistaEncuestasSection';
+import { VerificacionDocumentoModal } from './VerificacionDocumentoModal';
+import { EntrevistaEvidenceViewers } from './EntrevistaEvidenceViewers';
+import { VerificacionLlamadaModals } from './VerificacionLlamadaModals';
 import { DocumentosRevisionSection } from './DocumentosRevisionSection';
+import { useEntrevistaForm } from './useEntrevistaForm';
+import { useDocumentoRevisionModal } from './useDocumentoRevisionModal';
 import {
   CanalLlamadaVerificacion,
   crearClaveIdempotenciaLlamada,
@@ -155,11 +149,6 @@ import {
 } from './verificacion-entrevista.mapper';
 import {
   calcularSemanasTranscurridasDesdeMes,
-  FAMILIARES_DOMICILIO,
-  MOTIVOS_NO_VIVE_EN_DOMICILIO,
-  MOTIVOS_RECOMENDACION_NO,
-  MOTIVOS_RECOMENDACION_SI,
-  MOTIVOS_SIN_CONTROL_PAGOS,
   NO_CONOCE_TESORERA_VALUE,
   NO_SABE_DOMICILIO_RECOLECCION_VALUE,
 } from './verificacion-entrevista.catalog';
@@ -199,8 +188,6 @@ import {
   type VistaLlamada,
 } from './verificacion-individual.types';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 interface IntegranteVerificacionScreenProps {
   integranteId: string;
   nombreGrupo: string;
@@ -227,6 +214,67 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   onBack,
 }) => {
   const { usuario } = useAuth();
+  const {
+    values: entrevistaFormValues,
+    conoceAsesora, setConoceAsesora,
+    comoConocioAsesora, setComoConocioAsesora,
+    conoceIntegrantes, setConoceIntegrantes,
+    tiempoConoceIntegrantes, setTiempoConoceIntegrantes,
+    sabeMontosCompaneras, setSabeMontosCompaneras,
+    acuerdoMontos, setAcuerdoMontos,
+    companerasMontoNoAcordadoIds, setCompanerasMontoNoAcordadoIds,
+    motivosDesacuerdoMontosPorIntegrante, setMotivosDesacuerdoMontosPorIntegrante,
+    conoceTesoreraDelGrupo, setConoceTesoreraDelGrupo,
+    quienEsTesorera, setQuienEsTesorera,
+    domicilioRecoleccion, setDomicilioRecoleccion,
+    tieneFamiliarGrupo, setTieneFamiliarGrupo,
+    familiaresGrupoIds, setFamiliaresGrupoIds,
+    tieneOtroCreditoGrupal, setTieneOtroCreditoGrupal,
+    financieraCreditoGrupal, setFinancieraCreditoGrupal,
+    creditoGrupalAnteriorActivo, setCreditoGrupalAnteriorActivo,
+    valorFichaCreditoGrupal, setValorFichaCreditoGrupal,
+    semanaActualCreditoGrupal, setSemanaActualCreditoGrupal,
+    mesDesembolsoCreditoGrupal, setMesDesembolsoCreditoGrupal,
+    mesUltimoPagoCreditoGrupal, setMesUltimoPagoCreditoGrupal,
+    anioUltimoPagoCreditoGrupal, setAnioUltimoPagoCreditoGrupal,
+    numeroCiclosCreditoGrupal, setNumeroCiclosCreditoGrupal,
+    tasaCreditoGrupal, setTasaCreditoGrupal,
+    nombreAsesoraCreditoGrupal, setNombreAsesoraCreditoGrupal,
+    telefonoAsesoraCreditoGrupal, setTelefonoAsesoraCreditoGrupal,
+    motivoNoRenovacionCreditoGrupal, setMotivoNoRenovacionCreditoGrupal,
+    viveEnDomicilioDeclarado, setViveEnDomicilioDeclarado,
+    motivoNoViveEnDomicilio, setMotivoNoViveEnDomicilio,
+    tipoDomicilio, setTipoDomicilio,
+    familiarDomicilio, setFamiliarDomicilio,
+    aniosEnDomicilio, setAniosEnDomicilio,
+    personasVivenCasa, setPersonasVivenCasa,
+    quienViveConUsted, setQuienViveConUsted,
+    quienesVivenConUstedSabenDelCredito, setQuienesVivenConUstedSabenDelCredito,
+    tieneOtroIngresoHogar, setTieneOtroIngresoHogar,
+    otroIngresoSemanal, setOtroIngresoSemanal,
+    capacidadPagoSemanal, setCapacidadPagoSemanal,
+    motivoCredito, setMotivoCredito,
+    fuentesIngresoPersonal, setFuentesIngresoPersonal,
+    ingresosSemanalesDeclarados, setIngresosSemanalesDeclarados,
+    lugarTrabajo, setLugarTrabajo,
+    antiguedadLaboral, setAntiguedadLaboral,
+    tipoNegocio, setTipoNegocio,
+    ingresoLibreSemanalNegocio, setIngresoLibreSemanalNegocio,
+    ubicacionNegocio, setUbicacionNegocio,
+    tieneControlPagos, setTieneControlPagos,
+    motivoSinControl, setMotivoSinControl,
+    asesoraAcudioSemanalmente, setAsesoraAcudioSemanalmente,
+    firmabanControlSemanalmente, setFirmabanControlSemanalmente,
+    tratoAsesoraTesorera, setTratoAsesoraTesorera,
+    conocePremioTesorera, setConocePremioTesorera,
+    opinionCredito, setOpinionCredito,
+    tratoDesembolso, setTratoDesembolso,
+    rapidezDesembolso, setRapidezDesembolso,
+    informacionCreditoClara, setInformacionCreditoClara,
+    recomendaria, setRecomendaria,
+    razonRecomendacion, setRazonRecomendacion,
+    motivoRecomendacion, setMotivoRecomendacion,
+  } = useEntrevistaForm();
   const [integrante, setIntegrante] = useState<IntegranteData | null>(null);
   const [solicitudData, setSolicitudData] = useState<SolicitudData | null>(null);
   const [documentos, setDocumentos] = useState<DocumentoItem[]>([]);
@@ -235,11 +283,15 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const [markingNeedsDocumentation, setMarkingNeedsDocumentation] = useState(false);
   const [pasoActual, setPasoActual] = useState<PasoVerificacion>('documentos');
   const [consultandoDocumentos, setConsultandoDocumentos] = useState(false);
-  const [documentoViewing, setDocumentoViewing] = useState<DocumentoItem | null>(null);
-  const [showDocumentModal, setShowDocumentModal] = useState(false);
-  const [ladoSeleccionado, setLadoSeleccionado] = useState<'frente' | 'reverso'>('frente');
+  const {
+    documentoViewing,
+    showDocumentModal,
+    ladoSeleccionado,
+    setLadoSeleccionado,
+    abrirDocumento: mostrarDocumentoModal,
+    cerrarDocumento: cerrarDocumentoModal,
+  } = useDocumentoRevisionModal();
   const scrollViewRef = useRef<ScrollView>(null);
-  const documentPagesScrollViewRef = useRef<ScrollView>(null);
   const [showStickyGastos, setShowStickyGastos] = useState(false);
   const gastosHeaderRef = useRef<View>(null);
   const [gastosHeaderY, setGastosHeaderY] = useState(0);
@@ -303,15 +355,10 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const [ref2Telefono, setRef2Telefono] = useState('');
 
   // Preguntas generales
-  const [conoceIntegrantes, setConoceIntegrantes] = useState<string>('');
   const [conoceMontos, setConoceMontos] = useState<string>('');
   const [conoceTesorera, setConoceTesorera] = useState<string>('');
   const [conoceDomicilio, setConoceDomicilio] = useState<string>('');
   const [antiguedadDomicilio, setAntiguedadDomicilio] = useState('');
-  const [viveEnDomicilioDeclarado, setViveEnDomicilioDeclarado] = useState('');
-  const [motivoNoViveEnDomicilio, setMotivoNoViveEnDomicilio] = useState('');
-  const [tipoDomicilio, setTipoDomicilio] = useState<string>('');
-  const [familiarDomicilio, setFamiliarDomicilio] = useState('');
   const [tieneNegocio, setTieneNegocio] = useState<string>('');
   const [tieneOtroCredito, setTieneOtroCredito] = useState<string>('');
 
@@ -321,30 +368,17 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const [lugarCobro, setLugarCobro] = useState('');
 
   // Control de pagos
-  const [tieneControlPagos, setTieneControlPagos] = useState<string>('');
   const [fotoControlPagos1, setFotoControlPagos1] = useState<string | null>(null);
   const [fotoControlPagos2, setFotoControlPagos2] = useState<string | null>(null);
   const [fotoControlPagosVisible, setFotoControlPagosVisible] = useState(false);
-  const [motivoSinControl, setMotivoSinControl] = useState('');
 
   // Evaluación exclusiva de la tesorera sobre el servicio de la asesora
-  const [asesoraAcudioSemanalmente, setAsesoraAcudioSemanalmente] = useState<string>('');
-  const [firmabanControlSemanalmente, setFirmabanControlSemanalmente] = useState<string>('');
-  const [tratoAsesoraTesorera, setTratoAsesoraTesorera] = useState<string>('');
-  const [conocePremioTesorera, setConocePremioTesorera] = useState<string>('');
   const [fotoFolletoPremioTesorera, setFotoFolletoPremioTesorera] = useState<string | null>(null);
   const [fotoFolletoPremioVisible, setFotoFolletoPremioVisible] = useState(false);
 
   // Encuesta de servicio para integrantes con historial interno confirmado
-  const [opinionCredito, setOpinionCredito] = useState<string>('');
-  const [tratoDesembolso, setTratoDesembolso] = useState<string>('');
-  const [rapidezDesembolso, setRapidezDesembolso] = useState<string>('');
-  const [informacionCreditoClara, setInformacionCreditoClara] = useState<string>('');
   const [tratoAsesor, setTratoAsesor] = useState<string>('');
   const [calidadServicio, setCalidadServicio] = useState<string>('');
-  const [recomendaria, setRecomendaria] = useState<string>('');
-  const [razonRecomendacion, setRazonRecomendacion] = useState('');
-  const [motivoRecomendacion, setMotivoRecomendacion] = useState('');
 
   // Observaciones
   const [hayInconsistencias, setHayInconsistencias] = useState<string>('');
@@ -352,19 +386,6 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const [recomendacion, setRecomendacion] = useState<string>('');
   const [observacionesAdicionales, setObservacionesAdicionales] = useState('');
 
-  // Validacion Integrante (estados nuevos no duplicados)
-  const [conoceAsesora, setConoceAsesora] = useState<string>('');
-  const [comoConocioAsesora, setComoConocioAsesora] = useState('');
-  const [tiempoConoceIntegrantes, setTiempoConoceIntegrantes] = useState<string>('');
-  const [sabeMontosCompaneras, setSabeMontosCompaneras] = useState<string>('');
-  const [acuerdoMontos, setAcuerdoMontos] = useState<string>('');
-  const [companerasMontoNoAcordadoIds, setCompanerasMontoNoAcordadoIds] = useState<string[]>([]);
-  const [motivosDesacuerdoMontosPorIntegrante, setMotivosDesacuerdoMontosPorIntegrante] = useState<Record<string, string>>({});
-  const [conoceTesoreraDelGrupo, setConoceTesoreraDelGrupo] = useState('');
-  const [quienEsTesorera, setQuienEsTesorera] = useState('');
-  const [domicilioRecoleccion, setDomicilioRecoleccion] = useState('');
-  const [tieneFamiliarGrupo, setTieneFamiliarGrupo] = useState<string>('');
-  const [familiaresGrupoIds, setFamiliaresGrupoIds] = useState<string[]>([]);
   const [telefonoConfirmado, setTelefonoConfirmado] = useState('');
   const [telefonoSecundario, setTelefonoSecundario] = useState('');
   const [selectorCanalTelefonoVisible, setSelectorCanalTelefonoVisible] = useState(false);
@@ -388,38 +409,10 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   } | null>(null);
   const [evidenciaTelefonoHeaders, setEvidenciaTelefonoHeaders] = useState<Record<string, string>>();
   const [guardandoReemplazoEvidenciaTelefono, setGuardandoReemplazoEvidenciaTelefono] = useState(false);
-  const [fuentesIngresoPersonal, setFuentesIngresoPersonal] = useState<string[]>([]);
-  const [lugarTrabajo, setLugarTrabajo] = useState('');
-  const [antiguedadLaboral, setAntiguedadLaboral] = useState<string>('');
-  const [ingresosSemanalesDeclarados, setIngresosSemanalesDeclarados] = useState('');
-  const [tieneOtroIngresoHogar, setTieneOtroIngresoHogar] = useState<string>('');
-  const [otroIngresoSemanal, setOtroIngresoSemanal] = useState('');
-  const [capacidadPagoSemanal, setCapacidadPagoSemanal] = useState('');
-  const [quienViveConUsted, setQuienViveConUsted] = useState<string[]>([]);
-  const [quienesVivenConUstedSabenDelCredito, setQuienesVivenConUstedSabenDelCredito] = useState('');
-  const [personasVivenCasa, setPersonasVivenCasa] = useState<string>('');
-  const [tieneOtroCreditoGrupal, setTieneOtroCreditoGrupal] = useState<string>('');
-  const [financieraCreditoGrupal, setFinancieraCreditoGrupal] = useState('');
-  const [creditoGrupalAnteriorActivo, setCreditoGrupalAnteriorActivo] = useState<string>('');
-  const [valorFichaCreditoGrupal, setValorFichaCreditoGrupal] = useState('');
-  const [semanaActualCreditoGrupal, setSemanaActualCreditoGrupal] = useState('');
-  const [mesDesembolsoCreditoGrupal, setMesDesembolsoCreditoGrupal] = useState('');
-  const [mesUltimoPagoCreditoGrupal, setMesUltimoPagoCreditoGrupal] = useState('');
-  const [anioUltimoPagoCreditoGrupal, setAnioUltimoPagoCreditoGrupal] = useState('');
-  const [numeroCiclosCreditoGrupal, setNumeroCiclosCreditoGrupal] = useState('');
-  const [nombreAsesoraCreditoGrupal, setNombreAsesoraCreditoGrupal] = useState('');
-  const [telefonoAsesoraCreditoGrupal, setTelefonoAsesoraCreditoGrupal] = useState('');
-  const [tasaCreditoGrupal, setTasaCreditoGrupal] = useState('');
-  const [motivoNoRenovacionCreditoGrupal, setMotivoNoRenovacionCreditoGrupal] = useState('');
   const semanasDesdeUltimoPagoCreditoGrupal = calcularSemanasTranscurridasDesdeMes(
     mesUltimoPagoCreditoGrupal,
     anioUltimoPagoCreditoGrupal,
   );
-  const [aniosEnDomicilio, setAniosEnDomicilio] = useState<string>('');
-  const [motivoCredito, setMotivoCredito] = useState('');
-  const [tipoNegocio, setTipoNegocio] = useState('');
-  const [ingresoLibreSemanalNegocio, setIngresoLibreSemanalNegocio] = useState('');
-  const [ubicacionNegocio, setUbicacionNegocio] = useState('');
   const [evidenciasNegocio, setEvidenciasNegocio] = useState<EvidenciaNegocioVista[]>([]);
   const [evidenciasNegocioPendientes, setEvidenciasNegocioPendientes] = useState<EvidenciaNegocioPendiente[]>([]);
   const [loadingEvidenciasNegocio, setLoadingEvidenciasNegocio] = useState(false);
@@ -1287,66 +1280,10 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     loadIntegrante();
   }, [integranteId, usuario?.id]);
 
-  const entrevistaPayloadActual: EntrevistaPayload = crearEntrevistaPayload({
-    conoceAsesora,
-    comoConocioAsesora,
-    conoceIntegrantes,
-    tiempoConoceIntegrantes,
-    sabeMontosCompaneras,
-    acuerdoMontos,
-    companerasMontoNoAcordadoIds,
-    motivosDesacuerdoMontosPorIntegrante,
-    conoceTesoreraDelGrupo,
-    quienEsTesorera,
-    domicilioRecoleccion,
-    tieneFamiliarGrupo,
-    familiaresGrupoIds,
-    tieneOtroCreditoGrupal,
-    financieraCreditoGrupal,
-    creditoGrupalAnteriorActivo,
-    valorFichaCreditoGrupal,
-    semanaActualCreditoGrupal,
-    mesDesembolsoCreditoGrupal,
-    mesUltimoPagoCreditoGrupal,
-    anioUltimoPagoCreditoGrupal,
-    numeroCiclosCreditoGrupal,
-    tasaCreditoGrupal,
-    nombreAsesoraCreditoGrupal,
-    telefonoAsesoraCreditoGrupal,
-    motivoNoRenovacionCreditoGrupal,
-    viveEnDomicilioDeclarado,
-    motivoNoViveEnDomicilio,
-    tipoDomicilio,
-    familiarDomicilio,
-    aniosEnDomicilio,
-    personasVivenCasa,
-    quienViveConUsted,
-    quienesVivenConUstedSabenDelCredito,
-    tieneOtroIngresoHogar,
-    otroIngresoSemanal,
-    capacidadPagoSemanal,
-    motivoCredito,
-    fuentesIngresoPersonal,
-    ingresosSemanalesDeclarados,
-    lugarTrabajo,
-    antiguedadLaboral,
-    tipoNegocio,
-    ingresoLibreSemanalNegocio,
-    ubicacionNegocio,
-    tieneControlPagos,
-    motivoSinControl,
-    asesoraAcudioSemanalmente,
-    firmabanControlSemanalmente,
-    tratoAsesoraTesorera,
-    conocePremioTesorera,
-    opinionCredito,
-    tratoDesembolso,
-    rapidezDesembolso,
-    informacionCreditoClara,
-    recomendaria,
-    razonRecomendacion,
-    motivoRecomendacion,
-  }, NO_SABE_DOMICILIO_RECOLECCION_VALUE);
+  const entrevistaPayloadActual: EntrevistaPayload = crearEntrevistaPayload(
+    entrevistaFormValues,
+    NO_SABE_DOMICILIO_RECOLECCION_VALUE,
+  );
   const entrevistaSerializada = JSON.stringify(entrevistaPayloadActual);
   const entrevistaSerializadaDebounced = useDebounce(entrevistaSerializada, 900);
 
@@ -2771,7 +2708,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     ));
 
     // Cerrar el modal
-    setShowDocumentModal(false);
+    cerrarDocumentoModal();
   };
 
   const resolverImagenesDocumento = async (documento: DocumentoItem): Promise<DocumentoItem> => {
@@ -2814,9 +2751,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     try {
       const documentoResuelto = await resolverImagenesDocumento(documento);
       cachearImagenesDocumento(documentoResuelto);
-      setDocumentoViewing(documentoResuelto);
-      setLadoSeleccionado('frente');
-      setShowDocumentModal(true);
+      mostrarDocumentoModal(documentoResuelto);
     } catch (error) {
       Alert.alert(
         'No se pudo abrir el documento',
@@ -4051,759 +3986,156 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
               )}
             />
 
-            <View style={styles.entrevistaSectionHeader}>
-              <StickySectionHeader
-                title="DATOS PERSONALES"
-                moduleTheme="verification"
-              />
-            </View>
-
-            <SelectorField
-              label={`${[
+            <EntrevistaDatosPersonalesSection
+              nombreIntegrante={[
                 solicitudData?.nombres,
                 solicitudData?.apellido_pat,
-              ].filter(Boolean).join(' ').trim() || integrante?.nombre?.trim() || 'La integrante'}, ¿vive en este domicilio?`}
-              value={viveEnDomicilioDeclarado}
-              options={['Sí', 'No']}
-              onSelect={(respuesta) => {
-                setViveEnDomicilioDeclarado(respuesta);
-                setMotivoNoViveEnDomicilio('');
+              ].filter(Boolean).join(' ').trim() || integrante?.nombre?.trim() || 'La integrante'}
+              viveEnDomicilioDeclarado={viveEnDomicilioDeclarado}
+              motivoNoViveEnDomicilio={motivoNoViveEnDomicilio}
+              tipoDomicilio={tipoDomicilio}
+              familiarDomicilio={familiarDomicilio}
+              aniosEnDomicilio={aniosEnDomicilio}
+              personasVivenCasa={personasVivenCasa}
+              quienViveConUsted={quienViveConUsted}
+              quienesVivenConUstedSabenDelCredito={quienesVivenConUstedSabenDelCredito}
+              tieneOtroIngresoHogar={tieneOtroIngresoHogar}
+              otroIngresoSemanal={otroIngresoSemanal}
+              imagenesDomicilio={renderImagenesDomicilio()}
+              telefonoConfirmado={telefonoConfirmado}
+              telefonoSecundario={telefonoSecundario}
+              telefonoPrincipalEstaConfirmado={telefonoPrincipalEstaConfirmado}
+              telefonoSecundarioEstaConfirmado={telefonoSecundarioEstaConfirmado}
+              onViveEnDomicilioChange={setViveEnDomicilioDeclarado}
+              onMotivoNoViveEnDomicilioChange={setMotivoNoViveEnDomicilio}
+              onTipoDomicilioChange={setTipoDomicilio}
+              onFamiliarDomicilioChange={setFamiliarDomicilio}
+              onAniosEnDomicilioChange={setAniosEnDomicilio}
+              onPersonasVivenCasaChange={setPersonasVivenCasa}
+              onQuienViveConUstedChange={setQuienViveConUsted}
+              onQuienesVivenConUstedSabenDelCreditoChange={setQuienesVivenConUstedSabenDelCredito}
+              onTieneOtroIngresoHogarChange={setTieneOtroIngresoHogar}
+              onOtroIngresoSemanalChange={setOtroIngresoSemanal}
+              onTelefonoConfirmadoChange={setTelefonoConfirmado}
+              onTelefonoSecundarioChange={setTelefonoSecundario}
+              onConfirmarTelefonoPrincipal={() => handleSeleccionarCanalTelefono(
+                telefonoConfirmado,
+                'PRINCIPAL',
+              )}
+              onConfirmarTelefonoSecundario={() => handleSeleccionarCanalTelefono(
+                telefonoSecundario,
+                'SECUNDARIO',
+              )}
+              onVerEvidenciaTelefonoPrincipal={() => void abrirEvidenciaTelefono('PRINCIPAL')}
+              onVerEvidenciaTelefonoSecundario={() => void abrirEvidenciaTelefono('SECUNDARIO')}
+            />
+
+            <EntrevistaIngresosSection
+              capacidadPagoSemanal={capacidadPagoSemanal}
+              motivoCredito={motivoCredito}
+              fuentesIngresoPersonal={fuentesIngresoPersonal}
+              ingresosSemanalesDeclarados={ingresosSemanalesDeclarados}
+              lugarTrabajo={lugarTrabajo}
+              antiguedadLaboral={antiguedadLaboral}
+              tipoNegocio={tipoNegocio}
+              ingresoLibreSemanalNegocio={ingresoLibreSemanalNegocio}
+              ubicacionNegocio={ubicacionNegocio}
+              guardandoEvidenciasNegocio={guardandoEvidenciasNegocio}
+              loadingEvidenciasNegocio={loadingEvidenciasNegocio}
+              evidenciasNegocioPendientes={evidenciasNegocioPendientes.length}
+              evidenciasNegocioGuardadas={evidenciasNegocio.length}
+              paginasEvidenciasNegocio={paginasEvidenciasNegocio}
+              errorEvidenciasNegocio={errorEvidenciasNegocio}
+              onCapacidadPagoSemanalChange={setCapacidadPagoSemanal}
+              onMotivoCreditoChange={setMotivoCredito}
+              onFuentesIngresoPersonalChange={setFuentesIngresoPersonal}
+              onIngresosSemanalesDeclaradosChange={setIngresosSemanalesDeclarados}
+              onLugarTrabajoChange={setLugarTrabajo}
+              onAntiguedadLaboralChange={setAntiguedadLaboral}
+              onTipoNegocioChange={setTipoNegocio}
+              onIngresoLibreSemanalNegocioChange={setIngresoLibreSemanalNegocio}
+              onUbicacionNegocioChange={setUbicacionNegocio}
+              onLimpiarSueldo={() => {
+                setIngresosSemanalesDeclarados('');
+                setLugarTrabajo('');
+                setAntiguedadLaboral('');
               }}
-              moduleTheme="verification"
-              required
-            />
-
-            {viveEnDomicilioDeclarado === 'No' ? (
-              <PickerField
-                label="¿Por qué no vive en este domicilio?"
-                value={motivoNoViveEnDomicilio}
-                options={MOTIVOS_NO_VIVE_EN_DOMICILIO}
-                onSelect={setMotivoNoViveEnDomicilio}
-                placeholder="Seleccionar motivo"
-                moduleTheme="verification"
-                autoOpen
-                confirmSelection
-                highlightSelectedValue
-                selectionTone="danger"
-                required
-              />
-            ) : null}
-
-            <SelectorField
-              label="¿Renta, o es Dueña del domicilio?"
-              value={tipoDomicilio}
-              options={['Renta', 'Dueña', 'Familiar']}
-              onSelect={(opcion) => {
-                setTipoDomicilio(opcion);
-                if (opcion !== 'Familiar') {
-                  setFamiliarDomicilio('');
-                }
+              onLimpiarNegocio={() => {
+                setTipoNegocio('');
+                setIngresoLibreSemanalNegocio('');
+                setUbicacionNegocio('');
               }}
-              moduleTheme="verification"
-              required
+              onCapturarEvidenciaNegocio={() => void capturarEvidenciaNegocio()}
+              onReintentarEvidenciasNegocio={() => void guardarEvidenciasNegocio(
+                evidenciasNegocioPendientes,
+              )}
             />
 
-            {tipoDomicilio === 'Familiar' ? (
-              <PickerField
-                label="¿De qué familiar es el domicilio?"
-                value={familiarDomicilio}
-                options={FAMILIARES_DOMICILIO}
-                onSelect={setFamiliarDomicilio}
-                placeholder="Seleccionar familiar"
-                moduleTheme="verification"
-                autoOpen
-                confirmSelection
-                highlightSelectedValue
-                required
-              />
-            ) : null}
-
-            <SelectorField
-              label="¿Hace cuántos años vive en este domicilio?"
-              value={aniosEnDomicilio}
-              options={['0-1 años', '1-3 años', '3+ años']}
-              onSelect={setAniosEnDomicilio}
-              moduleTheme="verification"
-              required
-            />
-
-            <SelectorField
-              label="¿Cuántas personas viven en casa?"
-              value={personasVivenCasa}
-              options={['1', '2', '3', '4', '5', '≥6']}
-              onSelect={setPersonasVivenCasa}
-              moduleTheme="verification"
-              variant="countBubbles"
-              required
-            />
-
-            <MultiSelectField
-              label="¿Quién vive actualmente con usted?"
-              value={quienViveConUsted}
-              options={['Conyuge', 'Hijos', 'Padres', 'Hermanos', 'Otros']}
-              onSelect={setQuienViveConUsted}
-              helperText="Selecciona todas las opciones que apliquen"
-              moduleTheme="verification"
-              required
-            />
-
-            <SelectorField
-              label="¿Saben los que viven con usted del crédito?"
-              value={quienesVivenConUstedSabenDelCredito}
-              options={['Sí', 'No']}
-              onSelect={setQuienesVivenConUstedSabenDelCredito}
-              moduleTheme="verification"
-              required
-            />
-
-            <SelectorField
-              label="¿Alguien más aporta ingresos al hogar?"
-              value={tieneOtroIngresoHogar}
-              options={['Sí', 'No']}
-              onSelect={(respuesta) => {
-                setTieneOtroIngresoHogar(respuesta);
-                if (respuesta === 'No') {
-                  setOtroIngresoSemanal('');
-                }
+            <EntrevistaEncuestasSection
+              mostrarControlTesorera={Boolean(
+                integrante?.esTesorera && integrante.tieneHistorialInterno === true,
+              )}
+              mostrarEncuestaServicio={integrante?.tieneHistorialInterno === true}
+              tieneControlPagos={tieneControlPagos}
+              motivoSinControl={motivoSinControl}
+              asesoraAcudioSemanalmente={asesoraAcudioSemanalmente}
+              firmabanControlSemanalmente={firmabanControlSemanalmente}
+              tratoAsesoraTesorera={tratoAsesoraTesorera}
+              conocePremioTesorera={conocePremioTesorera}
+              opinionCredito={opinionCredito}
+              tratoDesembolso={tratoDesembolso}
+              rapidezDesembolso={rapidezDesembolso}
+              informacionCreditoClara={informacionCreditoClara}
+              recomendaria={recomendaria}
+              razonRecomendacion={razonRecomendacion}
+              motivoRecomendacion={motivoRecomendacion}
+              guardandoEvidencia={guardandoEvidenciaEntrevista}
+              fotoControlPagos={fotoControlPagos1}
+              fotoControlPagosPendiente={evidenciaControlPagosPendiente?.uri ?? null}
+              fotoFolleto={fotoFolletoPremioTesorera}
+              fotoFolletoPendiente={evidenciaFolletoPendiente?.uri ?? null}
+              headersEvidencia={evidenciaEntrevistaHeaders}
+              onTieneControlPagosChange={setTieneControlPagos}
+              onMotivoSinControlChange={setMotivoSinControl}
+              onAsesoraAcudioSemanalmenteChange={setAsesoraAcudioSemanalmente}
+              onFirmabanControlSemanalmenteChange={setFirmabanControlSemanalmente}
+              onTratoAsesoraTesoreraChange={setTratoAsesoraTesorera}
+              onConocePremioTesoreraChange={(respuesta) => {
+                setConocePremioTesorera(respuesta);
+                if (respuesta === 'Sí') setFotoFolletoPremioVisible(false);
               }}
-              moduleTheme="verification"
-              required
-            />
-
-            {tieneOtroIngresoHogar === 'Sí' ? (
-              <TextInput
-                label="¿A cuánto asciende la aportación semanal?"
-                value={otroIngresoSemanal}
-                onChangeText={(value) => setOtroIngresoSemanal(normalizeCurrencyInput(value))}
-                keyboardType="numeric"
-                placeholder="$ 0"
-                required
-              />
-            ) : null}
-
-            <View style={styles.entrevistaImagenesDomicilio}>
-              {renderImagenesDomicilio()}
-            </View>
-
-            <PhoneCallField
-              label="¿Me puede confirmar su número?"
-              value={telefonoConfirmado}
-              onChangeText={(value) => setTelefonoConfirmado(formatPhone(value))}
-              onCall={() => handleSeleccionarCanalTelefono(telefonoConfirmado, 'PRINCIPAL')}
-              onViewEvidence={() => void abrirEvidenciaTelefono('PRINCIPAL')}
-              errorText={telefonoConfirmado && telefonoConfirmado.replace(/\D/g, '').length !== 10
-                ? 'Captura un número de 10 dígitos.'
-                : undefined}
-              actionLabel="Confirmar"
-              confirmed={telefonoPrincipalEstaConfirmado}
-              callAccessibilityLabel="Confirmar el número y elegir llamada telefónica o WhatsApp"
-              required
-            />
-
-            <PhoneCallField
-              label="¿Tiene algún número secundario?"
-              value={telefonoSecundario}
-              onChangeText={(value) => setTelefonoSecundario(formatPhone(value))}
-              onCall={() => handleSeleccionarCanalTelefono(telefonoSecundario, 'SECUNDARIO')}
-              onViewEvidence={() => void abrirEvidenciaTelefono('SECUNDARIO')}
-              helperText="Opcional"
-              errorText={telefonoSecundario && telefonoSecundario.replace(/\D/g, '').length !== 10
-                ? 'Captura un número de 10 dígitos.'
-                : undefined}
-              actionLabel="Confirmar"
-              confirmed={telefonoSecundarioEstaConfirmado}
-              callAccessibilityLabel="Confirmar el número secundario y elegir llamada telefónica o WhatsApp"
-            />
-
-            <TextInput
-              label="¿Cuánto puede pagar por semana?"
-              value={capacidadPagoSemanal}
-              onChangeText={(value) => setCapacidadPagoSemanal(normalizeCurrencyInput(value))}
-              keyboardType="numeric"
-              placeholder="$ 0"
-              required
-            />
-
-            <TextInput
-              label="¿En qué va a utilizar el crédito?"
-              value={motivoCredito}
-              onChangeText={setMotivoCredito}
-              placeholder="Uso del crédito"
-              multiline
-              required
-            />
-
-            <MultiSelectField
-              label="¿De dónde provienen sus ingresos?"
-              value={fuentesIngresoPersonal}
-              options={['Sueldo', 'Negocio']}
-              onSelect={(seleccion) => {
-                setFuentesIngresoPersonal(seleccion);
-                if (!seleccion.includes('Sueldo')) {
-                  setIngresosSemanalesDeclarados('');
-                  setLugarTrabajo('');
-                  setAntiguedadLaboral('');
-                }
-                if (!seleccion.includes('Negocio')) {
-                  setTipoNegocio('');
-                  setIngresoLibreSemanalNegocio('');
-                  setUbicacionNegocio('');
-                }
+              onOpinionCreditoChange={setOpinionCredito}
+              onTratoDesembolsoChange={setTratoDesembolso}
+              onRapidezDesembolsoChange={setRapidezDesembolso}
+              onInformacionCreditoClaraChange={setInformacionCreditoClara}
+              onRecomendariaChange={setRecomendaria}
+              onRazonRecomendacionChange={setRazonRecomendacion}
+              onMotivoRecomendacionChange={setMotivoRecomendacion}
+              onAbrirControlPagos={() => setFotoControlPagosVisible(true)}
+              onCapturarControlPagos={abrirOpcionesFotoControlPagos}
+              onReintentarControlPagos={() => {
+                if (!evidenciaControlPagosPendiente) return;
+                void guardarEvidenciaEspecialEntrevista(
+                  evidenciaControlPagosPendiente,
+                  setFotoControlPagos1,
+                  setEvidenciaControlPagosPendiente,
+                );
               }}
-              helperText="Puedes seleccionar una o ambas opciones."
-              moduleTheme="verification"
-              variant="chips"
-              required
+              onAbrirFolleto={() => setFotoFolletoPremioVisible(true)}
+              onCapturarFolleto={() => void capturarYGuardarEvidenciaEntrevista(
+                'FOLLETO_PREMIO_TESORERA',
+                setFotoFolletoPremioTesorera,
+                setEvidenciaFolletoPendiente,
+              )}
+              onReintentarFolleto={() => {
+                if (!evidenciaFolletoPendiente) return;
+                void guardarEvidenciaEspecialEntrevista(
+                  evidenciaFolletoPendiente,
+                  setFotoFolletoPremioTesorera,
+                  setEvidenciaFolletoPendiente,
+                );
+              }}
             />
-
-            {fuentesIngresoPersonal.includes('Sueldo') ? (
-              <>
-                <View style={styles.entrevistaSectionHeader}>
-                  <StickySectionHeader
-                    title="SUELDO"
-                    moduleTheme="verification"
-                  />
-                </View>
-
-                <TextInput
-                  label="¿Cuál es su sueldo semanal?"
-                  value={ingresosSemanalesDeclarados}
-                  onChangeText={(value) => setIngresosSemanalesDeclarados(normalizeCurrencyInput(value))}
-                  keyboardType="numeric"
-                  placeholder="$ 0"
-                  required
-                />
-
-                <TextInput
-                  label="¿Dónde trabaja?"
-                  value={lugarTrabajo}
-                  onChangeText={setLugarTrabajo}
-                  required
-                />
-
-                <SelectorField
-                  label="¿Desde hace cuánto tiempo trabaja ahí?"
-                  value={antiguedadLaboral}
-                  options={['1 año', '2 años', '3 a 5 años', '≥ 5 años']}
-                  onSelect={setAntiguedadLaboral}
-                  moduleTheme="verification"
-                  required
-                />
-              </>
-            ) : null}
-
-            {fuentesIngresoPersonal.includes('Negocio') ? (
-              <>
-                <View style={styles.entrevistaSectionHeader}>
-                  <StickySectionHeader
-                    title="NEGOCIO"
-                    moduleTheme="verification"
-                  />
-                </View>
-
-                <TextInput
-                  label="¿De qué es el negocio?"
-                  value={tipoNegocio}
-                  onChangeText={setTipoNegocio}
-                  placeholder="Tipo de negocio"
-                  required
-                />
-
-                <TextInput
-                  label="¿Cuál es el ingreso libre semanal?"
-                  value={ingresoLibreSemanalNegocio}
-                  onChangeText={(value) => setIngresoLibreSemanalNegocio(normalizeCurrencyInput(value))}
-                  keyboardType="numeric"
-                  placeholder="$ 0"
-                  required
-                />
-
-                <Card
-                  moduleTheme="verification"
-                  variant="outlined"
-                  style={[styles.visitaVecinoIneCard, styles.negocioEvidenceCard]}
-                >
-                  <SectionTitle title="Fotografías del negocio" />
-                  <Text allowFontScaling={false} style={styles.helpText}>
-                    Opcional. Cada fotografía se toma con la cámara y se guarda con ubicación y usuario.
-                  </Text>
-
-                  {guardandoEvidenciasNegocio ? (
-                    <StatusBadge label="GUARDANDO FOTOGRAFÍAS" tone="progress" />
-                  ) : evidenciasNegocioPendientes.length > 0 ? (
-                    <StatusBadge
-                      label={`${evidenciasNegocioPendientes.length} PENDIENTE${evidenciasNegocioPendientes.length === 1 ? '' : 'S'} DE GUARDAR`}
-                      tone="pending"
-                    />
-                  ) : evidenciasNegocio.length > 0 ? (
-                    <StatusBadge
-                      label={`${evidenciasNegocio.length} FOTO${evidenciasNegocio.length === 1 ? '' : 'S'} GUARDADA${evidenciasNegocio.length === 1 ? '' : 'S'}`}
-                      tone="success"
-                    />
-                  ) : (
-                    <StatusBadge label="OPCIONAL" tone="progress" />
-                  )}
-
-                  {loadingEvidenciasNegocio ? (
-                    <View style={styles.imagenDomicilioLoading}>
-                      <ActivityIndicator color={moduleThemes.verification.primary} />
-                      <Text allowFontScaling={false} style={styles.helpText}>
-                        Consultando fotografías guardadas…
-                      </Text>
-                    </View>
-                  ) : null}
-
-                  {paginasEvidenciasNegocio.length > 0 ? (
-                    <DocumentImageCarousel
-                      title="FOTOGRAFÍAS DEL NEGOCIO"
-                      pages={paginasEvidenciasNegocio}
-                      moduleTheme="verification"
-                      helperText="Desliza para revisar las fotografías. Toca una imagen para ampliarla."
-                    />
-                  ) : null}
-
-                  {errorEvidenciasNegocio ? (
-                    <Text allowFontScaling={false} style={styles.imagenDomicilioErrorText}>
-                      {errorEvidenciasNegocio}
-                    </Text>
-                  ) : null}
-
-                  <View style={styles.visitaVecinoFachadaActions}>
-                    {evidenciasNegocioPendientes.length > 0 ? (
-                      <>
-                        <SecondaryButton
-                          title="Tomar otra fotografía"
-                          moduleTheme="verification"
-                          disabled={guardandoEvidenciasNegocio || loadingEvidenciasNegocio}
-                          onPress={capturarEvidenciaNegocio}
-                        />
-                        <PrimaryButton
-                          title="Reintentar pendientes"
-                          moduleTheme="verification"
-                          disabled={guardandoEvidenciasNegocio || loadingEvidenciasNegocio}
-                          onPress={() => guardarEvidenciasNegocio(evidenciasNegocioPendientes)}
-                        />
-                      </>
-                    ) : (
-                      <PrimaryButton
-                        title="Tomar fotografía"
-                        moduleTheme="verification"
-                        disabled={guardandoEvidenciasNegocio || loadingEvidenciasNegocio}
-                        onPress={capturarEvidenciaNegocio}
-                        accessibilityLabel="Tomar fotografía del negocio con la cámara"
-                      />
-                    )}
-                  </View>
-                </Card>
-
-                <TextInput
-                  label="¿Dónde se ubica el negocio?"
-                  value={ubicacionNegocio}
-                  onChangeText={setUbicacionNegocio}
-                  placeholder="Dirección del negocio"
-                  multiline
-                />
-              </>
-            ) : null}
-
-            {integrante?.esTesorera && integrante.tieneHistorialInterno === true ? (
-              <>
-                <View style={styles.entrevistaSectionHeader}>
-                  <StickySectionHeader
-                    title="CONTROL DE PAGOS"
-                    moduleTheme="verification"
-                  />
-                </View>
-
-                <View style={styles.tesoreraHeader}>
-                  <StatusBadge label="TESORERA · CON HISTORIAL" leadingMark="T" tone="pending" />
-                  <Text allowFontScaling={false} style={styles.tesoreraTitle}>
-                    Aplica porque la tesorera ya tuvo un crédito confirmado con CRELEALTAD.
-                  </Text>
-                </View>
-
-                <SectionTitle title="Control de pagos del ciclo anterior" />
-
-                <SelectorField
-                  label="¿Tienen su control de pagos?"
-                  value={tieneControlPagos}
-                  options={['Sí', 'No']}
-                  onSelect={(respuesta) => {
-                    setTieneControlPagos(respuesta);
-                    if (respuesta === 'Sí') {
-                      setMotivoSinControl('');
-                    }
-                  }}
-                  moduleTheme="verification"
-                  required
-                />
-
-                {tieneControlPagos === 'Sí' ? (
-                  <Card style={styles.imagenDomicilioCard}>
-                    <View style={styles.imagenDomicilioHeader}>
-                      <Text allowFontScaling={false} style={styles.imagenDomicilioTitle}>
-                        Control de pagos
-                      </Text>
-                      <StatusBadge
-                        label={guardandoEvidenciaEntrevista === 'CONTROL_PAGOS'
-                          ? 'GUARDANDO'
-                          : evidenciaControlPagosPendiente
-                            ? 'POR GUARDAR'
-                            : fotoControlPagos1
-                              ? 'GUARDADA'
-                              : 'PENDIENTE'}
-                        tone={guardandoEvidenciaEntrevista === 'CONTROL_PAGOS'
-                          ? 'progress'
-                          : evidenciaControlPagosPendiente
-                            ? 'pending'
-                            : fotoControlPagos1
-                              ? 'success'
-                              : 'pending'}
-                      />
-                    </View>
-
-                    {fotoControlPagos1 || evidenciaControlPagosPendiente ? (
-                      <View style={styles.fotoPreview}>
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel="Abrir fotografía del control de pagos"
-                          accessibilityHint="Abre la imagen en pantalla completa con controles de zoom"
-                          onPress={() => setFotoControlPagosVisible(true)}
-                        >
-                          <Image
-                            source={{
-                              uri: evidenciaControlPagosPendiente?.uri || fotoControlPagos1 || '',
-                              headers: evidenciaControlPagosPendiente
-                                ? undefined
-                                : evidenciaEntrevistaHeaders,
-                            }}
-                            style={styles.fotoControlImage}
-                            accessibilityLabel="Vista previa del control de pagos"
-                          />
-                        </Pressable>
-                        {evidenciaControlPagosPendiente ? (
-                          <PrimaryButton
-                            title={guardandoEvidenciaEntrevista === 'CONTROL_PAGOS'
-                              ? 'Guardando...'
-                              : 'Reintentar guardado'}
-                            moduleTheme="verification"
-                            disabled={guardandoEvidenciaEntrevista === 'CONTROL_PAGOS'}
-                            onPress={() => void guardarEvidenciaEspecialEntrevista(
-                              evidenciaControlPagosPendiente,
-                              setFotoControlPagos1,
-                              setEvidenciaControlPagosPendiente,
-                            )}
-                          />
-                        ) : null}
-                        <SecondaryButton
-                          title="Volver a tomar fotografía"
-                          moduleTheme="verification"
-                          leadingIcon={(
-                            <FontAwesome
-                              name="camera"
-                              size={iconSizes.action}
-                              color={moduleThemes.verification.primary}
-                            />
-                          )}
-                          onPress={abrirOpcionesFotoControlPagos}
-                        />
-                      </View>
-                    ) : (
-                      <PrimaryButton
-                        title="Tomar fotografía"
-                        moduleTheme="verification"
-                        leadingIcon={(
-                          <FontAwesome
-                            name="camera"
-                            size={iconSizes.action}
-                            color={moduleThemes.verification.primaryText}
-                          />
-                        )}
-                        onPress={abrirOpcionesFotoControlPagos}
-                        accessibilityLabel="Tomar fotografía geolocalizada del control de pagos"
-                      />
-                    )}
-                  </Card>
-                ) : null}
-
-                {tieneControlPagos === 'No' ? (
-                  <>
-                    <PickerField
-                      label="¿Qué pasó con el control de pagos?"
-                      value={motivoSinControl}
-                      options={MOTIVOS_SIN_CONTROL_PAGOS}
-                      onSelect={setMotivoSinControl}
-                      placeholder="Seleccionar motivo"
-                      moduleTheme="verification"
-                      autoOpen
-                      confirmSelection
-                      required
-                    />
-
-                    <View style={styles.warningBox}>
-                      <Text allowFontScaling={false} style={styles.warningIcon}>!</Text>
-                      <Text allowFontScaling={false} style={styles.warningText}>
-                        Explícale que el control de pagos es un documento clave, debe firmarse
-                        semanalmente por la asesora y la tesorera, y será requerido en el próximo
-                        desembolso.
-                      </Text>
-                    </View>
-                  </>
-                ) : null}
-
-                <View style={styles.entrevistaSectionHeader}>
-                  <StickySectionHeader
-                    title="EVALUACIÓN DEL SERVICIO DE LA ASESORA"
-                    moduleTheme="verification"
-                  />
-                </View>
-
-                <SelectorField
-                  label="¿La asesora acudió cada semana por el pago?"
-                  value={asesoraAcudioSemanalmente}
-                  options={['Siempre', 'A veces', 'Nunca']}
-                  onSelect={setAsesoraAcudioSemanalmente}
-                  moduleTheme="verification"
-                  required
-                />
-
-                <SelectorField
-                  label="¿Firmaban su control semanalmente?"
-                  value={firmabanControlSemanalmente}
-                  options={['Siempre', 'A veces', 'Nunca']}
-                  onSelect={setFirmabanControlSemanalmente}
-                  moduleTheme="verification"
-                  required
-                />
-
-                <SelectorField
-                  label="¿Cómo fue el trato de la asesora con ustedes?"
-                  value={tratoAsesoraTesorera}
-                  options={['Excelente', 'Bueno', 'Regular', 'Malo']}
-                  onSelect={setTratoAsesoraTesorera}
-                  moduleTheme="verification"
-                  required
-                />
-
-                <SelectorField
-                  label="¿Conoce nuestro premio para tesoreras?"
-                  value={conocePremioTesorera}
-                  options={['Sí', 'No']}
-                  onSelect={(respuesta) => {
-                    setConocePremioTesorera(respuesta);
-                    if (respuesta === 'Sí') {
-                      setFotoFolletoPremioVisible(false);
-                    }
-                  }}
-                  moduleTheme="verification"
-                  required
-                />
-
-                {conocePremioTesorera === 'No' ? (
-                  <>
-                    <View style={styles.warningBox}>
-                      <Text allowFontScaling={false} style={styles.tesoreraTitle}>
-                        &quot;Entregar folleto de premio a tesorera&quot;
-                      </Text>
-                    </View>
-
-                    <Card style={styles.imagenDomicilioCard}>
-                      <View style={styles.imagenDomicilioHeader}>
-                        <Text allowFontScaling={false} style={styles.imagenDomicilioTitle}>
-                          Evidencia de entrega del folleto
-                        </Text>
-                        <StatusBadge
-                          label={guardandoEvidenciaEntrevista === 'FOLLETO_PREMIO_TESORERA'
-                            ? 'GUARDANDO'
-                            : evidenciaFolletoPendiente
-                              ? 'POR GUARDAR'
-                              : fotoFolletoPremioTesorera
-                                ? 'GUARDADA'
-                                : 'PENDIENTE'}
-                          tone={guardandoEvidenciaEntrevista === 'FOLLETO_PREMIO_TESORERA'
-                            ? 'progress'
-                            : evidenciaFolletoPendiente
-                              ? 'pending'
-                              : fotoFolletoPremioTesorera
-                                ? 'success'
-                                : 'pending'}
-                        />
-                      </View>
-
-                      <Text allowFontScaling={false} style={styles.imagenDomicilioInstruction}>
-                        Toma la fotografía en el momento. No se permite seleccionar desde el carrete.
-                      </Text>
-
-                      {fotoFolletoPremioTesorera || evidenciaFolletoPendiente ? (
-                        <View style={styles.fotoPreview}>
-                          <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel="Abrir evidencia de entrega del folleto"
-                            accessibilityHint="Abre la imagen en pantalla completa con controles de zoom"
-                            onPress={() => setFotoFolletoPremioVisible(true)}
-                          >
-                            <Image
-                              source={{
-                                uri: evidenciaFolletoPendiente?.uri || fotoFolletoPremioTesorera || '',
-                                headers: evidenciaFolletoPendiente
-                                  ? undefined
-                                  : evidenciaEntrevistaHeaders,
-                              }}
-                              style={styles.fotoControlImage}
-                              accessibilityLabel="Vista previa de la evidencia del folleto"
-                            />
-                          </Pressable>
-                          {evidenciaFolletoPendiente ? (
-                            <PrimaryButton
-                              title={guardandoEvidenciaEntrevista === 'FOLLETO_PREMIO_TESORERA'
-                                ? 'Guardando...'
-                                : 'Reintentar guardado'}
-                              moduleTheme="verification"
-                              disabled={guardandoEvidenciaEntrevista === 'FOLLETO_PREMIO_TESORERA'}
-                              onPress={() => void guardarEvidenciaEspecialEntrevista(
-                                evidenciaFolletoPendiente,
-                                setFotoFolletoPremioTesorera,
-                                setEvidenciaFolletoPendiente,
-                              )}
-                            />
-                          ) : null}
-                          <SecondaryButton
-                            title="Volver a tomar evidencia"
-                            moduleTheme="verification"
-                            leadingIcon={(
-                              <FontAwesome
-                                name="camera"
-                                size={iconSizes.action}
-                                color={moduleThemes.verification.primary}
-                              />
-                            )}
-                            onPress={() => void capturarYGuardarEvidenciaEntrevista(
-                              'FOLLETO_PREMIO_TESORERA',
-                              setFotoFolletoPremioTesorera,
-                              setEvidenciaFolletoPendiente,
-                            )}
-                          />
-                        </View>
-                      ) : (
-                        <PrimaryButton
-                          title="Tomar evidencia"
-                          moduleTheme="verification"
-                          leadingIcon={(
-                            <FontAwesome
-                              name="camera"
-                              size={iconSizes.action}
-                              color={moduleThemes.verification.primaryText}
-                            />
-                          )}
-                          onPress={() => void capturarYGuardarEvidenciaEntrevista(
-                            'FOLLETO_PREMIO_TESORERA',
-                            setFotoFolletoPremioTesorera,
-                            setEvidenciaFolletoPendiente,
-                          )}
-                          accessibilityLabel="Tomar evidencia de la entrega del folleto con la cámara"
-                        />
-                      )}
-                    </Card>
-                  </>
-                ) : null}
-
-              </>
-            ) : null}
-
-            {integrante?.tieneHistorialInterno === true ? (
-              <>
-                <View style={styles.entrevistaSectionHeader}>
-                  <StickySectionHeader
-                    title="ENCUESTA DE SERVICIO"
-                    moduleTheme="verification"
-                  />
-                </View>
-
-                <View style={styles.tesoreraHeader}>
-                  <StatusBadge label="INTEGRANTE CON HISTORIAL" tone="pending" />
-                  <Text allowFontScaling={false} style={styles.tesoreraTitle}>
-                    Aplica porque la integrante ya tuvo un crédito confirmado con CRELEALTAD.
-                  </Text>
-                </View>
-
-                <SelectorField
-                  label="¿Cómo le ha parecido su crédito con CRELEALTAD?"
-                  value={opinionCredito}
-                  options={['Excelente', 'Bueno', 'Regular', 'Malo']}
-                  onSelect={setOpinionCredito}
-                  moduleTheme="verification"
-                  required
-                />
-
-                <SelectorField
-                  label="¿Cómo fue el trato que recibió durante el desembolso?"
-                  value={tratoDesembolso}
-                  options={['Excelente', 'Bueno', 'Regular', 'Malo']}
-                  onSelect={setTratoDesembolso}
-                  moduleTheme="verification"
-                  required
-                />
-
-                <SelectorField
-                  label="¿Cómo considera el tiempo que tardamos en entregarle su crédito?"
-                  value={rapidezDesembolso}
-                  options={['Muy rápido', 'Rápido', 'Lento', 'Muy lento']}
-                  onSelect={setRapidezDesembolso}
-                  moduleTheme="verification"
-                  required
-                />
-
-                <SelectorField
-                  label="¿La información sobre su crédito y sus pagos fue clara?"
-                  value={informacionCreditoClara}
-                  options={['Sí', 'No']}
-                  onSelect={setInformacionCreditoClara}
-                  moduleTheme="verification"
-                  required
-                />
-
-                <SelectorField
-                  label="¿Nos recomendaría como financiera?"
-                  value={recomendaria}
-                  options={['Sí', 'No']}
-                  onSelect={(respuesta) => {
-                    setRecomendaria(respuesta);
-                    setRazonRecomendacion('');
-                  }}
-                  moduleTheme="verification"
-                  required
-                />
-
-                {recomendaria ? (
-                  <PickerField
-                    key={`motivo-recomendacion-${recomendaria}`}
-                    label={recomendaria === 'Sí'
-                      ? '¿Por qué sí nos recomendaría?'
-                      : '¿Por qué no nos recomendaría?'}
-                    value={razonRecomendacion}
-                    options={recomendaria === 'Sí'
-                      ? MOTIVOS_RECOMENDACION_SI
-                      : MOTIVOS_RECOMENDACION_NO}
-                    onSelect={setRazonRecomendacion}
-                    placeholder="Seleccionar motivo"
-                    moduleTheme="verification"
-                    autoOpen
-                    confirmSelection
-                    required
-                  />
-                ) : null}
-
-                <TextInput
-                  label="¿En qué cree usted que podemos mejorar?"
-                  value={motivoRecomendacion}
-                  onChangeText={setMotivoRecomendacion}
-                  placeholder="Escribe lo que nos comentó la integrante"
-                  multiline
-                  numberOfLines={3}
-                  required
-                />
-              </>
-            ) : null}
           </Card>
         )}
 
@@ -4908,386 +4240,70 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
         )}
       </View>
 
-      {/* Modal para visualizar documentos */}
-      <Modal
+      <VerificacionDocumentoModal
         visible={showDocumentModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowDocumentModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalTitleContainer}>
-                <Text allowFontScaling={false} style={styles.modalSubtitle}>
-                  {documentoViewing?.nombre}
-                </Text>
-                <Text allowFontScaling={false} style={styles.modalTitle}>
-                  {getModalHeaderTitle()}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setShowDocumentModal(false)}
-                style={styles.modalCloseButton}
-              >
-                <Text allowFontScaling={false} style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
+        documento={documentoViewing}
+        consultando={consultandoDocumentos}
+        ladoSeleccionado={ladoSeleccionado}
+        titulo={getModalHeaderTitle()}
+        preguntaValidacion={getPreguntaValidacion()}
+        onLadoSeleccionadoChange={setLadoSeleccionado}
+        onClose={cerrarDocumentoModal}
+        onValidar={handleValidacion}
+      />
 
-            {documentoViewing?.uriFrente ? (
-              // Si tiene URIs locales, mostrar la imagen
-              documentoViewing.uriReverso ? (
-                // Si tiene reverso (INE), usar ScrollView horizontal con paginación
-                <View style={styles.swipeableContainer}>
-                  <Text allowFontScaling={false} style={styles.swipeInstructionText}>
-                    Pellizca o usa +/− para ampliar. Desliza para ver frente y reverso.
-                  </Text>
-                  <ScrollView
-                    ref={documentPagesScrollViewRef}
-                    horizontal
-                    pagingEnabled
-                    showsHorizontalScrollIndicator={false}
-                    onMomentumScrollEnd={(event) => {
-                      const offsetX = event.nativeEvent.contentOffset.x;
-                      setLadoSeleccionado(offsetX > SCREEN_WIDTH / 2 ? 'reverso' : 'frente');
-                    }}
-                    style={styles.imageScrollView}
-                  >
-                    <View style={styles.imagePageContainer}>
-                      <ZoomableImage
-                        uri={documentoViewing.uriFrente}
-                        headers={documentoViewing.headers}
-                        accessibilityLabel={`${documentoViewing.nombre}, frente`}
-                        style={styles.fullScreenImage}
-                      />
-                      <Text allowFontScaling={false} style={styles.imageLabelOverlay}>Frente</Text>
-                    </View>
-                    <View style={styles.imagePageContainer}>
-                      <ZoomableImage
-                        uri={documentoViewing.uriReverso}
-                        headers={documentoViewing.headers}
-                        accessibilityLabel={`${documentoViewing.nombre}, reverso`}
-                        style={styles.fullScreenImage}
-                      />
-                      <Text allowFontScaling={false} style={styles.imageLabelOverlay}>Reverso</Text>
-                    </View>
-                  </ScrollView>
-                  {/* Indicador de página */}
-                  <View style={styles.pageIndicator}>
-                    <View style={[
-                      styles.pageIndicatorDot,
-                      ladoSeleccionado === 'frente' && styles.pageIndicatorDotActive
-                    ]} />
-                    <View style={[
-                      styles.pageIndicatorDot,
-                      ladoSeleccionado === 'reverso' && styles.pageIndicatorDotActive
-                    ]} />
-                  </View>
-                </View>
-              ) : (
-                // Documento simple (solo frente)
-                <View style={styles.swipeableContainer}>
-                  <Text allowFontScaling={false} style={styles.swipeInstructionText}>
-                    Pellizca o usa +/− para ampliar. Arrastra para recorrer la imagen.
-                  </Text>
-                  <ZoomableImage
-                    uri={documentoViewing.uriFrente}
-                    headers={documentoViewing.headers}
-                    accessibilityLabel={documentoViewing.nombre}
-                    style={styles.zoomableDocumentImage}
-                  />
-                </View>
-              )
-            ) : documentoViewing?.ruta?.startsWith('mobile-temp:') ? (
-              <ScrollView
-                style={styles.modalImageContainer}
-                contentContainerStyle={styles.modalImageContent}
-              >
-                <View style={styles.placeholderContainer}>
-                  <Text allowFontScaling={false} style={styles.placeholderIcon}>
-                    {documentoViewing.icono}
-                  </Text>
-                  <Text allowFontScaling={false} style={styles.placeholderTitle}>
-                    Documento capturado
-                  </Text>
-                  <Text allowFontScaling={false} style={styles.placeholderText}>
-                    {documentoViewing.nombre}
-                  </Text>
-                  <View style={styles.placeholderInfoBox}>
-                    <Text allowFontScaling={false} style={styles.placeholderInfoIcon}>💡</Text>
-                    <Text allowFontScaling={false} style={styles.placeholderInfoText}>
-                      El documento fue capturado por el asesor.{'\n'}
-                      La imagen no está disponible en este dispositivo.
-                    </Text>
-                  </View>
-                </View>
-              </ScrollView>
-            ) : (
-              <ScrollView
-                style={styles.modalImageContainer}
-                contentContainerStyle={styles.modalImageContent}
-              >
-                <View style={styles.placeholderContainer}>
-                  <Text allowFontScaling={false} style={styles.placeholderIcon}>⚠️</Text>
-                  <Text allowFontScaling={false} style={styles.placeholderTitle}>
-                    Documento no disponible
-                  </Text>
-                  <Text allowFontScaling={false} style={styles.placeholderText}>
-                    La imagen no se encuentra en este dispositivo
-                  </Text>
-                </View>
-              </ScrollView>
-            )}
+      <VerificacionLlamadaModals
+        selectorNumeroVisible={selectorNumeroLlamadaVisible}
+        canalParaNumero={canalParaSeleccionarNumero}
+        telefonosDisponibles={obtenerTelefonosLlamadaDisponibles(integrante)}
+        selectorCanalVisible={selectorCanalTelefonoVisible}
+        telefonoSeleccionado={telefonoSeleccionadoParaContacto}
+        whatsappHabilitado={whatsappTelefonoConfirmadoHabilitado}
+        confirmacionEvidenciaVisible={confirmacionTelefonoEvidenciaVisible}
+        confirmacionPendiente={confirmacionTelefonoPendiente}
+        evidenciaSeleccionada={evidenciaLlamada}
+        guardandoConfirmacion={guardandoConfirmacionTelefono}
+        evidenciaTelefonoVisible={evidenciaTelefonoVisible}
+        telefonoEvidencia={telefonoEvidenciaEnVista}
+        evidenciaTelefonoHeaders={evidenciaTelefonoHeaders}
+        reemplazoEvidenciaVisible={reemplazoEvidenciaTelefonoVisible}
+        guardandoReemplazo={guardandoReemplazoEvidenciaTelefono}
+        resultadoVisible={showLlamadaModal}
+        guardandoResultado={guardandoResultadoLlamada}
+        onCloseSelectorNumero={cerrarSelectorNumeroLlamada}
+        onSeleccionarNumero={handleSeleccionarNumeroLlamada}
+        onCloseSelectorCanal={cerrarSelectorCanalTelefono}
+        onLlamadaTelefonica={handleLlamadaTelefonoSeleccionado}
+        onLlamadaWhatsApp={handleWhatsAppTelefonoSeleccionado}
+        onCloseConfirmacionEvidencia={cerrarEvidenciaConfirmacionTelefono}
+        onSeleccionarEvidencia={() => void seleccionarEvidenciaLlamada()}
+        onGuardarConfirmacion={() => void guardarConfirmacionTelefono()}
+        onCloseEvidenciaTelefono={cerrarEvidenciaTelefono}
+        onIniciarReemplazo={iniciarReemplazoEvidenciaTelefono}
+        onCloseReemplazo={cerrarReemplazoEvidenciaTelefono}
+        onGuardarReemplazo={() => void guardarReemplazoEvidenciaTelefono()}
+        onResultadoPositivo={() => handleResultadoLlamada('si-contesto')}
+        onResultadoNegativo={() => handleResultadoLlamada('no-contesto')}
+        onDismissResultado={handleDismissResultadoLlamada}
+      />
 
-            {!consultandoDocumentos ? (
-              <View style={styles.modalActions}>
-                <Text allowFontScaling={false} style={styles.validacionPregunta}>
-                  {getPreguntaValidacion()}
-                </Text>
-                <View style={styles.validacionBotones}>
-                  <TouchableOpacity
-                    style={styles.validacionBotonSi}
-                    onPress={() => handleValidacion('si')}
-                    activeOpacity={0.8}
-                  >
-                    <Text allowFontScaling={false} style={styles.validacionBotonSiTexto}>✓ SÍ</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.validacionBotonNo}
-                    onPress={() => handleValidacion('no')}
-                    activeOpacity={0.8}
-                  >
-                    <Text allowFontScaling={false} style={styles.validacionBotonNoTexto}>✗ NO</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : null}
-          </View>
-        </View>
-      </Modal>
-
-      <BottomSheetSelector
-        visible={selectorNumeroLlamadaVisible}
-        title="¿A qué número desea llamar?"
-        message={canalParaSeleccionarNumero === 'WHATSAPP'
-          ? 'Seleccionaste llamada por WhatsApp.'
-          : 'Seleccionaste llamada por teléfono.'}
-        dismissOnBackdrop
-        onClose={cerrarSelectorNumeroLlamada}
-      >
-        {obtenerTelefonosLlamadaDisponibles(integrante).map((opcion) => (
-          <SecondaryButton
-            key={opcion.tipo}
-            title={`${opcion.etiqueta}: ${formatPhone(opcion.numero)}`}
-            moduleTheme="verification"
-            size="large"
-            leadingIcon={(
-              <FontAwesome
-                name={canalParaSeleccionarNumero === 'WHATSAPP' ? 'whatsapp' : 'phone'}
-                size={iconSizes.action}
-                color={canalParaSeleccionarNumero === 'WHATSAPP'
-                  ? colors.whatsapp
-                  : moduleThemes.verification.primary}
-              />
-            )}
-            onPress={() => handleSeleccionarNumeroLlamada(opcion)}
-            accessibilityLabel={`Llamar al número ${opcion.etiqueta.toLowerCase()}, ${formatPhone(opcion.numero)}`}
-          />
-        ))}
-      </BottomSheetSelector>
-
-      <BottomSheetSelector
-        visible={selectorCanalTelefonoVisible}
-        title="¿Cómo desea realizar la llamada?"
-        message={`Número confirmado: ${telefonoSeleccionadoParaContacto}`}
-        dismissOnBackdrop
-        onClose={cerrarSelectorCanalTelefono}
-      >
-        <SecondaryButton
-          title="Llamada telefónica"
-          moduleTheme="verification"
-          size="large"
-          leadingIcon={(
-            <FontAwesome
-              name="phone"
-              size={iconSizes.action}
-              color={moduleThemes.verification.primary}
-            />
-          )}
-          onPress={handleLlamadaTelefonoSeleccionado}
-          accessibilityLabel="Realizar llamada telefónica al número confirmado"
-        />
-        <SecondaryButton
-          title="Llamada por WhatsApp"
-          moduleTheme="verification"
-          size="large"
-          leadingIcon={(
-            <FontAwesome
-              name="whatsapp"
-              size={iconSizes.action}
-              color={colors.whatsapp}
-            />
-          )}
-          disabled={!whatsappTelefonoConfirmadoHabilitado}
-          onPress={handleWhatsAppTelefonoSeleccionado}
-          accessibilityLabel={whatsappTelefonoConfirmadoHabilitado
-            ? 'Realizar llamada por WhatsApp al número confirmado'
-            : 'Llamada por WhatsApp disponible después de registrar una llamada telefónica'}
-        />
-        {!whatsappTelefonoConfirmadoHabilitado ? (
-          <Text allowFontScaling={false} style={styles.channelRequirementText}>
-            WhatsApp estará disponible después de registrar la primera llamada telefónica.
-          </Text>
-        ) : null}
-      </BottomSheetSelector>
-
-      <BottomSheetSelector
-        visible={confirmacionTelefonoEvidenciaVisible}
-        title="Guardar evidencia de la llamada"
-        message={confirmacionTelefonoPendiente
-          ? `La llamada al número ${formatPhone(confirmacionTelefonoPendiente.telefono)} fue contestada. Agrega la evidencia para confirmarlo.`
-          : undefined}
-        onClose={cerrarEvidenciaConfirmacionTelefono}
-      >
-        {evidenciaLlamada ? (
-          <Image
-            source={{ uri: evidenciaLlamada.uri }}
-            style={styles.confirmacionTelefonoEvidenceImage}
-            accessibilityLabel="Evidencia seleccionada para confirmar el teléfono"
-          />
-        ) : null}
-        <SecondaryButton
-          title={evidenciaLlamada ? 'Cambiar evidencia' : 'Seleccionar evidencia'}
-          moduleTheme="verification"
-          leadingIcon={(
-            <FontAwesome
-              name="image"
-              size={iconSizes.action}
-              color={moduleThemes.verification.primary}
-            />
-          )}
-          disabled={guardandoConfirmacionTelefono}
-          onPress={() => void seleccionarEvidenciaLlamada()}
-        />
-        <PrimaryButton
-          title={guardandoConfirmacionTelefono ? 'Guardando…' : 'Guardar evidencia y confirmar'}
-          moduleTheme="verification"
-          disabled={!evidenciaLlamada || guardandoConfirmacionTelefono}
-          onPress={() => void guardarConfirmacionTelefono()}
-        />
-      </BottomSheetSelector>
-
-      <DocumentViewer
-        visible={fotoControlPagosVisible && Boolean(
-          fotoControlPagos1 || evidenciaControlPagosPendiente,
-        )}
-        title="Control de pagos"
-        pages={fotoControlPagos1 || evidenciaControlPagosPendiente ? [{
+      <EntrevistaEvidenceViewers
+        controlPagosVisible={fotoControlPagosVisible}
+        controlPagos={fotoControlPagos1 || evidenciaControlPagosPendiente ? {
           uri: evidenciaControlPagosPendiente?.uri || fotoControlPagos1 || '',
           headers: evidenciaControlPagosPendiente ? undefined : evidenciaEntrevistaHeaders,
-          mimeType: 'image/jpeg',
-        }] : []}
-        onClose={() => setFotoControlPagosVisible(false)}
-        fullScreen
-        moduleTheme="verification"
-      />
-
-      <DocumentViewer
-        visible={Boolean(imagenDomicilioEnVista)}
-        title={imagenDomicilioEnVista?.titulo ?? 'Imagen del domicilio'}
-        pages={imagenDomicilioEnVista ? [{
-          uri: imagenDomicilioEnVista.uri,
-          headers: imagenDomicilioEnVista.headers,
-          mimeType: 'image/jpeg',
-        }] : []}
-        onClose={() => setImagenDomicilioEnVista(null)}
-        fullScreen
-        moduleTheme="verification"
-      />
-
-      <DocumentViewer
-        visible={fotoFolletoPremioVisible && Boolean(
-          fotoFolletoPremioTesorera || evidenciaFolletoPendiente,
-        )}
-        title="Evidencia del folleto para tesorera"
-        pages={fotoFolletoPremioTesorera || evidenciaFolletoPendiente ? [{
+        } : null}
+        imagenDomicilio={imagenDomicilioEnVista}
+        folletoVisible={fotoFolletoPremioVisible}
+        folleto={fotoFolletoPremioTesorera || evidenciaFolletoPendiente ? {
           uri: evidenciaFolletoPendiente?.uri || fotoFolletoPremioTesorera || '',
           headers: evidenciaFolletoPendiente ? undefined : evidenciaEntrevistaHeaders,
-          mimeType: 'image/jpeg',
-        }] : []}
-        onClose={() => setFotoFolletoPremioVisible(false)}
-        fullScreen
-        moduleTheme="verification"
+        } : null}
+        onCloseControlPagos={() => setFotoControlPagosVisible(false)}
+        onCloseImagenDomicilio={() => setImagenDomicilioEnVista(null)}
+        onCloseFolleto={() => setFotoFolletoPremioVisible(false)}
       />
 
-      <DocumentViewer
-        visible={evidenciaTelefonoVisible}
-        title={telefonoEvidenciaEnVista
-          ? `Evidencia del teléfono ${telefonoEvidenciaEnVista.tipo === 'PRINCIPAL' ? 'principal' : 'secundario'} · ${formatPhone(telefonoEvidenciaEnVista.telefono)}`
-          : 'Evidencia del teléfono confirmado'}
-        pages={telefonoEvidenciaEnVista ? [{
-          uri: apiUrl(telefonoEvidenciaEnVista.evidenciaUrl),
-          headers: evidenciaTelefonoHeaders,
-          mimeType: 'image/jpeg',
-        }] : []}
-        onClose={cerrarEvidenciaTelefono}
-        fullScreen
-        moduleTheme="verification"
-        secondaryAction={{
-          title: 'Cambiar evidencia',
-          accessibilityLabel: 'Seleccionar otra evidencia para el teléfono confirmado',
-          disabled: guardandoReemplazoEvidenciaTelefono,
-          onPress: iniciarReemplazoEvidenciaTelefono,
-        }}
-      />
-
-      <BottomSheetSelector
-        visible={reemplazoEvidenciaTelefonoVisible}
-        title="Cambiar evidencia del teléfono"
-        message={telefonoEvidenciaEnVista
-          ? `${formatPhone(telefonoEvidenciaEnVista.telefono)} · ${telefonoEvidenciaEnVista.tipo === 'PRINCIPAL' ? 'Principal' : 'Secundario'}`
-          : undefined}
-        onClose={cerrarReemplazoEvidenciaTelefono}
-      >
-        {evidenciaLlamada ? (
-          <Image
-            source={{ uri: evidenciaLlamada.uri }}
-            style={styles.confirmacionTelefonoEvidenceImage}
-            accessibilityLabel="Nueva evidencia seleccionada"
-          />
-        ) : null}
-        <SecondaryButton
-          title="Elegir otra imagen"
-          moduleTheme="verification"
-          leadingIcon={(
-            <FontAwesome
-              name="image"
-              size={iconSizes.action}
-              color={moduleThemes.verification.primary}
-            />
-          )}
-          disabled={guardandoReemplazoEvidenciaTelefono}
-          onPress={() => void seleccionarEvidenciaLlamada()}
-        />
-        <PrimaryButton
-          title={guardandoReemplazoEvidenciaTelefono ? 'Guardando…' : 'Guardar cambio'}
-          moduleTheme="verification"
-          disabled={!evidenciaLlamada || guardandoReemplazoEvidenciaTelefono}
-          onPress={() => void guardarReemplazoEvidenciaTelefono()}
-        />
-      </BottomSheetSelector>
-
-      <BinaryChoiceDialog
-        visible={showLlamadaModal}
-        title="Resultado de la llamada"
-        message={'¿La integrante contestó la llamada?\n\nAl responder se registrará la ubicación actual del teléfono.'}
-        positiveLabel="Sí contestó"
-        negativeLabel="No contestó"
-        onPositive={() => handleResultadoLlamada('si-contesto')}
-        onNegative={() => handleResultadoLlamada('no-contesto')}
-        onDismiss={handleDismissResultadoLlamada}
-        busy={guardandoResultadoLlamada}
-      />
       </KeyboardAvoidingView>
     </ScreenContainer>
   );
@@ -5482,52 +4498,6 @@ const styles = StyleSheet.create({
   mainCard: {
     marginTop: spacing.lg,
     padding: spacing.md,
-  },
-  entrevistaSectionHeader: {
-    marginTop: spacing.md,
-    marginBottom: spacing.md,
-  },
-  entrevistaImagenesDomicilio: {
-    marginBottom: spacing.lg,
-  },
-  imagenDomicilioCard: {
-    gap: spacing.md,
-    borderWidth: 2,
-    borderColor: moduleThemes.verification.primary,
-  },
-  imagenDomicilioHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  imagenDomicilioTitle: {
-    ...typography.sectionTitle,
-    color: colors.textPrimary,
-    flex: 1,
-  },
-  imagenDomicilioInstruction: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  imagenDomicilioLoading: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  imagenDomicilioErrorText: {
-    ...typography.body,
-    color: colors.error,
-  },
-  visitaVecinoIneCard: {
-    gap: spacing.md,
-  },
-  negocioEvidenceCard: {
-    marginBottom: spacing.sm,
-  },
-  visitaVecinoFachadaActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
   },
   stickyHeader: {
     backgroundColor: moduleThemes.verification.headerAccent,
@@ -5879,183 +4849,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textSecondary,
   },
-  channelRequirementText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: spacing.md,
-  },
-  confirmacionTelefonoEvidenceImage: {
-    width: '100%',
-    height: 190,
-    borderRadius: radius.md,
-    backgroundColor: colors.gray[100],
-    resizeMode: 'contain',
-  },
   montoAutorizadoText: {
     fontSize: 16,
     fontWeight: '700',
     color: moduleThemes.verification.headerBg,
-  },
-  // Modal de visualización de documentos
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '95%',
-    height: '90%',
-    backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: spacing.lg,
-    backgroundColor: moduleThemes.verification.headerBg,
-    borderBottomWidth: 2,
-    borderBottomColor: moduleThemes.verification.titleBarBg,
-  },
-  modalTitleContainer: {
-    flex: 1,
-    gap: 4,
-  },
-  modalSubtitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.7)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.white,
-    lineHeight: 20,
-  },
-  modalCloseButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCloseText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.white,
-  },
-  modalImageContainer: {
-    flex: 1,
-    backgroundColor: colors.gray[100],
-  },
-  modalImageContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
-  },
-  zoomableDocumentImage: {
-    flex: 1,
-    width: '100%',
-  },
-  modalActions: {
-    padding: spacing.lg,
-    backgroundColor: colors.white,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[200],
-    gap: spacing.md,
-  },
-  validacionPregunta: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  validacionBotones: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  validacionBotonSi: {
-    flex: 1,
-    backgroundColor: colors.successSoft,
-    borderRadius: radius.md,
-    borderWidth: 2,
-    borderColor: colors.success,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  validacionBotonSiTexto: {
-    color: colors.success,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  validacionBotonNo: {
-    flex: 1,
-    backgroundColor: colors.dangerSoft,
-    borderRadius: radius.md,
-    borderWidth: 2,
-    borderColor: colors.error,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  validacionBotonNoTexto: {
-    color: colors.error,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  placeholderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  placeholderIcon: {
-    fontSize: 80,
-    marginBottom: spacing.lg,
-  },
-  placeholderTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  placeholderText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: spacing.lg,
-    textAlign: 'center',
-  },
-  placeholderInfoBox: {
-    flexDirection: 'row',
-    backgroundColor: colors.gray[50],
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    gap: spacing.sm,
-    maxWidth: 320,
-  },
-  placeholderInfoIcon: {
-    fontSize: 20,
-  },
-  placeholderInfoText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-    lineHeight: 20,
   },
   imageOptionsContainer: {
     flex: 1,
@@ -6106,62 +4903,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  // Estilos para swipeable (deslizable)
-  swipeableContainer: {
-    flex: 1,
-  },
-  swipeInstructionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingVertical: spacing.md,
-    backgroundColor: colors.warningLight,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.warning,
-  },
-  imageScrollView: {
-    flex: 1,
-  },
-  imagePageContainer: {
-    width: SCREEN_WIDTH * 0.95,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  fullScreenImage: {
-    width: '100%',
-    height: '100%',
-  },
-  imageLabelOverlay: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.md,
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.white,
-  },
-  pageIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
-  },
-  pageIndicatorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.gray[300],
-  },
-  pageIndicatorDotActive: {
-    width: 24,
-    backgroundColor: moduleThemes.verification.headerBg,
   },
   navigationButtons: {
     flexDirection: 'row',

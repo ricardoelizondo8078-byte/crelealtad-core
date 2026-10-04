@@ -76,13 +76,13 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 - La misma pantalla exige seleccionar una única tesorera entre participantes completas, conserva la selección en el expediente, la identifica como `T · TESORERA` y mantiene fija la franja de selección sobre la lista durante el desplazamiento.
 - El alta de grupo crea grupo y expediente dentro de una sola transacción; una falla del expediente revierte el grupo completo.
 - El formulario de Solicitud usa un mapper único por pasos y serializa auto-guardado y navegación para evitar escrituras fuera de orden.
-- La descomposición modular móvil inició por las dos pantallas de mayor tamaño. Verificación ya
-  separa modelos/catálogos y las vistas de Revisión documental, Llamada, Visita al vecino,
-  Imágenes del domicilio, Preguntas generales e Historial crediticio con sus evidencias; Solicitud
-  separa reglas de completitud/validación, carga y visores documentales, y los siete pasos del
-  wizard. El estado compartido, autoguardado y navegación permanecen en sus coordinadores; las
-  secciones restantes de Datos personales y encuestas de Entrevista siguen como deuda técnica
-  explícita, sin cambio funcional.
+- La descomposición modular móvil cubre las dos pantallas de mayor tamaño. Verificación separa
+  modelos/catálogos, todos sus procesos y las secciones de Entrevista: Preguntas generales,
+  Historial crediticio, Datos personales, Ingresos y Encuestas; también delega visores y diálogos de
+  documentos, evidencias y llamadas, mientras hooks tipados concentran el estado del formulario y
+  el ciclo del visor. Solicitud separa reglas de completitud/validación, carga y visores documentales,
+  y los siete pasos del wizard. Persistencia, autoguardado y navegación permanecen en los
+  coordinadores, sin cambio funcional.
 - La UI de Verificación ya no calcula capacidad ni pago semanal con constantes no aprobadas, no permite seleccionar rechazos antes del handoff y mantiene la finalización explícitamente bloqueada.
 - La tarjeta fija de Verificación Individual muestra, junto al rol de la integrante, tres burbujas de contexto: cantidad de ciclos individuales previos confirmados, edad y distancia aproximada en línea recta al domicilio de la tesorera. El conteo se presenta como `CICLO / CICLOS`, une por `persona_id` solicitudes con monto autorizado y créditos reales, cuenta una sola participación por expediente y excluye el expediente actual; no infiere el historial individual legacy que aún no esté vinculado. Ciclos usa fondo verde claro con borde y texto verde oscuro; edad conserva fondo gris, borde gris medio de mayor contraste y advertencia amarilla sobre 70 años; distancia conserva celeste hasta 5 km y rojo por encima del límite. Los valores no disponibles se presentan como `N/D`.
 - Dentro de `HISTORIAL CREDITICIO`, Entrevista muestra `CON CRELEALTAD` sólo cuando existe historia individual confirmada. El resumen usa el mismo contrato por `persona_id`, excluye el expediente actual, deduplica solicitudes autorizadas y créditos reales por expediente y prefiere el crédito real cuando ambas fuentes coinciden. Presenta el máximo y mínimo con todos sus ciclos coincidentes y hasta cinco participaciones recientes con monto autorizado; no infiere historia legacy ni requiere migración.
@@ -147,8 +147,9 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 ### Testing — Parcial
 
 - Cuarenta y una suites de pruebas activas en API; no quedan suites `.skip`.
-- Cinco suites y 17 pruebas automatizadas activas en mobile cubren UI compartida, permisos del
-  catálogo institucional y reglas/mappers puros de Solicitud y Verificación.
+- Seis suites y 19 pruebas automatizadas activas en mobile cubren UI compartida, permisos del
+  catálogo institucional, reglas/mappers puros de Solicitud y Verificación, y coordinación del
+  formulario de Entrevista y del visor documental.
 - La validación del 2026-10-04 confirmó que `npm run build` de la API y el export Android de Expo terminan correctamente.
 - Jest terminó con 41 suites y 218 pruebas aprobadas. La cobertura comprueba además cambio de PIN transaccional sin credenciales en auditoría, bloqueo global mientras el cambio está pendiente, validación de DTO, normalización cerrada del contrato de permisos, trazabilidad transaccional del login y rechazo de actores/estados inválidos por la migración 036, junto con alcance por recurso, configuración productiva cerrada, rechazo de campos controlados por servidor, completitud con archivos realmente cargados, política común de formato/tamaño/hash/UUID y límites multipart, armado ordenado de documentos por lotes, autoguardado tipado de Entrevista, relaciones del mismo expediente, actor de JWT, geolocalización obligatoria y clasificación separada de evidencias.
 - Las suites con PostgreSQL ignoran `DB_NAME`, usan exclusivamente `crelealtad_test` y eliminan sólo los registros creados por cada caso mediante UUID exactos.
@@ -191,7 +192,10 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 5. Seguridad temporal: los 49 asesores comparten temporalmente el valor de prueba `1234`, aunque cada cuenta lo valida contra su propio hash. El cambio obligatorio ya está implementado, pero el valor no desaparece de una cuenta hasta que esa usuaria complete el flujo. La contraseña PostgreSQL y el JWT locales ya fueron rotados, PostgreSQL exige SCRAM en loopback, los scripts y el historial Git dejaron de conservar credenciales y el JWT móvil usa SecureStore. Falta operar secretos mediante un gestor productivo y completar la sustitución individual antes de producción.
 6. Verificación incompleta: el handoff valida participación, cero pendientes y al menos una completa; el concentrador abre cuatro procesos sin orden y mantiene `Conclusiones` visible pero deshabilitado. `Llamada` persiste intento, respuestas, evidencia y conclusión; `Visita al vecino` persiste fachada, respuesta y segunda evidencia, y sólo habilita su terminación con respuesta y evidencia confirmadas. El mínimo parametrizado, asignación, tratamiento posterior de resultados, cita real, persistencia de conclusiones y dictamen requieren decisiones posteriores.
 7. Cliente HTTP todavía inconsistente fuera del recorrido activo del asesor: subsisten usos directos de `fetch` en superficies parciales.
-8. Hotspots móviles: los pasos, validaciones y visores de Solicitud ya están separados, y Verificación delega sus procesos principales más Preguntas generales e Historial crediticio. Existe una suite móvil inicial, pero aún debe extraerse el estado compartido, separar las secciones restantes de Entrevista y ampliar la cobertura del recorrido.
+8. Hotspots móviles: los pasos, validaciones y visores de Solicitud ya están separados, y
+   Verificación delega sus procesos, todas las secciones de Entrevista y sus diálogos/visores. El
+   estado editable de Entrevista y el visor documental ya tienen hooks coordinadores; aún debe
+   ampliarse la cobertura del recorrido completo y mantenerse acotado el coordinador de red.
 9. Falta definir e implementar recuperación administrativa del PIN y cambio voluntario posterior; el cambio inicial obligatorio ya está activo.
 10. El almacenamiento documental por filesystem es configurable y verificable en servidor, pero producción requiere un volumen o proveedor durable, respaldo y monitoreo aprobados.
 

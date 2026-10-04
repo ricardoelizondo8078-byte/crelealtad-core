@@ -1,5 +1,25 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-04] - Segunda descomposición completa de Verificación
+
+### Modularidad móvil
+
+- `IntegranteVerificacionScreen` delega ahora Datos personales, Ingresos, Encuestas de servicio,
+  evidencias ampliadas y los diálogos de documentos y llamadas a componentes tipados propios.
+- `useEntrevistaForm` concentra una única fuente de estado para la captura parcial y evita repetir el
+  armado de sus 58 campos al crear el payload; `useDocumentoRevisionModal` coordina apertura, lado
+  visible y cierre del documento sin acoplarlo al árbol principal.
+- La pantalla coordinadora conserva carga, persistencia, autoguardado, navegación y operaciones API.
+  No cambiaron textos, orden, reglas, permisos, endpoints, tablas ni datos.
+- El coordinador bajó de 6,210 a menos de 5,000 líneas; los estilos y estados trasladados quedaron
+  junto a la responsabilidad que los consume.
+
+### Verificado
+
+- TypeScript mobile y las pruebas nuevas de los hooks aprobaron.
+- La suite mobile queda en 6 suites y 19 pruebas; ESLint conserva la línea base de 42 advertencias
+  heredadas y no incorporó errores.
+
 ## [2026-10-04] - Sincronización de entidades, estados, reglas y flujo
 
 ### Gobierno documental

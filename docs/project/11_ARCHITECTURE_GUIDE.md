@@ -176,8 +176,9 @@ Arquitectura requerida antes de escalar captura:
 ## Testing y calidad
 
 - Cuarenta y una suites y 218 pruebas API activas; no quedan suites `.skip`.
-- Cinco suites y 17 pruebas mobile cubren UI compartida, acceso por permisos y lógica pura de
-  Solicitud y Verificación mediante Jest, `jest-expo` y React Native Testing Library.
+- Seis suites y 19 pruebas mobile cubren UI compartida, acceso por permisos, lógica pura de
+  Solicitud y Verificación, y hooks de coordinación mediante Jest, `jest-expo` y React Native
+  Testing Library.
 - `npm run build` de la API y el export Android de Expo fueron aprobados el 2026-10-04.
 - La limpieza de los casos activos de `crelealtad_test` termina correctamente.
 - `npm run typecheck` valida API y mobile desde la raíz. TypeScript rechaza implícitos `any`, símbolos/parámetros sin uso, retornos incompletos y fallthrough en API; mobile aplica las puertas equivalentes compatibles con Expo.
