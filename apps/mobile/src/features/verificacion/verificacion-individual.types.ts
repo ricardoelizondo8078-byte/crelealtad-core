@@ -91,7 +91,7 @@ export interface DocumentoFuente {
 }
 
 export interface DocumentoRemoto {
-  archivos: Array<{ indice?: number; mime_type: string; url: string }>;
+  archivos: { indice?: number; mime_type: string; url: string }[];
 }
 
 export type PasoVerificacion =

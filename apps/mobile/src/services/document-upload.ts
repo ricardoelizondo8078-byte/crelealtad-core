@@ -8,7 +8,7 @@ export const MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST = 12;
 export interface DocumentoRemoto {
   id: string;
   ruta: string;
-  archivos: Array<{ indice: number; mime_type: string; url: string }>;
+  archivos: { indice: number; mime_type: string; url: string }[];
 }
 
 interface ProgresoCargaDocumento {

@@ -65,7 +65,7 @@ const motivoLabels: Record<MotivoRetiro, string> = {
   OTRO: 'Otro',
 };
 
-const motivoOptions = Object.entries(motivoLabels) as Array<[MotivoRetiro, string]>;
+const motivoOptions = Object.entries(motivoLabels) as [MotivoRetiro, string][];
 
 const sumarMontos = (integrantes: IntegranteConfirmacion[]): number => integrantes.reduce(
   (total, integrante) => total + (integrante.montoSolicitado ?? 0),

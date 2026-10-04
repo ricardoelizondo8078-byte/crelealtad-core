@@ -1,6 +1,6 @@
 # 09 Development Standards - Estandares de Desarrollo
 
-Version: 1.2.0
+Version: 1.3.0
 Estado: Vigente
 
 ## Principios
@@ -31,6 +31,11 @@ Estado: Vigente
 - Features por dominio.
 - Tokens de diseno centralizados en theme.
 - Mensajes operativos claros.
+- Toda lógica pura nueva o modificada debe cubrir al menos caso nominal, bloqueo y validación
+  aplicables con Jest; la interacción visible reutilizable se prueba con React Native Testing Library.
+- ESLint usa la configuración oficial de Expo. Una advertencia heredada puede permanecer sólo si
+  queda visible y su corrección exige un refactor funcional fuera del alcance; los errores o el
+  crecimiento sobre la línea base de 42 advertencias bloquean.
 
 ## Convenciones de datos
 
@@ -53,7 +58,8 @@ Estado: Vigente
 3. Ejecutar pruebas del modulo.
 4. Actualizar documentacion afectada.
 5. Registrar riesgos y supuestos.
-6. Ejecutar `npm run verify` desde la raíz; incluye escaneo de secretos, TypeScript y pruebas API.
+6. Ejecutar `npm run verify` desde la raíz; incluye escaneo de secretos, lint mobile, TypeScript y
+   pruebas API/mobile.
 
 ## Checklist de Testing (obligatorio)
 

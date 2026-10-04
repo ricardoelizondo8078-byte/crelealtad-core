@@ -129,7 +129,7 @@ const calcularHaversineKm = (origen: Coordenadas, destino: Coordenadas): number 
 
 export const calcularDistanciasAproximadasRegistradas = <T extends IntegranteGeocodificable>(
   integrantes: T[],
-): Array<T & { distancia_tesorera_aprox_km: number | null }> => {
+): (T & { distancia_tesorera_aprox_km: number | null })[] => {
   const coordenadas = new Map<string, Coordenadas>();
 
   integrantes.forEach((integrante) => {
@@ -157,7 +157,7 @@ export const calcularDistanciasAproximadasRegistradas = <T extends IntegranteGeo
 
 export const completarDistanciasAproximadas = async <T extends IntegranteGeocodificable>(
   integrantes: T[],
-): Promise<Array<T & { distancia_tesorera_aprox_km: number | null }>> => {
+): Promise<(T & { distancia_tesorera_aprox_km: number | null })[]> => {
   const coordenadas = new Map<string, Coordenadas>();
 
   for (const integrante of integrantes) {

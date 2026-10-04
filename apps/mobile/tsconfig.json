@@ -3,7 +3,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "types": ["jest"]
   },
   "extends": "expo/tsconfig.base"
 }

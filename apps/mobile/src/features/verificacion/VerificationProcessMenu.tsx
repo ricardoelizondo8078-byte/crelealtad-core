@@ -18,13 +18,13 @@ interface VerificationProcessMenuProps {
   visitaVecinoResultado?: 'si' | 'no' | null;
 }
 
-const PROCESSES: ReadonlyArray<{
+const PROCESSES: readonly {
   key: VerificationProcessKey;
   title: string;
   iconLabel: string;
   accessibilityHint: string;
   disabled?: boolean;
-}> = [
+}[] = [
   {
     key: 'documentos',
     title: 'Documentos',

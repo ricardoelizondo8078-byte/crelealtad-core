@@ -11,9 +11,12 @@
     "db:migrations:status": "npm --prefix apps/api run db:migrations:status --",
     "db:migrations:baseline": "npm --prefix apps/api run db:migrations:baseline --",
     "db:migrations:apply": "npm --prefix apps/api run db:migrations:apply --",
+    "lint": "npm --prefix apps/mobile run lint",
     "typecheck": "npm --prefix apps/api run typecheck && npm --prefix apps/mobile run typecheck",
-    "test": "npm --prefix apps/api run test:ci",
-    "verify": "npm run security:secrets && npm run typecheck && npm test"
+    "test:api": "npm --prefix apps/api run test:ci",
+    "test:mobile": "npm --prefix apps/mobile run test",
+    "test": "npm run test:api && npm run test:mobile",
+    "verify": "npm run security:secrets && npm run lint && npm run typecheck && npm test"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

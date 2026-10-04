@@ -55,12 +55,12 @@ interface SolicitudDocumentosInfo {
 interface DocumentoRemoto {
   id: string;
   ruta: string;
-  archivos: Array<{ indice: number; mime_type: string; url: string }>;
+  archivos: { indice: number; mime_type: string; url: string }[];
 }
 
 interface ViewerState {
   title: string;
-  pages: Array<{ uri: string; headers: Record<string, string>; mimeType: string }>;
+  pages: { uri: string; headers: Record<string, string>; mimeType: string }[];
 }
 
 interface DocumentosScreenProps {
@@ -73,7 +73,7 @@ interface DocumentosScreenProps {
   onBack?: () => void;
 }
 
-const DEFINICIONES: Array<Pick<DocumentoItem, 'clave' | 'nombre' | 'nota' | 'requerido'>> = [
+const DEFINICIONES: Pick<DocumentoItem, 'clave' | 'nombre' | 'nota' | 'requerido'>[] = [
   { clave: 'ine', nombre: 'INE', nota: 'Captura frente y reverso', requerido: true },
   { clave: 'comprobante', nombre: 'Comprobante de domicilio', requerido: true },
   { clave: 'solicitud_firmada', nombre: 'Solicitud firmada', requerido: true },

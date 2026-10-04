@@ -275,7 +275,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
       setAutoSaveStatus('saved');
       setTimeout(() => setAutoSaveStatus('idle'), 2000);
-    } catch (error) {
+    } catch {
       setAutoSaveStatus('error');
       setTimeout(() => setAutoSaveStatus('idle'), 2000);
     }
@@ -469,7 +469,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                         uriFrente = documentData.frente;
                         uriReverso = documentData.reverso;
                       }
-                    } catch (error) {
+                    } catch {
                     }
                   } else if (!doc.obligatorio) {
                     status = 'OPCIONAL';
@@ -570,7 +570,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         if (data.municipio) {
           setForm((prev) => ({ ...prev, municipio: data.municipio }));
         }
-      } catch (error) {
+      } catch {
         setColoniasDisponiblesDomicilio([]);
       } finally {
         setLoadingColoniasDomicilio(false);
@@ -599,7 +599,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         if (data.municipio) {
           setForm((prev) => ({ ...prev, negocio_municipio: data.municipio }));
         }
-      } catch (error) {
+      } catch {
         setColoniasDisponiblesNegocio([]);
       } finally {
         setLoadingColoniasNegocio(false);
@@ -1218,7 +1218,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     // Guardar antes de salir
     try {
       await saveCurrentStep();
-    } catch (e) {
+    } catch {
       // Si falla el guardado, igual salir
     }
 

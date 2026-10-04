@@ -26,7 +26,7 @@ restricciones y conteos de integridad.
 | Datos | Tres FKs faltantes agregadas con cero huérfanos. |
 | Migraciones | Ledger por SHA-256 y ejecutor transaccional activo hasta 035 en prueba y base local real; cero pendientes o drift. |
 | Recuperación | Respaldos custom previos a 033/034 y 035 creados y validados. |
-| Calidad | TypeScript API/mobile, build Nest, 40 suites y 213 pruebas aprobadas; export Android con Hermes verificado. |
+| Calidad | TypeScript API/mobile, build Nest, 40 suites/213 pruebas API y 5 suites/17 pruebas mobile aprobadas; ESLint mobile sin errores y export Android con Hermes verificado. |
 | Autorización | Catálogo técnico único, normalización cerrada y constraints JSONB; no sustituye la matriz funcional pendiente. |
 | Trazabilidad | Login exitoso actualiza su marca y `audit_log` en una sola transacción sin copiar credenciales. |
 | Modularidad mobile | Catálogo de módulos, acceso y claves idempotentes extraídos; Verificación delega procesos, Preguntas generales e Historial crediticio, y Solicitud delega siete pasos, validaciones puras y visores documentales. |
@@ -62,8 +62,9 @@ rutas ficticias ni permisos inventados.
    backoff, idempotencia, deduplicación y política explícita de conflictos.
 5. Continuar la división ya iniciada: extraer estado compartido y las secciones restantes de
    Entrevista, y dividir `IntegrantesService` y `VerificacionLlamadasService` por casos de uso.
-6. Agregar pruebas automatizadas mobile y recorridos end-to-end de permiso insuficiente, reinicio,
-   reconexión y archivos.
+6. Ampliar la suite mobile inicial y agregar recorridos end-to-end de permiso insuficiente,
+   reinicio, reconexión y archivos; reducir las 42 advertencias heredadas de hooks/refs mediante
+   refactors focalizados.
 7. Planear la migración CommonJS → ESM necesaria para NestJS 12; la actualización directa compila,
    pero no es aceptable mientras impida arrancar la suite Jest actual.
 8. Consolidar el working tree en entregas revisables: la auditoría encontró cientos de cambios

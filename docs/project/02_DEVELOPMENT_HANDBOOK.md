@@ -1,8 +1,8 @@
 # 02 DEVELOPMENT HANDBOOK — CRELEALTAD CORE
 
-Versión: 1.0.0  
+Versión: 1.1.0
 Estado: Vigente  
-Fecha: 2026-07-31
+Fecha: 2026-10-04
 
 ## Función
 
@@ -55,6 +55,13 @@ Cuando el código contradiga una autoridad superior, no se copiará el error com
 6. Validar compilación, tipos, pruebas y comportamiento afectado.
 7. Comparar el resultado contra el checklist.
 8. Actualizar estado, decisiones o changelog cuando aplique.
+
+## Puerta reproducible de calidad
+
+Desde la raíz, `npm run verify` es el cierre mínimo: escanea secretos, ejecuta lint mobile,
+TypeScript API/mobile y las suites API/mobile. Para diagnóstico focal en la aplicación móvil pueden
+usarse `npm --prefix apps/mobile run lint`, `npm --prefix apps/mobile run typecheck` y
+`npm --prefix apps/mobile test`.
 
 ## Regla de continuidad visual
 

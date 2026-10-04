@@ -11,11 +11,11 @@ import type {
   TipoImagenDomicilioEnPantalla,
 } from './verificacion-individual.types';
 
-export const IMAGENES_DOMICILIO: ReadonlyArray<{
+export const IMAGENES_DOMICILIO: readonly {
   tipo: TipoImagenDomicilioEnPantalla;
   titulo: string;
   obligatoria: boolean;
-}> = [
+}[] = [
   {
     tipo: 'FACHADA',
     titulo: 'Fachada',

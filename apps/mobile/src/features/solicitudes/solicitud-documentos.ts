@@ -35,7 +35,7 @@ export type { DocumentoRemoto } from '../../services/document-upload';
 
 export interface DocumentoViewerState {
   title: string;
-  pages: Array<{ uri: string; headers: Record<string, string>; mimeType: string }>;
+  pages: { uri: string; headers: Record<string, string>; mimeType: string }[];
 }
 
 export interface DocumentoCarouselState {

@@ -40,7 +40,7 @@ export const ModuleMenuScreen: React.FC<ModuleMenuScreenProps> = ({ modules, onL
     : hasPlannedModules
       ? 'Tus módulos habilitados están activos. Los demás estarán disponibles próximamente.'
       : 'Aquí aparecen los módulos habilitados para tu cuenta.';
-  const gridModules: Array<ModuleMenuOption | null> = modules.length % 2 === 0
+  const gridModules: (ModuleMenuOption | null)[] = modules.length % 2 === 0
     ? modules
     : [...modules, null];
 

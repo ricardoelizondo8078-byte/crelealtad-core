@@ -1,5 +1,33 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-04] - Pruebas móviles y lint reproducible
+
+### Calidad móvil
+
+- Se incorporaron Jest 29, `jest-expo` y React Native Testing Library con configuración propia de
+  mobile, sin reutilizar ni acoplar el entorno de pruebas de la API.
+- Cinco suites y 17 pruebas cubren el componente compartido `StatusBadge`, el catálogo y filtrado
+  de módulos por permisos, reglas y mapeo de Solicitud, y normalización del historial y teléfonos de
+  Verificación. Todos los datos de prueba son inventados.
+- Expo ESLint quedó configurado con formato plano. El barrido inicial cerró los errores mecánicos y
+  conserva como advertencias visibles 42 casos heredados de hooks/refs que requieren refactors
+  funcionales separados; el gate rechaza errores y también cualquier crecimiento sobre esa línea
+  base sin ocultar la deuda.
+- La puerta raíz `npm run verify` ejecuta ahora escaneo de secretos, lint móvil, TypeScript API/mobile
+  y pruebas API/mobile. No se modificaron flujo, permisos, estados, tablas ni datos.
+
+### Verificado
+
+- `npm run verify` aprobó escaneo de secretos, lint mobile, TypeScript API/mobile, 40 suites/213
+  pruebas API y 5 suites/17 pruebas mobile. ESLint terminó con cero errores y 42 advertencias
+  heredadas registradas.
+- Build Nest y export Android de Expo/Metro aprobados con 821 módulos y bytecode Hermes; el
+  artefacto temporal se eliminó después de comprobarlo. `expo install --check` confirmó la
+  compatibilidad con SDK 57.
+- El audit mobile conserva 25 avisos transitivos del toolchain Expo/Metro. La corrección automática
+  disponible bajaría Expo 57 a 44 y no se aplicó por ser incompatible; las nuevas herramientas de
+  pruebas y lint permanecen exclusivamente en `devDependencies`.
+
 ## [2026-10-04] - Segunda descomposición de Verificación y Solicitud
 
 ### Modularidad móvil

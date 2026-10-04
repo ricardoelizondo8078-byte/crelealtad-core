@@ -234,7 +234,7 @@ export const crearEntrevistaPayload = (
   oportunidad_mejora: texto(state.motivoRecomendacion),
 });
 
-export interface EntrevistaRestaurada extends EntrevistaFormState {}
+export type EntrevistaRestaurada = EntrevistaFormState;
 
 export const restaurarEntrevista = (
   data: EntrevistaGuardada,

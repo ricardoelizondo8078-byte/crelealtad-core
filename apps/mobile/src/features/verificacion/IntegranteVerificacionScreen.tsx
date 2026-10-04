@@ -20,8 +20,6 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import * as ImagePicker from 'expo-image-picker';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 import {
   AppHeader,
   BinaryChoiceDialog,
@@ -200,6 +198,8 @@ import {
   type TipoTelefonoEntrevista,
   type VistaLlamada,
 } from './verificacion-individual.types';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface IntegranteVerificacionScreenProps {
   integranteId: string;
@@ -1162,7 +1162,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
                   uriFrente = documentData.frente;
                   uriReverso = documentData.reverso;
                 }
-              } catch (error) {
+              } catch {
               }
             }
 
@@ -1422,7 +1422,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
       if (result.assets && result.assets[0]?.uri) {
         callback(result.assets[0].uri);
       }
-    } catch (error) {
+    } catch {
       Alert.alert(
         'Error',
         'No se pudo abrir la cámara. Por favor, verifica que los permisos estén habilitados.'
@@ -4603,7 +4603,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
                   <>
                     <View style={styles.warningBox}>
                       <Text allowFontScaling={false} style={styles.tesoreraTitle}>
-                        "Entregar folleto de premio a tesorera"
+                        &quot;Entregar folleto de premio a tesorera&quot;
                       </Text>
                     </View>
 

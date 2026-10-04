@@ -1,6 +1,6 @@
 # 03 Project Status — Estado Oficial del Proyecto
 
-Versión: 3.5.0
+Versión: 3.6.0
 Estado: Vigente y verificado
 Fecha de corte: 2026-10-04
 
@@ -145,12 +145,17 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 ### Testing — Parcial
 
 - Cuarenta suites de pruebas activas en API; no quedan suites `.skip`.
-- No se verificaron pruebas automatizadas en mobile.
+- Cinco suites y 17 pruebas automatizadas activas en mobile cubren UI compartida, permisos del
+  catálogo institucional y reglas/mappers puros de Solicitud y Verificación.
 - La validación del 2026-10-04 confirmó que `npm run build` de la API y el export Android de Expo terminan correctamente.
 - Jest terminó con 40 suites y 213 pruebas aprobadas. La cobertura comprueba además cambio de PIN transaccional sin credenciales en auditoría, bloqueo global mientras el cambio está pendiente, validación de DTO, normalización cerrada del contrato de permisos y trazabilidad transaccional del login, junto con alcance por recurso, configuración productiva cerrada, rechazo de campos controlados por servidor, completitud con archivos realmente cargados, política común de formato/tamaño/hash/UUID y límites multipart, armado ordenado de documentos por lotes, autoguardado tipado de Entrevista, relaciones del mismo expediente, actor de JWT, geolocalización obligatoria y clasificación separada de evidencias.
 - Las suites con PostgreSQL ignoran `DB_NAME`, usan exclusivamente `crelealtad_test` y eliminan sólo los registros creados por cada caso mediante UUID exactos.
-- `npm run typecheck`, `npm test` y el build Nest están disponibles como puertas reproducibles desde la raíz. API activa `noImplicitAny`, funciones estrictas, retornos, parámetros/locales no usados y fallthrough; mobile aplica las puertas equivalentes compatibles con Expo.
-- Hay pruebas de solicitudes, integridad, autenticación, autorización y validación de integrantes, pero falta cobertura móvil, sincronización, flujo end-to-end y módulos financieros.
+- `npm run verify` integra escaneo de secretos, lint móvil, TypeScript y pruebas API/mobile. API activa `noImplicitAny`, funciones estrictas, retornos, parámetros/locales no usados y fallthrough; mobile aplica las puertas equivalentes compatibles con Expo.
+- ESLint mobile termina con cero errores y mantiene visibles 42 advertencias heredadas de hooks/refs
+  para reducirlas mediante refactors focalizados, no mediante silenciamiento global; el gate impide
+  que esa línea base aumente.
+- Hay pruebas de solicitudes, integridad, autenticación, autorización y validación de integrantes,
+  pero falta ampliar cobertura móvil, sincronización, flujo end-to-end y módulos financieros.
 
 ### Documentación — Amplia, con deuda de actualización
 
@@ -184,7 +189,7 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 5. Seguridad temporal: los 49 asesores comparten temporalmente el valor de prueba `1234`, aunque cada cuenta lo valida contra su propio hash. El cambio obligatorio ya está implementado, pero el valor no desaparece de una cuenta hasta que esa usuaria complete el flujo. La contraseña PostgreSQL y el JWT locales ya fueron rotados, PostgreSQL exige SCRAM en loopback, los scripts y el historial Git dejaron de conservar credenciales y el JWT móvil usa SecureStore. Falta operar secretos mediante un gestor productivo y completar la sustitución individual antes de producción.
 6. Verificación incompleta: el handoff valida participación, cero pendientes y al menos una completa; el concentrador abre cuatro procesos sin orden y mantiene `Conclusiones` visible pero deshabilitado. `Llamada` persiste intento, respuestas, evidencia y conclusión; `Visita al vecino` persiste fachada, respuesta y segunda evidencia, y sólo habilita su terminación con respuesta y evidencia confirmadas. El mínimo parametrizado, asignación, tratamiento posterior de resultados, cita real, persistencia de conclusiones y dictamen requieren decisiones posteriores.
 7. Cliente HTTP todavía inconsistente fuera del recorrido activo del asesor: subsisten usos directos de `fetch` en superficies parciales.
-8. Hotspots móviles: los pasos, validaciones y visores de Solicitud ya están separados, y Verificación delega sus procesos principales más Preguntas generales e Historial crediticio. Aún debe extraerse el estado compartido y las secciones restantes de Entrevista, acompañado de pruebas móviles para reducir el riesgo residual.
+8. Hotspots móviles: los pasos, validaciones y visores de Solicitud ya están separados, y Verificación delega sus procesos principales más Preguntas generales e Historial crediticio. Existe una suite móvil inicial, pero aún debe extraerse el estado compartido, separar las secciones restantes de Entrevista y ampliar la cobertura del recorrido.
 9. Falta definir e implementar recuperación administrativa del PIN y cambio voluntario posterior; el cambio inicial obligatorio ya está activo.
 10. El almacenamiento documental por filesystem es configurable y verificable en servidor, pero producción requiere un volumen o proveedor durable, respaldo y monitoreo aprobados.
 
@@ -197,12 +202,14 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 5. Diseñar y probar arquitectura offline/sincronización antes de ampliar captura de campo.
 6. Terminar de consolidar rutas y clientes HTTP móviles fuera del recorrido activo del asesor, y retirar el código legacy excluido.
 7. Materializar precondiciones y transiciones oficiales en servicios de dominio.
-8. Mantener la compilación TypeScript limpia y añadir pruebas automatizadas del recorrido móvil.
+8. Mantener TypeScript y lint limpios, reducir las advertencias heredadas de hooks/refs y ampliar las pruebas automatizadas del recorrido móvil.
 9. Ampliar pruebas de integración y end-to-end.
 10. Implementar recuperación administrativa de PIN y completar la sustitución individual del valor temporal antes de producción.
 
 ## Última modificación
 
+- Se incorporaron ESLint y cinco suites móviles con 17 pruebas sobre componentes compartidos,
+  permisos, Solicitud y Verificación; `npm run verify` incluye ahora lint y pruebas mobile.
 - Se continuó la modularización de las dos pantallas móviles críticas: Historial crediticio y sus
   evidencias salieron del coordinador de Verificación; Solicitud movió a funciones puras las reglas
   de completitud/validación de sus siete pasos y delegó sus visores documentales. No cambiaron

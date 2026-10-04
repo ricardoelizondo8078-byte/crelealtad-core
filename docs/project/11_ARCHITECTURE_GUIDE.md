@@ -1,6 +1,6 @@
 # 11 Architecture Guide — Guía de Arquitectura
 
-Versión: 2.13.0
+Versión: 2.14.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -133,7 +133,8 @@ Fecha de auditoría: 2026-10-04
 - La selección fallida se conserva únicamente durante la sesión de pantalla; cerrar la app antes de confirmar pierde ese reintento.
 - La API aplica una política común de firma JPEG/PNG/PDF, máximo de 10 MB, UUID de rutas y SHA-256, y conserva versiones anteriores en almacenamiento. Todas las entradas multipart limitan archivos, campos, partes y encabezados. La carga documental admite hasta 12 archivos por petición; mobile encadena los lotes necesarios y el backend sólo activa la versión completa al finalizar, sin limitar la cantidad funcional aprobada para `comprobante_credito`. Falta un proveedor durable de producción, limpieza programada de cargas parciales y respaldo operativo.
 - Las variantes paralelas legacy de `modules/asesor` y sus archivos backup fueron retiradas del árbol activo después de comprobar que no tenían imports ni rutas vigentes.
-- No hay pruebas automatizadas mobile verificadas.
+- Existe una primera capa automatizada mobile para componentes compartidos, acceso por permisos y
+  modelos/mappers puros de Solicitud y Verificación; no sustituye pruebas de integración o E2E.
 
 ## Base de datos
 
@@ -174,14 +175,17 @@ Arquitectura requerida antes de escalar captura:
 
 ## Testing y calidad
 
-- Treinta y seis suites API activas; no quedan suites `.skip`.
-- Cero suites automatizadas mobile verificadas.
-- `npm run build` de la API fue aprobado el 2026-09-02.
-- Jest aprobó 36 suites y 161 pruebas el 2026-09-25.
+- Cuarenta suites y 213 pruebas API activas; no quedan suites `.skip`.
+- Cinco suites y 17 pruebas mobile cubren UI compartida, acceso por permisos y lógica pura de
+  Solicitud y Verificación mediante Jest, `jest-expo` y React Native Testing Library.
+- `npm run build` de la API y el export Android de Expo fueron aprobados el 2026-10-04.
 - La limpieza de los casos activos de `crelealtad_test` termina correctamente.
 - `npm run typecheck` valida API y mobile desde la raíz. TypeScript rechaza implícitos `any`, símbolos/parámetros sin uso, retornos incompletos y fallthrough en API; mobile aplica las puertas equivalentes compatibles con Expo.
+- ESLint mobile usa la configuración plana oficial de Expo: cero errores y 42 advertencias
+  heredadas de hooks/refs registradas como deuda explícita.
 - Falta una prueba end-to-end del flujo login → documentación → verificación.
-- `npm run verify` ejecuta typecheck y las pruebas API; la preparación determinista de `crelealtad_test` continúa como requisito para integraciones.
+- `npm run verify` ejecuta escaneo de secretos, lint mobile, typecheck y pruebas API/mobile; la
+  preparación determinista de `crelealtad_test` continúa como requisito para integraciones.
 
 ## Deployment e integraciones
 

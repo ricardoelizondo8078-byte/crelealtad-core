@@ -1,4 +1,4 @@
-import { ModuleMenuOption } from './ModuleMenuScreen';
+import type { ModuleMenuOption } from './ModuleMenuScreen';
 
 export type InstitutionalModuleId =
   | 'login'
@@ -106,7 +106,7 @@ export const PLANNED_MODULE_OPTIONS = [
     disabled: true,
     statusLabel: 'Próximamente',
   },
-] as const satisfies ReadonlyArray<ModuleMenuOption & { key: InstitutionalModuleId }>;
+] as const satisfies readonly (ModuleMenuOption & { key: InstitutionalModuleId })[];
 
 export function buildOperationalModuleOptions(
   access: OperationalModuleAccess,
