@@ -11,12 +11,10 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
-  Modal,
-  Image,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppHeader, Card, CreditAmountsSummary, DocumentImageCarousel, DocumentViewer, PrimaryButton, ScreenContainer, ScreenTitleBar } from '../../components/ui';
+import { AppHeader, Card, CreditAmountsSummary, PrimaryButton, ScreenContainer, ScreenTitleBar } from '../../components/ui';
 import type { DocumentImageCarouselPage } from '../../components/ui';
 import { apiUrl } from '../../config/api';
 import {
@@ -29,17 +27,13 @@ import { useProcessing } from '../../context/ProcessingContext';
 import { DEFAULT_STATE } from '../../catalogs';
 import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import {
-  formatISODateToDDMMYYYY,
   formatISODateToDDMMMYYYY,
   formatPhone,
   normalizeDigits,
   normalizePhone,
-  validatePhone10,
-  validateRealDate,
 } from '../../utils/input';
 import { llamar } from '../../utils/phone';
 import { MAX_SOLICITUD_AMOUNT } from '../../config/parameters';
-import { validateCURP } from '../../utils/validation';
 import { esRutaDocumentoServidor } from '../../utils/documents';
 import { geocodificarDomicilio } from '../../services/domicilio-distance';
 import {
@@ -60,6 +54,7 @@ import { SolicitudInformacionPersonalStep } from './SolicitudInformacionPersonal
 import { SolicitudNegocioStep } from './SolicitudNegocioStep';
 import { SolicitudReferenciasStep } from './SolicitudReferenciasStep';
 import { SolicitudValidacionesStep } from './SolicitudValidacionesStep';
+import { SolicitudDocumentOverlays } from './SolicitudDocumentOverlays';
 import {
   DOCUMENTOS_REQUERIDOS,
   RUTAS_DOCUMENTO,
@@ -72,13 +67,18 @@ import {
 } from './solicitud-documentos';
 import {
   getMontoSolicitadoError,
+  isSolicitudStepComplete,
   normalizeCurpInput,
+  validateCurpField,
+  validateFechaNacimientoField,
+  validateSolicitudStep,
   WIZARD_STEPS,
   type ComparacionMontoPaso6,
   type MontoReferencia,
   type SelectValue,
   type SelectorFieldKey,
   type SolicitudErrors,
+  type SolicitudFormData,
 } from './solicitud-form.model';
 
 
@@ -134,7 +134,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         : `Foto ${index + 1}`,
     }));
   }, [previewImage]);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<SolicitudFormData>({
     // Datos iniciales (pre-cargados del integrante)
     nombres: '',
     apellido_pat: '',
@@ -727,31 +727,6 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     }));
   };
 
-  const validateCurpField = (value: string): string | undefined => {
-    if (!value.trim()) {
-      return 'Campo obligatorio';
-    }
-
-    if (value.trim().length !== 18 || !validateCURP(value)) {
-      return 'CURP inválida';
-    }
-
-    return undefined;
-  };
-
-  const validateFechaNacimientoField = (value: string): string | undefined => {
-    if (!value.trim()) {
-      return 'Campo obligatorio';
-    }
-
-    const ddmmyyyy = formatISODateToDDMMYYYY(value);
-    if (!ddmmyyyy || !validateRealDate(ddmmyyyy)) {
-      return 'Fecha inválida';
-    }
-
-    return undefined;
-  };
-
   const handleCurpBlur = () => {
     setErrors((current) => ({
       ...current,
@@ -771,160 +746,13 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     }));
   };
 
-  // Verificar si el paso actual está completo (todos los campos obligatorios llenos)
-  const isStepComplete = (step: number): boolean => {
-    if (step === 1) {
-      // PASO 1: Información Personal
-      return !!(
-        form.nombres.trim() &&
-        form.apellido_pat.trim() &&
-        form.apellido_mat.trim() &&
-        form.telefonoInicial.trim() &&
-        form.fecha_nac.trim() &&
-        form.curp.trim() &&
-        form.genero.trim() &&
-        form.estado_civil.trim() &&
-        form.ocupacion.trim() &&
-        form.nivel_estudio.trim() &&
-        form.nacionalidad.trim()
-      );
-    } else if (step === 2) {
-      // PASO 2: Domicilio Particular
-      return !!(
-        form.calle.trim() &&
-        form.numeroExterior.trim() &&
-        form.entreCalles.trim() &&
-        form.colonia.trim() &&
-        form.municipio.trim()
-      );
-    } else if (step === 3) {
-      // PASO 3: Referencias
-      return !!(
-        form.referencia1NombreCompleto.trim() &&
-        form.referencia1Parentesco.trim() &&
-        form.referencia1Telefono.trim() &&
-        form.referencia1Direccion.trim() &&
-        form.referencia2NombreCompleto.trim() &&
-        form.referencia2Parentesco.trim() &&
-        form.referencia2Telefono.trim() &&
-        form.referencia2Direccion.trim()
-      );
-    } else if (step === 4) {
-      // PASO 4: Negocio o Trabajo
-      return !!(
-        form.negocioCalle.trim() &&
-        form.negocioNumeroExterior.trim() &&
-        form.negocio_colonia.trim() &&
-        form.negocio_municipio.trim() &&
-        form.negocioDesdeCuando.trim() &&
-        form.negocio_giro.trim() &&
-        form.negocio_ingreso_semanal.trim() &&
-        form.negocio_gastos.trim()
-      );
-    } else if (step === 5) {
-      // PASO 5: Beneficiario
-      return !!(
-        form.beneficiarioNombreCompleto.trim() &&
-        form.beneficiario_parentesco.trim() &&
-        form.beneficiario_telefono.trim() &&
-        form.beneficiario_direccion.trim()
-      );
-    } else if (step === 6) {
-      // PASO 6: Validaciones y Monto
-      const montoSolicitado = Number(form.montoSolicitado);
-      return !!(
-        form.tieneMedidorLuzSinAdeudo &&
-        form.viveMaximo5KmTesorera &&
-        form.montoSolicitado.trim() &&
-        Number.isFinite(montoSolicitado) &&
-        montoSolicitado > 0 &&
-        montoSolicitado <= montoMaximoSolicitable
-      );
-    } else if (step === 7) {
-      // PASO 7: los tres documentos obligatorios deben estar confirmados por la API.
-      const documentosObligatorios = documentos.filter(doc => doc.obligatorio);
-      const documentosCargados = documentosObligatorios.filter(doc => doc.status === 'SINCRONIZADO');
-      return documentosCargados.length === documentosObligatorios.length;
-    }
-    return false;
-  };
+  const isStepComplete = (step: number): boolean => (
+    isSolicitudStepComplete(step, form, documentos, montoMaximoSolicitable)
+  );
 
   // Validación por paso
   const validateCurrentStep = useCallback((): boolean => {
-    const nextErrors: SolicitudErrors = {};
-
-    if (currentStep === 1) {
-      // PASO 1: Información Personal
-      if (!form.nombres.trim()) nextErrors.nombres = 'Campo obligatorio';
-      if (!form.apellido_pat.trim()) nextErrors.apellido_pat = 'Campo obligatorio';
-      if (!form.apellido_mat.trim()) nextErrors.apellido_mat = 'Campo obligatorio';
-      if (!form.telefonoInicial.trim()) nextErrors.telefonoInicial = 'Campo obligatorio';
-      if (!validatePhone10(form.telefonoInicial)) nextErrors.telefonoInicial = 'Debe tener 10 dígitos';
-      if (!form.fecha_nac.trim()) nextErrors.fecha_nac = 'Campo obligatorio';
-      if (!form.curp.trim()) nextErrors.curp = 'Campo obligatorio';
-      if (!form.genero.trim()) nextErrors.genero = 'Campo obligatorio';
-      if (!form.estado_civil.trim()) nextErrors.estado_civil = 'Campo obligatorio';
-      if (!form.ocupacion.trim()) nextErrors.ocupacion = 'Campo obligatorio';
-      if (!form.nivel_estudio.trim()) nextErrors.nivel_estudio = 'Campo obligatorio';
-      if (!form.nacionalidad.trim()) nextErrors.nacionalidad = 'Campo obligatorio';
-      if (form.nacionalidad === 'MEXICANA' && !form.estado_nacimiento.trim()) {
-        nextErrors.estado_nacimiento = 'Campo obligatorio';
-      }
-
-      const fechaError = validateFechaNacimientoField(form.fecha_nac);
-      if (fechaError) nextErrors.fecha_nac = fechaError;
-
-      const curpError = validateCurpField(form.curp);
-      if (curpError) nextErrors.curp = curpError;
-    } else if (currentStep === 2) {
-      // PASO 2: Domicilio Particular
-      if (!form.calle.trim()) nextErrors.calle = 'Campo obligatorio';
-      if (!form.numeroExterior.trim()) nextErrors.numeroExterior = 'Campo obligatorio';
-      if (!form.colonia.trim()) nextErrors.colonia = 'Campo obligatorio';
-      if (!form.municipio.trim()) nextErrors.municipio = 'Campo obligatorio';
-      if (!form.codigoPostal.trim()) nextErrors.codigoPostal = 'Campo obligatorio';
-      if (form.codigoPostal.trim().length !== 5) nextErrors.codigoPostal = 'Debe tener 5 dígitos';
-      if (!form.entreCalles.trim()) nextErrors.entreCalles = 'Campo obligatorio';
-    } else if (currentStep === 3) {
-      // PASO 3: Referencias
-      if (!form.referencia1NombreCompleto.trim()) nextErrors.referencia1NombreCompleto = 'Campo obligatorio';
-      if (!form.referencia1Parentesco.trim()) nextErrors.referencia1Parentesco = 'Campo obligatorio';
-      if (!form.referencia1Telefono.trim()) nextErrors.referencia1Telefono = 'Campo obligatorio';
-      if (!validatePhone10(form.referencia1Telefono)) nextErrors.referencia1Telefono = 'Debe tener 10 dígitos';
-      if (!form.referencia1Direccion.trim()) nextErrors.referencia1Direccion = 'Campo obligatorio';
-
-      if (!form.referencia2NombreCompleto.trim()) nextErrors.referencia2NombreCompleto = 'Campo obligatorio';
-      if (!form.referencia2Parentesco.trim()) nextErrors.referencia2Parentesco = 'Campo obligatorio';
-      if (!form.referencia2Telefono.trim()) nextErrors.referencia2Telefono = 'Campo obligatorio';
-      if (!validatePhone10(form.referencia2Telefono)) nextErrors.referencia2Telefono = 'Debe tener 10 dígitos';
-      if (!form.referencia2Direccion.trim()) nextErrors.referencia2Direccion = 'Campo obligatorio';
-    } else if (currentStep === 4) {
-      // PASO 4: Negocio o Trabajo
-      if (!form.negocioCalle.trim()) nextErrors.negocioCalle = 'Campo obligatorio';
-      if (!form.negocioNumeroExterior.trim()) nextErrors.negocioNumeroExterior = 'Campo obligatorio';
-      if (!form.negocio_colonia.trim()) nextErrors.negocio_colonia = 'Campo obligatorio';
-      if (!form.negocio_municipio.trim()) nextErrors.negocio_municipio = 'Campo obligatorio';
-      if (!form.negocioCodigoPostal.trim()) nextErrors.negocioCodigoPostal = 'Campo obligatorio';
-      if (form.negocioCodigoPostal.trim().length !== 5) nextErrors.negocioCodigoPostal = 'Debe tener 5 dígitos';
-      if (!form.negocioDesdeCuando.trim()) nextErrors.negocioDesdeCuando = 'Campo obligatorio';
-      if (!form.negocio_giro.trim()) nextErrors.negocio_giro = 'Campo obligatorio';
-      if (!form.negocio_ingreso_semanal.trim()) nextErrors.negocio_ingreso_semanal = 'Campo obligatorio';
-      if (!form.negocio_gastos.trim()) nextErrors.negocio_gastos = 'Campo obligatorio';
-      if (!form.negocio_total.trim()) nextErrors.negocio_total = 'Campo obligatorio';
-    } else if (currentStep === 5) {
-      // PASO 5: Beneficiario
-      if (!form.beneficiarioNombreCompleto.trim()) nextErrors.beneficiarioNombreCompleto = 'Campo obligatorio';
-      if (!form.beneficiario_parentesco.trim()) nextErrors.beneficiario_parentesco = 'Campo obligatorio';
-      if (!form.beneficiario_telefono.trim()) nextErrors.beneficiario_telefono = 'Campo obligatorio';
-      if (!validatePhone10(form.beneficiario_telefono)) nextErrors.beneficiario_telefono = 'Debe tener 10 dígitos';
-      if (!form.beneficiario_direccion.trim()) nextErrors.beneficiario_direccion = 'Campo obligatorio';
-    } else if (currentStep === 6) {
-      // PASO 6: Validaciones y Monto
-      if (!form.tieneMedidorLuzSinAdeudo) nextErrors.tieneMedidorLuzSinAdeudo = 'Campo obligatorio';
-      if (!form.viveMaximo5KmTesorera) nextErrors.viveMaximo5KmTesorera = 'Campo obligatorio';
-      const montoError = getMontoSolicitadoError(form.montoSolicitado, montoMaximoSolicitable);
-      if (montoError) nextErrors.montoSolicitado = montoError;
-    }
+    const nextErrors = validateSolicitudStep(currentStep, form, montoMaximoSolicitable);
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -1729,157 +1557,19 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         </KeyboardAvoidingView>
       )}
 
-      {/* Modal para ver imágenes */}
-      <Modal
-        visible={viewingImage !== null}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setViewingImage(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text allowFontScaling={false} style={styles.modalTitle}>{viewingImage?.titulo}</Text>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setViewingImage(null)}
-              >
-                <Text allowFontScaling={false} style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            {viewingImage?.uri && (
-              <Image
-                source={{ uri: viewingImage.uri }}
-                style={styles.modalImage}
-                resizeMode="contain"
-              />
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Capa local para evitar competir con el modal nativo del visor con zoom. */}
-      {previewImage ? (
-        <View accessibilityViewIsModal style={styles.localModalLayer}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text allowFontScaling={false} style={styles.modalTitle}>{previewImage.titulo}</Text>
-              <TouchableOpacity
-                style={[
-                  styles.modalCloseButton,
-                  uploadingDocId !== null && styles.previewActionDisabled,
-                ]}
-                onPress={handleCancelarDocumento}
-                disabled={uploadingDocId !== null}
-              >
-                <Text allowFontScaling={false} style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            {previewImage.documentoId === 'comprobante_linea_credito' ? (
-              <View style={styles.previewCarouselContent}>
-                <DocumentImageCarousel
-                  title={previewImage.titulo}
-                  pages={previewCarouselPages}
-                  moduleTheme="documentation"
-                  helperText="Desliza para revisar las fotografías. Toca una imagen para ampliarla y hacer zoom."
-                />
-              </View>
-            ) : (
-              <ScrollView contentContainerStyle={styles.previewScrollContent}>
-                {previewImage.uris.map((uri, index) => (
-                  <View key={`${uri}-${index}`} style={styles.previewImageContainer}>
-                    <Text allowFontScaling={false} style={styles.previewLabel}>
-                      {previewImage.uris.length === 2 && previewImage.documentoId.includes('ine')
-                        ? index === 0 ? 'Frente' : 'Reverso'
-                        : `Imagen ${index + 1} de ${previewImage.uris.length}`}
-                    </Text>
-                    <Image
-                      source={{ uri }}
-                      style={styles.previewImage}
-                      resizeMode="contain"
-                    />
-                  </View>
-                ))}
-              </ScrollView>
-            )}
-
-            {documentUploadError ? (
-              <Text allowFontScaling={false} style={styles.previewErrorText}>
-                {documentUploadError}
-              </Text>
-            ) : null}
-
-            <View style={styles.previewActions}>
-              <TouchableOpacity
-                style={[
-                  styles.previewCancelButton,
-                  uploadingDocId !== null && styles.previewActionDisabled,
-                ]}
-                onPress={handleCancelarDocumento}
-                activeOpacity={0.8}
-                disabled={uploadingDocId !== null}
-              >
-                <Text allowFontScaling={false} style={styles.previewCancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.previewSaveButton,
-                  uploadingDocId !== null && styles.previewActionDisabled,
-                ]}
-                onPress={() => {
-                  void handleConfirmarDocumento();
-                }}
-                activeOpacity={0.8}
-                disabled={uploadingDocId !== null}
-              >
-                {uploadingDocId !== null ? (
-                  <View style={styles.previewSavingContent}>
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                    <Text allowFontScaling={false} style={styles.previewSaveButtonText}>Guardando...</Text>
-                  </View>
-                ) : (
-                  <Text allowFontScaling={false} style={styles.previewSaveButtonText}>Guardar</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-        </View>
-      ) : null}
-      {documentCarousel ? (
-        <View accessibilityViewIsModal style={styles.localModalLayer}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.carouselModalContainer}>
-            <View style={styles.modalHeader}>
-              <Text allowFontScaling={false} style={styles.modalTitle}>{documentCarousel.title}</Text>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Cerrar comprobante"
-                style={styles.modalCloseButton}
-                onPress={() => setDocumentCarousel(null)}
-              >
-                <Text allowFontScaling={false} style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.savedCarouselContent}>
-              <DocumentImageCarousel
-                title={documentCarousel.title}
-                pages={documentCarousel.pages}
-                moduleTheme="documentation"
-                helperText="Desliza para revisar las fotografías. Toca una imagen para verla completa y hacer zoom."
-              />
-            </View>
-          </View>
-        </View>
-        </View>
-      ) : null}
-      <DocumentViewer
-        visible={Boolean(documentViewer)}
-        title={documentViewer?.title || ''}
-        pages={documentViewer?.pages || []}
-        onClose={() => setDocumentViewer(null)}
+      <SolicitudDocumentOverlays
+        viewingImage={viewingImage}
+        previewImage={previewImage}
+        previewCarouselPages={previewCarouselPages}
+        documentCarousel={documentCarousel}
+        documentViewer={documentViewer}
+        uploadingDocId={uploadingDocId}
+        documentUploadError={documentUploadError}
+        onCloseViewingImage={() => setViewingImage(null)}
+        onCancelPreview={handleCancelarDocumento}
+        onConfirmPreview={() => void handleConfirmarDocumento()}
+        onCloseCarousel={() => setDocumentCarousel(null)}
+        onCloseViewer={() => setDocumentViewer(null)}
       />
     </ScreenContainer>
   );
@@ -2107,137 +1797,5 @@ const styles = StyleSheet.create({
     color: moduleThemes.documentation.headerBg,
     fontSize: 16,
     fontWeight: '600',
-  },
-  localModalLayer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    elevation: 100,
-    zIndex: 100,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: '95%',
-    height: '90%',
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-  },
-  carouselModalContainer: {
-    width: '95%',
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    flex: 1,
-  },
-  modalCloseButton: {
-    padding: spacing.sm,
-  },
-  modalCloseText: {
-    fontSize: 24,
-    color: colors.textSecondary,
-    fontWeight: '300',
-  },
-  modalImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  previewCarouselContent: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: spacing.md,
-  },
-  savedCarouselContent: {
-    padding: spacing.md,
-  },
-  previewScrollContent: {
-    padding: spacing.md,
-  },
-  previewImageContainer: {
-    marginBottom: spacing.lg,
-  },
-  previewLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
-  },
-  previewImage: {
-    width: '100%',
-    height: 300,
-    backgroundColor: colors.gray[100],
-    borderRadius: 8,
-  },
-  previewActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: spacing.lg,
-    gap: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  previewErrorText: {
-    ...typography.body,
-    color: colors.danger,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
-  },
-  previewCancelButton: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: moduleThemes.documentation.headerBg,
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  previewCancelButtonText: {
-    color: moduleThemes.documentation.headerBg,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  previewSaveButton: {
-    flex: 1,
-    backgroundColor: moduleThemes.documentation.headerBg,
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  previewSaveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  previewActionDisabled: {
-    opacity: 0.55,
-  },
-  previewSavingContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
   },
 });

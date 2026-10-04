@@ -7,9 +7,10 @@
 - Estado: parcial / en desarrollo
 - Responsable operativo: Asesor
 - Roles usuarios: ASESOR; coordinación y revisión quedan sujetos a matriz aprobada
-- Arquitectura móvil activa: el formulario individual delega reglas puras, carga documental y los
-  siete pasos a componentes tipados. El coordinador conserva recuperación, estado, autoguardado,
-  navegación y visores; esta separación no cambia el orden ni los requisitos de los pasos.
+- Arquitectura móvil activa: el formulario individual delega carga y visores documentales, reglas
+  puras de completitud/validación y los siete pasos a módulos tipados. El coordinador conserva
+  recuperación, estado compartido, autoguardado y navegación; esta separación no cambia el orden
+  ni los requisitos de los pasos.
 
 ## 2. Objetivo y resultado observable
 

@@ -1,6 +1,6 @@
 # 20 Module Catalog — Catálogo de Módulos
 
-Versión: 2.18.0
+Versión: 2.19.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -60,6 +60,9 @@ Verificado:
 - Captura y carga inmediata autenticada de INE de la integrante, comprobante de domicilio y solicitud firmada como documentos obligatorios; INE de beneficiario y comprobante de línea de crédito permanecen disponibles como opcionales.
 - Códigos postales y colonias.
 - Pantallas y formularios móviles conectados parcialmente.
+- Solicitud está dividida en siete pasos tipados, reglas puras de completitud/validación y un
+  componente independiente para sus visores documentales; el coordinador conserva estado,
+  recuperación, autoguardado y navegación.
 - Recorrido activo del asesor con contratos `snake_case`, cliente HTTP autenticado y verificación TypeScript limpia.
 - Pantalla `Renovación` con grupos vigentes y pasados cuyo último ciclo pertenece al asesor.
 - Endpoints de consulta y creación transaccional/idempotente del expediente siguiente, con bloqueo cuando falta el historial individual completo.
@@ -90,6 +93,8 @@ Verificado:
 - Lista de grupos en verificación.
 - Detalle de grupo e integrantes.
 - Pantalla extensa de verificación de integrante con captura fotográfica.
+- El coordinador individual delega Revisión documental, Llamada, Visita al vecino, Imágenes del
+  domicilio, Preguntas generales e Historial crediticio con sus evidencias a componentes tipados.
 - Concentrador individual posterior a la revisión documental con cuatro procesos equivalentes que pueden abrirse en cualquier orden: `Llamada`, `Visita al vecino`, `Imágenes del domicilio` y `Entrevista`.
 - `Visita al vecino` comienza con una fotografía de fachada tomada únicamente desde la cámara y una ubicación actual; el resto de la pantalla permanece bloqueado hasta que el servidor confirma la evidencia.
 - `Visita al vecino` consulta el frente y reverso del INE vigente mediante gesto lateral y abre la cara tocada en un visor opaco de pantalla completa con zoom, sin crear evidencia ni conclusión del proceso.

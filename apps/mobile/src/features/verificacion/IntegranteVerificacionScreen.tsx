@@ -29,10 +29,8 @@ import {
   Card,
   ContextHeader,
   CreditAmountsSummary,
-  CreditHistorySummary,
   DocumentImageCarousel,
   DocumentViewer,
-  MonthYearPickerField,
   MultiSelectField,
   PhoneCallField,
   PickerField,
@@ -99,6 +97,7 @@ import {
 import { ImagenesDomicilioSection } from './ImagenesDomicilioSection';
 import { VisitaVecinoSection } from './VisitaVecinoSection';
 import { EntrevistaPreguntasGeneralesSection } from './EntrevistaPreguntasGeneralesSection';
+import { EntrevistaHistorialCrediticioSection } from './EntrevistaHistorialCrediticioSection';
 import { DocumentosRevisionSection } from './DocumentosRevisionSection';
 import {
   CanalLlamadaVerificacion,
@@ -157,21 +156,14 @@ import {
   restaurarEntrevista,
 } from './verificacion-entrevista.mapper';
 import {
-  ANIOS_CREDITO_GRUPAL,
   calcularSemanasTranscurridasDesdeMes,
-  CICLOS_CREDITO_GRUPAL,
   FAMILIARES_DOMICILIO,
-  FINANCIERAS_CREDITO_GRUPAL_NUEVO_LEON,
-  MESES_CREDITO_GRUPAL,
-  MOTIVOS_NO_RENOVACION,
   MOTIVOS_NO_VIVE_EN_DOMICILIO,
   MOTIVOS_RECOMENDACION_NO,
   MOTIVOS_RECOMENDACION_SI,
   MOTIVOS_SIN_CONTROL_PAGOS,
   NO_CONOCE_TESORERA_VALUE,
   NO_SABE_DOMICILIO_RECOLECCION_VALUE,
-  SEMANAS_CREDITO_GRUPAL,
-  TASAS_CREDITO_GRUPAL,
 } from './verificacion-entrevista.catalog';
 import {
   crearErroresEvidenciasHistorialCreditoVacios,
@@ -182,7 +174,6 @@ import {
   crearImagenesDomicilioVacias,
 } from './verificacion-domicilio.model';
 import {
-  CREDIT_HISTORY_VISUAL_PREVIEW,
   cycleNumber,
   esTipoDocumentoRevision,
   mapCreditHistory,
@@ -3984,339 +3975,81 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
               onFamiliaresGrupoChange={setFamiliaresGrupoIds}
             />
 
-            <View style={styles.entrevistaSectionHeader}>
-              <StickySectionHeader
-                title="HISTORIAL CREDITICIO"
-                moduleTheme="verification"
-              />
-            </View>
-
-            {integrante?.historialCrediticioInterno ? (
-              <CreditHistorySummary
-                totalCycles={__DEV__
-                  ? CREDIT_HISTORY_VISUAL_PREVIEW.totalCycles
-                  : integrante.historialCrediticioInterno.totalCycles}
-                maximum={__DEV__
-                  ? CREDIT_HISTORY_VISUAL_PREVIEW.maximum
-                  : integrante.historialCrediticioInterno.maximum}
-                minimum={__DEV__
-                  ? CREDIT_HISTORY_VISUAL_PREVIEW.minimum
-                  : integrante.historialCrediticioInterno.minimum}
-                recentCycles={__DEV__
-                  ? CREDIT_HISTORY_VISUAL_PREVIEW.recentCycles
-                  : integrante.historialCrediticioInterno.recentCycles}
-                simulated={__DEV__}
-              />
-            ) : null}
-
-            <SelectorField
-              label="¿Ha estado en algún otro crédito grupal?"
-              value={tieneOtroCreditoGrupal}
-              options={['Sí', 'No']}
-              onSelect={(respuesta) => {
-                setTieneOtroCreditoGrupal(respuesta);
-                if (respuesta === 'No') {
-                  setFinancieraCreditoGrupal('');
-                  setCreditoGrupalAnteriorActivo('');
-                  setValorFichaCreditoGrupal('');
-                  setSemanaActualCreditoGrupal('');
-                  setMesDesembolsoCreditoGrupal('');
-                  setMesUltimoPagoCreditoGrupal('');
-                  setAnioUltimoPagoCreditoGrupal('');
-                  setNumeroCiclosCreditoGrupal('');
-                  setNombreAsesoraCreditoGrupal('');
-                  setTelefonoAsesoraCreditoGrupal('');
-                  setTasaCreditoGrupal('');
-                  setMotivoNoRenovacionCreditoGrupal('');
-                }
+            <EntrevistaHistorialCrediticioSection
+              historialInterno={integrante?.historialCrediticioInterno}
+              tieneOtroCreditoGrupal={tieneOtroCreditoGrupal}
+              financieraCreditoGrupal={financieraCreditoGrupal}
+              creditoGrupalAnteriorActivo={creditoGrupalAnteriorActivo}
+              valorFichaCreditoGrupal={valorFichaCreditoGrupal}
+              semanaActualCreditoGrupal={semanaActualCreditoGrupal}
+              mesDesembolsoCreditoGrupal={mesDesembolsoCreditoGrupal}
+              mesUltimoPagoCreditoGrupal={mesUltimoPagoCreditoGrupal}
+              anioUltimoPagoCreditoGrupal={anioUltimoPagoCreditoGrupal}
+              semanasDesdeUltimoPagoCreditoGrupal={semanasDesdeUltimoPagoCreditoGrupal}
+              numeroCiclosCreditoGrupal={numeroCiclosCreditoGrupal}
+              tasaCreditoGrupal={tasaCreditoGrupal}
+              nombreAsesoraCreditoGrupal={nombreAsesoraCreditoGrupal}
+              telefonoAsesoraCreditoGrupal={telefonoAsesoraCreditoGrupal}
+              motivoNoRenovacionCreditoGrupal={motivoNoRenovacionCreditoGrupal}
+              tipoEvidenciaActual={tipoEvidenciaHistorialCreditoActual}
+              tipoEvidenciaGuardando={guardandoEvidenciasHistorialCredito}
+              loadingEvidencias={loadingEvidenciasHistorialCredito}
+              loadingComprobante={loadingComprobanteLineaCredito}
+              evidenciasPendientes={evidenciasHistorialCreditoPendientesActuales.length}
+              fotografiasGuardadas={fotografiasOtraFinancieraGuardadas}
+              paginasEvidencias={paginasEvidenciasHistorialCredito}
+              errorEvidencias={errorEvidenciasHistorialCreditoActual}
+              errorComprobante={errorComprobanteLineaCredito}
+              onTieneOtroCreditoGrupalChange={setTieneOtroCreditoGrupal}
+              onFinancieraCreditoGrupalChange={setFinancieraCreditoGrupal}
+              onCreditoGrupalAnteriorActivoChange={setCreditoGrupalAnteriorActivo}
+              onValorFichaCreditoGrupalChange={setValorFichaCreditoGrupal}
+              onSemanaActualCreditoGrupalChange={setSemanaActualCreditoGrupal}
+              onMesDesembolsoCreditoGrupalChange={setMesDesembolsoCreditoGrupal}
+              onUltimoPagoCreditoGrupalChange={(month, year) => {
+                setMesUltimoPagoCreditoGrupal(month);
+                setAnioUltimoPagoCreditoGrupal(year);
               }}
-              moduleTheme="verification"
-              required
+              onNumeroCiclosCreditoGrupalChange={setNumeroCiclosCreditoGrupal}
+              onTasaCreditoGrupalChange={setTasaCreditoGrupal}
+              onNombreAsesoraCreditoGrupalChange={setNombreAsesoraCreditoGrupal}
+              onTelefonoAsesoraCreditoGrupalChange={setTelefonoAsesoraCreditoGrupal}
+              onMotivoNoRenovacionCreditoGrupalChange={setMotivoNoRenovacionCreditoGrupal}
+              onLimpiarCreditoGrupal={() => {
+                setFinancieraCreditoGrupal('');
+                setCreditoGrupalAnteriorActivo('');
+                setValorFichaCreditoGrupal('');
+                setSemanaActualCreditoGrupal('');
+                setMesDesembolsoCreditoGrupal('');
+                setMesUltimoPagoCreditoGrupal('');
+                setAnioUltimoPagoCreditoGrupal('');
+                setNumeroCiclosCreditoGrupal('');
+                setNombreAsesoraCreditoGrupal('');
+                setTelefonoAsesoraCreditoGrupal('');
+                setTasaCreditoGrupal('');
+                setMotivoNoRenovacionCreditoGrupal('');
+              }}
+              onLimpiarRutaCreditoGrupal={() => {
+                setValorFichaCreditoGrupal('');
+                setSemanaActualCreditoGrupal('');
+                setMesDesembolsoCreditoGrupal('');
+                setMesUltimoPagoCreditoGrupal('');
+                setAnioUltimoPagoCreditoGrupal('');
+                setNumeroCiclosCreditoGrupal('');
+                setNombreAsesoraCreditoGrupal('');
+                setTelefonoAsesoraCreditoGrupal('');
+                setTasaCreditoGrupal('');
+                setMotivoNoRenovacionCreditoGrupal('');
+              }}
+              onReintentarComprobante={() => void cargarComprobanteLineaCredito(
+                comprobanteLineaCredito,
+              )}
+              onCapturarEvidencia={(tipo) => void capturarEvidenciaHistorialCredito(tipo)}
+              onReintentarEvidencias={(tipo) => void guardarEvidenciasHistorialCredito(
+                tipo,
+                evidenciasHistorialCreditoPendientes[tipo],
+              )}
             />
-
-            {tieneOtroCreditoGrupal === 'Sí' ? (
-              <>
-                <PickerField
-                  label="¿Con qué financiera tuvo su último crédito grupal?"
-                  value={financieraCreditoGrupal}
-                  options={FINANCIERAS_CREDITO_GRUPAL_NUEVO_LEON}
-                  onSelect={setFinancieraCreditoGrupal}
-                  placeholder="Seleccionar financiera"
-                  moduleTheme="verification"
-                  autoOpen
-                  confirmSelection
-                  highlightSelectedValue
-                  required
-                />
-
-                <SelectorField
-                  label="¿Actualmente está activo?"
-                  value={creditoGrupalAnteriorActivo}
-                  options={['Sí', 'No']}
-                  onSelect={(respuesta) => {
-                    if (respuesta !== creditoGrupalAnteriorActivo) {
-                      setValorFichaCreditoGrupal('');
-                      setSemanaActualCreditoGrupal('');
-                      setMesDesembolsoCreditoGrupal('');
-                      setMesUltimoPagoCreditoGrupal('');
-                      setAnioUltimoPagoCreditoGrupal('');
-                      setNumeroCiclosCreditoGrupal('');
-                      setNombreAsesoraCreditoGrupal('');
-                      setTelefonoAsesoraCreditoGrupal('');
-                      setTasaCreditoGrupal('');
-                      setMotivoNoRenovacionCreditoGrupal('');
-                    }
-                    setCreditoGrupalAnteriorActivo(respuesta);
-                  }}
-                  moduleTheme="verification"
-                  required
-                />
-
-                {creditoGrupalAnteriorActivo ? (
-                  <>
-                    <TextInput
-                      label={creditoGrupalAnteriorActivo === 'Sí'
-                        ? '¿De qué valor es su ficha?'
-                        : '¿De qué valor era su ficha?'}
-                      value={valorFichaCreditoGrupal}
-                      onChangeText={(value) => setValorFichaCreditoGrupal(normalizeCurrencyInput(value))}
-                      keyboardType="numeric"
-                      placeholder="$ 0"
-                      required
-                    />
-
-                    {creditoGrupalAnteriorActivo === 'Sí' ? (
-                      <>
-                        <PickerField
-                          label="¿En qué semana van?"
-                          value={semanaActualCreditoGrupal}
-                          options={SEMANAS_CREDITO_GRUPAL}
-                          onSelect={setSemanaActualCreditoGrupal}
-                          placeholder="Seleccionar semana"
-                          moduleTheme="verification"
-                          confirmSelection
-                          required
-                        />
-
-                        <PickerField
-                          label="¿En qué mes se desembolsó?"
-                          value={mesDesembolsoCreditoGrupal}
-                          options={MESES_CREDITO_GRUPAL}
-                          onSelect={setMesDesembolsoCreditoGrupal}
-                          placeholder="Seleccionar mes"
-                          moduleTheme="verification"
-                          confirmSelection
-                          required
-                        />
-                      </>
-                    ) : (
-                      <MonthYearPickerField
-                        label="¿Cuándo fue su último pago?"
-                        month={mesUltimoPagoCreditoGrupal}
-                        year={anioUltimoPagoCreditoGrupal}
-                        months={MESES_CREDITO_GRUPAL}
-                        years={ANIOS_CREDITO_GRUPAL}
-                        onConfirm={(month, year) => {
-                          setMesUltimoPagoCreditoGrupal(month);
-                          setAnioUltimoPagoCreditoGrupal(year);
-                        }}
-                        placeholder="Seleccionar mes y año"
-                        trailingValue={semanasDesdeUltimoPagoCreditoGrupal == null
-                          ? undefined
-                          : `${semanasDesdeUltimoPagoCreditoGrupal} SEM`}
-                        moduleTheme="verification"
-                        required
-                      />
-                    )}
-
-                    <PickerField
-                      label={creditoGrupalAnteriorActivo === 'Sí'
-                        ? '¿Cuántos ciclos lleva en esa financiera?'
-                        : '¿Cuántos ciclos estuvo en esa financiera?'}
-                      value={numeroCiclosCreditoGrupal}
-                      options={CICLOS_CREDITO_GRUPAL}
-                      onSelect={setNumeroCiclosCreditoGrupal}
-                      placeholder="Seleccionar ciclos"
-                      moduleTheme="verification"
-                      confirmSelection
-                      required
-                    />
-
-                    <PickerField
-                      label={creditoGrupalAnteriorActivo === 'Sí'
-                        ? '¿Qué tasa maneja?'
-                        : '¿Qué tasa manejaba?'}
-                      value={tasaCreditoGrupal}
-                      options={TASAS_CREDITO_GRUPAL}
-                      onSelect={setTasaCreditoGrupal}
-                      placeholder="Seleccionar tasa"
-                      moduleTheme="verification"
-                      confirmSelection
-                      required
-                    />
-
-                    {tipoEvidenciaHistorialCreditoActual ? (
-                      <Card
-                        moduleTheme="verification"
-                        variant="outlined"
-                        style={[styles.visitaVecinoIneCard, styles.negocioEvidenceCard]}
-                      >
-                        <SectionTitle title="Evidencia de otra financiera" />
-                        <Text allowFontScaling={false} style={styles.helpText}>
-                          Aquí aparecen las imágenes del comprobante de línea de crédito capturadas
-                          en Documentación. Puedes agregar todas las fotografías que necesites; las
-                          nuevas se guardan con ubicación y usuario.
-                        </Text>
-
-                        {guardandoEvidenciasHistorialCredito === tipoEvidenciaHistorialCreditoActual ? (
-                          <StatusBadge label="GUARDANDO FOTOGRAFÍAS" tone="progress" />
-                        ) : loadingEvidenciasHistorialCredito || loadingComprobanteLineaCredito ? (
-                          <StatusBadge label="CONSULTANDO EVIDENCIAS" tone="progress" />
-                        ) : evidenciasHistorialCreditoPendientesActuales.length > 0 ? (
-                          <StatusBadge
-                            label={`${evidenciasHistorialCreditoPendientesActuales.length} PENDIENTE${evidenciasHistorialCreditoPendientesActuales.length === 1 ? '' : 'S'} DE GUARDAR`}
-                            tone="pending"
-                          />
-                        ) : fotografiasOtraFinancieraGuardadas > 0 ? (
-                          <StatusBadge
-                            label={`${fotografiasOtraFinancieraGuardadas} FOTO${fotografiasOtraFinancieraGuardadas === 1 ? '' : 'S'} DISPONIBLE${fotografiasOtraFinancieraGuardadas === 1 ? '' : 'S'}`}
-                            tone="success"
-                          />
-                        ) : (
-                          <StatusBadge label="PENDIENTE" tone="pending" />
-                        )}
-
-                        {loadingEvidenciasHistorialCredito || loadingComprobanteLineaCredito ? (
-                          <View style={styles.imagenDomicilioLoading}>
-                            <ActivityIndicator color={moduleThemes.verification.primary} />
-                            <Text allowFontScaling={false} style={styles.helpText}>
-                              Consultando fotografías guardadas…
-                            </Text>
-                          </View>
-                        ) : null}
-
-                        {paginasEvidenciasHistorialCredito.length > 0 ? (
-                          <DocumentImageCarousel
-                            title={creditoGrupalAnteriorActivo === 'Sí'
-                              ? 'EVIDENCIA DE OTRA FINANCIERA · CRÉDITO ACTIVO'
-                              : 'EVIDENCIA DE OTRA FINANCIERA · CRÉDITO ANTERIOR'}
-                            pages={paginasEvidenciasHistorialCredito}
-                            moduleTheme="verification"
-                            helperText="Desliza para revisar las fotografías. Toca una imagen para ampliarla."
-                          />
-                        ) : null}
-
-                        {errorEvidenciasHistorialCreditoActual ? (
-                          <Text allowFontScaling={false} style={styles.imagenDomicilioErrorText}>
-                            {errorEvidenciasHistorialCreditoActual}
-                          </Text>
-                        ) : null}
-
-                        {errorComprobanteLineaCredito ? (
-                          <>
-                            <Text allowFontScaling={false} style={styles.imagenDomicilioErrorText}>
-                              {errorComprobanteLineaCredito}
-                            </Text>
-                            <SecondaryButton
-                              title="Reintentar comprobante"
-                              moduleTheme="verification"
-                              disabled={loadingComprobanteLineaCredito}
-                              onPress={() => void cargarComprobanteLineaCredito(
-                                comprobanteLineaCredito,
-                              )}
-                            />
-                          </>
-                        ) : null}
-
-                        <View style={styles.visitaVecinoFachadaActions}>
-                          {evidenciasHistorialCreditoPendientesActuales.length > 0 ? (
-                            <>
-                              <SecondaryButton
-                                title="Tomar otra fotografía"
-                                moduleTheme="verification"
-                                disabled={Boolean(
-                                  guardandoEvidenciasHistorialCredito
-                                  || loadingEvidenciasHistorialCredito
-                                  || loadingComprobanteLineaCredito,
-                                )}
-                                onPress={() => void capturarEvidenciaHistorialCredito(
-                                  tipoEvidenciaHistorialCreditoActual,
-                                )}
-                              />
-                              <PrimaryButton
-                                title="Reintentar pendientes"
-                                moduleTheme="verification"
-                                disabled={Boolean(
-                                  guardandoEvidenciasHistorialCredito
-                                  || loadingEvidenciasHistorialCredito
-                                  || loadingComprobanteLineaCredito,
-                                )}
-                                onPress={() => void guardarEvidenciasHistorialCredito(
-                                  tipoEvidenciaHistorialCreditoActual,
-                                  evidenciasHistorialCreditoPendientesActuales,
-                                )}
-                              />
-                            </>
-                          ) : (
-                            <PrimaryButton
-                              title={fotografiasOtraFinancieraGuardadas > 0
-                                ? 'Tomar otra fotografía'
-                                : 'Tomar fotografía'}
-                              moduleTheme="verification"
-                              disabled={Boolean(
-                                guardandoEvidenciasHistorialCredito
-                                || loadingEvidenciasHistorialCredito
-                                || loadingComprobanteLineaCredito,
-                              )}
-                              onPress={() => void capturarEvidenciaHistorialCredito(
-                                tipoEvidenciaHistorialCreditoActual,
-                              )}
-                              accessibilityLabel={creditoGrupalAnteriorActivo === 'Sí'
-                                ? 'Tomar evidencia fotográfica del crédito activo con la cámara'
-                                : 'Tomar evidencia fotográfica del crédito anterior con la cámara'}
-                            />
-                          )}
-                        </View>
-                      </Card>
-                    ) : null}
-
-                    <TextInput
-                      label="¿Qué asesora la atendía en esa financiera?"
-                      value={nombreAsesoraCreditoGrupal}
-                      onChangeText={setNombreAsesoraCreditoGrupal}
-                      placeholder="Nombre de la asesora"
-                    />
-
-                    <TextInput
-                      label="¿Cuál es el teléfono de la asesora?"
-                      value={telefonoAsesoraCreditoGrupal}
-                      onChangeText={(value) => setTelefonoAsesoraCreditoGrupal(formatPhone(value))}
-                      keyboardType="phone-pad"
-                      placeholder="Número de 10 dígitos"
-                      error={telefonoAsesoraCreditoGrupal
-                        && telefonoAsesoraCreditoGrupal.replace(/\D/g, '').length !== 10
-                        ? 'Captura un número de 10 dígitos.'
-                        : undefined}
-                    />
-
-                    {creditoGrupalAnteriorActivo === 'No' ? (
-                      <PickerField
-                        label="¿Por qué no renovó en esa financiera?"
-                        value={motivoNoRenovacionCreditoGrupal}
-                        options={MOTIVOS_NO_RENOVACION}
-                        onSelect={setMotivoNoRenovacionCreditoGrupal}
-                        placeholder="Seleccionar motivo"
-                        moduleTheme="verification"
-                        autoOpen
-                        confirmSelection
-                        required
-                      />
-                    ) : null}
-                  </>
-                ) : null}
-
-              </>
-            ) : null}
 
             <View style={styles.entrevistaSectionHeader}>
               <StickySectionHeader

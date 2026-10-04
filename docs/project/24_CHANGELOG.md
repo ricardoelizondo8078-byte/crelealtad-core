@@ -1,5 +1,25 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-04] - Segunda descomposición de Verificación y Solicitud
+
+### Modularidad móvil
+
+- `IntegranteVerificacionScreen` delega ahora Historial crediticio completo, incluidos antecedentes
+  internos, crédito grupal externo y evidencias fotográficas, a un componente tipado propio.
+- `SolicitudFormScreen` dejó de contener las reglas de completitud y validación de los siete pasos;
+  estas viven como funciones puras en su modelo. Los modales, carruseles y visores documentales se
+  concentran en un componente presentacional independiente.
+- No cambiaron textos, orden, estados, permisos, llamadas API, tablas ni datos. El cambio es
+  estructural y reversible; el estado compartido y la navegación siguen en los coordinadores.
+
+### Verificado
+
+- Escaneo de secretos y TypeScript API/mobile aprobados.
+- Build Nest aprobado; Jest terminó con 40 suites y 213 pruebas aprobadas contra
+  `crelealtad_test`.
+- Export Android de Expo/Metro aprobado con 821 módulos y bytecode Hermes; el artefacto temporal
+  se eliminó después de comprobarlo.
+
 ## [2026-10-04] - Cambio obligatorio de PIN
 
 ### Seguridad y acceso

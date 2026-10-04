@@ -1,6 +1,6 @@
 # M03 — Entrevista de Verificación
 
-Versión: 1.2.0
+Versión: 1.3.0
 Estado: persistencia general implementada; criterio de conclusión pendiente
 Fecha de verificación: 2026-10-04
 
@@ -163,7 +163,7 @@ La Entrevista no tiene todavía un estado funcional de conclusión aprobado. El 
 
 | Pantalla | Plantilla | Objetivo | Acciones |
 |---|---|---|---|
-| `IntegranteVerificacionScreen` / Entrevista | T5 + T8 parcial | Capturar y recuperar entrevista individual | Responder, seleccionar integrantes, tomar/ver/reintentar fotos, volver al concentrador |
+| `IntegranteVerificacionScreen` con secciones de Entrevista | T5 + T8 parcial | Coordinar y recuperar la entrevista individual; Preguntas generales e Historial crediticio se renderizan en componentes propios | Responder, seleccionar integrantes, tomar/ver/reintentar fotos, volver al concentrador |
 
 ## 8. API y persistencia
 

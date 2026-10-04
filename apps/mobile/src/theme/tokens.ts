@@ -47,6 +47,7 @@ export const colors = {
   danger: '#EF4444', // Color de error/peligro para textos
   white: '#FFFFFF',
   overlay: 'rgba(17, 24, 39, 0.82)',
+  documentOverlay: 'rgba(0, 0, 0, 0.9)',
   // Colores principales
   primary: '#0F5A35', // Verde principal CRELEALTAD
   brandYellow: '#FDE047', // Acento institucional para encabezados contextuales

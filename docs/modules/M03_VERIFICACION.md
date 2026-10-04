@@ -8,9 +8,9 @@
 - Responsable operativo: por definir por CRELEALTAD.
 - Roles usuarios: durante DEC-023, todos los usuarios activos con acceso efectivo al módulo; `ASESOR` y `VERIFICADOR` disponen de la acción específica `verificacion:registrar` para los intentos de llamada. La matriz restrictiva definitiva sigue pendiente.
 - Arquitectura móvil activa: el coordinador individual delega Revisión documental, Llamada, Visita
-  al vecino, Imágenes del domicilio y Preguntas generales a componentes por proceso; contratos,
-  catálogos, mapeos y acceso API viven fuera de la vista. Esta separación es interna y no altera el
-  orden ni las reglas descritas en este documento.
+  al vecino, Imágenes del domicilio, Preguntas generales e Historial crediticio con sus evidencias
+  a componentes por proceso; contratos, catálogos, mapeos y acceso API viven fuera de la vista.
+  Esta separación es interna y no altera el orden ni las reglas descritas en este documento.
 
 ## 2. Objetivo y resultado observable
 

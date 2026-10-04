@@ -1,6 +1,6 @@
 # 11 Architecture Guide — Guía de Arquitectura
 
-Versión: 2.12.0
+Versión: 2.13.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -109,6 +109,10 @@ Fecha de auditoría: 2026-10-04
 - 31 componentes `.tsx` compartidos en `src/components/ui`.
 - Tokens en `src/theme/tokens.ts`.
 - Fuentes Montserrat e Inter.
+- Los coordinadores móviles críticos delegan las secciones visuales: Solicitud usa siete pasos,
+  validadores puros y visores documentales externos; Verificación separa sus procesos, Preguntas
+  generales e Historial crediticio con evidencias. Estado compartido, autoguardado y navegación
+  permanecen en los coordinadores hasta la siguiente extracción controlada.
 - Uso de cámara/galería mediante Expo Image Picker.
 - Lectura puntual de ubicación en primer plano mediante Expo Location al confirmar un resultado de llamada; si no existe una lectura válida, la API no recibe ni registra el intento.
 - AsyncStorage conserva usuario y borradores no sensibles; SecureStore conserva el JWT. La pantalla documental activa solo presenta como sincronizadas las rutas confirmadas por la API.

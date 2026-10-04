@@ -29,7 +29,7 @@ restricciones y conteos de integridad.
 | Calidad | TypeScript API/mobile, build Nest, 40 suites y 213 pruebas aprobadas; export Android con Hermes verificado. |
 | Autorización | Catálogo técnico único, normalización cerrada y constraints JSONB; no sustituye la matriz funcional pendiente. |
 | Trazabilidad | Login exitoso actualiza su marca y `audit_log` en una sola transacción sin copiar credenciales. |
-| Modularidad mobile | Catálogo de módulos, evaluación de acceso y claves idempotentes extraídos de las pantallas/shell que los consumen. |
+| Modularidad mobile | Catálogo de módulos, acceso y claves idempotentes extraídos; Verificación delega procesos, Preguntas generales e Historial crediticio, y Solicitud delega siete pasos, validaciones puras y visores documentales. |
 
 ## Estado de módulos
 
@@ -60,8 +60,8 @@ rutas ficticias ni permisos inventados.
 3. Sustituir filesystem local por almacenamiento durable con respaldo, monitoreo y carga reanudable.
 4. Diseñar la cola offline antes de ampliar masivamente formularios: persistencia, reintento con
    backoff, idempotencia, deduplicación y política explícita de conflictos.
-5. Dividir los hotspots `IntegranteVerificacionScreen`, `SolicitudFormScreen`,
-   `IntegrantesService` y `VerificacionLlamadasService` por casos de uso y secciones probables.
+5. Continuar la división ya iniciada: extraer estado compartido y las secciones restantes de
+   Entrevista, y dividir `IntegrantesService` y `VerificacionLlamadasService` por casos de uso.
 6. Agregar pruebas automatizadas mobile y recorridos end-to-end de permiso insuficiente, reinicio,
    reconexión y archivos.
 7. Planear la migración CommonJS → ESM necesaria para NestJS 12; la actualización directa compila,

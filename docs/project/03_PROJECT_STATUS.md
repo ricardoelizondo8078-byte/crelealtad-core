@@ -1,6 +1,6 @@
 # 03 Project Status — Estado Oficial del Proyecto
 
-Versión: 3.4.1
+Versión: 3.5.0
 Estado: Vigente y verificado
 Fecha de corte: 2026-10-04
 
@@ -76,9 +76,10 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 - El formulario de Solicitud usa un mapper único por pasos y serializa auto-guardado y navegación para evitar escrituras fuera de orden.
 - La descomposición modular móvil inició por las dos pantallas de mayor tamaño. Verificación ya
   separa modelos/catálogos y las vistas de Revisión documental, Llamada, Visita al vecino,
-  Imágenes del domicilio y Preguntas generales; Solicitud separa reglas/documentos y los siete
-  pasos del wizard. Las
-  secciones restantes de Entrevista continúan en su coordinador y siguen siendo deuda técnica
+  Imágenes del domicilio, Preguntas generales e Historial crediticio con sus evidencias; Solicitud
+  separa reglas de completitud/validación, carga y visores documentales, y los siete pasos del
+  wizard. El estado compartido, autoguardado y navegación permanecen en sus coordinadores; las
+  secciones restantes de Datos personales y encuestas de Entrevista siguen como deuda técnica
   explícita, sin cambio funcional.
 - La UI de Verificación ya no calcula capacidad ni pago semanal con constantes no aprobadas, no permite seleccionar rechazos antes del handoff y mantiene la finalización explícitamente bloqueada.
 - La tarjeta fija de Verificación Individual muestra, junto al rol de la integrante, tres burbujas de contexto: cantidad de ciclos individuales previos confirmados, edad y distancia aproximada en línea recta al domicilio de la tesorera. El conteo se presenta como `CICLO / CICLOS`, une por `persona_id` solicitudes con monto autorizado y créditos reales, cuenta una sola participación por expediente y excluye el expediente actual; no infiere el historial individual legacy que aún no esté vinculado. Ciclos usa fondo verde claro con borde y texto verde oscuro; edad conserva fondo gris, borde gris medio de mayor contraste y advertencia amarilla sobre 70 años; distancia conserva celeste hasta 5 km y rojo por encima del límite. Los valores no disponibles se presentan como `N/D`.
@@ -183,7 +184,7 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 5. Seguridad temporal: los 49 asesores comparten temporalmente el valor de prueba `1234`, aunque cada cuenta lo valida contra su propio hash. El cambio obligatorio ya está implementado, pero el valor no desaparece de una cuenta hasta que esa usuaria complete el flujo. La contraseña PostgreSQL y el JWT locales ya fueron rotados, PostgreSQL exige SCRAM en loopback, los scripts y el historial Git dejaron de conservar credenciales y el JWT móvil usa SecureStore. Falta operar secretos mediante un gestor productivo y completar la sustitución individual antes de producción.
 6. Verificación incompleta: el handoff valida participación, cero pendientes y al menos una completa; el concentrador abre cuatro procesos sin orden y mantiene `Conclusiones` visible pero deshabilitado. `Llamada` persiste intento, respuestas, evidencia y conclusión; `Visita al vecino` persiste fachada, respuesta y segunda evidencia, y sólo habilita su terminación con respuesta y evidencia confirmadas. El mínimo parametrizado, asignación, tratamiento posterior de resultados, cita real, persistencia de conclusiones y dictamen requieren decisiones posteriores.
 7. Cliente HTTP todavía inconsistente fuera del recorrido activo del asesor: subsisten usos directos de `fetch` en superficies parciales.
-8. Hotspots móviles: Solicitud y Verificación siguen concentrando UI y estado en pantallas extensas; se extrajo el mapper de persistencia, pero la separación de pasos visuales debe continuar junto con pruebas móviles para reducir riesgo.
+8. Hotspots móviles: los pasos, validaciones y visores de Solicitud ya están separados, y Verificación delega sus procesos principales más Preguntas generales e Historial crediticio. Aún debe extraerse el estado compartido y las secciones restantes de Entrevista, acompañado de pruebas móviles para reducir el riesgo residual.
 9. Falta definir e implementar recuperación administrativa del PIN y cambio voluntario posterior; el cambio inicial obligatorio ya está activo.
 10. El almacenamiento documental por filesystem es configurable y verificable en servidor, pero producción requiere un volumen o proveedor durable, respaldo y monitoreo aprobados.
 
@@ -202,6 +203,10 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 
 ## Última modificación
 
+- Se continuó la modularización de las dos pantallas móviles críticas: Historial crediticio y sus
+  evidencias salieron del coordinador de Verificación; Solicitud movió a funciones puras las reglas
+  de completitud/validación de sus siete pasos y delegó sus visores documentales. No cambiaron
+  flujo, textos, datos, API, estados ni permisos.
 - Se implementó el cambio obligatorio de PIN: pantalla móvil de tres pasos, teclado compartido, endpoint autenticado acotado, actualización bcrypt transaccional, auditoría sin secretos y bloqueo global de módulos mientras la marca siga activa. No se modificaron en lote los hashes existentes.
 - Se rotaron PostgreSQL/JWT locales, se exigió SCRAM en loopback y se integró el historial Git saneado en `main` y `origin/main` sin modificar el árbol de trabajo; reflogs y objetos locales antiguos quedaron purgados.
 - Se centralizó el vocabulario técnico de permisos, se separó del shell móvil la evaluación de acceso y se consolidó la generación de claves idempotentes de Verificación.
