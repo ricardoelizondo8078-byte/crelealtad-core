@@ -19,13 +19,14 @@ restricciones y conteos de integridad.
 |---|---|
 | Secretos | Credenciales literales retiradas de scripts e historial local; PostgreSQL/JWT locales rotados y escaneo automático integrado a `npm run verify`. |
 | Sesión móvil | JWT migrado de AsyncStorage a SecureStore; invalidación común ante `401`. |
+| Cambio de PIN | Flujo obligatorio mobile/API, hash bcrypt transaccional, auditoría no sensible y bloqueo global mientras la marca siga pendiente. |
 | Dependencias API | Parches compatibles aplicados y `picomatch` productivo corregido; sin avisos altos o críticos, quedan dos moderados ligados a NestJS 10. |
 | Dependencias mobile | Expo 57 y módulos nativos alineados; el audit conserva avisos transitivos del toolchain Expo/Metro sin corrección compatible disponible. |
 | Archivos | Política común para tamaño, firma real, UUID y SHA-256; multipart acotado y documentos numerosos reunidos por lotes en una sola versión. |
 | Datos | Tres FKs faltantes agregadas con cero huérfanos. |
 | Migraciones | Ledger por SHA-256 y ejecutor transaccional activo hasta 035 en prueba y base local real; cero pendientes o drift. |
 | Recuperación | Respaldos custom previos a 033/034 y 035 creados y validados. |
-| Calidad | TypeScript API/mobile, build Nest, 39 suites y 203 pruebas aprobadas; export Android con Hermes verificado. |
+| Calidad | TypeScript API/mobile, build Nest, 40 suites y 213 pruebas aprobadas; export Android con Hermes verificado. |
 | Autorización | Catálogo técnico único, normalización cerrada y constraints JSONB; no sustituye la matriz funcional pendiente. |
 | Trazabilidad | Login exitoso actualiza su marca y `audit_log` en una sola transacción sin copiar credenciales. |
 | Modularidad mobile | Catálogo de módulos, evaluación de acceso y claves idempotentes extraídos de las pantallas/shell que los consumen. |
@@ -34,7 +35,7 @@ restricciones y conteos de integridad.
 
 | Módulo | Estado verificable | Siguiente bloqueo real |
 |---|---|---|
-| M01 Login | Parcial funcional | Cambio/recuperación de PIN, rotación del PIN temporal y matriz territorial. |
+| M01 Login | Parcial funcional | Recuperación administrativa, sustitución individual del PIN temporal y matriz territorial. |
 | M02 Documentación | Parcial funcional | Cola offline durable y proveedor de archivos productivo. |
 | M03 Verificación | Parcial funcional | Dictamen/conclusiones, asignación y matriz aprobada. |
 | M04 Análisis | No implementado | Reglas de elegibilidad, capacidad, productos y excepciones aprobadas. |
@@ -52,8 +53,8 @@ rutas ficticias ni permisos inventados.
 
 ## Riesgos prioritarios pendientes
 
-1. Rotar el PIN temporal de 49 asesores y habilitar cambio obligatorio; usar un gestor de secretos
-   para despliegue.
+1. Completar individualmente el cambio obligatorio ya habilitado para los 49 asesores, definir
+   recuperación administrativa y usar un gestor de secretos para despliegue.
 2. Aprobar la matriz módulo–acción–rol y el alcance por sucursal/zona. DEC-023 continúa siendo una
    excepción temporal.
 3. Sustituir filesystem local por almacenamiento durable con respaldo, monitoreo y carga reanudable.
@@ -71,7 +72,7 @@ rutas ficticias ni permisos inventados.
 
 ## Secuencia recomendada
 
-1. Cerrar M01/M12: credenciales, cambio de PIN, matriz y alcance territorial.
+1. Cerrar M01/M12: completar sustitución/recuperación de PIN, matriz y alcance territorial.
 2. Construir infraestructura transversal offline y almacenamiento durable.
 3. Consolidar M02/M03 y su prueba end-to-end.
 4. Especificar/aprobar M11 antes de M04–M10 para evitar políticas financieras hardcodeadas.

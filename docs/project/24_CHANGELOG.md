@@ -1,5 +1,28 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-04] - Cambio obligatorio de PIN
+
+### Seguridad y acceso
+
+- Se agregó `POST /auth/cambiar-pin` para validar el PIN actual, exigir un nuevo PIN de cuatro
+  dígitos confirmado y distinto, reemplazar su hash bcrypt y desactivar `requiere_cambio_pin` en una
+  sola transacción con bloqueo pesimista.
+- `audit_log` registra únicamente la transición de la marca bajo `CAMBIO_PIN`; nunca recibe PIN ni
+  hash. El endpoint tiene límite de cinco intentos por minuto.
+- El guard global rechaza endpoints funcionales con `PIN_CHANGE_REQUIRED` mientras la marca siga
+  activa. Sólo `/auth/me` y el cambio de PIN están habilitados para resolver esa condición.
+- Mobile muestra una pantalla obligatoria de tres pasos antes del menú y reutiliza un teclado PIN
+  compartido con Login. No desactiva la marca ni comunica éxito hasta recibir confirmación del
+  servidor; el JWT continúa exclusivamente en SecureStore.
+- No se modificaron esquema, datos ni hashes de usuarios en lote. Las cuentas conservan su PIN
+  actual hasta que cada usuaria complete el cambio.
+
+### Verificado
+
+- `npm run verify`: escaneo de secretos, TypeScript API/mobile y 40 suites con 213 pruebas.
+- Build Nest y export Android de Expo/Metro aprobados con 819 módulos y bytecode Hermes; el
+  artefacto temporal de exportación se eliminó después de comprobarlo.
+
 ## [2026-10-04] - Dependencias compatibles y transporte multipart acotado
 
 ### Dependencias

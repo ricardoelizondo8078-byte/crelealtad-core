@@ -5,7 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PendingReviewsProvider, usePendingReviews } from './context/PendingReviewsContext';
 import { ProcessingProvider } from './context/ProcessingContext';
-import { LoginScreen } from './features/auth';
+import { ChangePinScreen, LoginScreen } from './features/auth';
 import { ExpedienteDetailScreen, ExpedientesListScreen } from './features/expedientes';
 import { CreateGroupScreen } from './features/grupos';
 import {
@@ -132,6 +132,10 @@ function AppContent() {
   // Mostrar login si no hay usuario autenticado
   if (!usuario) {
     return <LoginScreen />;
+  }
+
+  if (usuario.requiere_cambio_pin) {
+    return <ChangePinScreen />;
   }
 
   // Pantalla de verificación de integrante

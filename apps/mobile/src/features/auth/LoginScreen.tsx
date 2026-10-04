@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  Platform,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -13,13 +12,13 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import { LoginResponse, useAuth } from '../../context/AuthContext';
 import { useProcessingAction } from '../../context/ProcessingContext';
 import { TextInput as AppTextInput } from '../../components/ui';
 import { api, ApiError } from '../../services/api-client';
 import { colors, fonts, moduleThemes, spacing, shadows } from '../../theme/tokens';
 import appConfig from '../../../app.json';
+import { PinKeypad } from './PinKeypad';
 
 const getLoginErrorMessage = (error: unknown): string => {
   if (!(error instanceof ApiError)) {
@@ -52,26 +51,7 @@ export function LoginScreen() {
   const [error, setError] = useState('');
 
   const isCompact = height < 700;
-  const keyHeight = isCompact ? 46 : 52;
   const logoSize = isCompact ? 80 : 96;
-
-  const handleNumberPress = (num: string) => {
-    if (pin.length < 4) {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-      setPin(pin + num);
-      setError('');
-    }
-  };
-
-  const handleBackspace = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setPin(pin.slice(0, -1));
-    setError('');
-  };
 
   const handleLogin = async () => {
     const identificador = abreviatura.trim();
@@ -108,75 +88,6 @@ export function LoginScreen() {
   };
 
   const handleLoginPress = useProcessingAction(handleLogin, 'Iniciando sesión…');
-
-  const renderPinDots = () => {
-    return (
-      <View style={styles.pinDotsContainer}>
-        {[0, 1, 2, 3].map((i) => (
-          <View
-            key={i}
-            style={[
-              styles.pinDot,
-              pin.length > i && styles.pinDotFilled,
-            ]}
-          />
-        ))}
-      </View>
-    );
-  };
-
-  const renderNumericKeypad = () => {
-    const keys = [
-      ['1', '2', '3'],
-      ['4', '5', '6'],
-      ['7', '8', '9'],
-      ['', '0', 'backspace'],
-    ];
-
-    return (
-      <View style={styles.keypad}>
-        {keys.map((row, rowIndex) => (
-          <View key={rowIndex} style={styles.keypadRow}>
-            {row.map((key, keyIndex) => {
-              if (key === '') {
-                return <View key={keyIndex} style={styles.key} />;
-              }
-
-              if (key === 'backspace') {
-                return (
-                  <Pressable
-                    key={keyIndex}
-                    style={({ pressed }) => [
-                      styles.key,
-                      { height: keyHeight },
-                      pressed && styles.keyPressed,
-                    ]}
-                    onPress={handleBackspace}
-                  >
-                    <Text allowFontScaling={false} style={[styles.keyText, { color: colors.danger }]}>⌫</Text>
-                  </Pressable>
-                );
-              }
-
-              return (
-                <Pressable
-                  key={keyIndex}
-                  style={({ pressed }) => [
-                    styles.key,
-                    { height: keyHeight },
-                    pressed && styles.keyPressed,
-                  ]}
-                  onPress={() => handleNumberPress(key)}
-                >
-                  <Text allowFontScaling={false} style={styles.keyText}>{key}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ))}
-      </View>
-    );
-  };
 
   const canSubmit = abreviatura.trim().length > 0 && pin.length === 4 && !loading;
 
@@ -235,10 +146,14 @@ export function LoginScreen() {
             <Text allowFontScaling={false} style={[styles.fieldLabel, { marginTop: spacing.lg }]}>
               PIN DE ACCESO
             </Text>
-            {renderPinDots()}
-
-            {/* Teclado numérico */}
-            {renderNumericKeypad()}
+            <PinKeypad
+              value={pin}
+              disabled={loading}
+              onChange={(value) => {
+                setPin(value);
+                setError('');
+              }}
+            />
 
             {/* Botón Entrar */}
             <Pressable
@@ -358,50 +273,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textTransform: 'uppercase',
     marginBottom: 8,
-  },
-  pinDotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 14,
-    marginTop: 4,
-    marginBottom: 14,
-  },
-  pinDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: 'transparent',
-  },
-  pinDotFilled: {
-    backgroundColor: moduleThemes.general.primary,
-    borderColor: moduleThemes.general.primary,
-  },
-  keypad: {
-    gap: 10,
-    marginBottom: 16,
-  },
-  keypadRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  key: {
-    flex: 1,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  keyPressed: {
-    backgroundColor: colors.background,
-  },
-  keyText: {
-    fontFamily: fonts.extraBold,
-    fontSize: 22,
-    color: moduleThemes.general.primary,
   },
   loginButton: {
     height: 50,

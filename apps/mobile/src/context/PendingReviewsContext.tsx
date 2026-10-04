@@ -43,7 +43,9 @@ const PendingReviewsContext = createContext<PendingReviewsContextData | null>(nu
 
 export function PendingReviewsProvider({ children }: { children: React.ReactNode }) {
   const { usuario, tienePermiso } = useAuth();
-  const canReadExpedientes = Boolean(usuario) && tienePermiso('expedientes', 'leer');
+  const canReadExpedientes = Boolean(usuario)
+    && !usuario?.requiere_cambio_pin
+    && tienePermiso('expedientes', 'leer');
   const [groups, setGroups] = useState<PendingReviewGroup[]>([]);
   const [totalPending, setTotalPending] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -91,7 +93,7 @@ export function PendingReviewsProvider({ children }: { children: React.ReactNode
       setLoading(false);
       setRefreshing(false);
     }
-  }, [canReadExpedientes, usuario?.id]);
+  }, [canReadExpedientes, usuario?.id, usuario?.requiere_cambio_pin]);
 
   const refresh = useCallback(
     () => loadPendingReviews(false),
@@ -116,7 +118,7 @@ export function PendingReviewsProvider({ children }: { children: React.ReactNode
     setTotalPending(0);
     setError(null);
     void loadPendingReviews(true);
-  }, [canReadExpedientes, loadPendingReviews, usuario?.id]);
+  }, [canReadExpedientes, loadPendingReviews, usuario?.id, usuario?.requiere_cambio_pin]);
 
   useEffect(() => {
     if (!canReadExpedientes) return undefined;

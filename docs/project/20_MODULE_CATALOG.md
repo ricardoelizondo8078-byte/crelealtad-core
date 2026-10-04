@@ -27,6 +27,7 @@ Verificado:
 - Tablas `usuarios` y `roles`; permisos JSONB por rol y conjunto efectivo personalizado opcional por usuario.
 - Login por abreviatura y PIN comparado con hash bcrypt individual.
 - 49 usuarios/empleados asesores activos en `MATRIZ`, sin zona y con cambio de PIN pendiente.
+- `POST /auth/cambiar-pin` y pantalla móvil obligatoria de tres pasos; la API bloquea los módulos mientras la marca siga activa y audita el cambio sin conservar credenciales.
 - PIN, contraseñas, tokens y encabezados de autorización redactados de logs.
 - Guard global cerrado por defecto y permisos por módulo/acción en los handlers actuales.
 - Login y `/auth/me` entregan permisos efectivos; el menú principal móvil T8 filtra módulos ejecutables con ese contrato y cada login inicia en ese selector.
@@ -38,7 +39,8 @@ Pendientes críticos:
 
 - Alcance por sucursal/zona.
 - Aprobación funcional de la matriz completa rol–módulo–acción.
-- Implementar cambio/recuperación de PIN, retirar el valor temporal compartido y eliminar el secreto JWT de fallback.
+- Implementar recuperación administrativa/cambio voluntario de PIN y completar la sustitución individual del valor temporal compartido.
+- Operar los secretos de despliegue mediante el gestor productivo aprobado.
 - Manejo global de expiración durante una sesión ya abierta.
 
 ## M02 Documentación — Parcial funcional

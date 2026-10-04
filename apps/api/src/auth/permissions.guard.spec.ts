@@ -2,6 +2,7 @@ import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PermissionsGuard } from './permissions.guard';
 import {
+  PERMITE_CAMBIO_CREDENCIAL_PENDIENTE_KEY,
   PERMISO_REQUERIDO_KEY,
   SOLO_AUTENTICADO_KEY,
 } from './permissions.decorator';
@@ -16,14 +17,16 @@ describe('PermissionsGuard', () => {
     handler: () => void,
     permisos?: PermisosRol,
     permisosPersonalizados?: PermisosRol | null,
+    requiereCambioPin = false,
   ) =>
     ({
       getHandler: () => handler,
       getClass: () => class ControladorPrueba {},
       switchToHttp: () => ({
         getRequest: () => ({
-          user: permisos
+          user: permisos || requiereCambioPin
             ? {
+              requiere_cambio_pin: requiereCambioPin,
               permisos_personalizados: permisosPersonalizados,
               rol: { permisos },
             }
@@ -44,6 +47,35 @@ describe('PermissionsGuard', () => {
     Reflect.defineMetadata(SOLO_AUTENTICADO_KEY, true, handler);
 
     expect(guard.canActivate(crearContexto(handler))).toBe(true);
+  });
+
+  it('bloquea rutas funcionales mientras el cambio de PIN está pendiente', () => {
+    const handler = (): void => undefined;
+    Reflect.defineMetadata(
+      PERMISO_REQUERIDO_KEY,
+      { modulo: 'expedientes', accion: 'leer' },
+      handler,
+    );
+
+    expect(() => guard.canActivate(crearContexto(
+      handler,
+      { modulos: ['expedientes'], acciones: ['leer'] },
+      null,
+      true,
+    ))).toThrow(ForbiddenException);
+  });
+
+  it('permite únicamente una ruta autenticada marcada para resolver el cambio pendiente', () => {
+    const handler = (): void => undefined;
+    Reflect.defineMetadata(SOLO_AUTENTICADO_KEY, true, handler);
+    Reflect.defineMetadata(PERMITE_CAMBIO_CREDENCIAL_PENDIENTE_KEY, true, handler);
+
+    expect(guard.canActivate(crearContexto(
+      handler,
+      undefined,
+      null,
+      true,
+    ))).toBe(true);
   });
 
   it('permite el módulo y la acción configurados', () => {

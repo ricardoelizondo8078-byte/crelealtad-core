@@ -1,9 +1,14 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Usuario, UsuarioEstado } from '../catalogos/entities/usuario.entity';
 import { LoginDto } from './dto/login.dto';
+import { CambiarPinDto } from './dto/cambiar-pin.dto';
 import * as bcrypt from 'bcrypt';
 import { PermisosRol } from '../catalogos/entities/rol.entity';
 import { registrarAuditoria } from '../common/audit-log';
@@ -23,6 +28,12 @@ export interface LoginResponse {
   };
   token: string;
 }
+
+export interface CambioPinResponse {
+  requiere_cambio_pin: false;
+}
+
+const BCRYPT_ROUNDS = 10;
 
 @Injectable()
 export class AuthService {
@@ -117,6 +128,52 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  async cambiarPin(
+    usuarioId: string,
+    dto: CambiarPinDto,
+  ): Promise<CambioPinResponse> {
+    if (dto.nuevo_pin !== dto.confirmacion_pin) {
+      throw new BadRequestException('La confirmación no coincide con el nuevo PIN');
+    }
+    if (dto.nuevo_pin === dto.pin_actual) {
+      throw new BadRequestException('El nuevo PIN debe ser distinto del PIN actual');
+    }
+
+    return this.usuariosRepo.manager.transaction(async (manager) => {
+      const usuario = await manager.findOne(Usuario, {
+        where: { id: usuarioId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!usuario || usuario.estado !== UsuarioEstado.ACTIVO) {
+        throw new UnauthorizedException('Usuario inválido o inactivo');
+      }
+
+      const pinActualValido = await bcrypt.compare(
+        dto.pin_actual,
+        usuario.password_hash,
+      );
+      if (!pinActualValido) {
+        throw new BadRequestException('El PIN actual es incorrecto');
+      }
+
+      const nuevoHash = await bcrypt.hash(dto.nuevo_pin, BCRYPT_ROUNDS);
+      await manager.update(Usuario, usuario.id, {
+        password_hash: nuevoHash,
+        requiere_cambio_pin: false,
+      });
+      await registrarAuditoria(manager, {
+        tabla: 'usuarios',
+        registroId: usuario.id,
+        accion: 'CAMBIO_PIN',
+        usuarioId: usuario.id,
+        datosAntes: { requiere_cambio_pin: usuario.requiere_cambio_pin },
+        datosDespues: { requiere_cambio_pin: false },
+      });
+
+      return { requiere_cambio_pin: false };
+    });
   }
 
 }

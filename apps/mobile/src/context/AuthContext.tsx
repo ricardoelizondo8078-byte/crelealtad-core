@@ -31,6 +31,7 @@ interface AuthContextData {
   token: string | null;
   loading: boolean;
   login: (data: LoginResponse) => Promise<void>;
+  actualizarUsuario: (usuario: Usuario) => Promise<void>;
   logout: () => Promise<void>;
   tienePermiso: (modulo: string, accion: string) => boolean;
 }
@@ -91,12 +92,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await clearStoredSession();
   };
 
+  const actualizarUsuario = async (usuarioActualizado: Usuario) => {
+    await saveStoredUser(usuarioActualizado);
+    setUsuario(usuarioActualizado);
+  };
+
   const tienePermiso = (modulo: string, accion: string) => {
     return hasPermission(usuario?.permisos, modulo, accion);
   };
 
   return (
-    <AuthContext.Provider value={{ usuario, token, loading, login, logout, tienePermiso }}>
+    <AuthContext.Provider value={{
+      usuario,
+      token,
+      loading,
+      login,
+      actualizarUsuario,
+      logout,
+      tienePermiso,
+    }}>
       {children}
     </AuthContext.Provider>
   );

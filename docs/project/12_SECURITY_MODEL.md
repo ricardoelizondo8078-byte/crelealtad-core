@@ -52,11 +52,12 @@ Estado de implementacion:
 - Los 49 asesores fueron cargados con rol `ASESOR`, sucursal `MATRIZ`, zona nula y estado `ACTIVO`.
 - Cada cuenta conserva un hash bcrypt individual; el valor temporal compartido `1234` fue autorizado únicamente para desarrollo y pruebas, con `requiere_cambio_pin = true`.
 - No existe bypass universal y los valores sensibles se redactan de los logs.
-- El flujo de cambio obligatorio y recuperación del PIN sigue pendiente; el valor temporal debe retirarse antes de producción.
+- El cambio obligatorio ya está implementado: requiere JWT, PIN actual válido, un nuevo PIN de cuatro dígitos distinto y confirmación coincidente. La escritura usa bloqueo pesimista y transacción para reemplazar el hash bcrypt, desactivar la marca y registrar `CAMBIO_PIN` sin PIN ni hash. Recuperación administrativa y cambio voluntario posterior siguen pendientes; el valor temporal debe desaparecer de cada cuenta antes de producción.
 - La regla futura basada en grupos debe ejecutarse mediante un servicio auditable y no mediante una eliminacion de usuarios.
 - La API no expone una lista anonima de nombres o abreviaturas; el usuario escribe su identidad de acceso.
 - Al reabrir mobile, el token guardado se valida con `/auth/me` antes de restaurar identidad, rol y permisos efectivos.
 - Un login exitoso actualiza `ultimo_login` y escribe `LOGIN` con resultado, rol, sucursal y marca de cambio pendiente dentro de la misma transacción; no registra PIN ni abreviatura capturada.
+- Mientras la marca está activa, el guard global rechaza cualquier endpoint funcional salvo `/auth/me` y `/auth/cambiar-pin`; mobile no construye el menú ni inicia consultas de módulos hasta recibir la confirmación del servidor.
 
 ## Alcance de datos por identidad
 

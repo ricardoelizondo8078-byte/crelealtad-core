@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { Usuario } from '../catalogos/entities/usuario.entity';
 import { IS_PUBLIC_KEY } from './public.decorator';
 import {
+  PERMITE_CAMBIO_CREDENCIAL_PENDIENTE_KEY,
   PERMISO_REQUERIDO_KEY,
   PermisoRequerido,
   SOLO_AUTENTICADO_KEY,
@@ -25,6 +26,19 @@ export class PermissionsGuard implements CanActivate {
 
     if (esPublico) {
       return true;
+    }
+
+    const request = context.switchToHttp().getRequest<{ user?: Usuario }>();
+    const permiteCambioPinPendiente = this.reflector.getAllAndOverride<boolean>(
+      PERMITE_CAMBIO_CREDENCIAL_PENDIENTE_KEY,
+      targets,
+    );
+    if (request.user?.requiere_cambio_pin && !permiteCambioPinPendiente) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        code: 'PIN_CHANGE_REQUIRED',
+        message: 'Debes cambiar tu PIN antes de continuar',
+      });
     }
 
     const soloAutenticado = this.reflector.getAllAndOverride<boolean>(
@@ -45,7 +59,6 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('La ruta no tiene un permiso configurado');
     }
 
-    const request = context.switchToHttp().getRequest<{ user?: Usuario }>();
     const permisos = resolverPermisosEfectivos(request.user);
 
     if (!tienePermiso(permisos, requerido.modulo, requerido.accion)) {

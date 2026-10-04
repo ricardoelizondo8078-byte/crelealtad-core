@@ -8,6 +8,8 @@ export interface PermisoRequerido {
 
 export const PERMISO_REQUERIDO_KEY = 'permisoRequerido';
 export const SOLO_AUTENTICADO_KEY = 'soloAutenticado';
+export const PERMITE_CAMBIO_CREDENCIAL_PENDIENTE_KEY =
+  'permiteCambioCredencialPendiente';
 
 export const RequierePermiso = (
   modulo: ModuloAutorizable,
@@ -16,3 +18,6 @@ export const RequierePermiso = (
   SetMetadata(PERMISO_REQUERIDO_KEY, { modulo, accion } satisfies PermisoRequerido);
 
 export const SoloAutenticado = () => SetMetadata(SOLO_AUTENTICADO_KEY, true);
+
+export const PermiteCambioPinPendiente = () =>
+  SetMetadata(PERMITE_CAMBIO_CREDENCIAL_PENDIENTE_KEY, true);

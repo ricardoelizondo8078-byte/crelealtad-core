@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { UsuarioEstado } from '../catalogos/entities/usuario.entity';
@@ -16,6 +16,7 @@ describe('AuthService - login por abreviatura y PIN', () => {
     },
   };
   const transactionManager = {
+    findOne: jest.fn(),
     update: jest.fn(),
     query: jest.fn(),
   };
@@ -140,5 +141,70 @@ describe('AuthService - login por abreviatura y PIN', () => {
     await expect(
       service.login({ abreviatura: 'ANA_VAZQUEZ', pin: '1234' }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('cambia el PIN en una transacción y audita sólo metadatos no sensibles', async () => {
+    transactionManager.findOne.mockResolvedValue({
+      id: 'usuario-1',
+      password_hash: await bcrypt.hash('1234', 4),
+      estado: UsuarioEstado.ACTIVO,
+      requiere_cambio_pin: true,
+    });
+
+    await expect(service.cambiarPin('usuario-1', {
+      pin_actual: '1234',
+      nuevo_pin: '5678',
+      confirmacion_pin: '5678',
+    })).resolves.toEqual({ requiere_cambio_pin: false });
+
+    expect(transactionManager.findOne).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.objectContaining({
+        where: { id: 'usuario-1' },
+        lock: { mode: 'pessimistic_write' },
+      }),
+    );
+    const update = transactionManager.update.mock.calls[0][2] as {
+      password_hash: string;
+      requiere_cambio_pin: boolean;
+    };
+    expect(update.requiere_cambio_pin).toBe(false);
+    await expect(bcrypt.compare('5678', update.password_hash)).resolves.toBe(true);
+
+    const auditoriaSerializada = JSON.stringify(transactionManager.query.mock.calls);
+    expect(auditoriaSerializada).toContain('CAMBIO_PIN');
+    expect(auditoriaSerializada).not.toContain('1234');
+    expect(auditoriaSerializada).not.toContain('5678');
+    expect(auditoriaSerializada).not.toContain(update.password_hash);
+  });
+
+  it('rechaza un PIN actual incorrecto sin actualizar la credencial', async () => {
+    transactionManager.findOne.mockResolvedValue({
+      id: 'usuario-1',
+      password_hash: await bcrypt.hash('1234', 4),
+      estado: UsuarioEstado.ACTIVO,
+      requiere_cambio_pin: true,
+    });
+
+    await expect(service.cambiarPin('usuario-1', {
+      pin_actual: '9999',
+      nuevo_pin: '5678',
+      confirmacion_pin: '5678',
+    })).rejects.toBeInstanceOf(BadRequestException);
+    expect(transactionManager.update).not.toHaveBeenCalled();
+  });
+
+  it('rechaza confirmación diferente y reutilización del PIN actual', async () => {
+    await expect(service.cambiarPin('usuario-1', {
+      pin_actual: '1234',
+      nuevo_pin: '5678',
+      confirmacion_pin: '0000',
+    })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.cambiarPin('usuario-1', {
+      pin_actual: '1234',
+      nuevo_pin: '1234',
+      confirmacion_pin: '1234',
+    })).rejects.toBeInstanceOf(BadRequestException);
+    expect(usuariosRepo.manager.transaction).not.toHaveBeenCalled();
   });
 });

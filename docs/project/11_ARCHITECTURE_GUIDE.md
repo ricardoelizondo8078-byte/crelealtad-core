@@ -85,7 +85,7 @@ Fecha de auditoría: 2026-10-04
 
 - Existe un guard global y un decorador de permisos por módulo/acción; toda ruta protegida sin clasificación explícita queda bloqueada. El vocabulario autorizable vive en `auth/permission.contract.ts`, por lo que un identificador nuevo requiere una ampliación central y comprobable, no cadenas dispersas.
 - El alcance por responsable está aplicado de extremo a extremo para `ASESOR` en el recorrido activo. El alcance por sucursal/zona y la matriz de los demás roles siguen pendientes.
-- Cada asesor valida su PIN contra su propio hash bcrypt; no existe bypass universal. Durante pruebas, los 49 asesores comparten temporalmente el valor aprobado `1234` y tienen `requiere_cambio_pin = true`.
+- Cada asesor valida su PIN contra su propio hash bcrypt; no existe bypass universal. Durante pruebas, los 49 asesores comparten temporalmente el valor aprobado `1234` y tienen `requiere_cambio_pin = true`. El guard global bloquea endpoints funcionales para esas sesiones y sólo permite perfil/cambio de PIN; `POST /auth/cambiar-pin` verifica el PIN actual, guarda el hash nuevo y desactiva la marca dentro de una transacción auditada.
 - El middleware registra únicamente metadatos operativos de la petición; no serializa body, parámetros, cabeceras ni valores rechazados por validación.
 - `JWT_SECRET` es obligatorio cuando `NODE_ENV=production`; el valor local de desarrollo no permite iniciar producción.
 - Las credenciales PostgreSQL también son obligatorias en producción cuando no existe `DATABASE_URL`; la validación del certificado sólo puede desactivarse explícitamente.
@@ -99,7 +99,7 @@ Fecha de auditoría: 2026-10-04
 ### Runtime activo
 
 - Entrada `apps/mobile/App.tsx` delega en `apps/mobile/src/App.tsx`.
-- `AuthProvider` controla la sesión en memoria; el JWT vive en Expo SecureStore y una migración elimina el valor legacy de AsyncStorage.
+- `AuthProvider` controla la sesión en memoria; el JWT vive en Expo SecureStore y una migración elimina el valor legacy de AsyncStorage. Antes de construir la navegación funcional, `AppContent` deriva a `ChangePinScreen` cuando el servidor conserva la marca obligatoria.
 - Navegación implementada como estado local en `AppContent`, sin librería de navegación declarativa.
 - Superficies principales: login, inicio, crear grupo, renovación, expedientes, detalle de expediente, lista/detalle de verificación y verificación de integrante.
 - Formularios auxiliares para integrante, solicitud y documentos.
