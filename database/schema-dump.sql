@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict S6GLnGI5qk1bjYvVR70KkQZa0T9WrteXE8fuSvB5mdUnzVyBFLPFPK8bAtIDU0I
+\restrict o4loaHwjOkTQSNADM2ibYMRE90iVpvFREGYQ5UB65yJa0bnzmRd9ZM28abiZfcN
 
 -- Dumped from database version 17.10
 -- Dumped by pg_dump version 17.10
@@ -173,7 +173,8 @@ CREATE TABLE public.ciclos (
     dia_pago character varying(15) NOT NULL,
     estado character varying(20) DEFAULT 'ACTIVO'::character varying NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_ciclos_estado CHECK (((estado)::text = ANY ((ARRAY['PLANEADO'::character varying, 'ACTIVO'::character varying, 'EN_CIERRE'::character varying, 'CERRADO'::character varying])::text[])))
 );
 
 
@@ -217,9 +218,10 @@ CREATE TABLE public.creditos (
     retencion numeric(10,2) NOT NULL,
     fecha_desembolso date NOT NULL,
     monto_desembolsado numeric(10,2) NOT NULL,
-    estado character varying(20) DEFAULT 'ACTIVO'::character varying NOT NULL,
+    estado character varying(20) DEFAULT 'BORRADOR'::character varying NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_creditos_estado CHECK (((estado)::text = ANY ((ARRAY['BORRADOR'::character varying, 'PREPARADO_DESEMBOLSO'::character varying, 'DESEMBOLSADO'::character varying, 'VIGENTE'::character varying, 'VENCIDO'::character varying, 'LIQUIDADO'::character varying, 'REESTRUCTURADO'::character varying, 'CANCELADO'::character varying])::text[])))
 );
 
 
@@ -460,7 +462,7 @@ COMMENT ON COLUMN public.expedientes.tesorera_integrante_id IS 'Integrante del m
 CREATE TABLE public.grupos (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     nombre character varying NOT NULL,
-    created_by character varying,
+    created_by uuid,
     estado public.grupos_status_enum DEFAULT 'FORMANDO'::public.grupos_status_enum NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -672,10 +674,11 @@ CREATE TABLE public.pagos (
     dias_atraso integer DEFAULT 0 NOT NULL,
     metodo_pago character varying(30),
     recibido_por uuid,
-    estado character varying(20) DEFAULT 'REGISTRADO'::character varying NOT NULL,
+    estado character varying(20) DEFAULT 'PENDIENTE'::character varying NOT NULL,
     observaciones text,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_pagos_estado CHECK (((estado)::text = ANY ((ARRAY['PENDIENTE'::character varying, 'APLICADO'::character varying, 'PARCIAL'::character varying, 'VENCIDO'::character varying, 'REVERSADO'::character varying])::text[])))
 );
 
 
@@ -700,7 +703,8 @@ CREATE TABLE public.personas (
     monto_solicitado numeric(10,2),
     telefono_secundario character varying,
     nombres character varying(150) NOT NULL,
-    nombre_completo character varying(255) GENERATED ALWAYS AS (btrim(((((nombres)::text || ' '::text) || (apellido_pat)::text) || COALESCE((' '::text || NULLIF((apellido_mat)::text, ''::text)), ''::text)))) STORED
+    nombre_completo character varying(255) GENERATED ALWAYS AS (btrim(((((nombres)::text || ' '::text) || (apellido_pat)::text) || COALESCE((' '::text || NULLIF((apellido_mat)::text, ''::text)), ''::text)))) STORED,
+    CONSTRAINT ck_personas_estado CHECK (((estado)::text = ANY ((ARRAY['ACTIVA'::character varying, 'INACTIVA'::character varying, 'BLOQUEADA'::character varying, 'DEPURADA_LOGICA'::character varying])::text[])))
 );
 
 
@@ -738,7 +742,8 @@ CREATE TABLE public.productos_credito (
     max_integrantes integer DEFAULT 12 NOT NULL,
     estado character varying(20) DEFAULT 'ACTIVO'::character varying NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_productos_credito_estado CHECK (((estado)::text = ANY ((ARRAY['ACTIVO'::character varying, 'INACTIVO'::character varying, 'SUSPENDIDO'::character varying])::text[])))
 );
 
 
@@ -776,6 +781,7 @@ CREATE TABLE public.roles (
     estado character varying(20) DEFAULT 'ACTIVO'::character varying NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_roles_estado CHECK (((estado)::text = ANY ((ARRAY['ACTIVO'::character varying, 'INACTIVO'::character varying])::text[]))),
     CONSTRAINT roles_permisos_formato_check CHECK (((permisos IS NULL) OR ((jsonb_typeof(permisos) = 'object'::text) AND (jsonb_typeof((permisos -> 'modulos'::text)) = 'array'::text) AND (jsonb_typeof((permisos -> 'acciones'::text)) = 'array'::text) AND (NOT jsonb_path_exists(permisos, '$."modulos"[*]?(@.type() != "string")'::jsonpath)) AND (NOT jsonb_path_exists(permisos, '$."acciones"[*]?(@.type() != "string")'::jsonpath)))))
 );
 
@@ -1177,6 +1183,7 @@ CREATE TABLE public.usuarios (
     abreviatura character varying(100),
     requiere_cambio_pin boolean DEFAULT false NOT NULL,
     permisos_personalizados jsonb,
+    CONSTRAINT ck_usuarios_estado CHECK (((estado)::text = ANY ((ARRAY['ACTIVO'::character varying, 'INACTIVO'::character varying, 'SUSPENDIDO'::character varying, 'BLOQUEADO'::character varying])::text[]))),
     CONSTRAINT usuarios_permisos_personalizados_elementos_check CHECK (((permisos_personalizados IS NULL) OR ((NOT jsonb_path_exists(permisos_personalizados, '$."modulos"[*]?(@.type() != "string")'::jsonpath)) AND (NOT jsonb_path_exists(permisos_personalizados, '$."acciones"[*]?(@.type() != "string")'::jsonpath))))),
     CONSTRAINT usuarios_permisos_personalizados_formato_check CHECK (((permisos_personalizados IS NULL) OR ((jsonb_typeof(permisos_personalizados) = 'object'::text) AND (jsonb_typeof((permisos_personalizados -> 'modulos'::text)) = 'array'::text) AND (jsonb_typeof((permisos_personalizados -> 'acciones'::text)) = 'array'::text))))
 );
@@ -3015,6 +3022,13 @@ CREATE INDEX idx_expedientes_grupo_id ON public.expedientes USING btree (grupo_i
 
 
 --
+-- Name: idx_grupos_created_by; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_grupos_created_by ON public.grupos USING btree (created_by) WHERE (created_by IS NOT NULL);
+
+
+--
 -- Name: idx_grupos_nombre; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3518,6 +3532,14 @@ ALTER TABLE ONLY public.expedientes
 
 
 --
+-- Name: audit_log fk_audit_log_usuario; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_log
+    ADD CONSTRAINT fk_audit_log_usuario FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id) ON DELETE RESTRICT;
+
+
+--
 -- Name: solicitudes_beneficiarios fk_beneficiario_solicitud; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3619,6 +3641,14 @@ ALTER TABLE ONLY public.expedientes
 
 ALTER TABLE ONLY public.expedientes
     ADD CONSTRAINT fk_expedientes_importacion_integrantes FOREIGN KEY (importacion_integrantes_id) REFERENCES public.importaciones_excel(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: grupos fk_grupos_created_by; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.grupos
+    ADD CONSTRAINT fk_grupos_created_by FOREIGN KEY (created_by) REFERENCES public.usuarios(id) ON DELETE RESTRICT;
 
 
 --
@@ -4169,5 +4199,5 @@ ALTER TABLE ONLY public.zonas
 -- PostgreSQL database dump complete
 --
 
-\unrestrict S6GLnGI5qk1bjYvVR70KkQZa0T9WrteXE8fuSvB5mdUnzVyBFLPFPK8bAtIDU0I
+\unrestrict o4loaHwjOkTQSNADM2ibYMRE90iVpvFREGYQ5UB65yJa0bnzmRd9ZM28abiZfcN
 

@@ -1,5 +1,12 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
+export enum PersonaEstado {
+  ACTIVA = 'ACTIVA',
+  INACTIVA = 'INACTIVA',
+  BLOQUEADA = 'BLOQUEADA',
+  DEPURADA_LOGICA = 'DEPURADA_LOGICA',
+}
+
 @Entity('personas')
 export class PersonaEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -38,8 +45,8 @@ export class PersonaEntity {
   @Column({ type: 'varchar', length: 15, nullable: true })
   genero: string;
 
-  @Column({ type: 'varchar', length: 20, default: 'ACTIVA' })
-  estado: string;
+  @Column({ type: 'varchar', length: 20, default: PersonaEstado.ACTIVA })
+  estado: PersonaEstado;
 
   @Column({ type: 'varchar', nullable: true })
   telefono: string;

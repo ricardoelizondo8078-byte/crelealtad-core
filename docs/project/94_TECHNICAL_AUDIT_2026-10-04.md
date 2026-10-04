@@ -23,13 +23,14 @@ restricciones y conteos de integridad.
 | Dependencias API | Parches compatibles aplicados y `picomatch` productivo corregido; sin avisos altos o críticos, quedan dos moderados ligados a NestJS 10. |
 | Dependencias mobile | Expo 57 y módulos nativos alineados; el audit conserva avisos transitivos del toolchain Expo/Metro sin corrección compatible disponible. |
 | Archivos | Política común para tamaño, firma real, UUID y SHA-256; multipart acotado y documentos numerosos reunidos por lotes en una sola versión. |
-| Datos | Tres FKs faltantes agregadas con cero huérfanos. |
-| Migraciones | Ledger por SHA-256 y ejecutor transaccional activo hasta 035 en prueba y base local real; cero pendientes o drift. |
-| Recuperación | Respaldos custom previos a 033/034 y 035 creados y validados. |
-| Calidad | TypeScript API/mobile, build Nest, 40 suites/213 pruebas API y 5 suites/17 pruebas mobile aprobadas; ESLint mobile sin errores y export Android con Hermes verificado. |
+| Datos | Cinco FKs faltantes agregadas con cero huérfanos; siete catálogos de estado cerrados protegidos mediante `CHECK`. |
+| Migraciones | Ledger por SHA-256 y ejecutor transaccional activo hasta 036 en prueba y base local real; cero pendientes o drift. |
+| Recuperación | Respaldos custom previos a 033/034, 035 y 036 creados y validados. |
+| Calidad | TypeScript API/mobile, build Nest, 41 suites/218 pruebas API y 5 suites/17 pruebas mobile aprobadas; ESLint mobile sin errores y export Android con Hermes verificado. |
 | Autorización | Catálogo técnico único, normalización cerrada y constraints JSONB; no sustituye la matriz funcional pendiente. |
 | Trazabilidad | Login exitoso actualiza su marca y `audit_log` en una sola transacción sin copiar credenciales. |
 | Modularidad mobile | Catálogo de módulos, acceso y claves idempotentes extraídos; Verificación delega procesos, Preguntas generales e Historial crediticio, y Solicitud delega siete pasos, validaciones puras y visores documentales. |
+| Integridad de estados | Migración 036 aplicada con rollback probado: roles, usuarios, personas, productos, créditos, ciclos y pagos rechazan vocabulario fuera de contrato; grupos/expedientes y estados aún abiertos se conservaron sin inferencias. |
 
 ## Estado de módulos
 

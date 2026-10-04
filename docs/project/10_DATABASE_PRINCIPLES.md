@@ -1,6 +1,6 @@
 # 10 Database Principles — Principios de Base de Datos
 
-Versión: 2.12.1
+Versión: 2.13.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -22,11 +22,11 @@ Fecha de auditoría: 2026-10-04
 - Esquema operativo: `public`.
 - Tablas base: 50.
 - Vistas: 1 (`solicitudes_completo`).
-- Índices: 180.
+- Índices: 181.
 - Llaves primarias: 50.
-- Llaves foráneas: 94.
+- Llaves foráneas: 96.
 - Restricciones UNIQUE: 47.
-- Restricciones CHECK explícitas: 90.
+- Restricciones CHECK explícitas: 97.
 - Row Level Security activo: 0 tablas.
 - Triggers en esquema público: 0.
 
@@ -147,6 +147,7 @@ Las cinco FK críticas de `solicitudes` hacia persona, expediente, grupo, crédi
 - `usuarios.password_hash` almacena el hash bcrypt del PIN; nunca el PIN en texto plano.
 - `usuarios.requiere_cambio_pin` identifica credenciales temporales pendientes de sustitución.
 - `usuarios.email` es nullable para permitir asesores sin correo de acceso.
+- `audit_log.usuario_id` y `grupos.created_by` referencian `usuarios.id` con `ON DELETE RESTRICT`; `grupos.created_by` usa UUID y permanece nullable para historia sin actor atribuible.
 - `roles.permisos` almacena JSONB con módulos y acciones iniciales.
 - `usuarios.permisos_personalizados` almacena, sólo cuando existe una excepción individual autorizada, el conjunto efectivo que sustituye los permisos del rol sin cambiar `usuarios.rol_id`.
 - La migración 035 exige que ambos contratos tengan objeto, arreglos y elementos textuales; la API filtra contra un catálogo único y deniega por defecto cualquier valor desconocido.
@@ -155,6 +156,12 @@ Las cinco FK críticas de `solicitudes` hacia persona, expediente, grupo, crédi
 - La API evalúa los permisos JSONB mediante un guard global. Para `ASESOR`, también valida por recurso la cadena `usuario → empleado → expediente` en grupos, expedientes, integrantes, solicitudes y documentos. La matriz funcional completa y el alcance por sucursal/zona continúan pendientes de aprobación e implementación.
 - DEC-023 agrega temporalmente `verificacion:leer` al rol `ASESOR` mediante la migración 010, con registro antes/después en `audit_log` y rollback condicionado; no sustituye la matriz restrictiva definitiva requerida antes de producción.
 - No hay RLS activo; el alcance por sucursal/zona debe implementarse y probarse antes de producción.
+
+## Integridad de estados cerrados
+
+- La migración 036 agrega `CHECK` validados para `roles`, `usuarios`, `personas`, `productos_credito`, `creditos`, `ciclos` y `pagos` usando únicamente catálogos ya cerrados.
+- `creditos.estado` inicia en `BORRADOR` y `pagos.estado` en `PENDIENTE`; el backend debe ejecutar y auditar toda transición, no aceptar selección arbitraria desde la UI.
+- `grupos`, `expedientes`, mora, reestructura/convenio y las tres validaciones `SI/NO` de solicitud no recibieron restricciones nuevas porque su correspondencia funcional exacta continúa abierta o contiene valores legacy. No se inventó una migración de datos.
 
 ## Auditoría
 
@@ -189,6 +196,7 @@ Brecha constitucional:
 - Ninguna migración debe ejecutarse por nombre o fecha sin revisar SQL, precondiciones, respaldo, compatibilidad y reversión.
 - Los cambios se prueban primero en `crelealtad_test` cuando corresponda.
 - `schema_migrations` conserva versión, SHA-256, origen, actor y duración. `npm run db:migrations:apply -- --database=<base> --through=<secuencia>` exige confirmación nominal mediante `MIGRATION_APPLY_CONFIRM`, ejecuta cada archivo canónico dentro de una transacción y registra el ledger sólo al confirmar.
+- La cadena canónica tiene 33 migraciones aplicadas hasta 036 en `crelealtad_test` y `crelealtad`. La 036 fue probada con aplicación repetida, rollback, reconstrucción desde dump y pruebas de rechazo antes de aplicarse a la base operativa.
 - `db:migrations:status` termina con error si detecta pendientes, drift o entradas desconocidas. La reconstrucción destructiva de `crelealtad_test` exige `TEST_DB_RESET_CONFIRM=crelealtad_test` y registra como `BASELINE` el catálogo exacto representado por el dump; no mantiene listas paralelas de migraciones.
 - Está prohibido activar `synchronize: true`.
 - D01 identifica cada corte por SHA-256, genera manifiesto, prevalida relaciones y carga en una sola transacción; repetir el mismo hash no duplica filas.

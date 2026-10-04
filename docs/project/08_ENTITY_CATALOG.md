@@ -1,8 +1,8 @@
 # 08 Entity Catalog — Catálogo Integral de Entidades
 
-Versión: 2.12.0
+Versión: 2.13.0
 Estado: Vigente y verificado
-Fecha de auditoría: 2026-09-25
+Fecha de auditoría: 2026-10-04
 Fuente: PostgreSQL `crelealtad`, entidades TypeORM, API y mobile activos
 
 ## Criterio de lectura
@@ -19,6 +19,7 @@ Objetivo: identidad permanente de la clienta.
 Persistencia: `personas`.
 Cobertura: PostgreSQL, TypeORM y servicios de integrantes/solicitudes.
 Reglas cerradas: folio permanente; `nombres`, `apellido_pat`, `apellido_mat`; `nombre_completo` derivado; monto en persona es prospectivo.
+Integridad de estado: `ACTIVA`, `INACTIVA`, `BLOQUEADA` y `DEPURADA_LOGICA`, protegidos por `ck_personas_estado`.
 
 ## 2. Usuario
 
@@ -27,6 +28,7 @@ Persistencia: `usuarios`.
 Cobertura: PostgreSQL, TypeORM, Auth API y login mobile; cada acceso exitoso actualiza `ultimo_login` y registra un evento `LOGIN` no sensible en la misma transacción.
 Relaciones: un rol y una sucursal por usuario en el modelo vigente; `permisos_personalizados` puede reemplazar de forma excepcional y auditable el conjunto efectivo sin cambiar el rol.
 Implementación para asesores: abreviatura operativa como identificador de login, PIN en `password_hash`, marca `requiere_cambio_pin`, sucursal `MATRIZ`, zona sin asignar y estado `ACTIVO`.
+Integridad de estado: `ACTIVO`, `INACTIVO`, `SUSPENDIDO` y `BLOQUEADO`, protegidos por `ck_usuarios_estado`.
 Cobertura de carga: 49 usuarios vinculados a 49 registros de `empleados` y 49 registros de datos laborales.
 Brecha: no hay administración de usuarios, cambio/recuperación de PIN ni matriz funcional definitiva.
 
@@ -35,6 +37,7 @@ Brecha: no hay administración de usuarios, cambio/recuperación de PIN ni matri
 Objetivo: agrupar módulos y acciones permitidas.
 Persistencia: `roles`, con permisos JSONB.
 Cobertura: datos iniciales, rol incluido en JWT y permisos evaluados por el guard global contra un catálogo técnico central. La migración 035 valida en PostgreSQL la forma JSONB y que módulos/acciones contengan texto.
+Integridad de estado: `ACTIVO` e `INACTIVO`, protegidos por `ck_roles_estado`.
 Brecha: matriz funcional definitiva y alcance territorial pendientes.
 
 ## 4. Empleado
@@ -59,6 +62,7 @@ Objetivo: unidad solidaria de operación.
 Persistencia: `grupos`.
 Cobertura: PostgreSQL, TypeORM, API y mobile.
 Comportamiento actual: crear grupo genera exactamente un expediente en la misma transacción y audita ambas altas. No existe un endpoint independiente para duplicar esa creación.
+Actor de creación: `created_by` es UUID nullable y referencia `usuarios.id` con `ON DELETE RESTRICT`; la nulabilidad conserva grupos históricos sin actor atribuible.
 
 ## 7. Expediente
 
@@ -214,6 +218,7 @@ respaldado y observable, además de sincronización offline completa.
 Objetivo: configurar la oferta financiera.
 Persistencia: `productos_credito`.
 Cobertura: PostgreSQL y referencia desde expedientes.
+Integridad de estado: `ACTIVO`, `INACTIVO` y `SUSPENDIDO`, protegidos por `ck_productos_credito_estado`.
 Brecha: sin módulo de parámetros/productos ejecutable.
 
 ## 12. Crédito
@@ -222,6 +227,7 @@ Objetivo: obligación financiera nacida del desembolso real.
 Persistencia: `creditos`.
 Relaciones: persona, expediente y solicitud; la FK hacia `solicitudes.id` quedó validada en la migración 033.
 Cobertura: base de datos.
+Integridad de estado: `BORRADOR`, `PREPARADO_DESEMBOLSO`, `DESEMBOLSADO`, `VIGENTE`, `VENCIDO`, `LIQUIDADO`, `REESTRUCTURADO` y `CANCELADO`; el default es `BORRADOR`.
 Brecha: sin API/mobile de desembolso o crédito verificados.
 
 ## 13. Ciclo
@@ -232,6 +238,7 @@ Relaciones: grupo, expediente, tesorera y asesora.
 Regla cerrada: nace únicamente con desembolso real.
 Tesorera definitiva: `ciclos.tesorera_id` conserva a la persona con quien se ejecutó el desembolso. Puede diferir de `expedientes.tesorera_integrante_id`; una sustitución en Desembolsos se audita y no obliga a repetir Verificación.
 Integridad vigente: `expediente_id` obligatorio y único, FK compuesta con `grupo_id` y `ON DELETE RESTRICT`; el ciclo y su expediente siempre pertenecen al mismo grupo.
+Integridad de estado: `PLANEADO`, `ACTIVO`, `EN_CIERRE` y `CERRADO`, protegidos por `ck_ciclos_estado`.
 
 ## 14. Calendario de pagos
 
@@ -245,6 +252,7 @@ Objetivo: registrar aplicación de cobranza.
 Persistencia: `pagos`.
 Relaciones: crédito, calendario y persona.
 Cobertura: base de datos.
+Integridad de estado: `PENDIENTE`, `APLICADO`, `PARCIAL`, `VENCIDO` y `REVERSADO`; el default es `PENDIENTE`.
 Brecha: sin API/mobile, idempotencia ni flujo de reverso verificados.
 
 ## 16. Mora
@@ -278,7 +286,7 @@ Cobertura: API de colonias/información y uso mobile.
 
 Objetivo: registrar actor, fecha, motivo y resultado de eventos críticos.
 Persistencia: `audit_log` y bitácoras operativas específicas como `verificacion_llamadas`.
-Cobertura: `audit_log` registra altas de grupo, expediente e integrante; campos cambiados de integrante/solicitud; carga documental; renovaciones; participación; tesorera; handoff y revisión documental. Las llamadas conservan actor, fecha/hora, canal y resultado en su entidad inmutable.
+Cobertura: `audit_log` registra altas de grupo, expediente e integrante; campos cambiados de integrante/solicitud; carga documental; renovaciones; participación; tesorera; handoff y revisión documental. `audit_log.usuario_id` referencia `usuarios.id` con `ON DELETE RESTRICT`; las llamadas conservan actor, fecha/hora, canal y resultado en su entidad inmutable.
 Privacidad: los eventos nuevos de captura registran nombres de campos y contexto operativo, no copias de valores personales.
 Brecha: la cobertura transversal de módulos futuros continúa incompleta y no existen triggers públicos de auditoría.
 
@@ -296,7 +304,7 @@ Historia individual: vive en `expedientes`, `integrantes` y `solicitudes`; no ex
 Objetivo: detectar migraciones pendientes, archivos alterados y entradas desconocidas antes de desplegar.
 Persistencia: `schema_migrations`.
 Cobertura: versión de archivo, SHA-256, origen `MIGRATION` o `BASELINE`, fecha, usuario PostgreSQL y
-duración opcional. `crelealtad_test` y `crelealtad` están baselinizadas hasta la migración 034.
+duración opcional. `crelealtad_test` y `crelealtad` tienen las 33 migraciones canónicas aplicadas hasta la 036, sin pendientes, drift ni entradas desconocidas.
 Regla técnica: un checksum distinto bloquea el baseline; la tabla no contiene datos de negocio.
 
 ## Artefactos no canónicos

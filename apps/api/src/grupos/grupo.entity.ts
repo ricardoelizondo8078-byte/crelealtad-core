@@ -32,8 +32,8 @@ export class GrupoEntity {
   @Column({ type: 'varchar', nullable: false, default: GrupoEstado.FORMANDO })
   estado: GrupoEstado; // antes: status
 
-  @Column({ type: 'varchar', nullable: true })
-  created_by: string; // antes: createdBy
+  @Column({ type: 'uuid', nullable: true })
+  created_by: string | null; // antes: createdBy
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date; // antes: createdAt

@@ -1,14 +1,14 @@
-# 06 State Machine - Maquinas de Estado Oficiales
+# 09 State Machine - Máquinas de Estado Oficiales
 
-Version: 1.3.0
+Versión: 1.4.0
 Estado: Vigente y auditada
-Fecha de auditoria: 2026-09-02
+Fecha de auditoría: 2026-10-04
 
 ## Alcance
 
 - Esta guia define estados funcionales oficiales, no defaults tecnicos de implementacion.
-- El campo status actual del schema SQL usa valores tecnicos de arranque y no reemplaza esta semantica.
-- La cobertura en codigo es parcial y no debe interpretarse como contrato oficial completo.
+- Los estados técnicos del esquema no reemplazan esta semántica funcional.
+- La cobertura en código y PostgreSQL es parcial y no debe interpretarse como contrato oficial completo.
 
 ## Grupo
 
@@ -90,12 +90,14 @@ Estados: No elegible, En preparacion, Esperando umbral, Elegible, En ejecucion, 
 
 - API: `send-to-verification` materializa el handoff parcial; retiro, reintegro y selección de tesorera están controlados mientras el expediente permanece en documentación. El resto de la máquina continúa parcial.
 - Mobile: el flujo documental navega estados operativos, pero no modela el catalogo completo de transiciones.
-- SQL: no existen constraints verificadas que materialicen esta semantica funcional.
+- SQL: `integrantes.estado` y `grupos.estado` ya usan tipos controlados. La migración 036 agrega `CHECK` para los catálogos cerrados de rol (`ACTIVO`, `INACTIVO`), usuario (`ACTIVO`, `INACTIVO`, `SUSPENDIDO`, `BLOQUEADO`), persona (`ACTIVA`, `INACTIVA`, `BLOQUEADA`, `DEPURADA_LOGICA`), producto (`ACTIVO`, `INACTIVO`, `SUSPENDIDO`), crédito (`BORRADOR`, `PREPARADO_DESEMBOLSO`, `DESEMBOLSADO`, `VIGENTE`, `VENCIDO`, `LIQUIDADO`, `REESTRUCTURADO`, `CANCELADO`), ciclo (`PLANEADO`, `ACTIVO`, `EN_CIERRE`, `CERRADO`) y pago (`PENDIENTE`, `APLICADO`, `PARCIAL`, `VENCIDO`, `REVERSADO`).
+- SQL: los defaults nuevos de crédito y pago son `BORRADOR` y `PENDIENTE`. El estado final continúa derivándose mediante reglas y eventos; el `CHECK` sólo impide vocabulario inválido.
 
 ## Contradicciones documentadas sin cambio de regla
 
 - Los servicios actuales usan estados y validaciones parciales de prototipo.
-- Los defaults SQL como draft, active y pending son tecnicos y no equivalen a los estados funcionales oficiales.
+- La correspondencia de estados de grupo y expediente con el contrato funcional aún presenta valores legacy; por eso la migración 036 no amplía ni reemplaza sus catálogos.
+- Los estados de mora, reestructura/convenio y las validaciones `SI/NO` de solicitud permanecen sin una restricción nueva hasta cerrar su contrato exacto.
 
 ## Referencias cruzadas
 

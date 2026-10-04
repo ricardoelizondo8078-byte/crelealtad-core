@@ -1,6 +1,6 @@
 # 11 Architecture Guide — Guía de Arquitectura
 
-Versión: 2.14.0
+Versión: 2.15.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -140,7 +140,7 @@ Fecha de auditoría: 2026-10-04
 
 - PostgreSQL 17.10.
 - 50 tablas base y una vista pública; `schema_migrations` es una tabla técnica sin datos operativos.
-- Las migraciones 033 a 035 agregaron tres FK faltantes, un ledger por checksum y validación estructural de permisos JSONB; `crelealtad_test` y `crelealtad` tienen 32 migraciones aplicadas sin pendientes ni drift hasta 035.
+- Las migraciones 033 a 036 agregaron las FKs faltantes, un ledger por checksum, validación estructural de permisos JSONB y restricciones de actor/estado sobre contratos cerrados; `crelealtad_test` y `crelealtad` tienen 33 migraciones aplicadas sin pendientes ni drift hasta 036.
 - `verificacion_llamadas` conserva cada intento confirmado y su ubicación actual del dispositivo; tres tablas hijas guardan encuesta, seis características y metadatos de evidencia. La imagen vive en almacenamiento protegido y no existe borrado operativo.
 - `verificacion_visita_vecino_fachadas` conserva metadatos, hash, actor e ubicación de la fachada; el archivo se mantiene en filesystem protegido y se entrega sólo mediante API autenticada. `verificacion_visitas_vecino` conserva la confirmación combinada y liga cada respuesta nueva con la fachada más reciente.
 - `verificacion_visita_vecino_evidencias` conserva la segunda fotografía geolocalizada y la liga a la respuesta concreta; el archivo también permanece en filesystem protegido y sólo se entrega con JWT y alcance válido.
@@ -175,7 +175,7 @@ Arquitectura requerida antes de escalar captura:
 
 ## Testing y calidad
 
-- Cuarenta suites y 213 pruebas API activas; no quedan suites `.skip`.
+- Cuarenta y una suites y 218 pruebas API activas; no quedan suites `.skip`.
 - Cinco suites y 17 pruebas mobile cubren UI compartida, acceso por permisos y lógica pura de
   Solicitud y Verificación mediante Jest, `jest-expo` y React Native Testing Library.
 - `npm run build` de la API y el export Android de Expo fueron aprobados el 2026-10-04.

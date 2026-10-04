@@ -3,6 +3,11 @@ import { PermisosRol } from '../../auth/permission.contract';
 
 export type { PermisosRol } from '../../auth/permission.contract';
 
+export enum RolEstado {
+  ACTIVO = 'ACTIVO',
+  INACTIVO = 'INACTIVO',
+}
+
 @Entity('roles')
 export class Rol {
   @PrimaryGeneratedColumn('uuid')
@@ -14,6 +19,6 @@ export class Rol {
   @Column({ type: 'jsonb', nullable: true })
   permisos: PermisosRol | null;
 
-  @Column({ type: 'varchar', nullable: false, default: 'ACTIVO' })
-  estado: string;
+  @Column({ type: 'varchar', nullable: false, default: RolEstado.ACTIVO })
+  estado: RolEstado;
 }

@@ -5,6 +5,7 @@ export enum UsuarioEstado {
   ACTIVO = 'ACTIVO',
   INACTIVO = 'INACTIVO',
   SUSPENDIDO = 'SUSPENDIDO',
+  BLOQUEADO = 'BLOQUEADO',
 }
 
 @Entity('usuarios')

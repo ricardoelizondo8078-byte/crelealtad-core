@@ -1,5 +1,29 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-04] - Integridad referencial de actores y estados cerrados
+
+### Base de datos y dominio
+
+- La migración reversible 036 convirtió `grupos.created_by` a UUID, agregó las FK restrictivas
+  `audit_log.usuario_id → usuarios.id` y `grupos.created_by → usuarios.id`, y creó un índice parcial
+  para el actor de creación del grupo.
+- PostgreSQL valida ahora los catálogos cerrados de estado para roles, usuarios, personas, productos,
+  créditos, ciclos y pagos. Los defaults de crédito y pago cambiaron a `BORRADOR` y `PENDIENTE`.
+- No se agregaron restricciones a grupo, expediente, mora, reestructura/convenio ni a las validaciones
+  `SI/NO` de solicitud porque su correspondencia exacta sigue abierta o contiene valores legacy.
+- Las entidades TypeORM de rol, usuario, persona y grupo quedaron alineadas con el esquema.
+
+### Verificado
+
+- La 036 pasó aplicación doble, pruebas de rechazo, rollback y reaplicación oficial en
+  `crelealtad_test`; el dump canónico reconstruyó después las 50 tablas y baselinó las 33
+  migraciones.
+- Antes de migrar `crelealtad` se validó el respaldo
+  `database/backups/crelealtad-pre-036-20261004-220611.backup` de 4,176,932 bytes, 492 entradas y
+  SHA-256 `9bd200d893fb36b33b483d41055b27a821a8e7fbd12e76b887ece1743dacec4b`.
+- La base conservó exactamente sus conteos previos; terminó con 50 tablas, una vista, 96 FKs,
+  97 `CHECK`, 181 índices, cero actores huérfanos y ledger 33/33 sin pendientes ni drift.
+
 ## [2026-10-04] - Pruebas móviles y lint reproducible
 
 ### Calidad móvil

@@ -1,6 +1,6 @@
 # 03 Project Status — Estado Oficial del Proyecto
 
-Versión: 3.6.0
+Versión: 3.7.0
 Estado: Vigente y verificado
 Fecha de corte: 2026-10-04
 
@@ -8,7 +8,7 @@ Fecha de corte: 2026-10-04
 
 CRELEALTAD CORE superó la etapa de prototipo exclusivamente en memoria descrita en la auditoría de julio. El repositorio actual contiene persistencia PostgreSQL mediante TypeORM, autenticación JWT global, captura documental y de solicitudes, y un flujo parcial de verificación. El 2026-10-04 se rotaron las credenciales locales de PostgreSQL y JWT, se exigió SCRAM en loopback y se integró un historial Git saneado de 51 commits en `main` y `origin/main` mediante `force-with-lease` verificado.
 
-El sistema aún no está listo para producción. DEC-023 habilita temporalmente a todos los usuarios activos en los módulos ejecutables durante desarrollo; la matriz restrictiva definitiva, el alcance territorial, la trazabilidad transversal, la sincronización offline y las pruebas end-to-end continúan pendientes. El endurecimiento técnico del 2026-10-04 retiró credenciales literales de scripts, agregó detección automática de secretos, movió el JWT móvil a SecureStore, implementó el cambio obligatorio de PIN, centralizó la política de archivos y estableció trazabilidad por checksum para migraciones. Esto reduce riesgo técnico, pero no sustituye las decisiones funcionales pendientes de M03–M12.
+El sistema aún no está listo para producción. DEC-023 habilita temporalmente a todos los usuarios activos en los módulos ejecutables durante desarrollo; la matriz restrictiva definitiva, el alcance territorial, la trazabilidad transversal, la sincronización offline y las pruebas end-to-end continúan pendientes. El endurecimiento técnico del 2026-10-04 retiró credenciales literales de scripts, agregó detección automática de secretos, movió el JWT móvil a SecureStore, implementó el cambio obligatorio de PIN, centralizó la política de archivos, estableció trazabilidad por checksum para migraciones y protegió con FKs/checks los actores y estados cuyo contrato ya estaba cerrado. Esto reduce riesgo técnico, pero no sustituye las decisiones funcionales pendientes de M03–M12.
 
 ## Método y fuentes de verificación
 
@@ -115,7 +115,7 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 - PostgreSQL 17.10, base `crelealtad`.
 - 50 tablas base y una vista (`solicitudes_completo`). La tabla adicional `schema_migrations` es exclusivamente técnica y conserva versión, checksum, origen, actor PostgreSQL y fecha de aplicación. Entrevista utiliza una tabla principal, dos historiales relacionales y una tabla unificada de evidencias geolocalizadas; esa tabla distingue también el historial crediticio activo e inactivo y reutiliza por separado las confirmaciones telefónicas y las imágenes del domicilio para no duplicar historia.
 - Solicitudes normalizadas en tabla core más siete tablas hijas.
-- 50 llaves primarias, 94 llaves foráneas, 47 restricciones UNIQUE, 90 CHECK explícitos y 180 índices.
+- 50 llaves primarias, 96 llaves foráneas, 47 restricciones UNIQUE, 97 CHECK explícitos y 181 índices.
 - Las cinco relaciones críticas de `solicitudes` usan `ON DELETE RESTRICT`; sus siete tablas hijas usan `ON DELETE CASCADE`.
 - `ciclos.expediente_id` es obligatorio y único; una FK compuesta con `grupo_id` impide relacionar un ciclo con un expediente de otro grupo y restringe el borrado.
 - `roles.permisos` existe como JSONB y contiene permisos iniciales por módulos y acciones.
@@ -132,7 +132,7 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 - La migración 029 completa en `personas` los teléfonos maestros vacíos que ya estaban confirmados con evidencia. Fue probada con aplicación, rollback y reaplicación en `crelealtad_test`, respaldada en `database/backups/crelealtad-pre-029-20260928-194134.backup` y aplicada sobre `crelealtad`: actualizó un teléfono secundario vacío, dejó las dos confirmaciones sincronizadas y terminó sin vacíos ni conflictos.
 - La migración 031 agrega la captura parcial `verificacion_entrevistas`, los historiales de familiares y desacuerdos, y convierte las evidencias del negocio en `verificacion_entrevista_evidencias` para incluir control de pagos y folleto. Toda fila nueva exige cámara, fecha, coordenadas y actor; las filas anteriores se conservan como legado sin ubicación. Se validó creación, rollback y reaplicación en `crelealtad_test`, se verificó el respaldo `database/backups/crelealtad-pre-031-20261003.backup` y se aplicó sobre `crelealtad` sin crear filas de entrevista ni evidencia.
 - La migración 033 agrega las FKs faltantes `creditos.solicitud_id`, `solicitudes_domicilios.dom_cp_id` y `solicitudes_negocios.negocio_cp_id`. Fue aplicada primero en `crelealtad_test` y después de verificar cero huérfanos y un respaldo custom se aplicó a `crelealtad` sin modificar filas.
-- La migración 034 crea `schema_migrations`. La migración 035 valida el formato y los elementos textuales de los permisos JSONB. `crelealtad_test` y `crelealtad` tienen 32 migraciones canónicas aplicadas hasta 035, sin pendientes, drift ni entradas desconocidas.
+- La migración 034 crea `schema_migrations` y la 035 valida el formato y los elementos textuales de los permisos JSONB. La migración 036 relaciona de forma restrictiva los actores de `audit_log` y `grupos`, tipa `grupos.created_by` como UUID, fija los defaults canónicos de crédito/pago y agrega siete catálogos de estado cerrados mediante `CHECK`. `crelealtad_test` y `crelealtad` tienen 33 migraciones canónicas aplicadas hasta 036, sin pendientes, drift ni entradas desconocidas.
 - `database/migrations` es la única cadena ejecutable de esquema. El catálogo compartido rechaza secuencias duplicadas; `status` falla también ante pendientes, y la reconstrucción de `crelealtad_test` exige confirmación nominal y registra en el ledger el baseline exacto del dump. Los ejecutores históricos no forman parte del flujo canónico.
 - No hay Row Level Security activo ni triggers en el esquema público.
 - `audit_log` registra además el login exitoso, las altas atómicas de grupo/expediente e integrante, los campos modificados de solicitud/integrante y cada documento confirmado, sin copiar credenciales ni valores personales al evento. La auditoría transversal del resto de módulos continúa incompleta.
@@ -148,7 +148,7 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 - Cinco suites y 17 pruebas automatizadas activas en mobile cubren UI compartida, permisos del
   catálogo institucional y reglas/mappers puros de Solicitud y Verificación.
 - La validación del 2026-10-04 confirmó que `npm run build` de la API y el export Android de Expo terminan correctamente.
-- Jest terminó con 40 suites y 213 pruebas aprobadas. La cobertura comprueba además cambio de PIN transaccional sin credenciales en auditoría, bloqueo global mientras el cambio está pendiente, validación de DTO, normalización cerrada del contrato de permisos y trazabilidad transaccional del login, junto con alcance por recurso, configuración productiva cerrada, rechazo de campos controlados por servidor, completitud con archivos realmente cargados, política común de formato/tamaño/hash/UUID y límites multipart, armado ordenado de documentos por lotes, autoguardado tipado de Entrevista, relaciones del mismo expediente, actor de JWT, geolocalización obligatoria y clasificación separada de evidencias.
+- Jest terminó con 41 suites y 218 pruebas aprobadas. La cobertura comprueba además cambio de PIN transaccional sin credenciales en auditoría, bloqueo global mientras el cambio está pendiente, validación de DTO, normalización cerrada del contrato de permisos, trazabilidad transaccional del login y rechazo de actores/estados inválidos por la migración 036, junto con alcance por recurso, configuración productiva cerrada, rechazo de campos controlados por servidor, completitud con archivos realmente cargados, política común de formato/tamaño/hash/UUID y límites multipart, armado ordenado de documentos por lotes, autoguardado tipado de Entrevista, relaciones del mismo expediente, actor de JWT, geolocalización obligatoria y clasificación separada de evidencias.
 - Las suites con PostgreSQL ignoran `DB_NAME`, usan exclusivamente `crelealtad_test` y eliminan sólo los registros creados por cada caso mediante UUID exactos.
 - `npm run verify` integra escaneo de secretos, lint móvil, TypeScript y pruebas API/mobile. API activa `noImplicitAny`, funciones estrictas, retornos, parámetros/locales no usados y fallthrough; mobile aplica las puertas equivalentes compatibles con Expo.
 - ESLint mobile termina con cero errores y mantiene visibles 42 advertencias heredadas de hooks/refs
@@ -218,7 +218,7 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 - Se rotaron PostgreSQL/JWT locales, se exigió SCRAM en loopback y se integró el historial Git saneado en `main` y `origin/main` sin modificar el árbol de trabajo; reflogs y objetos locales antiguos quedaron purgados.
 - Se centralizó el vocabulario técnico de permisos, se separó del shell móvil la evaluación de acceso y se consolidó la generación de claves idempotentes de Verificación.
 - El login exitoso actualiza su marca temporal y auditoría en una sola transacción, sin registrar PIN ni abreviatura capturada.
-- La migración 035 fue validada en `crelealtad_test`, respaldada y aplicada a `crelealtad`; ambas bases quedaron sin pendientes ni drift.
+- La migración 036 superó aplicación doble, rechazo de valores inválidos, rollback y reconstrucción limpia en `crelealtad_test`; se respaldó `crelealtad` y se aplicó sin alterar conteos de filas. Ambas bases quedaron con 33 migraciones, sin pendientes ni drift.
 - `Evidencia de otra financiera` reutiliza todas las imágenes del comprobante de línea de crédito
   ya capturadas en Documentación y conserva la captura ilimitada de fotografías adicionales.
 - El comprobante de línea de crédito del Paso 7 admite selección múltiple y capturas consecutivas sin límite de cantidad impuesto por la aplicación; mobile transmite hasta 12 archivos por petición y la API reúne todos los lotes ordenados como una versión, conservando 10 MB por archivo.
