@@ -26,6 +26,7 @@ import { SolicitudCompletaDto } from './dto/solicitud-completa.dto';
 import { DocumentosStoragePort } from './documentos/documentos-storage.port';
 import {
   ArchivoDocumentoRecibido,
+  CargaDocumentoInput,
   TipoDocumento,
 } from './documentos/documentos.types';
 import { IntegranteEntity } from '../integrantes/integrante.entity';
@@ -82,15 +83,20 @@ export class SolicitudesService {
     tipo: string,
     scope: AccessScope,
     archivos: ArchivoDocumentoRecibido[],
+    carga: CargaDocumentoInput = {},
   ) {
     await assertIntegranteAccess(this.dataSource, integranteId, scope);
     await this.getIntegranteContext(integranteId);
-    const documento = await this.documentosStorageService.guardar(
+    const resultado = await this.documentosStorageService.guardarLote(
       integranteId,
       tipo,
       scope.usuarioId,
       archivos,
+      carga,
     );
+    if (!resultado.completado || !resultado.documento) return resultado;
+
+    const documento = resultado.documento;
     const camposPorTipo = {
       ine: { ruta: 'doc_ine_ruta', fecha: 'doc_ine_fecha' },
       comprobante: { ruta: 'doc_comprobante_ruta', fecha: 'doc_comprobante_fecha' },

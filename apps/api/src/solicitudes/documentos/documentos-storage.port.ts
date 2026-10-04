@@ -1,6 +1,8 @@
 import {
   ArchivoDocumentoRecibido,
+  CargaDocumentoInput,
   DocumentoGuardado,
+  ResultadoCargaDocumento,
   TipoDocumento,
 } from './documentos.types';
 
@@ -13,6 +15,14 @@ export abstract class DocumentosStoragePort {
     usuarioId: string,
     archivos: ArchivoDocumentoRecibido[],
   ): Promise<DocumentoGuardado>;
+
+  abstract guardarLote(
+    integranteId: string,
+    tipoEntrada: string,
+    usuarioId: string,
+    archivos: ArchivoDocumentoRecibido[],
+    carga?: CargaDocumentoInput,
+  ): Promise<ResultadoCargaDocumento>;
 
   abstract obtener(
     integranteId: string,

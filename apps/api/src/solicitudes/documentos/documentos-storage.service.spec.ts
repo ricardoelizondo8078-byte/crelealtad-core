@@ -3,6 +3,7 @@ import { mkdtemp, rm } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 import { DocumentosStorageService } from './documentos-storage.service';
+import { MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST } from '../../common/files/upload-file.policy';
 
 describe('DocumentosStorageService', () => {
   const integranteId = '11111111-1111-4111-8111-111111111111';
@@ -79,6 +80,104 @@ describe('DocumentosStorageService', () => {
       usuarioId,
       archivos,
     )).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('reúne más fotografías que el límite de transporte en una sola versión ordenada', async () => {
+    const contenido = Buffer.from([0xff, 0xd8, 0xff, 0x01]);
+    const primerLote = Array.from(
+      { length: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST },
+      () => ({ buffer: contenido, mimetype: 'image/jpeg', size: contenido.length }),
+    );
+    const parcial = await service.guardarLote(
+      integranteId,
+      'comprobante_credito',
+      usuarioId,
+      primerLote,
+      {
+        indice_inicio: 0,
+        total_archivos: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 1,
+        finalizar: false,
+      },
+    );
+
+    expect(parcial).toMatchObject({
+      recibidos: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST,
+      total_archivos: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 1,
+      completado: false,
+    });
+
+    const final = await service.guardarLote(
+      integranteId,
+      'comprobante_credito',
+      usuarioId,
+      [{ buffer: contenido, mimetype: 'image/jpeg', size: contenido.length }],
+      {
+        carga_id: parcial.carga_id,
+        indice_inicio: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST,
+        total_archivos: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 1,
+        finalizar: true,
+      },
+    );
+
+    expect(final.completado).toBe(true);
+    expect(final.documento?.archivos).toHaveLength(MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 1);
+    expect(final.documento?.archivos.map(({ indice }) => indice)).toEqual(
+      Array.from({ length: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 1 }, (_, index) => index),
+    );
+  });
+
+  it('rechaza incluso por servicio un lote que excede el límite multipart', async () => {
+    const contenido = Buffer.from([0xff, 0xd8, 0xff, 0x01]);
+    const archivos = Array.from({ length: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 1 }, () => ({
+      buffer: contenido,
+      mimetype: 'image/jpeg',
+      size: contenido.length,
+    }));
+
+    await expect(service.guardar(
+      integranteId,
+      'comprobante_credito',
+      usuarioId,
+      archivos,
+    )).rejects.toThrow(`máximo ${MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST} imágenes`);
+  });
+
+  it('vincula la continuación al actor y al siguiente índice esperado', async () => {
+    const contenido = Buffer.from([0xff, 0xd8, 0xff, 0x01]);
+    const archivo = { buffer: contenido, mimetype: 'image/jpeg', size: contenido.length };
+    const parcial = await service.guardarLote(
+      integranteId,
+      'comprobante_credito',
+      usuarioId,
+      [archivo],
+      { indice_inicio: 0, total_archivos: 2, finalizar: false },
+    );
+
+    await expect(service.guardarLote(
+      integranteId,
+      'comprobante_credito',
+      '33333333-3333-4333-8333-333333333333',
+      [archivo],
+      {
+        carga_id: parcial.carga_id,
+        indice_inicio: 1,
+        total_archivos: 2,
+        finalizar: true,
+      },
+    )).rejects.toThrow('no corresponde al documento o usuario actual');
+
+    await expect(service.guardarLote(
+      integranteId,
+      'comprobante_credito',
+      usuarioId,
+      [archivo],
+      {
+        carga_id: parcial.carga_id,
+        indice_inicio: 0,
+        total_archivos: 2,
+        finalizar: true,
+      },
+    )).rejects.toThrow('debe iniciar en el índice 1');
   });
 
   it('rechaza identificadores manipulados y documentos inexistentes', async () => {

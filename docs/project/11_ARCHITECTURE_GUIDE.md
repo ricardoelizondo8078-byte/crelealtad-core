@@ -127,7 +127,7 @@ Fecha de auditoría: 2026-10-04
 - La sesión guardada se valida contra `/auth/me` al iniciar y sólo entonces restaura usuario, rol y permisos efectivos.
 - No hay cola durable offline, backoff, idempotencia ni reconciliación.
 - La selección fallida se conserva únicamente durante la sesión de pantalla; cerrar la app antes de confirmar pierde ese reintento.
-- La API aplica una política común de firma JPEG/PNG/PDF, máximo de 10 MB, UUID de rutas y SHA-256, y conserva versiones anteriores en almacenamiento. Falta un proveedor durable de producción y respaldo operativo.
+- La API aplica una política común de firma JPEG/PNG/PDF, máximo de 10 MB, UUID de rutas y SHA-256, y conserva versiones anteriores en almacenamiento. Todas las entradas multipart limitan archivos, campos, partes y encabezados. La carga documental admite hasta 12 archivos por petición; mobile encadena los lotes necesarios y el backend sólo activa la versión completa al finalizar, sin limitar la cantidad funcional aprobada para `comprobante_credito`. Falta un proveedor durable de producción, limpieza programada de cargas parciales y respaldo operativo.
 - Las variantes paralelas legacy de `modules/asesor` y sus archivos backup fueron retiradas del árbol activo después de comprobar que no tenían imports ni rutas vigentes.
 - No hay pruebas automatizadas mobile verificadas.
 

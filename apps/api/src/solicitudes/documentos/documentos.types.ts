@@ -31,3 +31,18 @@ export interface DocumentoGuardado {
   usuario_id: string;
   archivos: ArchivoDocumentoGuardado[];
 }
+
+export interface CargaDocumentoInput {
+  carga_id?: string;
+  indice_inicio?: number;
+  total_archivos?: number;
+  finalizar?: boolean;
+}
+
+export interface ResultadoCargaDocumento {
+  carga_id: string;
+  recibidos: number;
+  total_archivos: number;
+  completado: boolean;
+  documento?: DocumentoGuardado;
+}

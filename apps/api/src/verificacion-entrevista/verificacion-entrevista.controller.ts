@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import { MAX_UPLOAD_FILE_SIZE_BYTES } from '../common/files/upload-file.policy';
+import { SINGLE_FILE_MULTIPART_OPTIONS } from '../common/files/upload-file.policy';
 import { RequierePermiso } from '../auth/permissions.decorator';
 import { Usuario } from '../catalogos/entities/usuario.entity';
 import {
@@ -74,7 +74,7 @@ export class VerificacionEntrevistaController {
 
   @Post('evidencias')
   @RequierePermiso('verificacion', 'registrar')
-  @UseInterceptors(FileInterceptor('foto', { limits: { fileSize: MAX_UPLOAD_FILE_SIZE_BYTES } }))
+  @UseInterceptors(FileInterceptor('foto', SINGLE_FILE_MULTIPART_OPTIONS))
   registrarEvidencia(
     @Param('integranteId', new ParseUUIDPipe()) integranteId: string,
     @Body() dto: RegistrarEvidenciaEntrevistaDto,

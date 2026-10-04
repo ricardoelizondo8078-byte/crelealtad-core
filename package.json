@@ -18,8 +18,5 @@
   "devDependencies": {
     "concurrently": "^9.1.2",
     "exceljs": "^4.4.0"
-  },
-  "dependencies": {
-    "@nestjs/throttler": "^6.5.0"
   }
 }

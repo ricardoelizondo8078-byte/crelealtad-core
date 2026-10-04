@@ -15,10 +15,14 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import { MAX_UPLOAD_FILE_SIZE_BYTES } from '../common/files/upload-file.policy';
+import {
+  DOCUMENT_FILES_MULTIPART_OPTIONS,
+  MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST,
+} from '../common/files/upload-file.policy';
 import { SolicitudesService } from './solicitudes.service';
 import { CreateSolicitudDto } from './dto/create-solicitud.dto';
 import { PartialUpdateSolicitudDto } from './dto/partial-update-solicitud.dto';
+import { CargaDocumentoDto } from './dto/carga-documento.dto';
 import { RequierePermiso } from '../auth/permissions.decorator';
 import { Usuario } from '../catalogos/entities/usuario.entity';
 import { ArchivoDocumentoRecibido } from './documentos/documentos.types';
@@ -56,10 +60,15 @@ export class SolicitudesController {
 
   @Post('integrante/:integranteId/documentos/:tipo')
   @RequierePermiso('solicitudes', 'actualizar')
-  @UseInterceptors(FilesInterceptor('archivos', undefined, { limits: { fileSize: MAX_UPLOAD_FILE_SIZE_BYTES } }))
+  @UseInterceptors(FilesInterceptor(
+    'archivos',
+    MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST,
+    DOCUMENT_FILES_MULTIPART_OPTIONS,
+  ))
   subirDocumento(
     @Param('integranteId') integranteId: string,
     @Param('tipo') tipo: string,
+    @Body() carga: CargaDocumentoDto,
     @UploadedFiles() archivos: ArchivoDocumentoRecibido[],
     @Req() request: { user: Usuario },
   ) {
@@ -68,6 +77,7 @@ export class SolicitudesController {
       tipo,
       accessScopeFromUser(request.user),
       archivos,
+      carga,
     );
   }
 

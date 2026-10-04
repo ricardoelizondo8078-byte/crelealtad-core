@@ -11,12 +11,14 @@ import {
   ScreenTitleBar,
 } from '../../components/ui';
 import { apiUrl } from '../../config/api';
-import { api, getAuthorizationHeaders, getDocumentUploadTimeoutMs } from '../../services/api-client';
+import { api, getAuthorizationHeaders } from '../../services/api-client';
 import { colors, spacing, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
 import { formatPhone } from '../../utils/input';
 import { esRutaDocumentoServidor } from '../../utils/documents';
-import { appendDocumentFile } from '../../services/document-upload';
+import {
+  uploadDocumentFiles,
+} from '../../services/document-upload';
 
 type DocumentoClave = 'ine' | 'comprobante' | 'ine_beneficiario' | 'solicitud_firmada' | 'comprobante_credito';
 type DocumentoEstado = 'Pendiente' | 'Subiendo' | 'Sincronizado' | 'Error' | 'Opcional';
@@ -151,27 +153,13 @@ export const DocumentosScreen: React.FC<DocumentosScreenProps> = ({
   };
 
   const subirDocumento = async (documento: DocumentoItem, assets: ImagePicker.ImagePickerAsset[]) => {
-    setPendientesSesion((current) => ({ ...current, [documento.clave]: assets }));
-    setDocumentoEstado(documento.clave, 'Subiendo');
-
     try {
-      const formData = new FormData();
-      for (let index = 0; index < assets.length; index += 1) {
-        const asset = assets[index];
-        if (!asset) continue;
-        const extension = asset.uri.split('?')[0].split('.').pop()?.toLowerCase() || 'jpg';
-        const normalizedExtension = extension === 'png' ? 'png' : extension === 'pdf' ? 'pdf' : 'jpg';
-        await appendDocumentFile(
-          formData,
-          asset.uri,
-          `${documento.clave}-${index + 1}.${normalizedExtension}`,
-        );
-      }
-
-      const remoto = await api.post<DocumentoRemoto>(
-        `/solicitudes/integrante/${integranteId}/documentos/${documento.clave}`,
-        formData,
-        { timeoutMs: getDocumentUploadTimeoutMs(assets.length) },
+      setPendientesSesion((current) => ({ ...current, [documento.clave]: assets }));
+      setDocumentoEstado(documento.clave, 'Subiendo');
+      const remoto = await uploadDocumentFiles(
+        integranteId,
+        documento.clave,
+        assets.map((asset) => asset.uri),
       );
       setPendientesSesion((current) => ({ ...current, [documento.clave]: undefined }));
       setDocumentoEstado(documento.clave, 'Sincronizado', remoto.ruta);

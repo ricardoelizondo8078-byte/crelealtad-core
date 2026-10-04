@@ -1,5 +1,39 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-04] - Dependencias compatibles y transporte multipart acotado
+
+### Dependencias
+
+- Se actualizaron dentro de sus rangos compatibles los árboles raíz, API y mobile. La raíz dejó de
+  instalar una copia sin uso de `@nestjs/throttler`; la API actualizó, entre otros, `pg` 8.23.1,
+  `supertest` 7.3.1 y `ts-jest` 29.4.14.
+- La API fuerza `picomatch` 4.0.7 únicamente bajo `fdir`, corrigiendo el aviso alto que alcanzaba el
+  árbol de producción. El audit productivo queda sin avisos altos o críticos y conserva dos
+  moderados cuya corrección requiere migrar coordinadamente NestJS 10 a 12.
+- Expo confirmó que el SDK 57 y sus módulos nativos están alineados. No se aplicaron los cambios
+  incompatibles sugeridos por `npm audit` para mobile, porque proponen bajar a Expo 44 y React
+  Native 0.72; esos avisos transitivos del toolchain permanecen registrados para seguimiento.
+
+### Multipart y documentos
+
+- Todas las rutas multipart tienen ahora límites explícitos de archivo, campos, partes y pares de
+  encabezado. Las evidencias unitarias aceptan un archivo y la carga documental acepta hasta 12
+  archivos por petición, manteniendo 10 MB por archivo.
+- El máximo de 12 es de transporte, no funcional: el comprobante de línea de crédito continúa sin
+  límite total impuesto por la aplicación. Mobile divide automáticamente selecciones mayores en
+  lotes ordenados y la API los reúne bajo una sola versión documental.
+- Cada continuación queda vinculada a integrante, tipo, actor, total e índice esperado. La ruta
+  vigente y la auditoría sólo se actualizan cuando el servidor confirma el último lote; una carga
+  parcial nunca se presenta como documento sincronizado.
+- No hubo cambios de esquema ni datos PostgreSQL.
+
+### Verificado
+
+- `npm run verify`: escaneo de secretos, TypeScript API/mobile y 39 suites con 203 pruebas.
+- Build Nest y export Android de Expo/Metro aprobados con 817 módulos y bytecode Hermes; el
+  artefacto temporal de exportación se eliminó después de comprobarlo.
+- `npx expo install --check` confirmó dependencias móviles compatibles.
+
 ## [2026-10-04] - Cierre del ledger único de migraciones
 
 ### Integridad del proceso

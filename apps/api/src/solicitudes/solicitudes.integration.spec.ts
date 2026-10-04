@@ -10,6 +10,7 @@ import { SolicitudesModule } from './solicitudes.module';
 import { IntegrantesModule } from '../integrantes/integrantes.module';
 import { ExpedientesModule } from '../expedientes/expedientes.module';
 import { GruposModule } from '../grupos/grupos.module';
+import { MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST } from '../common/files/upload-file.policy';
 
 describe('Solicitudes Integration - Wizard 7 pasos', () => {
   let app: INestApplication;
@@ -371,15 +372,49 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
       rutasDocumentos[tipo] = documentoRes.body.ruta;
     }
 
+    const primerLoteCredito = request(app.getHttpServer())
+      .post(`/solicitudes/integrante/${integranteId}/documentos/comprobante_credito`)
+      .field('indice_inicio', '0')
+      .field('total_archivos', String(MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 1))
+      .field('finalizar', 'false');
+    for (let index = 0; index < MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST; index += 1) {
+      primerLoteCredito.attach('archivos', imagenJpeg, {
+        filename: `comprobante-credito-${index + 1}.jpg`,
+        contentType: 'image/jpeg',
+      });
+    }
+    const primerLoteCreditoRes = await primerLoteCredito.expect(201);
+    expect(primerLoteCreditoRes.body).toMatchObject({
+      recibidos: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST,
+      total_archivos: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 1,
+      completado: false,
+    });
+
     const comprobanteCreditoRes = await request(app.getHttpServer())
       .post(`/solicitudes/integrante/${integranteId}/documentos/comprobante_credito`)
-      .attach('archivos', imagenJpeg, { filename: 'comprobante-credito-1.jpg', contentType: 'image/jpeg' })
-      .attach('archivos', imagenJpeg, { filename: 'comprobante-credito-2.jpg', contentType: 'image/jpeg' })
-      .attach('archivos', imagenJpeg, { filename: 'comprobante-credito-3.jpg', contentType: 'image/jpeg' })
-      .attach('archivos', imagenJpeg, { filename: 'comprobante-credito-4.jpg', contentType: 'image/jpeg' })
+      .field('carga_id', primerLoteCreditoRes.body.carga_id)
+      .field('indice_inicio', String(MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST))
+      .field('total_archivos', String(MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 1))
+      .field('finalizar', 'true')
+      .attach('archivos', imagenJpeg, {
+        filename: `comprobante-credito-${MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 1}.jpg`,
+        contentType: 'image/jpeg',
+      })
       .expect(201);
-    expect(comprobanteCreditoRes.body.archivos).toHaveLength(4);
+    expect(comprobanteCreditoRes.body.archivos).toHaveLength(
+      MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 1,
+    );
     rutasDocumentos.comprobante_credito = comprobanteCreditoRes.body.ruta;
+
+    const cargaExcesiva = request(app.getHttpServer())
+      .post(`/solicitudes/integrante/${integranteId}/documentos/comprobante_credito`);
+    for (let index = 0; index <= MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST; index += 1) {
+      cargaExcesiva.attach('archivos', imagenJpeg, {
+        filename: `exceso-${index + 1}.jpg`,
+        contentType: 'image/jpeg',
+      });
+    }
+    await cargaExcesiva.expect(400);
 
     // Verificar persistencia en solicitudes_documentos
     const documentos = await dataSource.query(

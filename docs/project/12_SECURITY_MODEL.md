@@ -168,6 +168,13 @@ hash, actor, fechas, origen `CAMARA`, coordenadas, precisión disponible y fuent
 Mobile no ofrece acceso al carrete o galería. La API rechaza capturas nuevas sin ubicación y omite
 las coordenadas exactas del evento de auditoría; el legado previo a 031 se conserva sin inventarlas.
 
+Las entradas multipart tienen límites explícitos de tamaño, cantidad de archivos por petición,
+campos, partes y encabezados. Las evidencias de Verificación aceptan un archivo por petición y los
+documentos hasta 12, siempre con 10 MB por archivo. Este límite es de transporte: DEC-172 conserva
+la cantidad funcional abierta de `comprobante_credito`, que se transmite en lotes ordenados. Cada
+continuación queda vinculada a integrante, tipo y actor; sólo el último lote crea el manifiesto,
+actualiza la ruta vigente y emite la auditoría documental.
+
 ## Errores y seguridad
 
 - Mensajes externos no deben exponer detalles internos.

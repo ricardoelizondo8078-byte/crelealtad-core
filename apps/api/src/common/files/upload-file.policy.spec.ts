@@ -1,10 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
 import {
   assertUuid,
+  DOCUMENT_FILES_MULTIPART_OPTIONS,
   detectDocumentUploadFormat,
   detectImageUploadFormat,
+  MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST,
   MAX_UPLOAD_FILE_SIZE_BYTES,
   sha256Hex,
+  SINGLE_FILE_MULTIPART_OPTIONS,
 } from './upload-file.policy';
 
 const messages = {
@@ -50,5 +53,21 @@ describe('upload-file.policy', () => {
     expect(() => assertUuid('00000000-0000-4000-8000-000000000000', 'evidencia'))
       .not.toThrow();
     expect(sha256Hex(Buffer.from('crelealtad'))).toHaveLength(64);
+  });
+
+  it('acota archivos, campos y partes de todas las cargas multipart', () => {
+    expect(SINGLE_FILE_MULTIPART_OPTIONS.limits).toMatchObject({
+      fileSize: MAX_UPLOAD_FILE_SIZE_BYTES,
+      files: 1,
+      fields: 16,
+      parts: 17,
+    });
+    expect(DOCUMENT_FILES_MULTIPART_OPTIONS.limits).toMatchObject({
+      fileSize: MAX_UPLOAD_FILE_SIZE_BYTES,
+      files: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST,
+      fields: 4,
+      parts: MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST + 4,
+    });
+    expect(MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST).toBeGreaterThan(2);
   });
 });

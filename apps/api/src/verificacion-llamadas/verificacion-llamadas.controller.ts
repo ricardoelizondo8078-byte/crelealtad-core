@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import { MAX_UPLOAD_FILE_SIZE_BYTES } from '../common/files/upload-file.policy';
+import { SINGLE_FILE_MULTIPART_OPTIONS } from '../common/files/upload-file.policy';
 import { RequierePermiso } from '../auth/permissions.decorator';
 import { Usuario } from '../catalogos/entities/usuario.entity';
 import { RegistrarEncuestaLlamadaDto } from './dto/registrar-encuesta-llamada.dto';
@@ -46,7 +46,7 @@ export class VerificacionLlamadasController {
 
   @Post(':llamadaId/encuesta')
   @RequierePermiso('verificacion', 'registrar')
-  @UseInterceptors(FileInterceptor('evidencia', { limits: { fileSize: MAX_UPLOAD_FILE_SIZE_BYTES } }))
+  @UseInterceptors(FileInterceptor('evidencia', SINGLE_FILE_MULTIPART_OPTIONS))
   registrarEncuesta(
     @Param('integranteId', new ParseUUIDPipe()) integranteId: string,
     @Param('llamadaId', new ParseUUIDPipe()) llamadaId: string,
@@ -81,7 +81,7 @@ export class VerificacionLlamadasController {
 
   @Post(':llamadaId/confirmacion-telefono')
   @RequierePermiso('verificacion', 'registrar')
-  @UseInterceptors(FileInterceptor('evidencia', { limits: { fileSize: MAX_UPLOAD_FILE_SIZE_BYTES } }))
+  @UseInterceptors(FileInterceptor('evidencia', SINGLE_FILE_MULTIPART_OPTIONS))
   registrarConfirmacionTelefono(
     @Param('integranteId', new ParseUUIDPipe()) integranteId: string,
     @Param('llamadaId', new ParseUUIDPipe()) llamadaId: string,
@@ -138,7 +138,7 @@ export class VerificacionLlamadasController {
 
   @Post(':llamadaId/confirmacion-telefono/reemplazo-evidencia')
   @RequierePermiso('verificacion', 'registrar')
-  @UseInterceptors(FileInterceptor('evidencia', { limits: { fileSize: MAX_UPLOAD_FILE_SIZE_BYTES } }))
+  @UseInterceptors(FileInterceptor('evidencia', SINGLE_FILE_MULTIPART_OPTIONS))
   reemplazarEvidenciaTelefono(
     @Param('integranteId', new ParseUUIDPipe()) integranteId: string,
     @Param('llamadaId', new ParseUUIDPipe()) llamadaId: string,

@@ -1,6 +1,8 @@
 import type { DocumentImageCarouselPage } from '../../components/ui';
-import { api, getDocumentUploadTimeoutMs } from '../../services/api-client';
-import { appendDocumentFile } from '../../services/document-upload';
+import {
+  uploadDocumentFiles,
+  type DocumentoRemoto,
+} from '../../services/document-upload';
 import type { SolicitudApiResponse } from './solicitud-api.types';
 
 export type DocumentStatus =
@@ -29,11 +31,7 @@ export interface DocumentoRequerido {
   rutaServidor?: string;
 }
 
-export interface DocumentoRemoto {
-  id: string;
-  ruta: string;
-  archivos: Array<{ indice: number; mime_type: string; url: string }>;
-}
+export type { DocumentoRemoto } from '../../services/document-upload';
 
 export interface DocumentoViewerState {
   title: string;
@@ -69,16 +67,6 @@ export const RUTAS_DOCUMENTO: Record<string, keyof SolicitudApiResponse> = {
   comprobante_linea_credito: 'doc_comprobante_credito_ruta',
 };
 
-const anexarArchivoDocumento = async (formData: FormData, uri: string, nombre: string) => {
-  const extension = uri.split('?')[0].split('.').pop()?.toLowerCase() || 'jpg';
-  const normalizedExtension = extension === 'png'
-    ? 'png'
-    : extension === 'pdf'
-      ? 'pdf'
-      : 'jpg';
-  await appendDocumentFile(formData, uri, `${nombre}.${normalizedExtension}`);
-};
-
 export const subirDocumentoAlServidor = async (
   integranteId: string,
   documentoId: string,
@@ -86,21 +74,5 @@ export const subirDocumentoAlServidor = async (
 ): Promise<DocumentoRemoto> => {
   const tipo = TIPOS_DOCUMENTO_API[documentoId];
   if (!tipo) throw new Error('Tipo de documento no reconocido.');
-  if (uris.length === 0) throw new Error('Selecciona al menos una imagen.');
-
-  const formData = new FormData();
-  for (let index = 0; index < uris.length; index += 1) {
-    const uri = uris[index];
-    if (!uri) continue;
-    await anexarArchivoDocumento(formData, uri, `${tipo}-${index + 1}`);
-  }
-
-  return api.post<DocumentoRemoto>(
-    `/solicitudes/integrante/${integranteId}/documentos/${tipo}`,
-    formData,
-    {
-      timeoutMs: getDocumentUploadTimeoutMs(uris.length),
-      showProcessing: false,
-    },
-  );
+  return uploadDocumentFiles(integranteId, tipo, uris);
 };

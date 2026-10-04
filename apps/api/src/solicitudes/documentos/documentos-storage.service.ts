@@ -9,14 +9,27 @@ import { basename, resolve } from 'path';
 import {
   assertUuid,
   detectDocumentUploadFormat,
+  MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST,
 } from '../../common/files/upload-file.policy';
 import {
   ArchivoDocumentoRecibido,
+  CargaDocumentoInput,
   DocumentoGuardado,
+  ResultadoCargaDocumento,
   TIPOS_DOCUMENTO,
   TipoDocumento,
 } from './documentos.types';
 import { DocumentosStoragePort } from './documentos-storage.port';
+
+interface CargaDocumentoPendiente {
+  id: string;
+  integrante_id: string;
+  tipo: TipoDocumento;
+  usuario_id: string;
+  total_archivos: number;
+  fecha_inicio: string;
+  archivos: DocumentoGuardado['archivos'];
+}
 
 @Injectable()
 export class DocumentosStorageService extends DocumentosStoragePort {
@@ -42,23 +55,111 @@ export class DocumentosStorageService extends DocumentosStoragePort {
     usuarioId: string,
     archivos: ArchivoDocumentoRecibido[],
   ): Promise<DocumentoGuardado> {
+    const resultado = await this.guardarLote(
+      integranteId,
+      tipoEntrada,
+      usuarioId,
+      archivos,
+      {
+        indice_inicio: 0,
+        total_archivos: archivos.length,
+        finalizar: true,
+      },
+    );
+    if (!resultado.documento) {
+      throw new BadRequestException('La carga del documento quedó incompleta');
+    }
+    return resultado.documento;
+  }
+
+  async guardarLote(
+    integranteId: string,
+    tipoEntrada: string,
+    usuarioId: string,
+    archivos: ArchivoDocumentoRecibido[],
+    carga: CargaDocumentoInput = {},
+  ): Promise<ResultadoCargaDocumento> {
     const tipo = this.validarTipo(tipoEntrada);
     if (!archivos?.length) {
       throw new BadRequestException('Debes enviar al menos una imagen del documento');
     }
-    if (tipo !== 'comprobante_credito' && archivos.length > 2) {
+    if (archivos.length > MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST) {
+      throw new BadRequestException(
+        `Cada lote permite máximo ${MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST} imágenes`,
+      );
+    }
+
+    const totalArchivos = carga.total_archivos ?? archivos.length;
+    const indiceInicio = carga.indice_inicio ?? 0;
+    const finalizar = carga.finalizar ?? true;
+    if (!Number.isSafeInteger(totalArchivos) || totalArchivos < 1) {
+      throw new BadRequestException('El total de archivos de la carga no es válido');
+    }
+    if (!Number.isSafeInteger(indiceInicio) || indiceInicio < 0) {
+      throw new BadRequestException('El índice inicial de la carga no es válido');
+    }
+    if (tipo !== 'comprobante_credito' && totalArchivos > 2) {
       throw new BadRequestException('Este documento permite máximo dos imágenes');
     }
-    if (tipo === 'ine' && archivos.length !== 2) {
+    if (tipo === 'ine' && totalArchivos !== 2) {
       throw new BadRequestException('El INE requiere frente y reverso');
     }
 
-    const documentoId = randomUUID();
+    const documentoId = carga.carga_id ?? randomUUID();
+    assertUuid(documentoId, 'carga');
     const directory = this.documentDirectory(integranteId, tipo, documentoId);
-    await mkdir(directory, { recursive: true });
+    const draftPath = resolve(directory, 'upload.json');
+    const esNuevaCarga = !carga.carga_id;
+    let pendiente: CargaDocumentoPendiente;
 
+    if (esNuevaCarga) {
+      if (indiceInicio !== 0) {
+        throw new BadRequestException('El primer lote debe iniciar en el índice 0');
+      }
+      pendiente = {
+        id: documentoId,
+        integrante_id: integranteId,
+        tipo,
+        usuario_id: usuarioId,
+        total_archivos: totalArchivos,
+        fecha_inicio: new Date().toISOString(),
+        archivos: [],
+      };
+    } else {
+      pendiente = await this.obtenerCargaPendiente(draftPath);
+      if (
+        pendiente.id !== documentoId
+        || pendiente.integrante_id !== integranteId
+        || pendiente.tipo !== tipo
+        || pendiente.usuario_id !== usuarioId
+      ) {
+        throw new BadRequestException('La carga pendiente no corresponde al documento o usuario actual');
+      }
+      if (pendiente.total_archivos !== totalArchivos) {
+        throw new BadRequestException('El total de archivos no coincide con la carga iniciada');
+      }
+    }
+
+    if (indiceInicio !== pendiente.archivos.length) {
+      throw new BadRequestException(
+        `El siguiente lote debe iniciar en el índice ${pendiente.archivos.length}`,
+      );
+    }
+    const recibidos = indiceInicio + archivos.length;
+    if (recibidos > totalArchivos) {
+      throw new BadRequestException('El lote excede el total de archivos declarado');
+    }
+    if (finalizar && recibidos !== totalArchivos) {
+      throw new BadRequestException('No se puede finalizar: todavía faltan archivos');
+    }
+    if (!finalizar && recibidos === totalArchivos) {
+      throw new BadRequestException('El último lote debe marcarse para finalizar');
+    }
+
+    const nombresCreados: string[] = [];
     try {
-      const guardados = [];
+      if (esNuevaCarga) await mkdir(directory, { recursive: true });
+      const guardados = [...pendiente.archivos];
       for (let index = 0; index < archivos.length; index += 1) {
         const archivo = archivos[index];
         const formato = detectDocumentUploadFormat(archivo, {
@@ -66,15 +167,31 @@ export class DocumentosStorageService extends DocumentosStoragePort {
           tooLarge: 'Cada archivo debe pesar máximo 10 MB',
           invalid: 'Solo se permiten imágenes JPEG, PNG o archivos PDF válidos',
         });
-        const nombre = `pagina-${index + 1}.${formato.extension}`;
+        const indice = indiceInicio + index;
+        const nombre = `pagina-${indice + 1}.${formato.extension}`;
         await writeFile(resolve(directory, nombre), archivo.buffer, { flag: 'wx' });
+        nombresCreados.push(nombre);
         guardados.push({
-          indice: index,
+          indice,
           nombre,
           mime_type: formato.mimeType,
           tamano: archivo.size,
-          url: this.archivoRoute(integranteId, tipo, documentoId, index),
+          url: this.archivoRoute(integranteId, tipo, documentoId, indice),
         });
+      }
+
+      if (!finalizar) {
+        await writeFile(
+          draftPath,
+          JSON.stringify({ ...pendiente, archivos: guardados }, null, 2),
+          { encoding: 'utf8' },
+        );
+        return {
+          carga_id: documentoId,
+          recibidos: guardados.length,
+          total_archivos: totalArchivos,
+          completado: false,
+        };
       }
 
       const fechaCaptura = new Date().toISOString();
@@ -92,9 +209,20 @@ export class DocumentosStorageService extends DocumentosStoragePort {
         JSON.stringify(documento, null, 2),
         { encoding: 'utf8', flag: 'wx' },
       );
-      return documento;
+      await rm(draftPath, { force: true });
+      return {
+        carga_id: documentoId,
+        recibidos: guardados.length,
+        total_archivos: totalArchivos,
+        completado: true,
+        documento,
+      };
     } catch (error) {
-      await rm(directory, { recursive: true, force: true });
+      if (esNuevaCarga) {
+        await rm(directory, { recursive: true, force: true });
+      } else {
+        await Promise.all(nombresCreados.map((nombre) => rm(resolve(directory, nombre), { force: true })));
+      }
       throw error;
     }
   }
@@ -156,6 +284,26 @@ export class DocumentosStorageService extends DocumentosStoragePort {
       recursive: true,
       force: true,
     });
+  }
+
+  private async obtenerCargaPendiente(path: string): Promise<CargaDocumentoPendiente> {
+    try {
+      const pendiente = JSON.parse(await readFile(path, 'utf8')) as CargaDocumentoPendiente;
+      if (
+        !pendiente
+        || typeof pendiente.id !== 'string'
+        || typeof pendiente.integrante_id !== 'string'
+        || typeof pendiente.tipo !== 'string'
+        || typeof pendiente.usuario_id !== 'string'
+        || !Number.isSafeInteger(pendiente.total_archivos)
+        || !Array.isArray(pendiente.archivos)
+      ) {
+        throw new Error('Carga pendiente inválida');
+      }
+      return pendiente;
+    } catch {
+      throw new NotFoundException('Carga pendiente no encontrada');
+    }
   }
 
   private documentDirectory(integranteId: string, tipo: TipoDocumento, documentoId: string): string {
