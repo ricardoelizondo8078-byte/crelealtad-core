@@ -1,107 +1,123 @@
-# 09 State Machine - Máquinas de Estado Oficiales
+# 09 State Machine — Máquinas de Estado Oficiales
 
-Versión: 1.4.0
+Versión: 2.0.0
 Estado: Vigente y auditada
 Fecha de auditoría: 2026-10-04
 
-## Alcance
+## Alcance y autoridad
 
-- Esta guia define estados funcionales oficiales, no defaults tecnicos de implementacion.
-- Los estados técnicos del esquema no reemplazan esta semántica funcional.
-- La cobertura en código y PostgreSQL es parcial y no debe interpretarse como contrato oficial completo.
+- Los nombres funcionales de este documento reproducen el contrato de
+  `01_PROJECT_CONSTITUTION.md`; no son etiquetas propuestas por el código.
+- PostgreSQL define el vocabulario técnico actualmente admitido, no la semántica funcional futura.
+- Una correspondencia funcional–técnica sólo es válida cuando está aprobada. Grupo y Expediente
+  todavía no cuentan con una correspondencia completa y no deben recibir un `CHECK` inferido.
+- Los estados finales se derivan mediante reglas y eventos; la usuaria no los elige arbitrariamente.
 
-## Grupo
+## Catálogos funcionales oficiales
 
-Estados: Prospecto, En integracion, Elegible, Activo, En renovacion, Cerrado.
-Transiciones validas:
-- Prospecto -> En integracion
-- En integracion -> Elegible
-- Elegible -> Activo
-- Activo -> En renovacion
-- En renovacion -> Activo
-- Activo -> Cerrado
+| Entidad | Estados funcionales oficiales |
+|---|---|
+| Persona | Activa, Inactiva, Bloqueada, Depurada lógica |
+| Usuario | Activo, Inactivo, Suspendido, Bloqueado |
+| Rol | Activo, Inactivo |
+| Producto | Activo, Inactivo, Suspendido |
+| Grupo | Propuesto, En documentación, En evaluación, Activo, En renovación, Cerrado |
+| Expediente | En documentación, Con observaciones, Listo para verificar, En verificación, Verificado, En análisis, Autorizado, Esperando 80 %, Listo para desembolso, Desembolsado, Cancelado, Rechazado |
+| Solicitante | Pendiente, Completa, Retirada, Rechazada |
+| Solicitud | No iniciada, En captura, Incompleta, Capturada, Observada, Reemplazada, Cerrada |
+| Documento | Pendiente, Capturado, Observado, Aceptado, Reemplazado, Vencido |
+| Crédito | Borrador, Preparado para desembolso, Desembolsado, Vigente, Vencido, Liquidado, Reestructurado, Cancelado |
+| Ciclo | Planeado, Activo, En cierre, Cerrado |
+| Desembolso | Pendiente, Programado, Ejecutado, Cancelado, Reversado |
+| Pago | Pendiente, Aplicado, Parcial, Vencido, Reversado |
 
-## Expediente
+## Transiciones funcionales principales
 
-Estados: En documentacion, Con observaciones, Listo para verificar, En verificacion, Verificado, En analisis, Autorizado, Esperando 80%, Listo para desembolso, Desembolsado, Cancelado, Rechazado.
-Transiciones clave:
-- En documentacion -> Listo para verificar
-- En documentacion -> Con observaciones
-- Con observaciones -> En documentacion
-- Listo para verificar -> En verificacion
-- En verificacion -> Verificado | Con observaciones | Rechazado
-- Verificado -> En analisis
-- En analisis -> Autorizado | Rechazado
-- Autorizado -> Esperando 80% | Listo para desembolso
-- Esperando 80% -> Listo para desembolso
-- Listo para desembolso -> Desembolsado
+### Grupo
 
-## Solicitante
+- Propuesto → En documentación → En evaluación → Activo.
+- Activo → En renovación → Activo.
+- Activo → Cerrado.
 
-Estados: Pendiente, Completa, Retirada, Rechazada.
-Transiciones:
-- Pendiente -> Completa
-- Completa -> Pendiente (si aparece observacion o vencimiento)
-- Pendiente -> Retirada
-- Completa -> Retirada (confirmación de no participación antes del handoff)
-- Retirada -> Pendiente | Completa (reintegro formal con recálculo)
-- Pendiente -> Rechazada
-- Completa -> Rechazada (dictamen posterior)
+La precisión de RN-007 continúa abierta: hoy existe una identidad operativa de grupo antes del
+desembolso, mientras que crédito y ciclo financiero sólo nacen con el desembolso real.
 
-## Solicitud
+### Expediente
 
-Estados: No iniciada, En captura, Capturada, Observada, Corregida, Cancelada.
+- En documentación → Listo para verificar | Con observaciones | Cancelado.
+- Con observaciones → En documentación | Cancelado.
+- Listo para verificar → En verificación.
+- En verificación → Verificado | Con observaciones | Rechazado.
+- Verificado → En análisis.
+- En análisis → Autorizado | Rechazado.
+- Autorizado → Esperando 80 % | Listo para desembolso.
+- Esperando 80 % → Listo para desembolso.
+- Listo para desembolso → Desembolsado.
 
-## Documento
+### Solicitante
 
-Estados: Pendiente, Capturado, Observado, Aceptado, Reemplazado, Vencido.
-Transiciones:
-- Pendiente -> Capturado
-- Capturado -> Observado | Aceptado
-- Observado -> Reemplazado | Capturado
-- Aceptado -> Vencido
+- Pendiente → Completa | Retirada | Rechazada.
+- Completa → Pendiente cuando aparece una observación o vencimiento.
+- Completa → Retirada antes del handoff o → Rechazada por dictamen posterior.
+- Retirada → Pendiente | Completa mediante reintegro formal y recálculo.
 
-## Verificacion
+### Documento
 
-Estados: Cola de revision, En revision, Aprobado, Observado, Rechazado.
+- Pendiente → Capturado.
+- Capturado → Observado | Aceptado.
+- Observado → Capturado | Reemplazado.
+- Aceptado → Vencido | Reemplazado.
 
-## Desembolso
+Las transiciones detalladas de Solicitud, Crédito, Ciclo, Desembolso y Pago requieren el caso de uso
+que materialice el evento y su auditoría; el catálogo no autoriza mutaciones directas.
 
-Estados: Pendiente, Programado, Ejecutado, Cancelado, Reversado.
+## Correspondencia técnica verificada
 
-## Cobranza
+| Concepto | Implementación vigente | Estado de correspondencia |
+|---|---|---|
+| Rol | `ACTIVO`, `INACTIVO` | Cerrada y protegida por `ck_roles_estado` |
+| Usuario | `ACTIVO`, `INACTIVO`, `SUSPENDIDO`, `BLOQUEADO` | Cerrada y protegida por `ck_usuarios_estado` |
+| Persona | `ACTIVA`, `INACTIVA`, `BLOQUEADA`, `DEPURADA_LOGICA` | Cerrada y protegida por `ck_personas_estado` |
+| Producto | `ACTIVO`, `INACTIVO`, `SUSPENDIDO` | Cerrada y protegida por `ck_productos_credito_estado` |
+| Crédito | `BORRADOR`, `PREPARADO_DESEMBOLSO`, `DESEMBOLSADO`, `VIGENTE`, `VENCIDO`, `LIQUIDADO`, `REESTRUCTURADO`, `CANCELADO` | Cerrada y protegida por `ck_creditos_estado` |
+| Ciclo | `PLANEADO`, `ACTIVO`, `EN_CIERRE`, `CERRADO` | Cerrada y protegida por `ck_ciclos_estado` |
+| Pago | `PENDIENTE`, `APLICADO`, `PARCIAL`, `VENCIDO`, `REVERSADO` | Cerrada y protegida por `ck_pagos_estado` |
+| Grupo | Enum PostgreSQL: `FORMANDO`, `LISTO_PARA_REVISION`, `EN_REVISION`, `AUTORIZADO`; TypeORM además declara valores posteriores no presentes en el enum SQL | Abierta; no hay equivalencia uno a uno aprobada |
+| Expediente | Código: `EN_DOCUMENTACION`, `EN_VERIFICACION`, `COMPLETO`, `EN_REVISION`, `AUTORIZADO`, `RECHAZADO`, `DESEMBOLSADO`; la base también conserva `En proceso` legacy | Abierta; sin restricción nueva |
+| Solicitante / integrante | `DOCUMENTANDO`, `SUJETA_CREDITO`, `EN_VERIFICACION`, `AUTORIZADA`, `RECHAZADA`, `RETIRADA` | Parcial; `SUJETA_CREDITO` materializa hoy la completitud técnica, pero no renombra `Completa` |
+| Solicitud | Sin columna de estado; completitud derivada de core, siete hijas y evidencias | Pendiente de materialización aprobada |
+| Documento | Sin entidad única con el catálogo funcional completo; mobile usa estados de transporte y servidor confirma archivos/versiones | Parcial; transporte no equivale a estado documental oficial |
 
-Estados: Vigente, Seguimiento, Riesgo, Mora, Regularizado, Liquidado.
+La auditoría de PostgreSQL del 2026-10-04 encontró 64 grupos `FORMANDO`, 493 `AUTORIZADO`; 568
+expedientes `En proceso`, 19 `EN_DOCUMENTACION`, 2 `EN_VERIFICACION` y 276 `DESEMBOLSADO`. Estos
+conteos son evidencia técnica agregada, no una homologación funcional ni una autorización para
+reescribir historia.
 
-## Renovacion
+## Procesos sin máquina final implementada
 
-Estados: No elegible, En preparacion, Esperando umbral, Elegible, En ejecucion, Concluida.
+- Verificación tiene cuatro procesos persistentes parciales, pero carece de dictamen general. Las
+  salidas objetivo son Verificado, Con observaciones y Rechazado.
+- Renovación puede preparar el expediente siguiente, pero no tiene motor parametrizado que determine
+  No elegible, Esperando umbral o Elegible.
+- Cobranza, Mora y Convenios tienen tablas parciales, pero no una máquina operativa aprobada de
+  extremo a extremo.
 
 ## Reglas de consistencia transversal
 
 1. No existe expediente Desembolsado sin desembolso Ejecutado.
 2. No existe solicitante Completa sin solicitud digital capturada.
 3. No existe solicitante Completa con documento obligatorio Pendiente, Observado o Vencido.
-4. No existe renovacion Elegible sin cumplir umbral configurado.
-5. No existe expediente Listo para verificar con pendientes obligatorios criticos ni sin una tesorera participante seleccionada.
-6. Sustituir a la tesorera durante Desembolso no retrocede el expediente a Verificacion: el evento se audita y la persona definitiva se registra en el ciclo desembolsado.
-
-## Cobertura verificada en implementacion actual
-
-- API: `send-to-verification` materializa el handoff parcial; retiro, reintegro y selección de tesorera están controlados mientras el expediente permanece en documentación. El resto de la máquina continúa parcial.
-- Mobile: el flujo documental navega estados operativos, pero no modela el catalogo completo de transiciones.
-- SQL: `integrantes.estado` y `grupos.estado` ya usan tipos controlados. La migración 036 agrega `CHECK` para los catálogos cerrados de rol (`ACTIVO`, `INACTIVO`), usuario (`ACTIVO`, `INACTIVO`, `SUSPENDIDO`, `BLOQUEADO`), persona (`ACTIVA`, `INACTIVA`, `BLOQUEADA`, `DEPURADA_LOGICA`), producto (`ACTIVO`, `INACTIVO`, `SUSPENDIDO`), crédito (`BORRADOR`, `PREPARADO_DESEMBOLSO`, `DESEMBOLSADO`, `VIGENTE`, `VENCIDO`, `LIQUIDADO`, `REESTRUCTURADO`, `CANCELADO`), ciclo (`PLANEADO`, `ACTIVO`, `EN_CIERRE`, `CERRADO`) y pago (`PENDIENTE`, `APLICADO`, `PARCIAL`, `VENCIDO`, `REVERSADO`).
-- SQL: los defaults nuevos de crédito y pago son `BORRADOR` y `PENDIENTE`. El estado final continúa derivándose mediante reglas y eventos; el `CHECK` sólo impide vocabulario inválido.
-
-## Contradicciones documentadas sin cambio de regla
-
-- Los servicios actuales usan estados y validaciones parciales de prototipo.
-- La correspondencia de estados de grupo y expediente con el contrato funcional aún presenta valores legacy; por eso la migración 036 no amplía ni reemplaza sus catálogos.
-- Los estados de mora, reestructura/convenio y las validaciones `SI/NO` de solicitud permanecen sin una restricción nueva hasta cerrar su contrato exacto.
+4. No existe renovación elegible sin cumplir el umbral configurado.
+5. No existe expediente Listo para verificar con pendientes obligatorios críticos ni sin una
+   tesorera participante completa.
+6. Sustituir a la tesorera durante Desembolso no retrocede el expediente a Verificación: el evento
+   se audita y la persona definitiva se registra en el ciclo desembolsado.
 
 ## Referencias cruzadas
 
-- project/05_BUSINESS_RULES.md
-- project/07_OPERATION_FLOW.md
-- project/08_ENTITY_CATALOG.md
-- project/12_SECURITY_MODEL.md
+- `project/01_PROJECT_CONSTITUTION.md`
+- `project/05_BUSINESS_RULES.md`
+- `project/07_OPERATION_FLOW.md`
+- `project/08_ENTITY_CATALOG.md`
+- `project/10_DATABASE_PRINCIPLES.md`
+- `project/12_SECURITY_MODEL.md`

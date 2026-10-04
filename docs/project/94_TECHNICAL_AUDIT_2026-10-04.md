@@ -31,6 +31,7 @@ restricciones y conteos de integridad.
 | Trazabilidad | Login exitoso actualiza su marca y `audit_log` en una sola transacción sin copiar credenciales. |
 | Modularidad mobile | Catálogo de módulos, acceso y claves idempotentes extraídos; Verificación delega procesos, Preguntas generales e Historial crediticio, y Solicitud delega siete pasos, validaciones puras y visores documentales. |
 | Integridad de estados | Migración 036 aplicada con rollback probado: roles, usuarios, personas, productos, créditos, ciclos y pagos rechazan vocabulario fuera de contrato; grupos/expedientes y estados aún abiertos se conservaron sin inferencias. |
+| Documentación canónica | Reglas, manual, flujo, catálogo de entidades y máquina de estados sincronizados contra Constitución, código y PostgreSQL; contrato objetivo, cobertura actual y brechas abiertas quedaron separados. |
 
 ## Estado de módulos
 

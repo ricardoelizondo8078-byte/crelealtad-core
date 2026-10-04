@@ -1,6 +1,6 @@
 # 08 Entity Catalog — Catálogo Integral de Entidades
 
-Versión: 2.13.0
+Versión: 2.14.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 Fuente: PostgreSQL `crelealtad`, entidades TypeORM, API y mobile activos
@@ -30,7 +30,8 @@ Relaciones: un rol y una sucursal por usuario en el modelo vigente; `permisos_pe
 Implementación para asesores: abreviatura operativa como identificador de login, PIN en `password_hash`, marca `requiere_cambio_pin`, sucursal `MATRIZ`, zona sin asignar y estado `ACTIVO`.
 Integridad de estado: `ACTIVO`, `INACTIVO`, `SUSPENDIDO` y `BLOQUEADO`, protegidos por `ck_usuarios_estado`.
 Cobertura de carga: 49 usuarios vinculados a 49 registros de `empleados` y 49 registros de datos laborales.
-Brecha: no hay administración de usuarios, cambio/recuperación de PIN ni matriz funcional definitiva.
+Brecha: el cambio inicial obligatorio de PIN ya está implementado; faltan administración de
+usuarios, recuperación o restablecimiento auditable, cambio voluntario y matriz funcional definitiva.
 
 ## 3. Rol
 
@@ -63,6 +64,9 @@ Persistencia: `grupos`.
 Cobertura: PostgreSQL, TypeORM, API y mobile.
 Comportamiento actual: crear grupo genera exactamente un expediente en la misma transacción y audita ambas altas. No existe un endpoint independiente para duplicar esa creación.
 Actor de creación: `created_by` es UUID nullable y referencia `usuarios.id` con `ON DELETE RESTRICT`; la nulabilidad conserva grupos históricos sin actor atribuible.
+Estados técnicos: PostgreSQL admite `FORMANDO`, `LISTO_PARA_REVISION`, `EN_REVISION` y
+`AUTORIZADO`; TypeORM no está completamente alineado con ese enum. Su correspondencia con
+Propuesto, En documentación, En evaluación, Activo, En renovación y Cerrado continúa abierta.
 
 ## 7. Expediente
 
@@ -73,6 +77,9 @@ Relación con ciclo: puede existir sin ciclo durante originación; una vez desem
 Tesorera en originación: `tesorera_integrante_id` identifica a la participante seleccionada en Documentación para las validaciones adicionales de Verificación. La FK compuesta impide apuntar a una integrante de otro expediente; la API exige además que continúe como participante.
 Historia importada: `ciclo_historico_origen_id` relaciona de forma única el expediente fuente con un ciclo D01 del mismo grupo; `importacion_integrantes_id` conserva su procedencia.
 Brecha: la transición actual a verificación aplica participación, pendientes y tesorera, pero el mínimo parametrizado y la bitácora constitucional completa continúan pendientes.
+Estados técnicos observados: `En proceso`, `EN_DOCUMENTACION`, `EN_VERIFICACION` y
+`DESEMBOLSADO`; el código declara además estados todavía no materializados. No existe una
+homologación completa aprobada con el catálogo funcional del expediente.
 
 ## 8. Integrante
 
@@ -165,8 +172,9 @@ fecha de foto, actor autenticado, idempotencia, latitud, longitud, precisión di
 ubicación, fuente `DISPOSITIVO` y fecha de registro.
 Reglas cerradas: cada captura confirmada crea una fila histórica; una repetición no borra la fila
 anterior. El resumen devuelve la toma más reciente de cada tipo sin exponer coordenadas ni actor.
-En M03 la fachada y el medidor de luz son obligatorios para terminar; fachada con la integrante es
-opcional y la nomenclatura no se muestra ni se exige. Su tipo e historial permanecen disponibles
+En M03 la fachada es obligatoria. Después se registra si existe medidor: `Sí` exige su fotografía y
+`No` exige una causa controlada persistida que la sustituye para el cierre. Fachada con la integrante
+es opcional y la nomenclatura no se muestra ni se exige. Su tipo e historial permanecen disponibles
 para el módulo de destino todavía pendiente. Resumen y auditoría omiten las coordenadas precisas.
 
 ## 8.8 Evidencia de Entrevista
@@ -202,6 +210,9 @@ Cobertura: PostgreSQL, entidades TypeORM, API y formularios mobile.
 Lectura: vista `solicitudes_completo` para resumen y relaciones TypeORM para detalle.
 Reglas cerradas: core más siete hijas, UPSERT por `solicitud_id`, IDs de contexto derivados en backend y crédito asignado solo durante desembolso real.
 El core conserva `monto_solicitado_confirmado_at` para distinguir una referencia precargada de la captura formal realizada por el asesor en el Paso 6.
+Estado: no existe una columna propia de estado en `solicitudes`; la completitud se deriva desde sus
+campos, tablas hijas, documentos y el estado técnico de la integrante. El catálogo funcional de
+Solicitud no debe inferirse a partir de estados locales de formulario.
 
 ## 10. Documento y evidencia
 
@@ -212,6 +223,9 @@ Cobertura: captura por cámara/galería, carga multipart autenticada, validació
 versionamiento y lectura privada confirmada por servidor.
 Brecha: el proveedor actual es filesystem configurable; producción requiere almacenamiento durable,
 respaldado y observable, además de sincronización offline completa.
+Estado: no existe todavía una entidad documental única que materialice Pendiente, Capturado,
+Observado, Aceptado, Reemplazado y Vencido. Los estados mobile de carga/sincronización describen
+transporte y no sustituyen ese catálogo funcional.
 
 ## 11. Producto de crédito
 

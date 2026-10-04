@@ -1,8 +1,8 @@
-# 04 Operation Flow - Flujo Operativo Completo
+# 07 Operation Flow — Flujo Operativo Completo
 
-Version: 1.1.0
+Versión: 1.2.0
 Estado: Vigente
-Fecha de verificacion: 2026-09-21
+Fecha de verificación: 2026-10-04
 
 ## Flujo macro del credito grupal
 
@@ -20,6 +20,15 @@ Fecha de verificacion: 2026-09-21
 12. Desembolso.
 13. Conservacion historica para seguimiento.
 
+Cobertura al corte:
+
+- Pasos 1 a 7: parciales con persistencia real en M02.
+- Paso 8: implementado como handoff técnico transaccional, con mínimo temporal no parametrizado.
+- Paso 9: parcial; existen cuatro procesos y evidencias, pero no dictamen general.
+- Pasos 10 a 12: contrato objetivo, sin módulos ejecutables verificados.
+- Paso 13: parcial; existe historia transaccional e importada, pero la auditoría transversal y el
+  historial individual legacy siguen incompletos.
+
 ## Flujo de decision de completitud de solicitante
 
 Entradas:
@@ -31,14 +40,16 @@ Entradas:
 Reglas:
 - Si falta solicitud digital obligatoria: Pendiente.
 - Si falta documento obligatorio, manifiesto o archivo confirmado: Pendiente.
-- Si cumple requisitos: Completa.
+- Si cumple requisitos: Completa. El estado técnico vigente de `integrantes` es
+  `SUJETA_CREDITO`; no constituye el nombre funcional oficial.
 - Si se retira por evento autorizado: Retirada.
 - Si dictamen negativo: Rechazada.
 
 ## Flujo de expediente a verificacion
 
 Precondiciones:
-- Al menos una participante completa mientras el minimo parametrizado siga pendiente de M11.
+- Al menos una participante completa como condición técnica temporal mientras el mínimo oficial
+  parametrizado siga pendiente de M11.
 - Sin integrantes activas con captura obligatoria pendiente; las retiradas formales no bloquean.
 - Tesorera seleccionada entre participantes completas.
 
@@ -55,12 +66,23 @@ Resultado:
 
 ## Flujo de verificacion
 
-Salidas:
+Cobertura actual:
+
+1. Revisión documental previa.
+2. Concentrador sin orden obligatorio: Llamada, Visita al vecino, Imágenes del domicilio y
+   Entrevista.
+3. Persistencia independiente de respuestas, evidencias, actor, fecha e idempotencia cuando aplica.
+4. `Conclusiones` deshabilitado; no existe salida general ni transición posterior autorizada.
+
+Salidas funcionales objetivo, aún no implementadas:
+
 - Verificado.
 - Con observaciones.
 - Rechazado.
 
 ## Flujo de autorizacion y desembolso
+
+Este bloque describe el contrato objetivo; M04 y M05 no tienen API o pantalla ejecutable verificada.
 
 - Expediente verificado pasa a analisis.
 - Si autorizado y cumple condiciones, pasa a listo para desembolso.
@@ -74,6 +96,17 @@ Salidas:
 - Control de estado.
 - Control de refinanciamiento.
 - Control de auditoria.
+
+## Matriz de trazabilidad del flujo
+
+| Tramo | Entidad principal | Estado de implementación |
+|---|---|---|
+| Documentación | Grupo, expediente, integrante, solicitud y documentos | Parcial funcional |
+| Handoff | Expediente, participantes y tesorera | Implementado con mínimo temporal |
+| Verificación | Cuatro procesos y sus evidencias | Parcial, sin dictamen general |
+| Análisis | Expediente verificado | No implementado |
+| Desembolso | Crédito, ciclo y evento de desembolso | Sólo base de datos parcial |
+| Cobranza y posteriores | Calendario, pago, mora y reestructura | Sólo base de datos parcial |
 
 ## Referencias cruzadas
 

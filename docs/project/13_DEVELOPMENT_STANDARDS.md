@@ -1,7 +1,8 @@
-# 09 Development Standards - Estandares de Desarrollo
+# 13 Development Standards — Estándares de Desarrollo
 
-Version: 1.3.0
+Versión: 1.4.0
 Estado: Vigente
+Fecha de verificación: 2026-10-04
 
 ## Principios
 
@@ -91,12 +92,15 @@ La reconstrucción de `crelealtad_test` es destructiva y requiere
 `TEST_DB_RESET_CONFIRM=crelealtad_test`; el proceso debe terminar con el catálogo completo
 registrado como `BASELINE` en `schema_migrations`.
 
-## Checklist de Documentacion
+## Checklist de Documentación
 
 1. Referencias cruzadas validas.
 2. Sin placeholders.
 3. Sin contradicciones no resueltas.
-4. Version y fecha actualizadas.
+4. Versión y fecha actualizadas.
+5. Estados funcionales y técnicos se distinguen; una correspondencia abierta nunca se presenta
+   como migración autorizada.
+6. Los flujos objetivo se etiquetan como pendientes cuando no existe caso de uso ejecutable.
 
 ## Referencias cruzadas
 

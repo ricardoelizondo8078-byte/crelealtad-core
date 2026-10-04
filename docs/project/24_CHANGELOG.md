@@ -1,5 +1,30 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-04] - Sincronización de entidades, estados, reglas y flujo
+
+### Gobierno documental
+
+- Se reconciliaron reglas, manual operativo, flujo, catálogo de entidades y máquina de estados
+  contra la Constitución, decisiones cerradas, código activo y metadatos agregados de PostgreSQL.
+- La máquina de estados reproduce ahora los catálogos funcionales oficiales y separa su contrato de
+  los valores técnicos. Los catálogos cerrados protegidos por la migración 036 quedaron distinguidos
+  de Grupo, Expediente, Solicitud, Documento y procesos cuya correspondencia sigue abierta o parcial.
+- El flujo identifica expresamente qué tramos son ejecutables, parciales o sólo objetivo. Verificación
+  ya no se documenta como si emitiera dictamen: conserva cuatro procesos, pero `Conclusiones` sigue
+  deshabilitado y M04/M05 no tienen superficies ejecutables.
+- Se corrigieron referencias obsoletas al PIN, a la regla condicional del medidor de luz, al número de
+  módulos funcionales, a los endpoints de Auth, al total de handlers y a las suites API.
+- No se modificaron la Constitución ni decisiones cerradas, no se inventaron equivalencias de estado
+  y no hubo cambios de código, esquema o datos.
+
+### Verificado
+
+- PostgreSQL: 50 tablas, 96 FKs, 97 `CHECK`; revisión agregada de catálogos y conteos sin consultar
+  datos personales.
+- Código: 12 módulos funcionales Nest, Health en raíz, 3 handlers Auth y 57 handlers totales.
+- Referencias cruzadas y términos contradictorios revisados; RN-007, el mínimo parametrizado, la
+  homologación Grupo/Expediente y el dictamen general permanecen abiertos de forma explícita.
+
 ## [2026-10-04] - Integridad referencial de actores y estados cerrados
 
 ### Base de datos y dominio

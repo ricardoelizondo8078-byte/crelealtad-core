@@ -1,8 +1,8 @@
-# 02 Business Rules - Catalogo Normalizado
+# 05 Business Rules — Catálogo Normalizado
 
-Version: 1.2.0
+Versión: 1.3.0
 Estado: Vigente y auditado
-Fecha de auditoria: 2026-09-21
+Fecha de auditoría: 2026-10-04
 Fuente base: docs/project/01_PROJECT_CONSTITUTION.md + docs/archive/BUSINESS_RULES_INITIAL_DRAFT.md
 
 ## Criterio de normalizacion
@@ -91,8 +91,11 @@ Estado documental: la parametrizacion continua siendo la politica oficial; el ha
 3. Entidad Solicitud en API y mobile sin tabla dedicada en schema principal.
 Estado documental: RESUELTA. PostgreSQL contiene `solicitudes`, siete tablas hijas y la vista `solicitudes_completo`; la API persiste mediante TypeORM y deriva persona, expediente y grupo desde la integrante.
 
-4. Estados tecnicos en SQL como draft, active y pending versus estados funcionales de negocio.
-Estado documental: los estados del schema actual no sustituyen la semantica funcional definida en esta guia y en la maquina de estados.
+4. Estados técnicos en SQL versus estados funcionales de negocio.
+Estado documental: RESUELTA para los catálogos cerrados de rol, usuario, persona, producto, crédito,
+ciclo y pago mediante la migración 036. Continúa ABIERTA para grupo, expediente, mora,
+reestructura/convenio y las validaciones `SI/NO` de solicitud porque conservan valores legacy o no
+tienen correspondencia funcional aprobada. Ningún estado técnico sustituye la semántica oficial.
 
 5. RN-007 indica que grupo y credito nacen tras el desembolso, mientras el flujo vigente crea el grupo al iniciar Documentacion y reserva el nacimiento del ciclo/credito para el desembolso real.
 Estado documental: ABIERTA. No se modifico RN-007 ni la operacion; requiere decision explicita de Direccion para precisar si "grupo" se refiere al grupo crediticio desembolsado o a su identidad operativa previa.
@@ -103,6 +106,20 @@ Estado documental: ABIERTA. No se modifico RN-007 ni la operacion; requiere deci
 - `monto_autorizado`, `ciclo_numero`, relaciones y rutas documentales no forman parte de la escritura publica de la solicitud.
 - Una evidencia obligatoria cuenta para completitud solo cuando su manifiesto y archivo existen en almacenamiento de servidor.
 - Para el rol `ASESOR`, la API valida propiedad del expediente en cada ruta directa del recorrido activo.
+
+## Límite entre regla y cobertura actual
+
+- `Solicitante` es el concepto funcional; el runtime vigente lo materializa en `integrantes` y usa
+  estados técnicos parciales. Esa equivalencia de persistencia no renombra la entidad funcional.
+- El mínimo oficial de solicitantes es parametrizable. Mientras M11 no exista, el handoff técnico
+  sólo exige al menos una participante completa, cero participantes pendientes y una tesorera
+  participante completa. Esta condición temporal no define el mínimo oficial del producto.
+- `Solicitud` se persiste en una tabla core y siete hijas, pero todavía no tiene una columna de estado
+  propia. Su completitud se deriva de campos y evidencias; no debe inferirse un catálogo SQL nuevo.
+- Verificación conserva cuatro procesos parciales y evidencias, pero todavía no emite el dictamen
+  general ni las transiciones funcionales posteriores. `Conclusiones` permanece deshabilitado.
+- Grupo y expediente operativos pueden existir antes del desembolso; crédito y ciclo financiero sólo
+  nacen con el desembolso real. La precisión semántica de RN-007 permanece abierta para Dirección.
 
 ## Referencias cruzadas
 

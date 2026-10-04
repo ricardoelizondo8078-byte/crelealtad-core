@@ -1,6 +1,6 @@
 # 03 Project Status — Estado Oficial del Proyecto
 
-Versión: 3.7.0
+Versión: 3.8.0
 Estado: Vigente y verificado
 Fecha de corte: 2026-10-04
 
@@ -27,9 +27,11 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 
 - NestJS 10, TypeORM, PostgreSQL, ValidationPipe, Helmet y throttling activos.
 - `synchronize: false`; el esquema se administra mediante migraciones.
-- Catorce módulos Nest registrados, incluidos Auth, Grupos, Expedientes, Integrantes, Solicitudes, Códigos Postales, Renovaciones, Pendientes y las cuatro superficies persistentes de Verificación, más Health en el módulo raíz.
+- Doce módulos funcionales Nest registrados: Auth, Grupos, Expedientes, Integrantes, Solicitudes,
+  Códigos Postales, Renovaciones, Pendientes y cuatro superficies persistentes de Verificación;
+  `HealthController` vive en el módulo raíz y la infraestructura se registra por separado.
 - Health controller independiente.
-- 56 handlers HTTP verificados.
+- 57 handlers HTTP verificados.
 - JWT aplicado como guard global; únicamente health y login son públicos. Se retiró la enumeración pública de usuarios.
 - Persistencia real verificada en repositorios TypeORM.
 - Existe guard global de permisos por módulo/acción, cerrado por defecto, sobre los handlers actuales; el decorador acepta sólo módulos y acciones del catálogo técnico central y la suite declarativa cubre también imágenes del domicilio y evidencias de Entrevista.
@@ -144,7 +146,7 @@ No se usaron datos personales ni contenido de registros para esta auditoría.
 
 ### Testing — Parcial
 
-- Cuarenta suites de pruebas activas en API; no quedan suites `.skip`.
+- Cuarenta y una suites de pruebas activas en API; no quedan suites `.skip`.
 - Cinco suites y 17 pruebas automatizadas activas en mobile cubren UI compartida, permisos del
   catálogo institucional y reglas/mappers puros de Solicitud y Verificación.
 - La validación del 2026-10-04 confirmó que `npm run build` de la API y el export Android de Expo terminan correctamente.

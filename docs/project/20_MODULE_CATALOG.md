@@ -1,6 +1,6 @@
 # 20 Module Catalog — Catálogo de Módulos
 
-Versión: 2.19.0
+Versión: 2.20.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -124,7 +124,8 @@ Verificado:
 
 Pendientes críticos:
 
-- Módulo backend de verificación y entidad/bitácora de dictamen.
+- Caso de uso backend de dictamen general y entidad/bitácora de su conclusión; las cuatro superficies
+  persistentes de Verificación ya existen, pero no deben confundirse con ese dictamen.
 - Cola, asignación y responsable de revisión.
 - Observaciones estructuradas, aprobación y rechazo auditables.
 - Tratamiento operativo de no coincidencias y creación real de una cita para `Agendó visita`; respuestas, acción y evidencia ya se conservan sin declarar conclusión cuando el resultado queda pendiente.

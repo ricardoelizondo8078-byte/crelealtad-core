@@ -1,6 +1,6 @@
 # 11 Architecture Guide — Guía de Arquitectura
 
-Versión: 2.15.0
+Versión: 2.16.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -44,7 +44,7 @@ Fecha de auditoría: 2026-10-04
 
 ### Superficie HTTP verificada
 
-- Auth: 2 handlers; la API no expone una lista pública de usuarios.
+- Auth: 3 handlers; la API no expone una lista pública de usuarios.
 - Grupos: 3 handlers.
 - Expedientes: 7 handlers; el alta ocurre únicamente dentro de la creación transaccional de grupo o renovación.
 - Integrantes: 7 handlers.
@@ -57,7 +57,7 @@ Fecha de auditoría: 2026-10-04
 - Imágenes del domicilio de Verificación: 4 handlers.
 - Entrevista y sus evidencias: 5 handlers.
 - Health: 1 handler.
-- Total: 56 handlers.
+- Total: 57 handlers.
 
 ### Persistencia y validación
 
@@ -144,7 +144,7 @@ Fecha de auditoría: 2026-10-04
 - `verificacion_llamadas` conserva cada intento confirmado y su ubicación actual del dispositivo; tres tablas hijas guardan encuesta, seis características y metadatos de evidencia. La imagen vive en almacenamiento protegido y no existe borrado operativo.
 - `verificacion_visita_vecino_fachadas` conserva metadatos, hash, actor e ubicación de la fachada; el archivo se mantiene en filesystem protegido y se entrega sólo mediante API autenticada. `verificacion_visitas_vecino` conserva la confirmación combinada y liga cada respuesta nueva con la fachada más reciente.
 - `verificacion_visita_vecino_evidencias` conserva la segunda fotografía geolocalizada y la liga a la respuesta concreta; el archivo también permanece en filesystem protegido y sólo se entrega con JWT y alcance válido.
-- `verificacion_imagenes_domicilio` conserva el historial de nomenclaturas, fachada, medidor de luz y fachada con la integrante, con tipo, hash, actor, fechas e ubicación por toma; los archivos viven en filesystem protegido y la API presenta únicamente la imagen más reciente de cada tipo sin exponer coordenadas. M03 ofrece fachada y medidor como obligatorias, mantiene la fachada con integrante opcional y reserva la nomenclatura para otro módulo sin eliminar su contrato ni historia.
+- `verificacion_imagenes_domicilio` conserva el historial de nomenclaturas, fachada, medidor de luz y fachada con la integrante, con tipo, hash, actor, fechas e ubicación por toma; los archivos viven en filesystem protegido y la API presenta únicamente la imagen más reciente de cada tipo sin exponer coordenadas. M03 exige fachada y después una respuesta sobre el medidor: `Sí` exige fotografía y `No` una causa controlada persistida. La fachada con integrante permanece opcional y la nomenclatura se reserva para otro módulo sin eliminar su contrato ni historia.
 - `verificacion_entrevistas` conserva una captura parcial tipada por integrante; familiares y desacuerdos viven en historiales separados de altas y retiros. `verificacion_entrevista_evidencias` unifica las fotografías de negocio, control de pagos y folleto, y exige en toda captura nueva cámara, horas, actor, coordenadas, fuente, hash e idempotencia. Los archivos permanecen protegidos y las filas previas a la migración 031 no reciben coordenadas inventadas.
 - D01 conserva cortes históricos del Excel en tres tablas separadas del modelo transaccional de desembolso; la carga usa manifiesto, hash, prevalidación y transacción.
 - Roles y permisos iniciales almacenados.
