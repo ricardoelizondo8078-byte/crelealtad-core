@@ -10,16 +10,22 @@ import { DataSource } from 'typeorm';
 import { ExpedienteEntity } from '../expedientes/expediente.entity';
 import { GrupoEntity } from '../grupos/grupo.entity';
 import { PersonaEntity } from '../personas/persona.entity';
+import {
+  createTestActorFixture,
+  deleteTestActorFixture,
+  TestActorFixture,
+} from '../test-support/test-actor.fixture';
 import { VerificacionVisitasVecinoModule } from './verificacion-visitas-vecino.module';
 
 describe('VerificacionVisitasVecino integración', () => {
   jest.setTimeout(30000);
-  const usuarioId = '00000000-0000-4000-8000-000000000103';
+  const usuarioId = randomUUID();
   const grupoId = randomUUID();
   const expedienteId = randomUUID();
   const integranteId = randomUUID();
   let app: INestApplication;
   let dataSource: DataSource;
+  let testActor: TestActorFixture;
   let storageRoot: string;
 
   beforeAll(async () => {
@@ -65,6 +71,7 @@ describe('VerificacionVisitasVecino integración', () => {
     }));
     await app.init();
     dataSource = moduleFixture.get<DataSource>(DataSource);
+    testActor = await createTestActorFixture(dataSource, { usuarioId });
 
     await dataSource.query('INSERT INTO grupos (id, nombre) VALUES ($1, $2)', [
       grupoId,
@@ -113,6 +120,7 @@ describe('VerificacionVisitasVecino integración', () => {
     await dataSource.query('DELETE FROM integrantes WHERE id=$1', [integranteId]);
     await dataSource.query('DELETE FROM expedientes WHERE id=$1', [expedienteId]);
     await dataSource.query('DELETE FROM grupos WHERE id=$1', [grupoId]);
+    await deleteTestActorFixture(dataSource, testActor);
     await app.close();
     delete process.env.VERIFICACION_STORAGE_PATH;
     await rm(storageRoot, { recursive: true, force: true });

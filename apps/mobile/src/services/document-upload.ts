@@ -18,6 +18,12 @@ interface ProgresoCargaDocumento {
   completado: false;
 }
 
+export interface DocumentUploadResumeOptions {
+  cargaId?: string;
+  nextIndex?: number;
+  onProgress?: (progress: { cargaId: string; nextIndex: number }) => void | Promise<void>;
+}
+
 /**
  * Adjunta un archivo local con una representacion compatible con el fetch de Expo.
  * En SDK 57, el transporte nativo no acepta el descriptor historico
@@ -68,14 +74,20 @@ export const uploadDocumentFiles = async (
   integranteId: string,
   tipo: string,
   uris: readonly string[],
+  options: DocumentUploadResumeOptions = {},
 ): Promise<DocumentoRemoto> => {
   if (uris.length === 0) {
     throw new Error('Selecciona al menos una imagen.');
   }
 
-  let cargaId: string | undefined;
+  let cargaId = options.cargaId;
+  const nextIndex = options.nextIndex ?? 0;
+  if (!Number.isSafeInteger(nextIndex) || nextIndex < 0 || nextIndex > uris.length) {
+    throw new Error('El progreso local de la carga no es válido.');
+  }
+
   for (
-    let indiceInicio = 0;
+    let indiceInicio = nextIndex;
     indiceInicio < uris.length;
     indiceInicio += MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST
   ) {
@@ -121,6 +133,10 @@ export const uploadDocumentFiles = async (
       throw new Error('El servidor no confirmó el lote recibido. Intenta nuevamente.');
     }
     cargaId = respuesta.carga_id;
+    await options.onProgress?.({
+      cargaId,
+      nextIndex: respuesta.recibidos,
+    });
   }
 
   throw new Error('No se pudo completar la carga del documento.');

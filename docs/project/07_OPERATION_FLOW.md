@@ -1,6 +1,6 @@
 # 07 Operation Flow — Flujo Operativo Completo
 
-Versión: 1.2.0
+Versión: 1.3.0
 Estado: Vigente
 Fecha de verificación: 2026-10-04
 
@@ -56,6 +56,20 @@ Precondiciones:
 Resultado:
 - Estado cambia a En verificacion.
 - Se registra handoff, conteos, tesorera, actor y trazabilidad en la misma transaccion.
+
+## Flujo de captura con conectividad variable
+
+1. Solicitud y Entrevista conservan primero un borrador local separado por usuario y entidad.
+2. La cola intenta confirmar el cambio con la versión del servidor que originó el borrador.
+3. Un fallo transitorio permanece pendiente y se reintenta con espera creciente; cerrar la app no
+   elimina la operación ni los archivos copiados al directorio durable.
+4. Una respuesta confirmada actualiza la versión base y encadena cualquier cambio posterior del
+   mismo registro.
+5. Un conflicto de versión queda bloqueado para revisión humana; no se resuelve por última escritura.
+6. `SUJETA_CREDITO` permanece bloqueado mientras exista trabajo local sin confirmar.
+
+Esta primera vertical cubre Solicitud, documentos de M02 y la captura general de Entrevista. Llamada,
+Visita al vecino e Imágenes del domicilio aún no tienen cadenas offline completas.
 
 ## Flujo de autorizacion de acceso
 

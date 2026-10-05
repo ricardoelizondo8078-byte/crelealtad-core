@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PendingReviewsProvider, usePendingReviews } from './context/PendingReviewsContext';
 import { ProcessingProvider } from './context/ProcessingContext';
+import { OfflineSyncProvider } from './context/OfflineSyncContext';
 import { ChangePinScreen, LoginScreen } from './features/auth';
 import { ExpedienteDetailScreen, ExpedientesListScreen } from './features/expedientes';
 import { CreateGroupScreen } from './features/grupos';
@@ -270,10 +271,12 @@ export default function App() {
   return (
     <ProcessingProvider>
       <AuthProvider>
-        <PendingReviewsProvider>
-          <AppContent />
-          <PendingReviewOverlay />
-        </PendingReviewsProvider>
+        <OfflineSyncProvider>
+          <PendingReviewsProvider>
+            <AppContent />
+            <PendingReviewOverlay />
+          </PendingReviewsProvider>
+        </OfflineSyncProvider>
       </AuthProvider>
     </ProcessingProvider>
   );

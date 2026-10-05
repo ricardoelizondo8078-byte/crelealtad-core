@@ -11,6 +11,11 @@ import { IntegrantesModule } from '../integrantes/integrantes.module';
 import { ExpedientesModule } from '../expedientes/expedientes.module';
 import { GruposModule } from '../grupos/grupos.module';
 import { MAX_DOCUMENT_FILES_PER_MULTIPART_REQUEST } from '../common/files/upload-file.policy';
+import {
+  createTestActorFixture,
+  deleteTestActorFixture,
+  TestActorFixture,
+} from '../test-support/test-actor.fixture';
 
 describe('Solicitudes Integration - Wizard 7 pasos', () => {
   let app: INestApplication;
@@ -20,6 +25,7 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
   let personaId: string;
   let integranteId: string;
   let testUserId: string;
+  let testActor: TestActorFixture;
   let storagePath: string;
 
   beforeAll(async () => {
@@ -61,10 +67,8 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
     await app.init();
 
     dataSource = moduleFixture.get<DataSource>(DataSource);
-    const testUsers = await dataSource.query(
-      'SELECT u.id FROM usuarios u JOIN empleados e ON e.usuario_id = u.id ORDER BY u.id LIMIT 1',
-    );
-    testUserId = testUsers[0].id;
+    testActor = await createTestActorFixture(dataSource, { tipoEmpleado: 'ASESOR' });
+    testUserId = testActor.usuarioId;
   });
 
   afterAll(async () => {
@@ -101,6 +105,7 @@ describe('Solicitudes Integration - Wizard 7 pasos', () => {
       throw error;
     }
 
+    await deleteTestActorFixture(dataSource, testActor);
     await app.close();
     await rm(storagePath, { recursive: true, force: true });
     delete process.env.DOCUMENT_STORAGE_PATH;

@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { api } from '../services/api-client';
+import { api, ApiError } from '../services/api-client';
 import {
   clearStoredSession,
   getStoredToken,
+  getStoredUser,
+  isStoredJwtUsableOffline,
   saveSession,
   saveStoredUser,
   subscribeToSessionInvalidation,
@@ -55,13 +57,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const tokenGuardado = await getStoredToken();
         if (!tokenGuardado) return;
+        const usuarioGuardado = await getStoredUser<Usuario>();
 
-        const usuarioVigente = await api.get<Usuario>('/auth/me');
-        if (!activo) return;
+        try {
+          const usuarioVigente = await api.get<Usuario>('/auth/me');
+          if (!activo) return;
 
-        await saveStoredUser(usuarioVigente);
-        setToken(tokenGuardado);
-        setUsuario(usuarioVigente);
+          await saveStoredUser(usuarioVigente);
+          setToken(tokenGuardado);
+          setUsuario(usuarioVigente);
+        } catch (error) {
+          if (
+            error instanceof ApiError
+            && error.status === 0
+            && usuarioGuardado
+            && isStoredJwtUsableOffline(tokenGuardado)
+          ) {
+            if (!activo) return;
+            setToken(tokenGuardado);
+            setUsuario(usuarioGuardado);
+            return;
+          }
+          throw error;
+        }
       } catch {
         await clearStoredSession();
         if (activo) {

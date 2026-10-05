@@ -99,13 +99,25 @@ describe('Migración 036 - integridad de actores y estados', () => {
   });
 
   it('rechaza un estado fuera del catálogo', async () => {
-    await expectDatabaseRejection(
-      `UPDATE roles
-       SET estado = 'ESTADO_INVENTADO'
-       WHERE id = (SELECT id FROM roles ORDER BY id LIMIT 1)`,
-      [],
-      '23514',
-    );
+    const roleId = randomUUID();
+    await dataSource.query('BEGIN');
+    try {
+      await dataSource.query(
+        `INSERT INTO roles (id, nombre, estado)
+         VALUES ($1, $2, 'ACTIVO')`,
+        [roleId, `ROL_PRUEBA_${roleId}`],
+      );
+      await expect(
+        dataSource.query(
+          "UPDATE roles SET estado = 'ESTADO_INVENTADO' WHERE id = $1",
+          [roleId],
+        ),
+      ).rejects.toMatchObject({
+        driverError: expect.objectContaining({ code: '23514' }),
+      });
+    } finally {
+      await dataSource.query('ROLLBACK');
+    }
   });
 
   it('usa UUID para el creador y defaults canónicos en crédito y pago', async () => {

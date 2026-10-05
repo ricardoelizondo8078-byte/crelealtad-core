@@ -1,4 +1,5 @@
 import { PartialType, OmitType } from '@nestjs/mapped-types';
+import { IsISO8601, IsOptional } from 'class-validator';
 import { CreateSolicitudDto } from './create-solicitud.dto';
 
 /**
@@ -13,4 +14,8 @@ import { CreateSolicitudDto } from './create-solicitud.dto';
  */
 export class PartialUpdateSolicitudDto extends PartialType(
   OmitType(CreateSolicitudDto, ['integrante_id'] as const)
-) {}
+) {
+  @IsOptional()
+  @IsISO8601({ strict: true })
+  expected_updated_at?: string | null;
+}

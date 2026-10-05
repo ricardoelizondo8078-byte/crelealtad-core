@@ -5,6 +5,7 @@ import {
   IsArray,
   IsEnum,
   IsIn,
+  IsISO8601,
   IsNumber,
   IsOptional,
   IsString,
@@ -78,6 +79,10 @@ class UpdateEstadoDto {
 }
 
 class UpdateIntegranteDto {
+  @IsOptional()
+  @IsISO8601({ strict: true })
+  expected_persona_updated_at?: string | null;
+
   @IsOptional()
   @IsString()
   nombres?: string;

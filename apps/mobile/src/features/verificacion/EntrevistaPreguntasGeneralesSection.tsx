@@ -34,6 +34,7 @@ interface EntrevistaPreguntasGeneralesSectionProps {
   errorGuardado: string | null;
   entrevistaCargada: boolean;
   entrevistaConfirmada: boolean;
+  guardadoLocalPendiente: boolean;
   conoceAsesora: string;
   comoConocioAsesora: string;
   conoceIntegrantes: string;
@@ -74,6 +75,7 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
   errorGuardado,
   entrevistaCargada,
   entrevistaConfirmada,
+  guardadoLocalPendiente,
   conoceAsesora,
   comoConocioAsesora,
   conoceIntegrantes,
@@ -127,6 +129,8 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
           onPress={entrevistaCargada ? onReintentarGuardado : onRecuperarEntrevista}
         />
       </Card>
+    ) : guardadoLocalPendiente ? (
+      <StatusBadge label="GUARDADA LOCALMENTE · PENDIENTE" tone="pending" />
     ) : entrevistaConfirmada ? (
       <StatusBadge label="ENTREVISTA GUARDADA" tone="success" />
     ) : null}

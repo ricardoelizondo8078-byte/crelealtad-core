@@ -24,6 +24,8 @@ import {
 } from '../../services/api-client';
 import { usePendingReviews } from '../../context/PendingReviewsContext';
 import { useProcessing } from '../../context/ProcessingContext';
+import { useOfflineSync } from '../../context/OfflineSyncContext';
+import { offlineDraftKey } from '../../offline/offline-sync.ids';
 import { DEFAULT_STATE } from '../../catalogs';
 import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import {
@@ -58,7 +60,7 @@ import { SolicitudDocumentOverlays } from './SolicitudDocumentOverlays';
 import {
   DOCUMENTOS_REQUERIDOS,
   RUTAS_DOCUMENTO,
-  subirDocumentoAlServidor,
+  TIPOS_DOCUMENTO_API,
   type DocumentStatus,
   type DocumentoCarouselState,
   type DocumentoRemoto,
@@ -94,6 +96,23 @@ interface SolicitudFormScreenProps {
   onDataChange?: (data: { nombre?: string; telefono?: string; montoSolicitado?: number }) => void;
 }
 
+interface IntegranteSolicitudResumen {
+  nombre: string;
+  telefono: string;
+  montoSolicitado: number | null;
+  montoAutorizadoAnterior?: number | null;
+}
+
+interface SolicitudOfflineDraftData {
+  form: SolicitudFormData;
+  fechaNacimientoInput: string;
+  currentStep: number;
+  documentos: DocumentoRequerido[];
+  integrante: IntegranteSolicitudResumen | null;
+  montoReferencia: MontoReferencia | null;
+  montoMaximoSolicitable: number;
+}
+
 
 
 
@@ -110,6 +129,16 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 }) => {
   const { refresh: refreshPendingReviews } = usePendingReviews();
   const { run } = useProcessing();
+  const {
+    summary: offlineSummary,
+    saveDraft,
+    getDraft,
+    enqueueJson,
+    enqueueDocument,
+    hasPendingForEntity,
+    setServerVersion,
+    syncNow,
+  } = useOfflineSync();
   const documentationTheme = moduleThemes.documentation;
   const [currentStep, setCurrentStep] = useState(initialStep ?? 1);
   const [documentos, setDocumentos] = useState<DocumentoRequerido[]>(DOCUMENTOS_REQUERIDOS);
@@ -204,20 +233,59 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
   const [isLoadingSolicitud, setIsLoadingSolicitud] = useState(true);
   const [solicitudLoadError, setSolicitudLoadError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const [integrante, setIntegrante] = useState<{
-    nombre: string;
-    telefono: string;
-    montoSolicitado: number | null;
-    montoAutorizadoAnterior?: number | null;
-  } | null>(null);
+  const [integrante, setIntegrante] = useState<IntegranteSolicitudResumen | null>(null);
   const [montoReferencia, setMontoReferencia] = useState<MontoReferencia | null>(null);
   const [montoMaximoSolicitable, setMontoMaximoSolicitable] = useState(MAX_SOLICITUD_AMOUNT);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [autoSaveStatus, setAutoSaveStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'pending' | 'error'
+  >('idle');
   const scrollViewRef = React.useRef<ScrollView>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialLoadRef = useRef(true);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const documentOperationRef = useRef<string | null>(null);
+  const reconciledDocumentsRef = useRef(false);
+  const solicitudDraftKey = useMemo(
+    () => offlineDraftKey('DOCUMENTACION', 'integrante', integranteId),
+    [integranteId],
+  );
+  const integranteVersionKey = useMemo(
+    () => `documentacion:integrante:${integranteId}:persona`,
+    [integranteId],
+  );
+  const solicitudVersionKey = useMemo(
+    () => `documentacion:solicitud:${integranteId}:updated_at`,
+    [integranteId],
+  );
+
+  const buildDraftData = useCallback((overrides: Partial<SolicitudOfflineDraftData> = {}): SolicitudOfflineDraftData => ({
+    form,
+    fechaNacimientoInput,
+    currentStep,
+    documentos,
+    integrante,
+    montoReferencia,
+    montoMaximoSolicitable,
+    ...overrides,
+  }), [
+    currentStep,
+    documentos,
+    fechaNacimientoInput,
+    form,
+    integrante,
+    montoMaximoSolicitable,
+    montoReferencia,
+  ]);
+
+  const applyOfflineDraft = useCallback((draft: SolicitudOfflineDraftData) => {
+    setForm(draft.form);
+    setFechaNacimientoInput(draft.fechaNacimientoInput);
+    setCurrentStep(Math.max(1, Math.min(draft.currentStep, WIZARD_STEPS.length)));
+    setDocumentos(draft.documentos);
+    setIntegrante(draft.integrante);
+    setMontoReferencia(draft.montoReferencia);
+    setMontoMaximoSolicitable(draft.montoMaximoSolicitable);
+  }, []);
 
   const runSerializedSave = useCallback((operation: () => Promise<void>): Promise<void> => {
     const next = saveQueueRef.current.then(operation, operation);
@@ -253,7 +321,88 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
   const [coloniasDisponiblesNegocio, setColoniasDisponiblesNegocio] = useState<string[]>([]);
   const [loadingColoniasNegocio, setLoadingColoniasNegocio] = useState(false);
 
-  // Función de auto-guardado
+  const persistSolicitudPayloads = useCallback(async (
+    datosSolicitante: Record<string, unknown>,
+    datosSolicitud: Record<string, unknown>,
+    draftOverride?: Partial<SolicitudOfflineDraftData>,
+  ): Promise<'saved' | 'pending' | 'error'> => {
+    await saveDraft({
+      key: solicitudDraftKey,
+      module: 'DOCUMENTACION',
+      entityType: 'integrante',
+      entityId: integranteId,
+      data: buildDraftData(draftOverride),
+    });
+
+    const operations = [
+      Object.keys(datosSolicitante).length > 0
+        ? enqueueJson({
+            module: 'DOCUMENTACION',
+            entityType: 'integrante',
+            entityId: integranteId,
+            dedupeKey: `solicitud:${integranteId}:integrante`,
+            draftKey: solicitudDraftKey,
+            endpoint: `/integrantes/${integranteId}`,
+            method: 'PATCH',
+            body: datosSolicitante,
+            conflict: {
+              key: integranteVersionKey,
+              requestField: 'expected_persona_updated_at',
+              responsePath: 'persona_updated_at',
+            },
+          })
+        : null,
+      Object.keys(datosSolicitud).length > 0
+        ? enqueueJson({
+            module: 'DOCUMENTACION',
+            entityType: 'integrante',
+            entityId: integranteId,
+            dedupeKey: `solicitud:${integranteId}:datos`,
+            draftKey: solicitudDraftKey,
+            endpoint: `/solicitudes/integrante/${integranteId}`,
+            method: 'PATCH',
+            body: datosSolicitud,
+            conflict: {
+              key: solicitudVersionKey,
+              requestField: 'expected_updated_at',
+              responsePath: 'updated_at',
+            },
+          })
+        : null,
+    ].filter((operation): operation is NonNullable<typeof operation> => operation !== null);
+
+    if (operations.length === 0) return 'saved';
+    const results = await Promise.all(operations);
+    if (results.some((result) => result.status === 'BLOCKED')) return 'error';
+    return results.every((result) => result.status === 'CONFIRMED') ? 'saved' : 'pending';
+  }, [
+    buildDraftData,
+    enqueueJson,
+    integranteVersionKey,
+    integranteId,
+    saveDraft,
+    solicitudDraftKey,
+    solicitudVersionKey,
+  ]);
+
+  useEffect(() => {
+    const hasQueuedDocument = documentos.some(
+      (documento) => documento.status === 'PENDIENTE_SUBIR' || documento.status === 'SUBIENDO',
+    );
+    const hasOfflineWork = offlineSummary.pending > 0
+      || offlineSummary.syncing > 0
+      || offlineSummary.blocked > 0;
+    if (hasOfflineWork) {
+      reconciledDocumentsRef.current = false;
+      return;
+    }
+    if (hasQueuedDocument && !reconciledDocumentsRef.current) {
+      reconciledDocumentsRef.current = true;
+      setLoadAttempt((attempt) => attempt + 1);
+    }
+  }, [documentos, offlineSummary]);
+
+  // Función de auto-guardado durable
   const performAutoSave = useCallback(async () => {
     setAutoSaveStatus('saving');
     const datosSolicitante = compactPayload(buildIntegrantePayload(form, true));
@@ -261,25 +410,15 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
     try {
       await runSerializedSave(async () => {
-        if (Object.keys(datosSolicitante).length > 0) {
-          await api.patch(`/integrantes/${integranteId}`, datosSolicitante, {
-            showProcessing: false,
-          });
-        }
-        if (Object.keys(datosSolicitud).length > 0) {
-          await api.patch(`/solicitudes/integrante/${integranteId}`, datosSolicitud, {
-            showProcessing: false,
-          });
-        }
+        const result = await persistSolicitudPayloads(datosSolicitante, datosSolicitud);
+        setAutoSaveStatus(result);
       });
-
-      setAutoSaveStatus('saved');
-      setTimeout(() => setAutoSaveStatus('idle'), 2000);
+      setTimeout(() => setAutoSaveStatus('idle'), 2500);
     } catch {
       setAutoSaveStatus('error');
-      setTimeout(() => setAutoSaveStatus('idle'), 2000);
+      setTimeout(() => setAutoSaveStatus('idle'), 2500);
     }
-  }, [form, integranteId, montoMaximoSolicitable, runSerializedSave]);
+  }, [form, montoMaximoSolicitable, persistSolicitudPayloads, runSerializedSave]);
 
   // Auto-guardado en tiempo real (debounced)
   useEffect(() => {
@@ -311,6 +450,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     const loadExistingSolicitud = async () => {
       let integranteData: any = null;
       let limiteMontoSolicitable = MAX_SOLICITUD_AMOUNT;
+      const localDraft = await getDraft<SolicitudOfflineDraftData>(solicitudDraftKey);
 
       setIsLoadingSolicitud(true);
       setSolicitudLoadError(null);
@@ -322,6 +462,10 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         // Cargar datos del integrante
         integranteData = await api.get<IntegranteApiResponse>(`/integrantes/${integranteId}`);
         if (integranteData) {
+          await setServerVersion(
+            integranteVersionKey,
+            integranteData.persona_updated_at ?? null,
+          );
           setIntegrante({
             ...integranteData,
             montoSolicitado: integranteData.montoSolicitado == null
@@ -364,6 +508,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
         try {
           const data = await api.get<SolicitudApiResponse>(`/solicitudes/integrante/${integranteId}`);
+          await setServerVersion(solicitudVersionKey, data?.updated_at ?? null);
           if (data) {
             // Parsear la fecha de nacimiento de ISO a DD,MMM,YYYY para display
             const fecha_nac_display = data.fecha_nac ? formatISODateToDDMMMYYYY(data.fecha_nac) : '';
@@ -488,37 +633,6 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                 })
               );
               setDocumentos(documentosActualizados);
-
-              // Las versiones anteriores de esta pantalla guardaban documentos como
-               // referencias locales. Al encontrarlas, termina la subida que la usuaria ya inició.
-               for (const documento of documentosActualizados) {
-                 const urisLocales = documento.urisLocales?.length
-                   ? documento.urisLocales
-                   : [documento.uriFrente, documento.uriReverso]
-                       .filter((uri): uri is string => Boolean(uri));
-                 if (documento.status !== 'PENDIENTE_SUBIR' || urisLocales.length === 0) continue;
-                 setUploadingDocId(documento.id);
-                setDocumentos((actuales) => actuales.map((actual) =>
-                  actual.id === documento.id ? { ...actual, status: 'SUBIENDO' } : actual
-                ));
-                try {
-                   const remoto = await subirDocumentoAlServidor(
-                     integranteId,
-                     documento.id,
-                     urisLocales,
-                   );
-                  setDocumentos((actuales) => actuales.map((actual) =>
-                    actual.id === documento.id
-                      ? { ...actual, status: 'SINCRONIZADO', rutaServidor: remoto.ruta }
-                      : actual
-                  ));
-                } catch {
-                  setDocumentos((actuales) => actuales.map((actual) =>
-                    actual.id === documento.id ? { ...actual, status: 'ERROR' } : actual
-                  ));
-                }
-              }
-              setUploadingDocId(null);
             };
 
             await cargarDocumentosAsync();
@@ -529,16 +643,27 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
           }
         } catch (solicitudError) {
           if (solicitudError instanceof ApiError && solicitudError.status === 404) {
+            await setServerVersion(solicitudVersionKey, null);
           } else {
             throw solicitudError;
           }
         }
+        if (localDraft && localDraft.status !== 'SYNCED') {
+          applyOfflineDraft(localDraft.data);
+          setAutoSaveStatus(localDraft.status === 'BLOCKED' ? 'error' : 'pending');
+        }
       } catch (error) {
-        setSolicitudLoadError(
-          error instanceof Error
-            ? error.message
-            : 'No se pudo recuperar la información guardada.',
-        );
+        if (error instanceof ApiError && error.status === 0 && localDraft) {
+          applyOfflineDraft(localDraft.data);
+          setSolicitudLoadError(null);
+          setAutoSaveStatus(localDraft.status === 'BLOCKED' ? 'error' : 'pending');
+        } else {
+          setSolicitudLoadError(
+            error instanceof Error
+              ? error.message
+              : 'No se pudo recuperar la información guardada.',
+          );
+        }
       } finally {
         setIsLoadingSolicitud(false);
         // Marcar que la carga inicial terminó (para activar auto-guardado)
@@ -549,7 +674,17 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     };
 
     loadExistingSolicitud();
-  }, [integranteId, initialStep, loadAttempt]);
+  }, [
+    applyOfflineDraft,
+    integranteVersionKey,
+    getDraft,
+    integranteId,
+    initialStep,
+    loadAttempt,
+    solicitudDraftKey,
+    solicitudVersionKey,
+    setServerVersion,
+  ]);
 
   // Cargar colonias del DOMICILIO desde el API cuando cambia el código postal
   useEffect(() => {
@@ -771,17 +906,16 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
       }
     }
 
-    // Cada navegación persiste únicamente el paso visible. Así, retroceder desde
-    // Documentación nunca puede reemplazar los seis pasos anteriores con vacíos.
-    await runSerializedSave(async () => {
-      if (currentStep === 1) {
-        await api.patch(`/integrantes/${integranteId}`, buildIntegrantePayload(form, true));
-      } else if (currentStep === 2) {
-        await api.patch(`/integrantes/${integranteId}`, buildIntegrantePayload(form, false));
-      }
+    let integranteData: Record<string, unknown> = {};
+    if (currentStep === 1) {
+      integranteData = buildIntegrantePayload(form, true);
+    } else if (currentStep === 2) {
+      integranteData = buildIntegrantePayload(form, false);
+    }
 
-      const solicitudData = buildSolicitudStepPayload(form, currentStep);
-      if (currentStep === 2) {
+    const solicitudData = buildSolicitudStepPayload(form, currentStep);
+    if (currentStep === 2) {
+      try {
         const coordenadas = await geocodificarDomicilio({
           calle: form.calle,
           numeroExterior: form.numeroExterior,
@@ -796,12 +930,33 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
           dom_geocodificacion_fuente: coordenadas ? 'GEOCODIFICADOR_DISPOSITIVO' : null,
           dom_geocodificacion_fecha: coordenadas ? new Date().toISOString() : null,
         });
+      } catch {
+        Object.assign(solicitudData, {
+          dom_latitud: null,
+          dom_longitud: null,
+          dom_geocodificacion_fuente: null,
+          dom_geocodificacion_fecha: null,
+        });
       }
-      if (Object.keys(solicitudData).length > 0) {
-        await api.patch(`/solicitudes/integrante/${integranteId}`, solicitudData);
-      }
+    }
+
+    // Cada navegación conserva primero el paso visible en el dispositivo y
+    // consolida las escrituras equivalentes en la cola durable.
+    await runSerializedSave(async () => {
+      setAutoSaveStatus('saving');
+      const status = await persistSolicitudPayloads(integranteData, solicitudData);
+      setAutoSaveStatus(status);
+      setTimeout(() => setAutoSaveStatus('idle'), 2500);
     });
-  }, [currentStep, form, integranteId, isLoadingSolicitud, montoMaximoSolicitable, runSerializedSave, solicitudLoadError]);
+  }, [
+    currentStep,
+    form,
+    isLoadingSolicitud,
+    montoMaximoSolicitable,
+    persistSolicitudPayloads,
+    runSerializedSave,
+    solicitudLoadError,
+  ]);
 
   const handleContinuar = useCallback(async () => {
     if (validateCurrentStep()) {
@@ -1021,23 +1176,62 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     ));
 
     try {
-      const remoto = await subirDocumentoAlServidor(integranteId, documentoId, uris);
-      setDocumentos((prev) =>
-        prev.map((doc) =>
-          doc.id === documentoId
-            ? {
-                ...doc,
-                status: 'SINCRONIZADO',
-                uriFrente: uris[0],
-                uriReverso: uris[1],
-                urisLocales: uris,
-                rutaServidor: remoto.ruta,
-              }
-            : doc
-        )
+      const tipo = TIPOS_DOCUMENTO_API[documentoId];
+      if (!tipo) throw new Error('Tipo de documento no reconocido.');
+      const result = await enqueueDocument({
+        module: 'DOCUMENTACION',
+        entityType: 'integrante',
+        entityId: integranteId,
+        dedupeKey: `documento:${integranteId}:${tipo}`,
+        draftKey: solicitudDraftKey,
+        integranteId,
+        tipo,
+        files: uris.map((uri, index) => ({
+          uri,
+          fieldName: 'archivos',
+          name: `${tipo}-${index + 1}.${uri.split('?')[0].split('.').pop()?.toLowerCase() === 'png' ? 'png' : 'jpg'}`,
+        })),
+      });
+      const durableUris = result.durableFileUris?.length ? result.durableFileUris : uris;
+      const rutaServidor = result.status === 'CONFIRMED'
+        ? `/solicitudes/integrante/${integranteId}/documentos/${tipo}/${result.operationId}`
+        : undefined;
+      const nextDocumentos = documentos.map((doc) =>
+        doc.id === documentoId
+          ? {
+              ...doc,
+              status: result.status === 'CONFIRMED'
+                ? 'SINCRONIZADO' as const
+                : result.status === 'BLOCKED'
+                  ? 'ERROR' as const
+                  : 'PENDIENTE_SUBIR' as const,
+              uriFrente: durableUris[0],
+              uriReverso: durableUris[1],
+              urisLocales: durableUris,
+              rutaServidor,
+            }
+          : doc
       );
+      setDocumentos(nextDocumentos);
+      await saveDraft({
+        key: solicitudDraftKey,
+        module: 'DOCUMENTACION',
+        entityType: 'integrante',
+        entityId: integranteId,
+        data: buildDraftData({ documentos: nextDocumentos }),
+        status: result.status === 'CONFIRMED'
+          ? 'SYNCED'
+          : result.status === 'BLOCKED'
+            ? 'BLOCKED'
+            : 'PENDING',
+        lastError: result.status === 'BLOCKED' ? result.error : undefined,
+      });
 
-      setDocumentUploadError(null);
+      setDocumentUploadError(
+        result.status === 'BLOCKED'
+          ? result.error || 'La carga quedó bloqueada. Revisa el documento e inténtalo nuevamente.'
+          : null,
+      );
       return true;
     } catch (error) {
       const message = error instanceof Error
@@ -1163,9 +1357,16 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     setAutoSaveStatus('saving');
 
     try {
-      // El auto-save ya guardó todo. Solo intentamos cambiar el estado.
-      // El backend validará que tenga los 7 pasos completos y devolverá
-      // pasosIncompletos y camposFaltantes si falta algo.
+      await saveCurrentStep();
+      await syncNow();
+      if (await hasPendingForEntity('integrante', integranteId)) {
+        setAutoSaveStatus('pending');
+        Alert.alert(
+          'Sincronización pendiente',
+          'La captura está guardada en este teléfono, pero todavía no está confirmada por el servidor. Conéctate y espera a que termine la sincronización antes de marcarla como completa.',
+        );
+        return;
+      }
 
       await api.patch(`/integrantes/${integranteId}/estado`, { estado: 'SUJETA_CREDITO' });
       await refreshPendingReviews();
@@ -1327,10 +1528,15 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             <Text allowFontScaling={false} style={styles.autoSaveTextSaving}>Guardando...</Text>
           )}
           {autoSaveStatus === 'saved' && (
-            <Text allowFontScaling={false} style={styles.autoSaveTextSaved}>Guardado ✓</Text>
+            <Text allowFontScaling={false} style={styles.autoSaveTextSaved}>Sincronizado ✓</Text>
+          )}
+          {autoSaveStatus === 'pending' && (
+            <Text allowFontScaling={false} style={styles.autoSaveTextPending}>
+              Guardado en este teléfono · pendiente de sincronizar
+            </Text>
           )}
           {autoSaveStatus === 'error' && (
-            <Text allowFontScaling={false} style={styles.autoSaveTextError}>Error al guardar</Text>
+            <Text allowFontScaling={false} style={styles.autoSaveTextError}>Revisión necesaria antes de sincronizar</Text>
           )}
         </View>
 
@@ -1743,6 +1949,11 @@ const styles = StyleSheet.create({
   autoSaveTextSaved: {
     ...typography.caption,
     color: colors.success,
+    fontWeight: '700',
+  },
+  autoSaveTextPending: {
+    ...typography.caption,
+    color: colors.warning,
     fontWeight: '700',
   },
   autoSaveTextError: {

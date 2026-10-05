@@ -24,6 +24,29 @@ export async function saveStoredUser(user: unknown): Promise<void> {
   await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 }
 
+export async function getStoredUser<T>(): Promise<T | null> {
+  const raw = await AsyncStorage.getItem(USER_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+export function isStoredJwtUsableOffline(token: string, nowMs = Date.now()): boolean {
+  try {
+    const payloadSegment = token.split('.')[1];
+    if (!payloadSegment) return false;
+    const normalized = payloadSegment.replace(/-/g, '+').replace(/_/g, '/');
+    const padding = '='.repeat((4 - (normalized.length % 4)) % 4);
+    const payload = JSON.parse(globalThis.atob(`${normalized}${padding}`)) as { exp?: unknown };
+    return typeof payload.exp === 'number' && payload.exp * 1000 > nowMs + 30_000;
+  } catch {
+    return false;
+  }
+}
+
 export async function saveSession(token: string, user: unknown): Promise<void> {
   try {
     await SecureStore.setItemAsync(SECURE_TOKEN_KEY, token);

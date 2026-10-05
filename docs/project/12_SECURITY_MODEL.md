@@ -1,6 +1,6 @@
 # 12 Security Model - Modelo de Seguridad
 
-Version: 1.12.0
+Version: 1.13.0
 Estado: Vigente
 Fecha de actualizacion: 2026-10-04
 
@@ -191,6 +191,12 @@ actualiza la ruta vigente y emite la auditoría documental.
 - Produccion no inicia sin secreto JWT ni credenciales PostgreSQL explicitas o `DATABASE_URL`.
 - TLS de PostgreSQL valida certificados por defecto; una excepcion requiere configuracion explicita.
 - El JWT móvil se conserva en SecureStore y se retira del AsyncStorage legacy; un `401` autenticado invalida la sesión local.
+- La cola offline no persiste JWT ni cabeceras de autorización y separa borradores, operaciones y
+  versiones por usuario autenticado. Los cambios atrasados de identidad, Solicitud o Entrevista se
+  bloquean con conflicto en API en lugar de sobrescribir otra versión.
+- Los borradores y archivos pendientes viven hoy en almacenamiento privado de la aplicación, pero
+  su cifrado local auditado continúa como requisito obligatorio antes de capturar datos reales en
+  producción.
 - `npm run security:secrets` bloquea credenciales literales en código ejecutable sin imprimir sus valores.
 - Scripts administrativos y de migración reciben credenciales y PIN iniciales por variables de entorno y no los registran en consola.
 - El entorno local exige contraseña PostgreSQL mediante `scram-sha-256` incluso en loopback; la

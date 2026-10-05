@@ -173,11 +173,84 @@ describe('DocumentosStorageService', () => {
       [archivo],
       {
         carga_id: parcial.carga_id,
-        indice_inicio: 0,
+        indice_inicio: 2,
         total_archivos: 2,
         finalizar: true,
       },
     )).rejects.toThrow('debe iniciar en el índice 1');
+  });
+
+  it('reanuda con un identificador creado por el dispositivo y acepta el mismo lote una sola vez', async () => {
+    const cargaId = '44444444-4444-4444-8444-444444444444';
+    const contenido = Buffer.from([0xff, 0xd8, 0xff, 0x01]);
+    const archivo = { buffer: contenido, mimetype: 'image/jpeg', size: contenido.length };
+    const primerLote = await service.guardarLote(
+      integranteId,
+      'comprobante_credito',
+      usuarioId,
+      [archivo],
+      {
+        carga_id: cargaId,
+        indice_inicio: 0,
+        total_archivos: 2,
+        finalizar: false,
+      },
+    );
+
+    const repetido = await service.guardarLote(
+      integranteId,
+      'comprobante_credito',
+      usuarioId,
+      [archivo],
+      {
+        carga_id: cargaId,
+        indice_inicio: 0,
+        total_archivos: 2,
+        finalizar: false,
+      },
+    );
+
+    expect(primerLote).toMatchObject({ carga_id: cargaId, recibidos: 1, completado: false });
+    expect(repetido).toMatchObject({ carga_id: cargaId, recibidos: 1, completado: false });
+  });
+
+  it('devuelve la confirmación existente al repetir el último lote sin duplicar archivos', async () => {
+    const cargaId = '55555555-5555-4555-8555-555555555555';
+    const contenido = Buffer.from([0xff, 0xd8, 0xff, 0x01]);
+    const archivo = { buffer: contenido, mimetype: 'image/jpeg', size: contenido.length };
+
+    const completado = await service.guardarLote(
+      integranteId,
+      'comprobante',
+      usuarioId,
+      [archivo],
+      {
+        carga_id: cargaId,
+        indice_inicio: 0,
+        total_archivos: 1,
+        finalizar: true,
+      },
+    );
+    const repetido = await service.guardarLote(
+      integranteId,
+      'comprobante',
+      usuarioId,
+      [archivo],
+      {
+        carga_id: cargaId,
+        indice_inicio: 0,
+        total_archivos: 1,
+        finalizar: true,
+      },
+    );
+
+    expect(completado.documento?.archivos).toHaveLength(1);
+    expect(repetido).toMatchObject({
+      carga_id: cargaId,
+      recibidos: 1,
+      completado: true,
+      documento: { id: cargaId },
+    });
   });
 
   it('rechaza identificadores manipulados y documentos inexistentes', async () => {

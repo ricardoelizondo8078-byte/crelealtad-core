@@ -197,4 +197,3 @@ npm run migration:report
 **Scripts ejecutados**: 4 de 11  
 **Datos procesados**: 8,406 → 7,732 (92%)  
 **Próximo paso**: Actualizar credenciales BD y continuar desde PASO 6
-

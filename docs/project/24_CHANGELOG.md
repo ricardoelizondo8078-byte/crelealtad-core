@@ -1,5 +1,46 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-04] - Primera vertical offline para Documentación y Verificación
+
+### Mobile y sincronización
+
+- Se agregó un repositorio local versionado por usuario con borradores, cola durable, recuperación
+  de operaciones interrumpidas, consolidación de autoguardados, backoff y sincronización al iniciar,
+  volver a primer plano, por intervalo o manualmente.
+- Solicitud y Entrevista recuperan el borrador local, distinguen pendiente de confirmación y bloquean
+  el avance final de la integrante mientras exista trabajo sin sincronizar.
+- Los documentos pendientes se copian al almacenamiento privado durable, conservan UUID y progreso
+  de lote y reanudan desde el último índice confirmado.
+
+### API e integridad
+
+- La carga documental acepta el UUID del dispositivo y trata como idempotentes los reintentos
+  parciales o finales con contenido idéntico; una reutilización con bytes distintos se rechaza.
+- Datos personales, Solicitud y Entrevista aplican control optimista de versión. Un reintento cuyo
+  contenido ya está confirmado no duplica revisión ni auditoría; otro contenido basado en una
+  versión atrasada responde `409` y permanece bloqueado para revisión humana.
+- No se modificó el esquema PostgreSQL. La primera vertical no incluye Llamada, Visita al vecino,
+  Imágenes del domicilio ni cifrado local productivo.
+- Las integraciones dejaron de depender de usuarios o roles precargados: un fixture transaccional
+  crea y retira una identidad completamente inventada por suite.
+- Se agregó `test:isolated`, que levanta PostgreSQL 17 en una carpeta temporal y puerto aleatorio,
+  carga exclusivamente el dump canónico, ejecuta las suites y elimina el clúster aun ante fallos.
+
+### Seguridad de desarrollo
+
+- Una contraseña histórica que permanecía escrita en documentación de migración fue reemplazada
+  por una marca no sensible. No se utilizó para conectarse ni se copió a configuración de la app.
+- La API puede validarse sin conocer, recuperar ni sustituir la contraseña del servicio PostgreSQL
+  local y sin conectarse a la base operativa externa.
+
+### Verificado
+
+- TypeScript mobile, TypeScript API y build Nest aprobaron; las nueve suites mobile aprobaron 27
+  pruebas.
+- La ejecución aislada desde un esquema vacío aprobó las 41 suites API y sus 224 pruebas. El primer
+  ciclo limpio detectó seis suites con precondiciones implícitas; se corrigieron y el segundo ciclo
+  confirmó que ya no dependen de filas preexistentes ni del orden de ejecución.
+
 ## [2026-10-04] - Aprobación de la matriz institucional de acceso
 
 ### Gobierno y seguridad

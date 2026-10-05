@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -38,7 +38,9 @@ import type {
 } from '../../components/ui';
 import { apiUrl } from '../../config/api';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api-client';
+import { useOfflineSync } from '../../context/OfflineSyncContext';
+import { offlineDraftKey } from '../../offline/offline-sync.ids';
+import { api, ApiError } from '../../services/api-client';
 import {
   obtenerUbicacionEntrevista,
   obtenerUbicacionImagenDomicilio,
@@ -136,7 +138,6 @@ import {
   EntrevistaPayload,
   EvidenciaEntrevistaPendiente,
   EvidenciaNegocioPendiente,
-  guardarEntrevista,
   obtenerEntrevista,
   obtenerEvidenciasEntrevista,
   obtenerEvidenciasNegocio,
@@ -146,6 +147,7 @@ import {
 import {
   crearEntrevistaPayload,
   restaurarEntrevista,
+  type EntrevistaRestaurada,
 } from './verificacion-entrevista.mapper';
 import {
   calcularSemanasTranscurridasDesdeMes,
@@ -214,6 +216,14 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   onBack,
 }) => {
   const { usuario } = useAuth();
+  const {
+    saveDraft,
+    getDraft,
+    enqueueJson,
+    syncNow,
+    retryBlocked,
+    setServerVersion,
+  } = useOfflineSync();
   const {
     values: entrevistaFormValues,
     conoceAsesora, setConoceAsesora,
@@ -440,7 +450,9 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const [entrevistaCargada, setEntrevistaCargada] = useState(false);
   const [guardandoEntrevista, setGuardandoEntrevista] = useState(false);
   const [errorGuardadoEntrevista, setErrorGuardadoEntrevista] = useState<string | null>(null);
-  const [reintentoGuardadoEntrevista, setReintentoGuardadoEntrevista] = useState(0);
+  const [estadoSyncEntrevista, setEstadoSyncEntrevista] = useState<
+    'idle' | 'pending' | 'synced' | 'blocked'
+  >('idle');
   const ultimaEntrevistaConfirmadaRef = useRef<string>('');
   const guardadoEntrevistaEnCursoRef = useRef(false);
   const entrevistaPendienteRef = useRef<string | null>(null);
@@ -451,6 +463,14 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const [guardandoEvidenciaEntrevista, setGuardandoEvidenciaEntrevista] = useState<
     'CONTROL_PAGOS' | 'FOLLETO_PREMIO_TESORERA' | null
   >(null);
+  const entrevistaDraftKey = useMemo(
+    () => offlineDraftKey('VERIFICACION', 'entrevista', integranteId),
+    [integranteId],
+  );
+  const entrevistaVersionKey = useMemo(
+    () => `verificacion:entrevista:${integranteId}:revision`,
+    [integranteId],
+  );
 
   // Llamada integrante
   const [showLlamadaModal, setShowLlamadaModal] = useState(false);
@@ -506,87 +526,161 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const [guardandoEvidenciaVisita, setGuardandoEvidenciaVisita] = useState(false);
   const [errorEvidenciaVisita, setErrorEvidenciaVisita] = useState<string | null>(null);
 
+  const aplicarEntrevistaRestaurada = (restaurada: EntrevistaRestaurada) => {
+    setConoceAsesora(restaurada.conoceAsesora);
+    setComoConocioAsesora(restaurada.comoConocioAsesora);
+    setConoceIntegrantes(restaurada.conoceIntegrantes);
+    setTiempoConoceIntegrantes(restaurada.tiempoConoceIntegrantes);
+    setSabeMontosCompaneras(restaurada.sabeMontosCompaneras);
+    setAcuerdoMontos(restaurada.acuerdoMontos);
+    setCompanerasMontoNoAcordadoIds(restaurada.companerasMontoNoAcordadoIds);
+    setMotivosDesacuerdoMontosPorIntegrante(restaurada.motivosDesacuerdoMontosPorIntegrante);
+    setConoceTesoreraDelGrupo(restaurada.conoceTesoreraDelGrupo);
+    setQuienEsTesorera(restaurada.quienEsTesorera);
+    setDomicilioRecoleccion(restaurada.domicilioRecoleccion);
+    setTieneFamiliarGrupo(restaurada.tieneFamiliarGrupo);
+    setFamiliaresGrupoIds(restaurada.familiaresGrupoIds);
+    setTieneOtroCreditoGrupal(restaurada.tieneOtroCreditoGrupal);
+    setFinancieraCreditoGrupal(restaurada.financieraCreditoGrupal);
+    setCreditoGrupalAnteriorActivo(restaurada.creditoGrupalAnteriorActivo);
+    setValorFichaCreditoGrupal(restaurada.valorFichaCreditoGrupal);
+    setSemanaActualCreditoGrupal(restaurada.semanaActualCreditoGrupal);
+    setMesDesembolsoCreditoGrupal(restaurada.mesDesembolsoCreditoGrupal);
+    setMesUltimoPagoCreditoGrupal(restaurada.mesUltimoPagoCreditoGrupal);
+    setAnioUltimoPagoCreditoGrupal(restaurada.anioUltimoPagoCreditoGrupal);
+    setNumeroCiclosCreditoGrupal(restaurada.numeroCiclosCreditoGrupal);
+    setTasaCreditoGrupal(restaurada.tasaCreditoGrupal);
+    setNombreAsesoraCreditoGrupal(restaurada.nombreAsesoraCreditoGrupal);
+    setTelefonoAsesoraCreditoGrupal(formatPhone(restaurada.telefonoAsesoraCreditoGrupal));
+    setMotivoNoRenovacionCreditoGrupal(restaurada.motivoNoRenovacionCreditoGrupal);
+    setViveEnDomicilioDeclarado(restaurada.viveEnDomicilioDeclarado);
+    setMotivoNoViveEnDomicilio(restaurada.motivoNoViveEnDomicilio);
+    setTipoDomicilio(restaurada.tipoDomicilio);
+    setFamiliarDomicilio(restaurada.familiarDomicilio);
+    setAniosEnDomicilio(restaurada.aniosEnDomicilio);
+    setPersonasVivenCasa(restaurada.personasVivenCasa);
+    setQuienViveConUsted(restaurada.quienViveConUsted);
+    setQuienesVivenConUstedSabenDelCredito(restaurada.quienesVivenConUstedSabenDelCredito);
+    setTieneOtroIngresoHogar(restaurada.tieneOtroIngresoHogar);
+    setOtroIngresoSemanal(restaurada.otroIngresoSemanal);
+    setCapacidadPagoSemanal(restaurada.capacidadPagoSemanal);
+    setMotivoCredito(restaurada.motivoCredito);
+    setFuentesIngresoPersonal(restaurada.fuentesIngresoPersonal);
+    setIngresosSemanalesDeclarados(restaurada.ingresosSemanalesDeclarados);
+    setLugarTrabajo(restaurada.lugarTrabajo);
+    setAntiguedadLaboral(restaurada.antiguedadLaboral);
+    setTipoNegocio(restaurada.tipoNegocio);
+    setIngresoLibreSemanalNegocio(restaurada.ingresoLibreSemanalNegocio);
+    setUbicacionNegocio(restaurada.ubicacionNegocio);
+    setTieneControlPagos(restaurada.tieneControlPagos);
+    setMotivoSinControl(restaurada.motivoSinControl);
+    setAsesoraAcudioSemanalmente(restaurada.asesoraAcudioSemanalmente);
+    setFirmabanControlSemanalmente(restaurada.firmabanControlSemanalmente);
+    setTratoAsesoraTesorera(restaurada.tratoAsesoraTesorera);
+    setConocePremioTesorera(restaurada.conocePremioTesorera);
+    setOpinionCredito(restaurada.opinionCredito);
+    setTratoDesembolso(restaurada.tratoDesembolso);
+    setRapidezDesembolso(restaurada.rapidezDesembolso);
+    setInformacionCreditoClara(restaurada.informacionCreditoClara);
+    setRecomendaria(restaurada.recomendaria);
+    setRazonRecomendacion(restaurada.razonRecomendacion);
+    setMotivoRecomendacion(restaurada.motivoRecomendacion);
+  };
+
+  const aplicarEntrevistaPayload = (payload: EntrevistaPayload) => {
+    aplicarEntrevistaRestaurada(restaurarEntrevista({
+      ...payload,
+      id: 'borrador-local',
+      integrante_id: integranteId,
+      revision: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }, NO_SABE_DOMICILIO_RECOLECCION_VALUE));
+  };
+
   const cargarEntrevistaGuardada = async () => {
     setEntrevistaCargada(false);
+    const localDraft = await getDraft<EntrevistaPayload>(entrevistaDraftKey);
     try {
       const respuesta = await obtenerEntrevista(integranteId);
-      if (respuesta.entrevista) {
-        const restaurada = restaurarEntrevista(
-          respuesta.entrevista,
-          NO_SABE_DOMICILIO_RECOLECCION_VALUE,
-        );
-        setConoceAsesora(restaurada.conoceAsesora);
-        setComoConocioAsesora(restaurada.comoConocioAsesora);
-        setConoceIntegrantes(restaurada.conoceIntegrantes);
-        setTiempoConoceIntegrantes(restaurada.tiempoConoceIntegrantes);
-        setSabeMontosCompaneras(restaurada.sabeMontosCompaneras);
-        setAcuerdoMontos(restaurada.acuerdoMontos);
-        setCompanerasMontoNoAcordadoIds(restaurada.companerasMontoNoAcordadoIds);
-        setMotivosDesacuerdoMontosPorIntegrante(restaurada.motivosDesacuerdoMontosPorIntegrante);
-        setConoceTesoreraDelGrupo(restaurada.conoceTesoreraDelGrupo);
-        setQuienEsTesorera(restaurada.quienEsTesorera);
-        setDomicilioRecoleccion(restaurada.domicilioRecoleccion);
-        setTieneFamiliarGrupo(restaurada.tieneFamiliarGrupo);
-        setFamiliaresGrupoIds(restaurada.familiaresGrupoIds);
-        setTieneOtroCreditoGrupal(restaurada.tieneOtroCreditoGrupal);
-        setFinancieraCreditoGrupal(restaurada.financieraCreditoGrupal);
-        setCreditoGrupalAnteriorActivo(restaurada.creditoGrupalAnteriorActivo);
-        setValorFichaCreditoGrupal(restaurada.valorFichaCreditoGrupal);
-        setSemanaActualCreditoGrupal(restaurada.semanaActualCreditoGrupal);
-        setMesDesembolsoCreditoGrupal(restaurada.mesDesembolsoCreditoGrupal);
-        setMesUltimoPagoCreditoGrupal(restaurada.mesUltimoPagoCreditoGrupal);
-        setAnioUltimoPagoCreditoGrupal(restaurada.anioUltimoPagoCreditoGrupal);
-        setNumeroCiclosCreditoGrupal(restaurada.numeroCiclosCreditoGrupal);
-        setTasaCreditoGrupal(restaurada.tasaCreditoGrupal);
-        setNombreAsesoraCreditoGrupal(restaurada.nombreAsesoraCreditoGrupal);
-        setTelefonoAsesoraCreditoGrupal(formatPhone(restaurada.telefonoAsesoraCreditoGrupal));
-        setMotivoNoRenovacionCreditoGrupal(restaurada.motivoNoRenovacionCreditoGrupal);
-        setViveEnDomicilioDeclarado(restaurada.viveEnDomicilioDeclarado);
-        setMotivoNoViveEnDomicilio(restaurada.motivoNoViveEnDomicilio);
-        setTipoDomicilio(restaurada.tipoDomicilio);
-        setFamiliarDomicilio(restaurada.familiarDomicilio);
-        setAniosEnDomicilio(restaurada.aniosEnDomicilio);
-        setPersonasVivenCasa(restaurada.personasVivenCasa);
-        setQuienViveConUsted(restaurada.quienViveConUsted);
-        setQuienesVivenConUstedSabenDelCredito(restaurada.quienesVivenConUstedSabenDelCredito);
-        setTieneOtroIngresoHogar(restaurada.tieneOtroIngresoHogar);
-        setOtroIngresoSemanal(restaurada.otroIngresoSemanal);
-        setCapacidadPagoSemanal(restaurada.capacidadPagoSemanal);
-        setMotivoCredito(restaurada.motivoCredito);
-        setFuentesIngresoPersonal(restaurada.fuentesIngresoPersonal);
-        setIngresosSemanalesDeclarados(restaurada.ingresosSemanalesDeclarados);
-        setLugarTrabajo(restaurada.lugarTrabajo);
-        setAntiguedadLaboral(restaurada.antiguedadLaboral);
-        setTipoNegocio(restaurada.tipoNegocio);
-        setIngresoLibreSemanalNegocio(restaurada.ingresoLibreSemanalNegocio);
-        setUbicacionNegocio(restaurada.ubicacionNegocio);
-        setTieneControlPagos(restaurada.tieneControlPagos);
-        setMotivoSinControl(restaurada.motivoSinControl);
-        setAsesoraAcudioSemanalmente(restaurada.asesoraAcudioSemanalmente);
-        setFirmabanControlSemanalmente(restaurada.firmabanControlSemanalmente);
-        setTratoAsesoraTesorera(restaurada.tratoAsesoraTesorera);
-        setConocePremioTesorera(restaurada.conocePremioTesorera);
-        setOpinionCredito(restaurada.opinionCredito);
-        setTratoDesembolso(restaurada.tratoDesembolso);
-        setRapidezDesembolso(restaurada.rapidezDesembolso);
-        setInformacionCreditoClara(restaurada.informacionCreditoClara);
-        setRecomendaria(restaurada.recomendaria);
-        setRazonRecomendacion(restaurada.razonRecomendacion);
-        setMotivoRecomendacion(restaurada.motivoRecomendacion);
-        ultimaEntrevistaConfirmadaRef.current = JSON.stringify(crearEntrevistaPayload(
-          restaurada,
-          NO_SABE_DOMICILIO_RECOLECCION_VALUE,
-        ));
+      await setServerVersion(
+        entrevistaVersionKey,
+        respuesta.entrevista?.revision ?? 0,
+      );
+      const usaBorradorLocal = Boolean(localDraft && localDraft.status !== 'SYNCED');
+      const payload = usaBorradorLocal ? localDraft?.data : respuesta.entrevista;
+      if (payload) {
+        if (usaBorradorLocal) {
+          aplicarEntrevistaPayload(payload);
+        } else {
+          aplicarEntrevistaRestaurada(restaurarEntrevista(
+            respuesta.entrevista!,
+            NO_SABE_DOMICILIO_RECOLECCION_VALUE,
+          ));
+        }
+        ultimaEntrevistaConfirmadaRef.current = JSON.stringify(payload);
       } else {
         ultimaEntrevistaConfirmadaRef.current = '';
       }
-      setErrorGuardadoEntrevista(null);
+      setEstadoSyncEntrevista(
+        localDraft?.status === 'BLOCKED'
+          ? 'blocked'
+          : usaBorradorLocal
+            ? 'pending'
+            : payload
+              ? 'synced'
+              : 'idle',
+      );
+      setErrorGuardadoEntrevista(
+        localDraft?.status === 'BLOCKED'
+          ? localDraft.lastError || 'La entrevista requiere revisión antes de sincronizar.'
+          : null,
+      );
       setEntrevistaCargada(true);
-    } catch {
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 0 && localDraft) {
+        aplicarEntrevistaPayload(localDraft.data);
+        ultimaEntrevistaConfirmadaRef.current = JSON.stringify(localDraft.data);
+        setEstadoSyncEntrevista(localDraft.status === 'BLOCKED' ? 'blocked' : 'pending');
+        setErrorGuardadoEntrevista(
+          localDraft.status === 'BLOCKED'
+            ? localDraft.lastError || 'La entrevista requiere revisión antes de sincronizar.'
+            : null,
+        );
+        setEntrevistaCargada(true);
+        return;
+      }
       setEntrevistaCargada(false);
+      setEstadoSyncEntrevista('idle');
       setErrorGuardadoEntrevista(
         'No se pudo recuperar la entrevista guardada. Revisa tu conexión antes de capturar.',
       );
+    }
+  };
+
+  const reintentarGuardadoEntrevista = async () => {
+    setGuardandoEntrevista(true);
+    try {
+      if (estadoSyncEntrevista === 'blocked') {
+        await retryBlocked();
+      } else {
+        await syncNow();
+      }
+      const draft = await getDraft<EntrevistaPayload>(entrevistaDraftKey);
+      if (draft?.status === 'BLOCKED') {
+        setEstadoSyncEntrevista('blocked');
+        setErrorGuardadoEntrevista(
+          draft.lastError || 'La entrevista requiere revisión antes de sincronizar.',
+        );
+      } else if (draft?.status === 'PENDING' || draft?.status === 'SYNCING') {
+        setEstadoSyncEntrevista('pending');
+        setErrorGuardadoEntrevista(null);
+      } else {
+        setEstadoSyncEntrevista('synced');
+        setErrorGuardadoEntrevista(null);
+      }
+    } finally {
+      setGuardandoEntrevista(false);
     }
   };
 
@@ -830,7 +924,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     setEntrevistaCargada(false);
     setGuardandoEntrevista(false);
     setErrorGuardadoEntrevista(null);
-    setReintentoGuardadoEntrevista(0);
+    setEstadoSyncEntrevista('idle');
     ultimaEntrevistaConfirmadaRef.current = '';
     guardadoEntrevistaEnCursoRef.current = false;
     entrevistaPendienteRef.current = null;
@@ -1305,16 +1399,43 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
         while (entrevistaPendienteRef.current) {
           const pendiente = entrevistaPendienteRef.current;
           entrevistaPendienteRef.current = null;
-          await guardarEntrevista(
-            integranteId,
-            JSON.parse(pendiente) as EntrevistaPayload,
-          );
+          const payload = JSON.parse(pendiente) as EntrevistaPayload;
+          await saveDraft({
+            key: entrevistaDraftKey,
+            module: 'VERIFICACION',
+            entityType: 'entrevista',
+            entityId: integranteId,
+            data: payload,
+          });
+          const result = await enqueueJson({
+            module: 'VERIFICACION',
+            entityType: 'entrevista',
+            entityId: integranteId,
+            dedupeKey: `entrevista:${integranteId}`,
+            draftKey: entrevistaDraftKey,
+            endpoint: `/verificacion/integrantes/${integranteId}/entrevista`,
+            method: 'PUT',
+            body: payload,
+            conflict: {
+              key: entrevistaVersionKey,
+              requestField: 'expected_revision',
+              responsePath: 'entrevista.revision',
+            },
+          });
           ultimaEntrevistaConfirmadaRef.current = pendiente;
-          setErrorGuardadoEntrevista(null);
+          if (result.status === 'BLOCKED') {
+            setEstadoSyncEntrevista('blocked');
+            setErrorGuardadoEntrevista(
+              result.error || 'La entrevista requiere revisión antes de sincronizar.',
+            );
+          } else {
+            setEstadoSyncEntrevista(result.status === 'CONFIRMED' ? 'synced' : 'pending');
+            setErrorGuardadoEntrevista(null);
+          }
         }
       } catch {
         setErrorGuardadoEntrevista(
-          'No se guardaron los últimos cambios de la entrevista. Revisa tu conexión; se reintentará al modificar una respuesta.',
+          'No se pudo conservar el borrador de la entrevista. Intenta nuevamente antes de salir.',
         );
       } finally {
         guardadoEntrevistaEnCursoRef.current = false;
@@ -1326,9 +1447,13 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   }, [
     entrevistaCargada,
     entrevistaSerializadaDebounced,
+    enqueueJson,
+    entrevistaDraftKey,
+    entrevistaVersionKey,
     integranteId,
     pasoActual,
-    reintentoGuardadoEntrevista,
+    saveDraft,
+    setServerVersion,
   ]);
 
   const tomarFoto = async (callback: (uri: string) => void) => {
@@ -3867,7 +3992,8 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
               guardando={guardandoEntrevista}
               errorGuardado={errorGuardadoEntrevista}
               entrevistaCargada={entrevistaCargada}
-              entrevistaConfirmada={Boolean(ultimaEntrevistaConfirmadaRef.current)}
+              entrevistaConfirmada={Boolean(ultimaEntrevistaConfirmadaRef.current) && estadoSyncEntrevista === 'synced'}
+              guardadoLocalPendiente={estadoSyncEntrevista === 'pending'}
               conoceAsesora={conoceAsesora}
               comoConocioAsesora={comoConocioAsesora}
               conoceIntegrantes={conoceIntegrantes}
@@ -3885,7 +4011,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
               tieneFamiliarGrupo={tieneFamiliarGrupo}
               familiaresGrupoIds={familiaresGrupoIds}
               onRecuperarEntrevista={() => void cargarEntrevistaGuardada()}
-              onReintentarGuardado={() => setReintentoGuardadoEntrevista((valor) => valor + 1)}
+              onReintentarGuardado={() => void reintentarGuardadoEntrevista()}
               onConoceAsesoraChange={(respuesta) => {
                 setConoceAsesora(respuesta);
                 if (respuesta === 'No') setComoConocioAsesora('');

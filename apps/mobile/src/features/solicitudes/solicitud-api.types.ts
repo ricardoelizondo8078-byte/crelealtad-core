@@ -1,5 +1,6 @@
 export interface IntegranteApiResponse {
   id: string;
+  persona_updated_at?: string | null;
   nombres?: string;
   apellido_pat?: string;
   apellido_mat?: string;
@@ -16,6 +17,7 @@ export interface IntegranteApiResponse {
 }
 
 export interface SolicitudApiResponse {
+  updated_at?: string;
   monto_solicitado?: number | null;
   monto_solicitado_confirmado_at?: string | null;
   nombres?: string;

@@ -109,7 +109,37 @@ export class DocumentosStorageService extends DocumentosStoragePort {
     assertUuid(documentoId, 'carga');
     const directory = this.documentDirectory(integranteId, tipo, documentoId);
     const draftPath = resolve(directory, 'upload.json');
-    const esNuevaCarga = !carga.carga_id;
+    const manifestPath = resolve(directory, 'manifest.json');
+    const documentoExistente = await this.obtenerDocumentoCompletadoSiExiste(manifestPath);
+    if (documentoExistente) {
+      if (
+        documentoExistente.id !== documentoId
+        || documentoExistente.integrante_id !== integranteId
+        || documentoExistente.tipo !== tipo
+        || documentoExistente.usuario_id !== usuarioId
+        || documentoExistente.archivos.length !== totalArchivos
+      ) {
+        throw new BadRequestException('La carga completada no corresponde al documento o usuario actual');
+      }
+      if (indiceInicio + archivos.length > totalArchivos) {
+        throw new BadRequestException('El lote repetido excede la carga completada');
+      }
+      await this.validarLoteRepetido(
+        directory,
+        documentoExistente,
+        archivos,
+        indiceInicio,
+      );
+      return {
+        carga_id: documentoId,
+        recibidos: documentoExistente.archivos.length,
+        total_archivos: totalArchivos,
+        completado: true,
+        documento: documentoExistente,
+      };
+    }
+
+    const esNuevaCarga = !(await this.existeArchivo(draftPath));
     let pendiente: CargaDocumentoPendiente;
 
     if (esNuevaCarga) {
@@ -140,6 +170,21 @@ export class DocumentosStorageService extends DocumentosStoragePort {
       }
     }
 
+    if (indiceInicio < pendiente.archivos.length) {
+      const indiceFinal = indiceInicio + archivos.length;
+      if (indiceFinal > pendiente.archivos.length) {
+        throw new BadRequestException(
+          `El siguiente lote debe iniciar en el índice ${pendiente.archivos.length}`,
+        );
+      }
+      await this.validarLoteRepetido(directory, pendiente, archivos, indiceInicio);
+      return {
+        carga_id: documentoId,
+        recibidos: pendiente.archivos.length,
+        total_archivos: totalArchivos,
+        completado: false,
+      };
+    }
     if (indiceInicio !== pendiente.archivos.length) {
       throw new BadRequestException(
         `El siguiente lote debe iniciar en el índice ${pendiente.archivos.length}`,
@@ -205,7 +250,7 @@ export class DocumentosStorageService extends DocumentosStoragePort {
         archivos: guardados,
       };
       await writeFile(
-        resolve(directory, 'manifest.json'),
+        manifestPath,
         JSON.stringify(documento, null, 2),
         { encoding: 'utf8', flag: 'wx' },
       );
@@ -303,6 +348,43 @@ export class DocumentosStorageService extends DocumentosStoragePort {
       return pendiente;
     } catch {
       throw new NotFoundException('Carga pendiente no encontrada');
+    }
+  }
+
+  private async existeArchivo(path: string): Promise<boolean> {
+    try {
+      return (await stat(path)).isFile();
+    } catch {
+      return false;
+    }
+  }
+
+  private async obtenerDocumentoCompletadoSiExiste(
+    path: string,
+  ): Promise<DocumentoGuardado | null> {
+    try {
+      const documento = JSON.parse(await readFile(path, 'utf8')) as DocumentoGuardado;
+      return documento && Array.isArray(documento.archivos) ? documento : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async validarLoteRepetido(
+    directory: string,
+    pendiente: Pick<CargaDocumentoPendiente, 'archivos'>,
+    archivos: ArchivoDocumentoRecibido[],
+    indiceInicio: number,
+  ): Promise<void> {
+    for (let index = 0; index < archivos.length; index += 1) {
+      const guardado = pendiente.archivos[indiceInicio + index];
+      if (!guardado || basename(guardado.nombre) !== guardado.nombre) {
+        throw new BadRequestException('El lote repetido no coincide con la carga pendiente');
+      }
+      const contenido = await readFile(resolve(directory, guardado.nombre));
+      if (contenido.length !== archivos[index].size || !contenido.equals(archivos[index].buffer)) {
+        throw new BadRequestException('El lote repetido no coincide con la carga pendiente');
+      }
     }
   }
 

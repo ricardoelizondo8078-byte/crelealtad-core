@@ -41,7 +41,8 @@
 
 - Reconciliación de los 578 expedientes históricos que actualmente no tienen `asesora_id`.
 - Alcance completo por responsable en rutas directas de expedientes, integrantes, solicitudes y documentos, ni alcance por sucursal/zona.
-- Cola offline durable, reintentos después de cerrar la aplicación o reconciliación de conflictos.
+- Cifrado local productivo, conciliación humana de conflictos y prueba manual completa después de
+  cerrar/reabrir la aplicación; la primera vertical de cola y reanudación ya está implementada.
 - Aceptación, observación o dictamen de documentos por VERIFICADOR.
 - Catálogo parametrizable de tipos documentales.
 - Borrado de evidencias o administración de permisos.
@@ -104,7 +105,9 @@ No se agregan estados oficiales de documento ni expediente en este incremento.
 - Servicio: almacenamiento documental local configurable mediante `DOCUMENT_STORAGE_PATH`.
 - Tablas: `solicitudes` y `solicitudes_documentos`; sin cambio de esquema.
 - El límite del Paso 6 proviene del producto asignado al expediente; mientras los expedientes históricos no tengan `producto_id`, se usa el primer producto activo. El valor de contingencia vigente es $100,000 si no existe configuración utilizable.
-- Idempotencia: pendiente para la futura cola durable; cada carga confirmada crea una versión nueva.
+- Idempotencia: la cola conserva un UUID estable por carga, reanuda desde el siguiente lote y la API
+  devuelve una carga parcial o final idéntica sin crear otra versión ni auditoría. Una sustitución
+  deliberada posterior conserva el comportamiento de versión nueva.
 - Auditoría: el manifiesto conserva usuario, fecha, integrante y tipo; integración transversal con `audit_log` permanece pendiente.
 
 ## 9. Reglas de negocio
@@ -185,7 +188,9 @@ La bandeja y el detalle de grupos aplican alcance por responsable para `ASESOR`.
 ## 15. Decisiones abiertas
 
 - Proveedor durable de almacenamiento para producción.
-- Cola offline, idempotencia entre reinicios y política de conflictos.
+- Cifrado local auditado, interfaz de conciliación humana y pruebas manuales de cierre/reconexión;
+  la cola, el backoff, la carga reanudable y la detección de conflictos ya existen en la primera
+  vertical.
 - Catálogo parametrizable y versionamiento documental en PostgreSQL.
 - Aplicación completa del alcance por responsable y territorial aprobado en DEC-175.
 - Fuente operativa para reconciliar `asesora_id` en los 578 expedientes históricos.

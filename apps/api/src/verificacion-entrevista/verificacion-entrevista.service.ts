@@ -120,6 +120,23 @@ export class VerificacionEntrevistaService {
         lock: { mode: 'pessimistic_write' },
       });
 
+      const revisionActual = existente?.revision ?? 0;
+      if (input.expected_revision !== undefined && input.expected_revision !== revisionActual) {
+        if (existente) {
+          const presentada = await this.presentarEntrevista(
+            existente,
+            familiarRepository,
+            desacuerdoRepository,
+          );
+          if (this.entrevistaCoincideConInput(presentada, input)) {
+            return { entrevista: presentada };
+          }
+        }
+        throw new ConflictException(
+          'La entrevista cambió en el servidor. Revisa la versión actual antes de sincronizar.',
+        );
+      }
+
       const entrevista = await repository.save(repository.create({
         ...(existente ?? {}),
         ...this.mapearEntrevista(input),
@@ -461,6 +478,41 @@ export class VerificacionEntrevistaService {
       motivo_recomendacion: textoONull(input.motivo_recomendacion),
       oportunidad_mejora: textoONull(input.oportunidad_mejora),
     };
+  }
+
+  private entrevistaCoincideConInput(
+    presentada: Record<string, unknown>,
+    input: GuardarEntrevistaDto,
+  ): boolean {
+    const esperada = this.mapearEntrevista(input) as Record<string, unknown>;
+    const escalaresCoinciden = Object.entries(esperada).every(([campo, valor]) => (
+      this.valoresEntrevistaEquivalentes(presentada[campo], valor)
+    ));
+    if (!escalaresCoinciden) return false;
+
+    const familiaresActuales = [...((presentada.familiares_grupo_ids as string[] | undefined) ?? [])]
+      .sort();
+    const familiaresEsperados = [...(input.familiares_grupo_ids ?? [])].sort();
+    if (JSON.stringify(familiaresActuales) !== JSON.stringify(familiaresEsperados)) return false;
+
+    const ordenarDesacuerdos = (items: Array<{ integrante_id: string; motivo: string }>) => (
+      [...items].sort((left, right) => (
+        `${left.integrante_id}:${left.motivo}`.localeCompare(`${right.integrante_id}:${right.motivo}`)
+      ))
+    );
+    const desacuerdosActuales = ordenarDesacuerdos(
+      (presentada.desacuerdos_montos as Array<{ integrante_id: string; motivo: string }> | undefined) ?? [],
+    );
+    const desacuerdosEsperados = ordenarDesacuerdos(input.desacuerdos_montos ?? []);
+    return JSON.stringify(desacuerdosActuales) === JSON.stringify(desacuerdosEsperados);
+  }
+
+  private valoresEntrevistaEquivalentes(actual: unknown, esperado: unknown): boolean {
+    if (Array.isArray(actual) && Array.isArray(esperado)) {
+      return JSON.stringify([...actual].sort()) === JSON.stringify([...esperado].sort());
+    }
+    if (typeof esperado === 'number') return Number(actual) === esperado;
+    return actual === esperado;
   }
 
   private async registrarHistorialFamiliares(

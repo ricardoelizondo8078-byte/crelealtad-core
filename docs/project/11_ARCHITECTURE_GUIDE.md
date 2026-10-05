@@ -1,6 +1,6 @@
 # 11 Architecture Guide — Guía de Arquitectura
 
-Versión: 2.17.0
+Versión: 2.18.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -115,7 +115,10 @@ Fecha de auditoría: 2026-10-04
   permanecen en los coordinadores hasta la siguiente extracción controlada.
 - Uso de cámara/galería mediante Expo Image Picker.
 - Lectura puntual de ubicación en primer plano mediante Expo Location al confirmar un resultado de llamada; si no existe una lectura válida, la API no recibe ni registra el intento.
-- AsyncStorage conserva usuario y borradores no sensibles; SecureStore conserva el JWT. La pantalla documental activa solo presenta como sincronizadas las rutas confirmadas por la API.
+- AsyncStorage conserva usuario, borradores y la cola offline separada por usuario; SecureStore
+  conserva exclusivamente el JWT. Los archivos pendientes se copian al directorio privado durable
+  de la app y sólo se eliminan después de confirmación. La pantalla documental activa sólo presenta
+  como sincronizadas las rutas confirmadas por la API.
 
 ### Comunicación API
 
@@ -129,8 +132,15 @@ Fecha de auditoría: 2026-10-04
 - El inicio filtra sus accesos con los permisos efectivos incluidos en login y `/auth/me`; el hook de acceso operativo y el constructor del menú mantienen esa regla fuera del shell `App.tsx`.
 - El contrato efectivo actual contiene listas de `modulos` y `acciones`, con soporte de comodín administrativo.
 - La sesión guardada se valida contra `/auth/me` al iniciar y sólo entonces restaura usuario, rol y permisos efectivos.
-- No hay cola durable offline, backoff, idempotencia ni reconciliación.
-- La selección fallida se conserva únicamente durante la sesión de pantalla; cerrar la app antes de confirmar pierde ese reintento.
+- Existe una primera vertical de cola durable en `src/offline`: serializa por usuario, consolida
+  autoguardados, recupera operaciones interrumpidas, aplica backoff y reintenta al iniciar, volver a
+  primer plano, cada 30 segundos o por acción manual. Solicitud y Entrevista recuperan su borrador.
+- Los documentos de M02 conservan UUID y progreso de lote para reanudar; la API acepta repeticiones
+  idénticas del lote sin crear otra versión ni otra auditoría.
+- Datos personales, Solicitud y Entrevista usan versiones optimistas encadenadas. Una versión
+  atrasada con otro contenido responde `409` y queda `BLOCKED`; no se aplica última escritura gana.
+- Continúan pendientes el cifrado local productivo, la pantalla de conciliación humana, la prueba
+  manual completa en dispositivo y las cadenas offline de Llamada, Visita e Imágenes del domicilio.
 - La API aplica una política común de firma JPEG/PNG/PDF, máximo de 10 MB, UUID de rutas y SHA-256, y conserva versiones anteriores en almacenamiento. Todas las entradas multipart limitan archivos, campos, partes y encabezados. La carga documental admite hasta 12 archivos por petición; mobile encadena los lotes necesarios y el backend sólo activa la versión completa al finalizar, sin limitar la cantidad funcional aprobada para `comprobante_credito`. Falta un proveedor durable de producción, limpieza programada de cargas parciales y respaldo operativo.
 - Las variantes paralelas legacy de `modules/asesor` y sus archivos backup fueron retiradas del árbol activo después de comprobar que no tenían imports ni rutas vigentes.
 - Existe una primera capa automatizada mobile para componentes compartidos, acceso por permisos y
@@ -157,28 +167,30 @@ El detalle canónico está en `10_DATABASE_PRINCIPLES.md`.
 
 Estado actual:
 
-- Persistencia local parcial con AsyncStorage.
-- Captura de imágenes y carga inmediata autenticada al servidor.
+- Persistencia local versionada con AsyncStorage, separada por usuario y entidad.
+- Cola durable para JSON, multipart y documentos; los archivos pendientes se copian al directorio
+  privado de la app.
+- Captura de imágenes con carga autenticada reanudable para documentos de M02.
 - Timeout de health check para descubrimiento de API.
-- Sin motor de sincronización verificable.
+- Motor con recuperación de operaciones interrumpidas, backoff, consolidación, reintento por ciclo
+  de vida y control optimista de versiones en datos personales, Solicitud y Entrevista.
 
-Arquitectura requerida antes de escalar captura:
+Pendiente antes de escalar captura:
 
-1. Almacén local estructurado por entidad/usuario.
-2. Cola durable de operaciones.
-3. Idempotency keys y UUID cuando aplique.
-4. Reintentos con backoff.
-5. Estado visible de sincronización.
-6. Subida reanudable de documentos.
-7. Política de conflictos aprobada.
-8. Pruebas de cierre, reinicio, reconexión y duplicidad.
+1. Cifrado local auditado para datos reales.
+2. Interfaz y responsabilidad operativa de conciliación humana.
+3. Cadenas offline de Llamada, Visita, Imágenes del domicilio y evidencias de Entrevista.
+4. Pruebas manuales de cierre, reinicio, reconexión y duplicidad en iOS/Android.
+5. Monitoreo, límites y política de retención/limpieza de operaciones bloqueadas.
 
 ## Testing y calidad
 
-- Cuarenta y una suites y 218 pruebas API activas; no quedan suites `.skip`.
-- Seis suites y 19 pruebas mobile cubren UI compartida, acceso por permisos, lógica pura de
-  Solicitud y Verificación, y hooks de coordinación mediante Jest, `jest-expo` y React Native
-  Testing Library.
+- Cuarenta y una suites y 224 pruebas API activas; no quedan suites `.skip`. Las seis nuevas de
+  reanudación y conflicto aprobaron focalizadas; la corrida integral posterior está pendiente de
+  cargar la credencial protegida de `crelealtad_test`.
+- Nueve suites y 27 pruebas mobile cubren UI compartida, acceso por permisos, lógica pura de
+  Solicitud y Verificación, hooks de coordinación, sesión sin red y el repositorio/política offline
+  mediante Jest, `jest-expo` y React Native Testing Library.
 - `npm run build` de la API y el export Android de Expo fueron aprobados el 2026-10-04.
 - La limpieza de los casos activos de `crelealtad_test` termina correctamente.
 - `npm run typecheck` valida API y mobile desde la raíz. TypeScript rechaza implícitos `any`, símbolos/parámetros sin uso, retornos incompletos y fallthrough en API; mobile aplica las puertas equivalentes compatibles con Expo.
@@ -201,7 +213,8 @@ Arquitectura requerida antes de escalar captura:
 2. Código y PostgreSQL gobiernan el inventario técnico observable.
 3. Un artefacto presente no se considera integrado hasta rastrear su uso en runtime.
 4. Ocultar una acción en mobile no sustituye autorización en API.
-5. AsyncStorage no equivale a arquitectura offline completa.
+5. Una cola en AsyncStorage sólo constituye la primera vertical offline: producción requiere además
+   cifrado local auditado, prueba en dispositivo, monitoreo y conciliación operativa de conflictos.
 6. Todo cambio de esquema usa migración revisada y reversible.
 
 ## Referencias cruzadas

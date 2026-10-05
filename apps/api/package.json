@@ -9,6 +9,7 @@
     "start:prod": "node dist/main.js",
     "test": "node --env-file-if-exists=.env ./node_modules/jest/bin/jest.js",
     "test:ci": "node --env-file-if-exists=.env ./node_modules/jest/bin/jest.js --runInBand",
+    "test:isolated": "pwsh -NoProfile -File scripts/run-tests-isolated.ps1",
     "typecheck": "tsc --noEmit",
     "db:migrations:status": "node --env-file-if-exists=.env scripts/migration-ledger.js status",
     "db:migrations:baseline": "node --env-file-if-exists=.env scripts/migration-ledger.js baseline",

@@ -10,6 +10,11 @@ import { IntegrantesModule } from './integrantes.module';
 import { SolicitudesModule } from '../solicitudes/solicitudes.module';
 import { ExpedientesModule } from '../expedientes/expedientes.module';
 import { GruposModule } from '../grupos/grupos.module';
+import {
+  createTestActorFixture,
+  deleteTestActorFixture,
+  TestActorFixture,
+} from '../test-support/test-actor.fixture';
 
 describe('Integrantes - Validación de Solicitud Completa', () => {
   let app: INestApplication;
@@ -19,6 +24,7 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
   let personaId: string;
   let integranteId: string;
   let testUserId: string;
+  let testActor: TestActorFixture;
   let storagePath: string;
 
   beforeAll(async () => {
@@ -60,10 +66,8 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
     await app.init();
 
     dataSource = moduleFixture.get<DataSource>(DataSource);
-    const testUsers = await dataSource.query(
-      'SELECT u.id FROM usuarios u JOIN empleados e ON e.usuario_id = u.id ORDER BY u.id LIMIT 1',
-    );
-    testUserId = testUsers[0].id;
+    testActor = await createTestActorFixture(dataSource, { tipoEmpleado: 'ASESOR' });
+    testUserId = testActor.usuarioId;
   });
 
   beforeEach(async () => {
@@ -117,6 +121,7 @@ describe('Integrantes - Validación de Solicitud Completa', () => {
   });
 
   afterAll(async () => {
+    await deleteTestActorFixture(dataSource, testActor);
     await app.close();
     await rm(storagePath, { recursive: true, force: true });
     delete process.env.DOCUMENT_STORAGE_PATH;

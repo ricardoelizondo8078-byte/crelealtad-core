@@ -14,6 +14,10 @@
   pantalla. Dos hooks concentran el estado del formulario y el ciclo de apertura/cierre del visor;
   contratos, catálogos, mapeos y acceso API permanecen fuera de la vista. Esta separación es interna
   y no altera el orden ni las reglas descritas en este documento.
+- Arquitectura offline activa: la captura general de Entrevista conserva borrador y cola por
+  usuario/integrante, reintenta con backoff y valida `expected_revision`; un reintento idéntico no
+  incrementa revisión y un contenido atrasado distinto queda bloqueado. Llamada, Visita, Imágenes
+  del domicilio y evidencias de Entrevista aún no están cubiertas por esta vertical.
 
 ## 2. Objetivo y resultado observable
 

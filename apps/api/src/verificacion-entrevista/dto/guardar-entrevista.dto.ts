@@ -44,6 +44,12 @@ export class DesacuerdoMontoEntrevistaDto {
 
 export class GuardarEntrevistaDto {
   @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  expected_revision?: number;
+
+  @IsOptional()
   @IsBoolean()
   conoce_asesora?: boolean | null;
 

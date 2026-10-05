@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { ExpedienteEstado } from '../expedientes/expediente.entity';
 import { IntegranteEntity, IntegranteEstado } from '../integrantes/integrante.entity';
 import { VerificacionEntrevistaDesacuerdoMontoEntity } from './verificacion-entrevista-desacuerdo-monto.entity';
@@ -218,6 +218,42 @@ describe('VerificacionEntrevistaService', () => {
       familiares_grupo_ids: [],
       desacuerdos_montos: [],
     }));
+  });
+
+  it('bloquea una entrevista atrasada cuando el servidor ya tiene otros datos', async () => {
+    entrevistaRepository.findOne.mockResolvedValue({
+      id: '77777777-7777-4777-8777-777777777777',
+      expediente_id: expedienteId,
+      integrante_id: integranteId,
+      conoce_asesora: false,
+      revision: 2,
+    });
+
+    await expect(service.guardarEntrevista(integranteId, scope, {
+      expected_revision: 1,
+      conoce_asesora: true,
+    })).rejects.toBeInstanceOf(ConflictException);
+    expect(entrevistaRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('acepta sin duplicar una repetición cuyo contenido ya quedó confirmado', async () => {
+    const input = { expected_revision: 1 };
+    const mapped = (service as unknown as {
+      mapearEntrevista: (value: typeof input) => Record<string, unknown>;
+    }).mapearEntrevista(input);
+    entrevistaRepository.findOne.mockResolvedValue({
+      ...mapped,
+      id: '77777777-7777-4777-8777-777777777777',
+      expediente_id: expedienteId,
+      integrante_id: integranteId,
+      revision: 2,
+    });
+
+    const resultado = await service.guardarEntrevista(integranteId, scope, input);
+
+    expect(resultado.entrevista).toEqual(expect.objectContaining({ revision: 2 }));
+    expect(entrevistaRepository.save).not.toHaveBeenCalled();
+    expect(manager.query).not.toHaveBeenCalled();
   });
 
   it('rechaza relaciones hacia integrantes de otro expediente', async () => {

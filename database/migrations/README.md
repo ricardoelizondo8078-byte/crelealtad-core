@@ -46,3 +46,15 @@ npm --prefix apps/api run test:setup
 ```
 
 Nunca se usa ese comando contra `crelealtad`.
+
+Para ejecutar toda la API sin depender de una contraseña local ni de filas precargadas, el entorno
+Windows de desarrollo puede levantar un PostgreSQL 17 desechable en un puerto aleatorio:
+
+```powershell
+npm --prefix apps/api run test:isolated
+```
+
+El comando carga únicamente `database/schema-dump.sql`, ejecuta las suites y elimina el clúster
+temporal aun cuando falle una prueba. Si PostgreSQL está instalado en otra ubicación, se indica su
+carpeta `bin` mediante `POSTGRES_BIN`. Este mecanismo no conecta con `crelealtad` ni con una base
+externa.

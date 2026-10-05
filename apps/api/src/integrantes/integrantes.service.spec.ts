@@ -1,3 +1,4 @@
+import { ConflictException } from '@nestjs/common';
 import { IntegrantesService } from './integrantes.service';
 
 describe('IntegrantesService - monto formal de solicitud', () => {
@@ -14,7 +15,11 @@ describe('IntegrantesService - monto formal de solicitud', () => {
     findOne: jest.fn(),
     manager: { query: jest.fn(), transaction: jest.fn() },
   };
-  const personaRepository = { findOne: jest.fn(), save: jest.fn() };
+  const personaRepository = {
+    findOne: jest.fn(),
+    save: jest.fn(),
+    merge: jest.fn((entity, changes) => ({ ...entity, ...changes })),
+  };
   let service: IntegrantesService;
   const scope = { usuarioId: 'usuario-1', rolNombre: 'VERIFICADOR' };
 
@@ -33,6 +38,7 @@ describe('IntegrantesService - monto formal de solicitud', () => {
     }));
     personaRepository.findOne.mockReset();
     personaRepository.save.mockReset();
+    personaRepository.merge.mockClear();
     service = new IntegrantesService(
       integranteRepository as never,
       personaRepository as never,
@@ -260,6 +266,45 @@ describe('IntegrantesService - monto formal de solicitud', () => {
       expect.stringContaining('s.monto_autorizado > 0'),
       [['integrante-nueva']],
     );
+  });
+
+  it('bloquea datos personales atrasados cuando la persona ya cambió', async () => {
+    integranteRepository.findOne.mockResolvedValue({
+      id: 'integrante-1',
+      persona_id: 'persona-1',
+    });
+    personaRepository.findOne.mockResolvedValue({
+      id: 'persona-1',
+      nombres: 'NOMBRE ACTUAL',
+      updated_at: new Date('2026-10-04T20:00:00.000Z'),
+    });
+
+    await expect(service.update('integrante-1', {
+      nombres: 'NOMBRE ATRASADO',
+      expected_persona_updated_at: '2026-10-04T19:00:00.000Z',
+    }, scope)).rejects.toBeInstanceOf(ConflictException);
+    expect(personaRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('acepta sin duplicar el mismo cambio personal después de perder la respuesta', async () => {
+    const updatedAt = new Date('2026-10-04T20:00:00.000Z');
+    integranteRepository.findOne.mockResolvedValue({
+      id: 'integrante-1',
+      persona_id: 'persona-1',
+    });
+    personaRepository.findOne.mockResolvedValue({
+      id: 'persona-1',
+      nombres: 'NOMBRE CONFIRMADO',
+      updated_at: updatedAt,
+    });
+
+    const resultado = await service.update('integrante-1', {
+      nombres: 'NOMBRE CONFIRMADO',
+      expected_persona_updated_at: '2026-10-04T19:00:00.000Z',
+    }, scope);
+
+    expect(resultado).toEqual(expect.objectContaining({ persona_updated_at: updatedAt }));
+    expect(personaRepository.save).not.toHaveBeenCalled();
   });
 
   it('conserva historial desconocido sin clasificarlo como confirmado', async () => {

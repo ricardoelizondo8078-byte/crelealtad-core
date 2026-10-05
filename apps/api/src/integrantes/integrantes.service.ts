@@ -42,6 +42,7 @@ export interface RetirarIntegranteInput {
 }
 
 export interface UpdateIntegranteInput {
+  expected_persona_updated_at?: string | null;
   nombres?: string;
   apellido_pat?: string;
   apellido_mat?: string;
@@ -253,12 +254,14 @@ export class IntegrantesService {
         montoProspectivo: null,
         fechaNacimiento: null,
       };
+      let personaUpdatedAt: Date | null = null;
 
       if (integrante.persona_id) {
         const persona = await this.personaRepository.findOne({
           where: { id: integrante.persona_id },
         });
         if (persona) {
+          personaUpdatedAt = persona.updated_at;
           personaData = {
             nombres: persona.nombres,
             apellido_pat: persona.apellido_pat,
@@ -306,6 +309,7 @@ export class IntegrantesService {
         es_tesorera: integrante.expediente?.tesorera_integrante_id === integrante.id,
         created_at: integrante.created_at,
         updated_at: integrante.updated_at,
+        persona_updated_at: personaUpdatedAt,
         ...personaData,
         montoAutorizadoAnterior: montos?.montoAutorizadoAnterior ?? null,
         comparacionMontoDisponible: montoAnteriorDisponible,
@@ -1209,9 +1213,34 @@ export class IntegrantesService {
         return integrante;
       }
 
-      await manager.getRepository(PersonaEntity).update(
-        integrante.persona_id,
-        datosPersona,
+      const personaRepository = manager.getRepository(PersonaEntity);
+      const persona = await personaRepository.findOne({
+        where: { id: integrante.persona_id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!persona) {
+        throw new NotFoundException(`Persona de integrante ${id} no encontrada`);
+      }
+      if (data.expected_persona_updated_at !== undefined) {
+        const versionActual = persona.updated_at?.toISOString() ?? null;
+        if (data.expected_persona_updated_at !== versionActual) {
+          const cambioYaAplicado = Object.entries(datosPersona).every(([campo, esperado]) => {
+            const actual = persona[campo as keyof PersonaEntity];
+            return typeof esperado === 'number'
+              ? Number(actual) === esperado
+              : actual === esperado;
+          });
+          if (cambioYaAplicado) {
+            return { ...integrante, persona_updated_at: persona.updated_at };
+          }
+          throw new ConflictException(
+            'Los datos personales cambiaron en el servidor. Revisa la versión actual antes de sincronizar.',
+          );
+        }
+      }
+
+      const personaActualizada = await personaRepository.save(
+        personaRepository.merge(persona, datosPersona),
       );
       await registrarAuditoria(manager, {
         tabla: 'integrantes',
@@ -1220,7 +1249,7 @@ export class IntegrantesService {
         usuarioId: scope.usuarioId,
         datosDespues: { campos_modificados: camposModificados },
       });
-      return integrante;
+      return { ...integrante, persona_updated_at: personaActualizada.updated_at };
     });
   }
 }

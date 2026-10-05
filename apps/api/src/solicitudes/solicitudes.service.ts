@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   DataSource,
@@ -114,6 +114,18 @@ export class SolicitudesService {
       },
     } as const;
     const campos = camposPorTipo[documento.tipo];
+
+    const solicitudActual = await this.solicitudCoreRepository.findOne({
+      where: { integrante_id: integranteId },
+    });
+    if (solicitudActual) {
+      const documentosActuales = await this.documentosRepository.findOne({
+        where: { solicitud_id: solicitudActual.id },
+      });
+      if (documentosActuales?.[campos.ruta] === documento.ruta) {
+        return documento;
+      }
+    }
 
     try {
       await this.partialUpdateDocumentos(integranteId, {
@@ -286,6 +298,7 @@ export class SolicitudesService {
       accion: 'DOCUMENTO_SUBIDO';
       datos: Record<string, unknown>;
     },
+    expectedUpdatedAt?: string | null,
   ): Promise<SolicitudCompletaDto> {
     if (dto.monto_solicitado !== undefined) {
       const montoMaximo = await obtenerMontoMaximoSolicitable(this.dataSource, dto.expediente_id);
@@ -296,8 +309,22 @@ export class SolicitudesService {
       // 1. Buscar o crear solicitud core
       let solicitudCore = await manager.findOne(SolicitudCoreEntity, {
         where: { integrante_id: dto.integrante_id },
+        lock: { mode: 'pessimistic_write' },
       });
       const esNueva = !solicitudCore;
+
+      if (expectedUpdatedAt !== undefined) {
+        const versionActual = solicitudCore?.updated_at?.toISOString() ?? null;
+        if (expectedUpdatedAt !== versionActual) {
+          if (solicitudCore) {
+            const actual = await this.cargarSolicitudCompleta(manager, solicitudCore);
+            if (this.solicitudCoincideConEntrada(actual, dto)) return actual;
+          }
+          throw new ConflictException(
+            'La solicitud cambió en el servidor. Revisa la versión actual antes de sincronizar.',
+          );
+        }
+      }
 
       if (!solicitudCore) {
         // ASIGNACIÓN EXPLÍCITA CAMPO POR CAMPO - NO SPREAD
@@ -330,6 +357,8 @@ export class SolicitudesService {
       await this.upsertBeneficiario(manager, solicitudCore.id, dto);
       await this.upsertValidaciones(manager, solicitudCore.id, dto);
       await this.upsertDocumentos(manager, solicitudCore.id, dto);
+      solicitudCore.updated_at = new Date();
+      solicitudCore = await manager.save(SolicitudCoreEntity, solicitudCore);
       const camposModificados = Object.entries(dto)
         .filter(([, value]) => value !== undefined)
         .map(([field]) => field)
@@ -345,32 +374,59 @@ export class SolicitudesService {
         },
       });
 
-      // 3. Cargar las 7 hijas en orden: el EntityManager transaccional comparte
-      // una sola conexión y no admite consultas concurrentes seguras.
-      const datosPersonales = await manager.findOne(SolicitudDatosPersonalesEntity, { where: { solicitud_id: solicitudCore.id } });
-      const domicilios = await manager.findOne(SolicitudDomiciliosEntity, { where: { solicitud_id: solicitudCore.id } });
-      const negocios = await manager.findOne(SolicitudNegociosEntity, { where: { solicitud_id: solicitudCore.id } });
-      const referencias = await manager.findOne(SolicitudReferenciasEntity, { where: { solicitud_id: solicitudCore.id } });
-      const beneficiarios = await manager.findOne(SolicitudBeneficiariosEntity, { where: { solicitud_id: solicitudCore.id } });
-      const validaciones = await manager.findOne(SolicitudValidacionesEntity, { where: { solicitud_id: solicitudCore.id } });
-      const documentos = await manager.findOne(SolicitudDocumentosEntity, { where: { solicitud_id: solicitudCore.id } });
+      return this.cargarSolicitudCompleta(manager, solicitudCore);
+    });
+  }
 
-      return {
-        ...solicitudCore,
-        ...this.excludeCollisions(datosPersonales),
-        ...this.excludeCollisions(domicilios),
-        ...this.excludeCollisions(negocios),
-        ...this.excludeCollisions(referencias),
-        ...this.excludeCollisions(beneficiarios),
-        ...this.excludeCollisions(validaciones),
-        ...this.excludeCollisions(documentos),
-      };
+  private async cargarSolicitudCompleta(
+    manager: EntityManager,
+    solicitudCore: SolicitudCoreEntity,
+  ): Promise<SolicitudCompletaDto> {
+    // Lectura secuencial: el EntityManager transaccional usa una sola conexión.
+    const datosPersonales = await manager.findOne(SolicitudDatosPersonalesEntity, { where: { solicitud_id: solicitudCore.id } });
+    const domicilios = await manager.findOne(SolicitudDomiciliosEntity, { where: { solicitud_id: solicitudCore.id } });
+    const negocios = await manager.findOne(SolicitudNegociosEntity, { where: { solicitud_id: solicitudCore.id } });
+    const referencias = await manager.findOne(SolicitudReferenciasEntity, { where: { solicitud_id: solicitudCore.id } });
+    const beneficiarios = await manager.findOne(SolicitudBeneficiariosEntity, { where: { solicitud_id: solicitudCore.id } });
+    const validaciones = await manager.findOne(SolicitudValidacionesEntity, { where: { solicitud_id: solicitudCore.id } });
+    const documentos = await manager.findOne(SolicitudDocumentosEntity, { where: { solicitud_id: solicitudCore.id } });
+    return {
+      ...solicitudCore,
+      ...this.excludeCollisions(datosPersonales),
+      ...this.excludeCollisions(domicilios),
+      ...this.excludeCollisions(negocios),
+      ...this.excludeCollisions(referencias),
+      ...this.excludeCollisions(beneficiarios),
+      ...this.excludeCollisions(validaciones),
+      ...this.excludeCollisions(documentos),
+    };
+  }
+
+  private solicitudCoincideConEntrada(
+    actual: SolicitudCompletaDto,
+    entrada: SolicitudPersistenciaInput,
+  ): boolean {
+    const ignorados = new Set(['integrante_id', 'persona_id', 'expediente_id', 'grupo_id']);
+    return Object.entries(entrada).every(([campo, esperado]) => {
+      if (ignorados.has(campo) || esperado === undefined) return true;
+      const valorActual = (actual as unknown as Record<string, unknown>)[campo];
+      if (typeof esperado === 'number') return Number(valorActual) === esperado;
+      if (valorActual instanceof Date && typeof esperado === 'string') {
+        const fechaEsperada = new Date(esperado);
+        return !Number.isNaN(fechaEsperada.getTime())
+          && valorActual.toISOString() === fechaEsperada.toISOString();
+      }
+      if (esperado instanceof Date) {
+        const actualIso = valorActual instanceof Date ? valorActual.toISOString() : String(valorActual);
+        return actualIso === esperado.toISOString();
+      }
+      return valorActual === esperado;
     });
   }
 
   async partialUpdate(
     integranteId: string,
-    data: Partial<CreateSolicitudDto>,
+    data: Partial<CreateSolicitudDto> & { expected_updated_at?: string | null },
     scope: AccessScope,
   ): Promise<SolicitudCompletaDto> {
     await assertIntegranteAccess(this.dataSource, integranteId, scope);
@@ -378,15 +434,16 @@ export class SolicitudesService {
     const integrante = await this.getIntegranteContext(integranteId);
 
     // Construir DTO completo con campos derivados
+    const { expected_updated_at: expectedUpdatedAt, ...changes } = data;
     const fullDto: SolicitudPersistenciaInput = {
-      ...data,
+      ...changes,
       integrante_id: integranteId,
       persona_id: integrante.persona_id,
       expediente_id: integrante.expediente_id,
       grupo_id: integrante.expediente.grupo_id,
     };
 
-    return this.persistSolicitud(fullDto, scope.usuarioId);
+    return this.persistSolicitud(fullDto, scope.usuarioId, undefined, expectedUpdatedAt);
   }
 
   private async partialUpdateDocumentos(

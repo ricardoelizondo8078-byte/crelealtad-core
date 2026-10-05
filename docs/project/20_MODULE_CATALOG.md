@@ -1,6 +1,6 @@
 # 20 Module Catalog — Catálogo de Módulos
 
-Versión: 2.22.0
+Versión: 2.23.0
 Estado: Vigente y verificado
 Fecha de auditoría: 2026-10-04
 
@@ -73,12 +73,16 @@ Verificado:
 - Selección obligatoria, única y persistente de tesorera entre participantes completas antes del handoff; la fila permanece fija, la tarjeta muestra `T · TESORERA` y la API audita asignación, cambio y desasignación por retiro.
 - El rol `ASESOR` tiene alcance por responsable en rutas directas de expediente, integrante, solicitud y archivo, no sólo en la bandeja.
 - Altas y cambios principales del recorrido registran auditoría transaccional sin copiar valores personales.
+- Solicitud, datos personales y documentos cuentan con una primera vertical offline: borrador y
+  cola por usuario, backoff, reanudación por lote, UUID estable, estados visibles y bloqueo de
+  `SUJETA_CREDITO` hasta confirmación. Las escrituras atrasadas usan versión optimista y quedan
+  bloqueadas ante conflicto.
 
 Pendientes críticos:
 
-- Guardado automático consistente en todos los pasos.
+- Completar prueba manual en dispositivo del guardado automático y la recuperación tras cierre.
 - Configurar almacenamiento durable y respaldado para producción.
-- Implementar cola offline, idempotencia, reanudación y reconciliación.
+- Cifrar la persistencia local productiva y construir la conciliación humana de conflictos.
 - Retirar o migrar definitivamente rutas, alias y variantes legacy excluidas.
 - Ampliar la trazabilidad a módulos posteriores y excepciones aún no implementadas.
 - Implementar la matriz aprobada de asesora/coordinación y su alcance territorial.
@@ -112,6 +116,9 @@ Verificado:
 - `Llamada` permite escoger `Llamada telefónica` o `Llamada por WhatsApp` y, cuando existen dos teléfonos válidos y distintos, seleccionar después el principal o el secundario; con uno solo continúa directamente. El resultado declarado persiste con actor y fecha/hora y alimenta contadores independientes por canal. Si contesta, la API conserva las cuatro preguntas, las seis coincidencias, la acción posterior y una fotografía elegida de la galería; no existe captura libre.
 - La paloma de `Llamada` se deriva del servidor y sobrevive al cierre de sesión o de la aplicación. Exige coincidencias positivas, evidencia y una acción distinta de `Llamar más tarde`; las dos opciones de entrevista abren directamente el proceso Entrevista tras el guardado confirmado.
 - En `Entrevista`, la captura parcial tipada se autoguarda y se recupera por integrante; familiares y desacuerdos conservan historial. Las fotografías de negocio, control de pagos y folleto se toman exclusivamente con cámara y cada archivo nuevo exige actor del JWT, hora y ubicación actual, además de hash e idempotencia. Las fotos opcionales del negocio no bloquean ni concluyen el proceso.
+- La captura general de Entrevista conserva un borrador y una operación durable por integrante. El
+  cliente encadena la `revision` confirmada y la API acepta una repetición idéntica sin incrementar
+  otra vez; una revisión atrasada con contenido distinto responde conflicto y queda bloqueada.
 - Después del domicilio de recolección, Entrevista pregunta si existen familiares en el grupo. `Sí` abre un selector múltiple con las demás integrantes y excluye a la entrevistada; `No` oculta el selector y limpia los identificadores elegidos. Altas y retiros se guardan como eventos inmutables con UUID, actor y fecha.
 - Cambio de expediente a `EN_VERIFICACION`.
 - Lectura de solicitud e integrantes mediante endpoints compartidos.
@@ -134,7 +141,8 @@ Pendientes críticos:
 - Tratamiento posterior específico para cada resultado de `Visita al vecino`; su terminación básica ya exige respuesta y segunda evidencia confirmadas.
 - Mínimo parametrizado de integrantes cuando M11 defina el producto aplicable; retiro, cero pendientes y al menos una completa ya se validan en servidor.
 - Implementar la matriz aprobada de `VERIFICADOR` y su alcance territorial.
-- Criterio funcional de conclusión de Entrevista y cola offline durable; sus respuestas y evidencias ya cuentan con persistencia y recuperación de servidor.
+- Criterio funcional de conclusión de Entrevista; ampliar su primera vertical offline a evidencias y
+  a Llamada, Visita e Imágenes del domicilio, además de cifrado y conciliación productivos.
 - Crear o asignar usuarios operativos al rol autorizado; al 2026-08-29 no hay usuarios activos `VERIFICADOR` en la base local.
 
 ## M04 Análisis — No implementado
@@ -264,7 +272,7 @@ Pendiente:
 
 1. Autorización y alcance territorial.
 2. Auditoría de actor, motivo y resultado.
-3. Motor offline y sincronización.
+3. Completar el motor offline y sincronización iniciado en `docs/modules/X01_SINCRONIZACION_OFFLINE.md`.
 4. Máquina de estados en backend.
 5. Parámetros y reglas versionadas.
 6. Almacenamiento documental de servidor.
