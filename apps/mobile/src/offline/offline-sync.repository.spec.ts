@@ -18,6 +18,42 @@ jest.mock(
   () => jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
+jest.mock('./offline-crypto', () => ({
+  encryptOfflineJson: async (_userId: string, _scope: string, value: unknown) => ({
+    version: 1,
+    algorithm: 'AES-256-GCM',
+    ciphertext: Buffer.from(JSON.stringify(value), 'utf8').toString('base64'),
+  }),
+  decryptOfflineJson: async <T,>(
+    _userId: string,
+    _scope: string,
+    envelope: { ciphertext: string },
+  ): Promise<T> => JSON.parse(Buffer.from(envelope.ciphertext, 'base64').toString('utf8')) as T,
+  isOfflineEncryptedEnvelope: (value: unknown) => {
+    if (!value || typeof value !== 'object') return false;
+    const candidate = value as Record<string, unknown>;
+    return candidate.version === 1
+      && candidate.algorithm === 'AES-256-GCM'
+      && typeof candidate.ciphertext === 'string';
+  },
+}));
+
+jest.mock('./offline-file-store', () => ({
+  migrateLegacyOfflineFiles: async (
+    _userId: string,
+    _operationId: string,
+    files: Record<string, unknown>[],
+  ) => ({
+    changed: files.some((file) => !file.encryption),
+    files: files.map((file) => file.encryption ? file : ({
+      ...file,
+      uri: `${file.uri}.clenc`,
+      encryption: { version: 1, algorithm: 'AES-256-GCM' },
+    })),
+  }),
+  cleanupLegacyOfflineFiles: jest.fn(),
+}));
+
 const userId = 'usuario-prueba';
 const draftKey = 'DOCUMENTACION:integrante:integrante-1';
 
@@ -141,5 +177,94 @@ describe('offline-sync.repository', () => {
         },
       },
     });
+  });
+
+  it('no deja el contenido del borrador visible en AsyncStorage', async () => {
+    await saveOfflineDraft({
+      userId,
+      key: draftKey,
+      module: 'DOCUMENTACION',
+      entityType: 'integrante',
+      entityId: 'integrante-1',
+      data: { calle: 'DOMICILIO_DE_PRUEBA_SENSIBLE' },
+    });
+
+    const raw = await AsyncStorage.getItem(`crelealtad:offline-sync:v2:${userId}`);
+    expect(raw).toContain('AES-256-GCM');
+    expect(raw).not.toContain('DOMICILIO_DE_PRUEBA_SENSIBLE');
+  });
+
+  it('migra el almacén v1 sólo después de verificar el contenedor cifrado', async () => {
+    const legacyUri = 'file:///crelealtad-offline/usuario-prueba/operacion-archivo/1-ine.jpg';
+    await AsyncStorage.setItem(`crelealtad:offline-sync:v1:${userId}`, JSON.stringify({
+      version: 1,
+      userId,
+      operations: [{
+        version: 1,
+        id: 'operacion-archivo',
+        userId,
+        module: 'DOCUMENTACION',
+        entityType: 'integrante',
+        entityId: 'integrante-1',
+        dedupeKey: 'documento:integrante-1:ine',
+        draftKey,
+        kind: 'DOCUMENT_UPLOAD',
+        status: 'PENDING',
+        attempts: 0,
+        nextAttemptAt: '2026-01-01T00:00:00.000Z',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        request: {
+          integranteId: 'integrante-1',
+          tipo: 'ine',
+          files: [{
+            uri: legacyUri,
+            name: 'ine.jpg',
+            fieldName: 'archivos',
+            size: 128,
+          }],
+          progress: { cargaId: 'operacion-archivo', nextIndex: 0 },
+        },
+      }],
+      drafts: {
+        [draftKey]: {
+          version: 1,
+          key: draftKey,
+          userId,
+          module: 'DOCUMENTACION',
+          entityType: 'integrante',
+          entityId: 'integrante-1',
+          data: { calle: 'LEGADO_DE_PRUEBA', urisLocales: [legacyUri] },
+          status: 'LOCAL',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      },
+      serverVersions: {},
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    }));
+
+    await expect(getOfflineDraft(userId, draftKey)).resolves.toMatchObject({
+      data: {
+        calle: 'LEGADO_DE_PRUEBA',
+        urisLocales: [`${legacyUri}.clenc`],
+      },
+    });
+    await expect(AsyncStorage.getItem(`crelealtad:offline-sync:v1:${userId}`)).resolves.toBeNull();
+    const encrypted = await AsyncStorage.getItem(`crelealtad:offline-sync:v2:${userId}`);
+    expect(encrypted).not.toContain('LEGADO_DE_PRUEBA');
+  });
+
+  it('no reemplaza por un almacén vacío un contenedor cifrado dañado', async () => {
+    const key = `crelealtad:offline-sync:v2:${userId}`;
+    await AsyncStorage.setItem(key, JSON.stringify({
+      version: 1,
+      algorithm: 'AES-256-GCM',
+      ciphertext: 'contenido-invalido',
+    }));
+
+    await expect(getOfflineDraft(userId, draftKey)).rejects.toThrow(
+      'No se pudo recuperar la captura offline cifrada',
+    );
+    await expect(AsyncStorage.getItem(key)).resolves.toContain('contenido-invalido');
   });
 });

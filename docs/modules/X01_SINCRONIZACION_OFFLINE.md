@@ -4,7 +4,7 @@
 
 - Nombre oficial: Sincronización offline de campo.
 - Código: X01.
-- Estado: primera vertical implementada; pendiente de prueba manual en dispositivo, cifrado local productivo y ampliación a los demás procesos de Verificación.
+- Estado: primera vertical y cifrado local implementados; pendiente de prueba manual en dispositivo, auditoría física del almacenamiento y ampliación a los demás procesos de Verificación.
 - Responsable operativo: Operación de campo y coordinación técnica.
 - Roles usuarios: usuarios autenticados con permiso vigente sobre M02 o M03.
 
@@ -19,8 +19,11 @@
 ### Incluye
 
 - Repositorio local versionado y separado por usuario.
+- Cifrado autenticado AES-256-GCM de borradores y cola, con una llave por usuario resguardada en
+  SecureStore y datos autenticados ligados a su contexto.
 - Cola durable para solicitudes JSON, multipart idempotente y documentos por lotes.
-- Archivos pendientes copiados al directorio durable privado de la app.
+- Archivos pendientes cifrados en el directorio durable privado de la app; sólo se materializan en
+  caché para visualización o envío y el temporal se limpia al cerrar, terminar o reiniciar.
 - Reintento inmediato, al volver la app a primer plano, periódico y manual.
 - Backoff acotado y clasificación entre error transitorio y conflicto bloqueante.
 - Borrador recuperable de la solicitud individual de M02.
@@ -37,7 +40,9 @@
 - Permitir dictámenes, handoff o cambios de estado sin confirmación del servidor.
 - Resolver automáticamente conflictos financieros, de identidad o de decisión.
 - Sincronizar todavía las secuencias de Llamada, Visita al vecino o Imágenes del domicilio que dependen de identificadores de pasos previos confirmados por servidor.
-- Declarar lista para producción la persistencia local sensible: la primera vertical usa el almacenamiento privado disponible y requiere cifrado local auditado antes de operar con datos reales.
+- Declarar lista para producción la persistencia local sensible: el cifrado está implementado, pero
+  requiere validación y auditoría en dispositivos Android/iOS representativos antes de operar con
+  datos reales.
 
 ## 4. Flujo operativo
 
@@ -55,7 +60,7 @@
 |---|---|---:|---|---:|
 | `OfflineDraft` | Formulario móvil | Sí durante captura | usuario, módulo, tipo e ID de entidad | Se conserva última versión local y fechas de confirmación |
 | `OfflineOperation` | Servicio de sincronización | Sí al diferir una escritura | contrato versionado, endpoint permitido y payload serializable | Sí hasta confirmación o resolución |
-| `OfflineFileRef` | Cámara/galería | Sí para multipart | existencia, tamaño, nombre y copia durable | Se elimina sólo al confirmar o descartar explícitamente |
+| `OfflineFileRef` | Cámara/galería | Sí para multipart | existencia, tamaño, nombre, cifrado y copia durable | Se elimina sólo al confirmar o descartar explícitamente |
 | `DocumentUploadProgress` | API de documentos | No | `carga_id`, siguiente índice y total | Sí mientras la carga esté pendiente |
 
 ## 6. Estados y transiciones
@@ -81,6 +86,13 @@
   UUID estable para iniciar o reanudar lotes. Los `PATCH` de integrante/Solicitud reciben la fecha
   esperada y el `PUT` de Entrevista recibe la revisión esperada.
 - Servicios: repositorio offline, almacén de archivos, ejecutor y motor de sincronización.
+- Persistencia móvil: AsyncStorage conserva exclusivamente sobres cifrados versionados. SecureStore
+  resguarda una llave AES-256 por usuario con alcance al dispositivo. Los archivos usan AES-GCM y
+  AAD ligado a usuario, operación y nombre cifrado.
+- Compatibilidad: al encontrar el formato `v1`, la app cifra y verifica primero el nuevo almacén
+  `v2`; sólo después retira el índice anterior y las copias durables legibles. Un sobre dañado o una
+  llave ausente bloquea la recuperación y conserva el contenido para revisión, en vez de sustituirlo
+  silenciosamente por un almacén vacío.
 - Tablas/relaciones: no modifica PostgreSQL en esta vertical.
 - Idempotencia: consolidación por `dedupe_key` en autoguardados; UUID estable en carga documental;
   repetición idéntica aceptada sin otra revisión ni auditoría; las evidencias reutilizarán sus claves
@@ -103,7 +115,11 @@
 | Resolver conflicto | pendiente de flujo administrativo | no se resuelve automáticamente | debe quedar explícita |
 
 - La cola nunca persiste el JWT ni encabezados de autorización.
+- La cola, los borradores y los archivos durables no se conservan en texto claro. La llave no se
+  guarda en AsyncStorage ni junto a los archivos.
 - El cierre de sesión no mezcla colas: cada almacén está separado por `usuario_id`.
+- Cerrar sesión no elimina la llave mientras haya trabajo pendiente; eliminarla haría irrecuperable
+  una captura aún no confirmada.
 - El borrado automático de evidencia pendiente está prohibido; sólo se limpia al confirmar o descartar explícitamente.
 
 ## 11. Estados técnicos de UI
@@ -132,6 +148,10 @@
 - [x] La UI distingue local, pendiente, sincronizando, confirmado y bloqueado.
 - [x] No se permite `SUJETA_CREDITO` con cola pendiente o bloqueada.
 - [x] Un conflicto no se resuelve con última escritura gana.
+- [x] El repositorio no deja campos del borrador visibles en AsyncStorage y migra `v1` después de
+  verificar el contenedor cifrado.
+- [ ] Un dispositivo Android y uno iOS confirman recuperación, vista temporal, envío y limpieza de
+  archivos cifrados después de cierre forzado y reconexión.
 
 ## 14. Pruebas
 
@@ -142,6 +162,7 @@
 
 ## 15. Decisiones abiertas
 
-- Seleccionar y auditar el mecanismo de cifrado local para producción antes de usar datos reales.
+- Auditar en dispositivos físicos el cifrado AES-256-GCM, la protección de SecureStore y la limpieza
+  de temporales antes de usar datos reales.
 - Aprobar la política operativa y UI de resolución humana de conflictos.
 - Definir las cadenas offline de Llamada, Visita al vecino e Imágenes del domicilio que dependen de pasos previos confirmados.

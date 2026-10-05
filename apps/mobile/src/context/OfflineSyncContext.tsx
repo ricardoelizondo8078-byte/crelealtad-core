@@ -9,7 +9,12 @@ import React, {
 import { AppState } from 'react-native';
 import { useAuth } from './AuthContext';
 import { createOfflineOperationId } from '../offline/offline-sync.ids';
-import { persistOfflineFiles, removeOfflineFiles } from '../offline/offline-file-store';
+import {
+  clearOfflineTemporaryFiles,
+  materializeOfflineUrisForPreview,
+  persistOfflineFiles,
+  removeOfflineFiles,
+} from '../offline/offline-file-store';
 import {
   enqueueOfflineOperation,
   getOfflineDraft,
@@ -95,6 +100,9 @@ interface OfflineSyncContextData {
   syncNow: () => Promise<void>;
   retryBlocked: () => Promise<void>;
   setServerVersion: (key: string, version: string | number | null) => Promise<void>;
+  prepareFilePreview: (
+    uris: readonly string[],
+  ) => Promise<{ uris: string[]; cleanup: () => Promise<void> }>;
 }
 
 const EMPTY_SUMMARY: OfflineSyncSummary = { pending: 0, syncing: 0, blocked: 0 };
@@ -124,7 +132,10 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
       return undefined;
     }
     const initialSync = setTimeout(() => {
-      void recoverInterruptedOfflineOperations(userId).then(syncNow);
+      void clearOfflineTemporaryFiles()
+        .then(() => recoverInterruptedOfflineOperations(userId))
+        .then(syncNow)
+        .catch(() => undefined);
     }, 0);
 
     const interval = setInterval(() => void syncNow(), 30_000);
@@ -326,6 +337,11 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
     await setOfflineServerVersion(userId, key, version);
   }, [userId]);
 
+  const prepareFilePreview = useCallback(async (uris: readonly string[]) => {
+    if (!userId) throw new Error('Se requiere una sesión para abrir la evidencia local.');
+    return materializeOfflineUrisForPreview(userId, uris);
+  }, [userId]);
+
   const value = useMemo<OfflineSyncContextData>(() => ({
     summary: userId ? summary : EMPTY_SUMMARY,
     saveDraft,
@@ -337,6 +353,7 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
     syncNow,
     retryBlocked,
     setServerVersion,
+    prepareFilePreview,
   }), [
     enqueueDocument,
     enqueueJson,
@@ -346,6 +363,7 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
     retryBlocked,
     saveDraft,
     setServerVersion,
+    prepareFilePreview,
     summary,
     syncNow,
     userId,

@@ -138,6 +138,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     hasPendingForEntity,
     setServerVersion,
     syncNow,
+    prepareFilePreview,
   } = useOfflineSync();
   const documentationTheme = moduleThemes.documentation;
   const [currentStep, setCurrentStep] = useState(initialStep ?? 1);
@@ -153,6 +154,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     documentoId: string;
     titulo: string;
   } | null>(null);
+  const preparedPreviewCleanupRef = useRef<(() => Promise<void>) | null>(null);
   const previewCarouselPages = useMemo<DocumentImageCarouselPage[]>(() => {
     if (!previewImage) return [];
     const esIneDoble = previewImage.uris.length === 2 && previewImage.documentoId.includes('ine');
@@ -1250,6 +1252,20 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     }
   };
 
+  const openPreparedImage = async (uri: string, titulo: string) => {
+    try {
+      await preparedPreviewCleanupRef.current?.();
+      const prepared = await prepareFilePreview([uri]);
+      preparedPreviewCleanupRef.current = prepared.cleanup;
+      setViewingImage({ uri: prepared.uris[0], titulo });
+    } catch (error) {
+      Alert.alert(
+        'No se pudo abrir',
+        error instanceof Error ? error.message : 'Intenta nuevamente.',
+      );
+    }
+  };
+
   const handleVerDocumento = async (documento: DocumentoRequerido) => {
     if (openingDocId !== null) return;
     setOpeningDocId(documento.id);
@@ -1260,9 +1276,12 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             .filter((uri): uri is string => Boolean(uri));
 
       if (documento.id === 'comprobante_linea_credito' && urisLocales.length > 0) {
+        await preparedPreviewCleanupRef.current?.();
+        const prepared = await prepareFilePreview(urisLocales);
+        preparedPreviewCleanupRef.current = prepared.cleanup;
         setDocumentCarousel({
           title: documento.nombre,
-          pages: urisLocales.map((uri, index) => ({
+          pages: prepared.uris.map((uri, index) => ({
             uri,
             label: `Foto ${index + 1}`,
           })),
@@ -1277,11 +1296,17 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
           [
             {
               text: 'Frente',
-              onPress: () => setViewingImage({ uri: documento.uriFrente!, titulo: `${documento.nombre} - Frente` }),
+              onPress: () => void openPreparedImage(
+                documento.uriFrente!,
+                `${documento.nombre} - Frente`,
+              ),
             },
             {
               text: 'Reverso',
-              onPress: () => setViewingImage({ uri: documento.uriReverso!, titulo: `${documento.nombre} - Reverso` }),
+              onPress: () => void openPreparedImage(
+                documento.uriReverso!,
+                `${documento.nombre} - Reverso`,
+              ),
             },
             {
               text: 'Cancelar',
@@ -1293,7 +1318,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
       }
 
       if (documento.uriFrente) {
-        setViewingImage({ uri: documento.uriFrente, titulo: documento.nombre });
+        await openPreparedImage(documento.uriFrente, documento.nombre);
         return;
       }
 
@@ -1335,13 +1360,33 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     }
   };
 
+  const closePreparedViewingImage = useCallback(() => {
+    setViewingImage(null);
+    const cleanup = preparedPreviewCleanupRef.current;
+    preparedPreviewCleanupRef.current = null;
+    if (cleanup) void cleanup();
+  }, []);
+
+  const closePreparedCarousel = useCallback(() => {
+    setDocumentCarousel(null);
+    const cleanup = preparedPreviewCleanupRef.current;
+    preparedPreviewCleanupRef.current = null;
+    if (cleanup) void cleanup();
+  }, []);
+
+  useEffect(() => () => {
+    const cleanup = preparedPreviewCleanupRef.current;
+    preparedPreviewCleanupRef.current = null;
+    if (cleanup) void cleanup();
+  }, []);
+
   useEffect(() => {
     if (!previewImage && !documentCarousel) return undefined;
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       if (documentOperationRef.current !== null) return true;
       if (documentCarousel) {
-        setDocumentCarousel(null);
+        closePreparedCarousel();
       } else {
         setDocumentUploadError(null);
         setPreviewImage(null);
@@ -1350,7 +1395,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     });
 
     return () => subscription.remove();
-  }, [documentCarousel, previewImage]);
+  }, [closePreparedCarousel, documentCarousel, previewImage]);
 
   const handleMarcarCapturado = async () => {
     setIsSubmitting(true);
@@ -1771,10 +1816,10 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         documentViewer={documentViewer}
         uploadingDocId={uploadingDocId}
         documentUploadError={documentUploadError}
-        onCloseViewingImage={() => setViewingImage(null)}
+        onCloseViewingImage={closePreparedViewingImage}
         onCancelPreview={handleCancelarDocumento}
         onConfirmPreview={() => void handleConfirmarDocumento()}
-        onCloseCarousel={() => setDocumentCarousel(null)}
+        onCloseCarousel={closePreparedCarousel}
         onCloseViewer={() => setDocumentViewer(null)}
       />
     </ScreenContainer>

@@ -115,10 +115,11 @@ Fecha de auditoría: 2026-10-04
   permanecen en los coordinadores hasta la siguiente extracción controlada.
 - Uso de cámara/galería mediante Expo Image Picker.
 - Lectura puntual de ubicación en primer plano mediante Expo Location al confirmar un resultado de llamada; si no existe una lectura válida, la API no recibe ni registra el intento.
-- AsyncStorage conserva usuario, borradores y la cola offline separada por usuario; SecureStore
-  conserva exclusivamente el JWT. Los archivos pendientes se copian al directorio privado durable
-  de la app y sólo se eliminan después de confirmación. La pantalla documental activa sólo presenta
-  como sincronizadas las rutas confirmadas por la API.
+- AsyncStorage conserva el usuario no sensible y sobres AES-256-GCM de borradores y cola separados
+  por usuario; SecureStore conserva el JWT y una llave offline por usuario. Los archivos pendientes
+  se cifran en el directorio privado durable, se materializan sólo de forma temporal para vista o
+  envío y se eliminan después de confirmación. La pantalla documental activa sólo presenta como
+  sincronizadas las rutas confirmadas por la API.
 
 ### Comunicación API
 
@@ -139,8 +140,10 @@ Fecha de auditoría: 2026-10-04
   idénticas del lote sin crear otra versión ni otra auditoría.
 - Datos personales, Solicitud y Entrevista usan versiones optimistas encadenadas. Una versión
   atrasada con otro contenido responde `409` y queda `BLOCKED`; no se aplica última escritura gana.
-- Continúan pendientes el cifrado local productivo, la pantalla de conciliación humana, la prueba
-  manual completa en dispositivo y las cadenas offline de Llamada, Visita e Imágenes del domicilio.
+- El almacén `v2` cifra borradores, operaciones y archivos con AES-256-GCM, autentica su contexto y
+  migra `v1` sólo después de verificar el nuevo contenedor. Continúan pendientes la auditoría y
+  prueba manual completa en dispositivo, la pantalla de conciliación humana y las cadenas offline
+  de Llamada, Visita e Imágenes del domicilio.
 - La API aplica una política común de firma JPEG/PNG/PDF, máximo de 10 MB, UUID de rutas y SHA-256, y conserva versiones anteriores en almacenamiento. Todas las entradas multipart limitan archivos, campos, partes y encabezados. La carga documental admite hasta 12 archivos por petición; mobile encadena los lotes necesarios y el backend sólo activa la versión completa al finalizar, sin limitar la cantidad funcional aprobada para `comprobante_credito`. Falta un proveedor durable de producción, limpieza programada de cargas parciales y respaldo operativo.
 - Las variantes paralelas legacy de `modules/asesor` y sus archivos backup fueron retiradas del árbol activo después de comprobar que no tenían imports ni rutas vigentes.
 - Existe una primera capa automatizada mobile para componentes compartidos, acceso por permisos y
@@ -213,8 +216,9 @@ Pendiente antes de escalar captura:
 2. Código y PostgreSQL gobiernan el inventario técnico observable.
 3. Un artefacto presente no se considera integrado hasta rastrear su uso en runtime.
 4. Ocultar una acción en mobile no sustituye autorización en API.
-5. Una cola en AsyncStorage sólo constituye la primera vertical offline: producción requiere además
-   cifrado local auditado, prueba en dispositivo, monitoreo y conciliación operativa de conflictos.
+5. Una cola cifrada en AsyncStorage sólo constituye la primera vertical offline: producción requiere
+   además auditoría física del cifrado, prueba en dispositivo, monitoreo y conciliación operativa de
+   conflictos.
 6. Todo cambio de esquema usa migración revisada y reversible.
 
 ## Referencias cruzadas

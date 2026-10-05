@@ -13,6 +13,10 @@ export interface OfflineFileInput {
 export interface OfflineFileRef extends Omit<OfflineFileInput, 'uri'> {
   uri: string;
   size: number;
+  encryption?: {
+    version: 1;
+    algorithm: 'AES-256-GCM';
+  };
 }
 
 interface OfflineOperationBase {

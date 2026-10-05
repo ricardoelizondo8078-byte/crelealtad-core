@@ -1,5 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  decryptOfflineJson,
+  encryptOfflineJson,
+  isOfflineEncryptedEnvelope,
+} from './offline-crypto';
+import {
+  cleanupLegacyOfflineFiles,
+  migrateLegacyOfflineFiles,
+} from './offline-file-store';
+import {
   OfflineDraft,
   OfflineModule,
   OfflineOperation,
@@ -7,12 +16,15 @@ import {
   OfflineUserStore,
 } from './offline-sync.types';
 
-const STORAGE_PREFIX = 'crelealtad:offline-sync:v1:';
+const LEGACY_STORAGE_PREFIX = 'crelealtad:offline-sync:v1:';
+const STORAGE_PREFIX = 'crelealtad:offline-sync:v2:';
 const locks = new Map<string, Promise<unknown>>();
 
 const nowIso = (): string => new Date().toISOString();
 
 const storageKey = (userId: string): string => `${STORAGE_PREFIX}${userId}`;
+const legacyStorageKey = (userId: string): string => `${LEGACY_STORAGE_PREFIX}${userId}`;
+const encryptionScope = (userId: string): string => `crelealtad:offline-store:v2:${userId}`;
 
 const createEmptyStore = (userId: string): OfflineUserStore => ({
   version: 1,
@@ -24,9 +36,13 @@ const createEmptyStore = (userId: string): OfflineUserStore => ({
 });
 
 const normalizeStore = (userId: string, value: unknown): OfflineUserStore => {
-  if (!value || typeof value !== 'object') return createEmptyStore(userId);
+  if (!value || typeof value !== 'object') {
+    throw new Error('El almacenamiento offline no contiene un objeto válido.');
+  }
   const candidate = value as Partial<OfflineUserStore>;
-  if (candidate.version !== 1 || candidate.userId !== userId) return createEmptyStore(userId);
+  if (candidate.version !== 1 || candidate.userId !== userId) {
+    throw new Error('El almacenamiento offline no corresponde a la sesión actual.');
+  }
 
   const operations = Array.isArray(candidate.operations) ? candidate.operations : [];
 
@@ -40,6 +56,61 @@ const normalizeStore = (userId: string, value: unknown): OfflineUserStore => {
       : {},
     updatedAt: typeof candidate.updatedAt === 'string' ? candidate.updatedAt : nowIso(),
   };
+};
+
+const migrateStoreFiles = async (
+  store: OfflineUserStore,
+): Promise<{ store: OfflineUserStore; changed: boolean }> => {
+  let changed = false;
+  const uriReplacements = new Map<string, string>();
+  for (const operation of store.operations) {
+    if (operation.kind === 'JSON_REQUEST') continue;
+    const previousFiles = operation.request.files;
+    const migrated = await migrateLegacyOfflineFiles(
+      store.userId,
+      operation.id,
+      previousFiles,
+    );
+    if (!migrated.changed) continue;
+    previousFiles.forEach((file, index) => {
+      const nextUri = migrated.files[index]?.uri;
+      if (nextUri && nextUri !== file.uri) uriReplacements.set(file.uri, nextUri);
+    });
+    operation.request.files = migrated.files;
+    changed = true;
+  }
+
+  if (uriReplacements.size > 0) {
+    const replaceUris = (value: unknown): unknown => {
+      if (typeof value === 'string') return uriReplacements.get(value) ?? value;
+      if (Array.isArray(value)) return value.map(replaceUris);
+      if (!value || typeof value !== 'object') return value;
+      return Object.fromEntries(
+        Object.entries(value).map(([key, child]) => [key, replaceUris(child)]),
+      );
+    };
+    for (const [key, draft] of Object.entries(store.drafts)) {
+      store.drafts[key] = { ...draft, data: replaceUris(draft.data) };
+    }
+  }
+  return { store, changed };
+};
+
+const cleanupMigratedFiles = (store: OfflineUserStore): void => {
+  for (const operation of store.operations) {
+    if (operation.kind === 'JSON_REQUEST') continue;
+    cleanupLegacyOfflineFiles(store.userId, operation.id, operation.request.files);
+  }
+};
+
+const writeEncryptedStore = async (store: OfflineUserStore): Promise<void> => {
+  const next = { ...store, updatedAt: nowIso() };
+  const encrypted = await encryptOfflineJson(
+    store.userId,
+    encryptionScope(store.userId),
+    next,
+  );
+  await AsyncStorage.setItem(storageKey(store.userId), JSON.stringify(encrypted));
 };
 
 const readPath = (value: unknown, path: string): unknown => (
@@ -59,17 +130,58 @@ const serialize = async <T>(userId: string, task: () => Promise<T>): Promise<T> 
 
 const readUnlocked = async (userId: string): Promise<OfflineUserStore> => {
   const raw = await AsyncStorage.getItem(storageKey(userId));
-  if (!raw) return createEmptyStore(userId);
+  if (raw) {
+    try {
+      const envelope = JSON.parse(raw) as unknown;
+      if (!isOfflineEncryptedEnvelope(envelope)) {
+        throw new Error('El contenedor cifrado no es válido.');
+      }
+      const decoded = await decryptOfflineJson<unknown>(
+        userId,
+        encryptionScope(userId),
+        envelope,
+      );
+      const migrated = await migrateStoreFiles(normalizeStore(userId, decoded));
+      if (migrated.changed) await writeEncryptedStore(migrated.store);
+      cleanupMigratedFiles(migrated.store);
+      return migrated.store;
+    } catch (error) {
+      throw new Error(
+        'No se pudo recuperar la captura offline cifrada. Conserva la app instalada y solicita revisión técnica.',
+        { cause: error },
+      );
+    }
+  }
+
+  const legacyRaw = await AsyncStorage.getItem(legacyStorageKey(userId));
+  if (!legacyRaw) return createEmptyStore(userId);
   try {
-    return normalizeStore(userId, JSON.parse(raw));
-  } catch {
-    return createEmptyStore(userId);
+    const legacyStore = normalizeStore(userId, JSON.parse(legacyRaw));
+    const migrated = await migrateStoreFiles(legacyStore);
+    await writeEncryptedStore(migrated.store);
+
+    const encryptedRaw = await AsyncStorage.getItem(storageKey(userId));
+    if (!encryptedRaw) throw new Error('La escritura cifrada no pudo verificarse.');
+    const envelope = JSON.parse(encryptedRaw) as unknown;
+    if (!isOfflineEncryptedEnvelope(envelope)) throw new Error('El contenedor cifrado no es válido.');
+    normalizeStore(
+      userId,
+      await decryptOfflineJson(userId, encryptionScope(userId), envelope),
+    );
+
+    cleanupMigratedFiles(migrated.store);
+    await AsyncStorage.removeItem(legacyStorageKey(userId));
+    return migrated.store;
+  } catch (error) {
+    throw new Error(
+      'No se pudo migrar la captura offline anterior. Los datos originales se conservaron para revisión.',
+      { cause: error },
+    );
   }
 };
 
 const writeUnlocked = async (store: OfflineUserStore): Promise<void> => {
-  const next = { ...store, updatedAt: nowIso() };
-  await AsyncStorage.setItem(storageKey(store.userId), JSON.stringify(next));
+  await writeEncryptedStore(store);
 };
 
 const mutateStore = async <T>(

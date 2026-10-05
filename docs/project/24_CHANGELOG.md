@@ -11,6 +11,13 @@
   el avance final de la integrante mientras exista trabajo sin sincronizar.
 - Los documentos pendientes se copian al almacenamiento privado durable, conservan UUID y progreso
   de lote y reanudan desde el último índice confirmado.
+- Borradores y operaciones usan ahora sobres AES-256-GCM en AsyncStorage; cada usuario tiene una
+  llave independiente protegida por SecureStore y el contexto del contenido se autentica mediante
+  AAD para impedir intercambios silenciosos entre usuarios o almacenes.
+- Los archivos pendientes se guardan cifrados. Para vista o multipart se descifran en caché privada
+  temporal, que se limpia al cerrar, terminar el intento y al iniciar una nueva sesión de sincronía.
+- La migración del formato legible `v1` escribe y verifica primero `v2`; sólo después elimina el
+  índice anterior y las copias durables sin cifrar. Un contenedor dañado no se reemplaza por vacío.
 
 ### API e integridad
 
@@ -19,8 +26,9 @@
 - Datos personales, Solicitud y Entrevista aplican control optimista de versión. Un reintento cuyo
   contenido ya está confirmado no duplica revisión ni auditoría; otro contenido basado en una
   versión atrasada responde `409` y permanece bloqueado para revisión humana.
-- No se modificó el esquema PostgreSQL. La primera vertical no incluye Llamada, Visita al vecino,
-  Imágenes del domicilio ni cifrado local productivo.
+- No se modificó el esquema PostgreSQL. La primera vertical no incluye Llamada, Visita al vecino ni
+  Imágenes del domicilio; el cifrado requiere todavía auditoría y prueba manual Android/iOS antes de
+  considerarse apto para datos reales.
 - Las integraciones dejaron de depender de usuarios o roles precargados: un fixture transaccional
   crea y retira una identidad completamente inventada por suite.
 - Se agregó `test:isolated`, que levanta PostgreSQL 17 en una carpeta temporal y puerto aleatorio,
@@ -35,8 +43,8 @@
 
 ### Verificado
 
-- TypeScript mobile, TypeScript API y build Nest aprobaron; las nueve suites mobile aprobaron 27
-  pruebas.
+- TypeScript mobile, TypeScript API y build Nest aprobaron; las diez suites mobile aprobaron 32
+  pruebas después de incorporar los casos de confidencialidad, migración y corrupción local.
 - La ejecución aislada desde un esquema vacío aprobó las 41 suites API y sus 224 pruebas. El primer
   ciclo limpio detectó seis suites con precondiciones implícitas; se corrigieron y el segundo ciclo
   confirmó que ya no dependen de filas preexistentes ni del orden de ejecución.
