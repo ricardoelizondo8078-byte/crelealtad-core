@@ -306,6 +306,50 @@ async function verificarSchema() {
 
   console.log('  ✓ evidencias de Entrevista conservan actor, fecha y ubicación');
 
+  const catalogoFinancieras = await testClient.query(`
+    SELECT
+      to_regclass('public.financieras_competidoras') IS NOT NULL AS catalogo_existe,
+      to_regclass('public.financieras_competidoras_versiones') IS NOT NULL AS versiones_existe,
+      EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'financieras_competidoras'
+          AND column_name = 'catalogo_base'
+          AND data_type = 'boolean'
+          AND is_nullable = 'NO'
+      ) AS catalogo_base_existe,
+      (
+        SELECT COUNT(*) = 2
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'financieras_competidoras_versiones'
+          AND column_name IN ('nombre_oficial', 'nombre_normalizado')
+          AND is_nullable = 'NO'
+      ) AS nombres_versionados_existen,
+      (
+        SELECT COUNT(*) = 2
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'financieras_competidoras_versiones'
+          AND column_name IN ('clasificacion', 'motivo')
+          AND is_nullable = 'YES'
+      ) AS clasificacion_y_motivo_opcionales
+  `);
+
+  const catalogoFinancierasVigente = catalogoFinancieras.rows[0];
+  if (
+    !catalogoFinancierasVigente?.catalogo_existe
+    || !catalogoFinancierasVigente?.versiones_existe
+    || !catalogoFinancierasVigente?.catalogo_base_existe
+    || !catalogoFinancierasVigente?.nombres_versionados_existen
+    || !catalogoFinancierasVigente?.clasificacion_y_motivo_opcionales
+  ) {
+    throw new Error('Schema test no contiene el catálogo versionado de financieras competidoras');
+  }
+
+  console.log('  ✓ catálogo versionado de financieras competidoras existe');
+
   const columnasGeocodificacion = await testClient.query(`
     SELECT column_name
     FROM information_schema.columns

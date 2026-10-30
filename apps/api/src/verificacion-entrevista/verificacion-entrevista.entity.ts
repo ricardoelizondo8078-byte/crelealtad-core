@@ -65,6 +65,9 @@ export class VerificacionEntrevistaEntity {
   @Column({ type: 'numeric', precision: 12, scale: 2, nullable: true })
   valor_ficha_credito_grupal: number | null;
 
+  @Column({ type: 'numeric', precision: 12, scale: 2, nullable: true })
+  monto_ultimo_prestamo_credito_grupal: number | null;
+
   @Column({ type: 'smallint', nullable: true })
   semana_actual_credito_grupal: number | null;
 

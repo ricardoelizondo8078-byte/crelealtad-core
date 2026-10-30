@@ -4,7 +4,8 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["jest"]
+    "types": ["jest", "node"],
+    "customConditions": ["react-native", "react-native-legacy-deep-imports"]
   },
   "extends": "expo/tsconfig.base"
 }

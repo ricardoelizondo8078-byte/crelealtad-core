@@ -3,6 +3,7 @@ export const TIPOS_DOCUMENTO = [
   'comprobante',
   'ine_beneficiario',
   'solicitud_firmada',
+  'control_pagos',
   'comprobante_credito',
 ] as const;
 

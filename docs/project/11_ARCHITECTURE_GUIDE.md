@@ -1,8 +1,8 @@
 # 11 Architecture Guide — Guía de Arquitectura
 
-Versión: 2.18.0
+Versión: 2.20.0
 Estado: Vigente y verificado
-Fecha de auditoría: 2026-10-04
+Fecha de auditoría: 2026-10-08
 
 ## Arquitectura mayor
 
@@ -153,12 +153,19 @@ Fecha de auditoría: 2026-10-04
 
 - PostgreSQL 17.10.
 - 50 tablas base y una vista pública; `schema_migrations` es una tabla técnica sin datos operativos.
-- Las migraciones 033 a 036 agregaron las FKs faltantes, un ledger por checksum, validación estructural de permisos JSONB y restricciones de actor/estado sobre contratos cerrados; `crelealtad_test` y `crelealtad` tienen 33 migraciones aplicadas sin pendientes ni drift hasta 036.
+- Las migraciones 033 a 041 agregaron las FKs faltantes, un ledger por checksum, validación
+  estructural de permisos JSONB, restricciones de actor/estado y el catálogo gobernado de
+  financieras competidoras con nombre oficial versionado y alias operativo; `crelealtad_test` y
+  `crelealtad` tienen 38 migraciones aplicadas sin pendientes, drift ni entradas desconocidas hasta 041.
 - `verificacion_llamadas` conserva cada intento confirmado y su ubicación actual del dispositivo; tres tablas hijas guardan encuesta, seis características y metadatos de evidencia. La imagen vive en almacenamiento protegido y no existe borrado operativo.
 - `verificacion_visita_vecino_fachadas` conserva metadatos, hash, actor e ubicación de la fachada; el archivo se mantiene en filesystem protegido y se entrega sólo mediante API autenticada. `verificacion_visitas_vecino` conserva la confirmación combinada y liga cada respuesta nueva con la fachada más reciente.
 - `verificacion_visita_vecino_evidencias` conserva la segunda fotografía geolocalizada y la liga a la respuesta concreta; el archivo también permanece en filesystem protegido y sólo se entrega con JWT y alcance válido.
 - `verificacion_imagenes_domicilio` conserva el historial de nomenclaturas, fachada, medidor de luz y fachada con la integrante, con tipo, hash, actor, fechas e ubicación por toma; los archivos viven en filesystem protegido y la API presenta únicamente la imagen más reciente de cada tipo sin exponer coordenadas. M03 exige fachada y después una respuesta sobre el medidor: `Sí` exige fotografía y `No` una causa controlada persistida. La fachada con integrante permanece opcional y la nomenclatura se reserva para otro módulo sin eliminar su contrato ni historia.
-- `verificacion_entrevistas` conserva una captura parcial tipada por integrante; familiares y desacuerdos viven en historiales separados de altas y retiros. `verificacion_entrevista_evidencias` unifica las fotografías de negocio, control de pagos y folleto, y exige en toda captura nueva cámara, horas, actor, coordenadas, fuente, hash e idempotencia. Los archivos permanecen protegidos y las filas previas a la migración 031 no reciben coordenadas inventadas.
+- `verificacion_entrevistas` conserva una captura parcial tipada por integrante; familiares y desacuerdos viven en historiales separados de altas y retiros. `verificacion_entrevista_evidencias` unifica las fotografías de negocio, historial externo, control de pagos y folleto, y exige en toda captura nueva cámara, horas, actor, coordenadas, fuente, hash e idempotencia. Las evidencias nuevas de historial externo requieren color y una referencia activa a `motivos_clasificacion_evidencia` del mismo color; la API resuelve la regla y PostgreSQL protege la relación. Los archivos permanecen protegidos y las filas previas a las migraciones 031, 049 y 050 conservan sus valores nulos sin datos inventados.
+- `parametros_entrevista_opciones` desacopla de mobile 18 familias de etiquetas, motivos y escalas
+  de Entrevista. La API administrativa aplica rol, permiso, código estable, orden, baja lógica y
+  auditoría; la ruta operativa de Verificación permite resolver códigos históricos y mobile filtra
+  únicamente opciones activas para nuevas respuestas.
 - D01 conserva cortes históricos del Excel en tres tablas separadas del modelo transaccional de desembolso; la carga usa manifiesto, hash, prevalidación y transacción.
 - Roles y permisos iniciales almacenados.
 - Sin RLS ni triggers públicos.

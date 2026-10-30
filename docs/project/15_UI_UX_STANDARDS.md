@@ -1,6 +1,6 @@
 # 10 UI UX Standards - Estandares de Interfaz
 
-Version: 1.0.0
+Version: 1.1.0
 Estado: Vigente
 
 ## Perfil de uso
@@ -33,6 +33,14 @@ Diseno centrado en asesora en campo: lectura rapida, accion clara, baja friccion
 
 - En linea, sin interrumpir captura innecesaria.
 - Mensajes concretos: que fallo y como corregir.
+
+## Formato monetario
+
+- Toda respuesta monetaria visible usa el formato `$ 18,000`: signo, un espacio, coma en miles y
+  sin centavos visibles.
+- Los campos monetarios escritos normalizan la captura con la utilidad compartida; al restaurar una
+  respuesta persistida se aplica el mismo formato.
+- La presentación sin centavos no autoriza a reducir la precisión contable almacenada por un contrato.
 
 ## Errores
 

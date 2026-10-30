@@ -7,6 +7,8 @@ describe('VerificacionVisitasVecinoService', () => {
   const integranteId = '11111111-1111-4111-8111-111111111111';
   const fachadaId = '22222222-2222-4222-8222-222222222222';
   const evidenciaId = '55555555-5555-4555-8555-555555555555';
+  const opcionId = '77777777-7777-4777-8777-777777777777';
+  const otraOpcionId = '88888888-8888-4888-8888-888888888888';
   const usuarioId = '33333333-3333-4333-8333-333333333333';
   const scope = {
     usuarioId,
@@ -21,6 +23,7 @@ describe('VerificacionVisitasVecinoService', () => {
   const input = {
     fachada_id: fachadaId,
     conoce_y_sabe_donde_vive: true,
+    opcion_ids: [opcionId],
     idempotency_key: 'neighbor_20260922_abcdef',
     ubicacion_latitud: 25.686614238,
     ubicacion_longitud: -100.316112689,
@@ -96,6 +99,7 @@ describe('VerificacionVisitasVecinoService', () => {
   };
   const dataSource = {
     transaction: jest.fn(),
+    query: jest.fn(),
   };
   const fachadaStorage = {
     guardar: jest.fn(),
@@ -111,11 +115,29 @@ describe('VerificacionVisitasVecinoService', () => {
     jest.clearAllMocks();
     integranteRepository.findOne.mockResolvedValue(integranteEnVerificacion);
     visitaRepository.save.mockResolvedValue(guardada);
-    visitaRepository.findOne.mockResolvedValue(guardada);
+    visitaRepository.findOne.mockImplementation(async (options) => (
+      options?.where?.idempotency_key ? null : guardada
+    ));
     fachadaRepository.save.mockResolvedValue(fachadaGuardada);
     fachadaRepository.findOne.mockResolvedValue(fachadaGuardada);
     evidenciaRepository.save.mockResolvedValue(evidenciaGuardada);
     evidenciaRepository.findOne.mockResolvedValue(evidenciaGuardada);
+    manager.query.mockImplementation(async (query: string) => (
+      query.includes('FROM parametros_entrevista_opciones')
+        ? [{
+            id: opcionId,
+            codigo: 'CONFIRMA_DOMICILIO',
+            etiqueta: 'Confirma el domicilio',
+            orden: 1,
+          }]
+        : []
+    ));
+    dataSource.query.mockResolvedValue([{
+      id: opcionId,
+      codigo: 'CONFIRMA_DOMICILIO',
+      etiqueta: 'Confirma el domicilio',
+      orden: 1,
+    }]);
     fachadaStorage.guardar.mockResolvedValue({
       id: fachadaId,
       ruta: fachadaGuardada.ruta,
@@ -167,19 +189,27 @@ describe('VerificacionVisitasVecinoService', () => {
         'VISITA_VECINO',
       ]),
     );
-    const auditParameters = manager.query.mock.calls[0][1] as unknown[];
+    const auditCall = manager.query.mock.calls.find(([query]) => (
+      String(query).includes('INSERT INTO audit_log')
+    ));
+    const auditParameters = auditCall?.[1] as unknown[];
     expect(JSON.stringify(auditParameters)).not.toContain('25.686');
     expect(JSON.stringify(auditParameters)).not.toContain('-100.316');
     expect(result.resumen.resultado).toEqual({
       conoce_y_sabe_donde_vive: true,
       visita_id: guardada.id,
       fachada_id: fachadaId,
+      opciones_seleccionadas: [{
+        id: opcionId,
+        codigo: 'CONFIRMA_DOMICILIO',
+        etiqueta: 'Confirma el domicilio',
+        orden: 1,
+      }],
       registrada_at: guardada.created_at,
     });
   });
 
   it('reutiliza el registro cuando se reintenta la misma clave y respuesta', async () => {
-    dataSource.transaction.mockRejectedValue({ code: '23505' });
     visitaRepository.findOne.mockResolvedValue(guardada);
 
     const result = await service.registrar(integranteId, scope, input);
@@ -194,7 +224,6 @@ describe('VerificacionVisitasVecinoService', () => {
   });
 
   it('rechaza reutilizar una clave con otra respuesta', async () => {
-    dataSource.transaction.mockRejectedValue({ code: '23505' });
     visitaRepository.findOne.mockResolvedValue({
       ...guardada,
       conoce_y_sabe_donde_vive: false,
@@ -202,6 +231,22 @@ describe('VerificacionVisitasVecinoService', () => {
 
     await expect(service.registrar(integranteId, scope, input))
       .rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rechaza opciones inactivas o de la rama contraria', async () => {
+    manager.query.mockResolvedValueOnce([]);
+
+    await expect(service.registrar(integranteId, scope, input))
+      .rejects.toThrow('Selecciona una opción activa que corresponda a la respuesta');
+    expect(visitaRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('rechaza más de una opción aunque pertenezcan a la misma respuesta', async () => {
+    await expect(service.registrar(integranteId, scope, {
+      ...input,
+      opcion_ids: [opcionId, otraOpcionId],
+    })).rejects.toThrow('Selecciona exactamente una opción');
+    expect(visitaRepository.save).not.toHaveBeenCalled();
   });
 
   it('devuelve la respuesta más reciente en el resumen', async () => {
@@ -239,7 +284,10 @@ describe('VerificacionVisitasVecinoService', () => {
       ubicacion_fuente: 'DISPOSITIVO',
     }));
     expect(result.fachada?.id).toBe(fachadaId);
-    const auditParameters = manager.query.mock.calls[0][1] as unknown[];
+    const auditCall = manager.query.mock.calls.find(([query]) => (
+      String(query).includes('INSERT INTO audit_log')
+    ));
+    const auditParameters = auditCall?.[1] as unknown[];
     expect(JSON.stringify(auditParameters)).not.toContain('25.686');
     expect(JSON.stringify(auditParameters)).not.toContain('-100.316');
   });
@@ -281,7 +329,10 @@ describe('VerificacionVisitasVecinoService', () => {
       ubicacion_fuente: 'DISPOSITIVO',
     }));
     expect(result.evidencia?.id).toBe(evidenciaId);
-    const auditParameters = manager.query.mock.calls[0][1] as unknown[];
+    const auditCall = manager.query.mock.calls.find(([query]) => (
+      String(query).includes('INSERT INTO audit_log')
+    ));
+    const auditParameters = auditCall?.[1] as unknown[];
     expect(JSON.stringify(auditParameters)).not.toContain('25.686');
     expect(JSON.stringify(auditParameters)).not.toContain('-100.316');
   });

@@ -11,12 +11,16 @@ const mobileDirectory = path.join(root, 'apps', 'mobile');
 const apiPort = 3100;
 const isRemoteMode = process.argv.slice(2).includes('--remote');
 const isTailscaleMode = process.argv.slice(2).includes('--tailscale');
-const expoPort = isTailscaleMode ? 8084 : 8081;
+// Windows puede reservar dinamicamente 8081 para servicios del sistema aun
+// cuando netstat no muestre un proceso escuchando. 8082 evita esa colision y
+// sigue exponiendo Metro exclusivamente mediante la direccion de Tailscale.
+const expoPort = 8082;
 const children = [];
 let activeLocalIp = null;
 let networkMonitor = null;
 let checkingNetwork = false;
 let shuttingDown = false;
+let managedApiProcess = null;
 
 function isPortAvailable(port) {
   return new Promise((resolve) => {
@@ -27,7 +31,10 @@ function isPortAvailable(port) {
       server.close(() => resolve(true));
     });
 
-    server.listen(port, '0.0.0.0');
+    // En modo Tailscale, tailscaled escucha en la IP 100.x y reenvia hacia
+    // localhost. Comprobar 0.0.0.0 confunde ese proxy con un proceso local y
+    // evita que API/Metro vuelvan a arrancar despues de un reinicio.
+    server.listen(port, isTailscaleMode ? '127.0.0.1' : '0.0.0.0');
   });
 }
 
@@ -38,7 +45,7 @@ function isExpoHealthy() {
         hostname: '127.0.0.1',
         port: expoPort,
         path: '/status',
-        timeout: 1500,
+        timeout: 5000,
       },
       (response) => {
         let body = '';
@@ -157,7 +164,9 @@ function isApiHealthy() {
 }
 
 async function waitForApi() {
-  const deadline = Date.now() + 45000;
+  // La compilacion inicial de Nest puede tardar varios minutos en esta laptop.
+  // Cancelarla temprano provoca un ciclo infinito de arranque.
+  const deadline = Date.now() + 300000;
 
   while (Date.now() < deadline) {
     if (await isApiHealthy()) {
@@ -181,6 +190,7 @@ function runNpm(args, cwd, extraEnv = {}) {
     env: { ...process.env, ...extraEnv },
     shell: false,
     stdio: 'inherit',
+    windowsHide: true,
   });
 
   children.push(child);
@@ -202,6 +212,46 @@ function restartIfChildStops(child, label) {
       shutdown(code || 1);
     }
   });
+}
+
+async function startManagedApi() {
+  const apiProcess = runNpm(['run', 'start:dev'], apiDirectory, {
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    PORT: String(apiPort),
+      ...(isTailscaleMode ? { HOST: '127.0.0.1' } : {}),
+  });
+  managedApiProcess = apiProcess;
+  restartIfChildStops(apiProcess, 'La API');
+  await waitForApi();
+}
+
+function isManagedApiRunning() {
+  return Boolean(
+    managedApiProcess
+    && !managedApiProcess.killed
+    && managedApiProcess.exitCode === null,
+  );
+}
+
+async function recoverUnmanagedApi() {
+  if (isManagedApiRunning()) {
+    console.error(
+      'La API administrada sigue compilando; el supervisor esperará su recuperación.',
+    );
+    return false;
+  }
+
+  if (!await isPortAvailable(apiPort)) {
+    console.error(
+      `La API no responde y el puerto ${apiPort} continúa ocupado; se reintentará la recuperación.`,
+    );
+    return false;
+  }
+
+  console.error('La API reutilizada dejó de responder. Iniciando una nueva instancia...');
+  await startManagedApi();
+  console.log('API recuperada sin reiniciar Expo.');
+  return true;
 }
 
 function stopChildren() {
@@ -264,9 +314,21 @@ function startNetworkMonitor() {
       apiFailures = apiHealthy ? 0 : apiFailures + 1;
       expoFailures = expoHealthy ? 0 : expoFailures + 1;
 
-      if (apiFailures >= 6 || expoFailures >= 6) {
-        const failedService = apiFailures >= 6 ? 'la API' : 'Expo';
-        console.error(`El supervisor detectó que ${failedService} dejó de responder. Reiniciando...`);
+      // La API puede tardar cerca de un minuto al recompilar en modo watch.
+      // Metro sí debe recuperarse antes; mantener umbrales separados evita
+      // apagar Expo por una recompilación legítima del backend.
+      const apiFailureLimit = 24;
+      // En esta laptop una recompilacion completa de Metro puede bloquear el
+      // endpoint de estado durante varios minutos. No reiniciar mientras una
+      // compilacion legitima sigue trabajando.
+      const expoFailureLimit = 72;
+      if (apiFailures >= apiFailureLimit) {
+        const recovered = await recoverUnmanagedApi();
+        apiFailures = recovered ? 0 : apiFailureLimit - 6;
+      }
+
+      if (expoFailures >= expoFailureLimit) {
+        console.error('El supervisor detectó que Expo dejó de responder. Reiniciando...');
         shutdown(1);
       }
     } finally {
@@ -340,12 +402,7 @@ async function main() {
   }
 
   if (apiPortAvailable) {
-    const apiProcess = runNpm(['run', 'start:dev'], apiDirectory, {
-      NODE_ENV: process.env.NODE_ENV || 'development',
-      PORT: String(apiPort),
-    });
-    restartIfChildStops(apiProcess, 'La API');
-    await waitForApi();
+    await startManagedApi();
     console.log('API lista.');
   } else {
     console.log('API existente verificada; se reutilizará.');
@@ -353,12 +410,22 @@ async function main() {
 
   if (expoPortAvailable) {
     const expoCommand = isTailscaleMode
-      ? ['run', 'start', '--', '--lan', '--go', '--port', String(expoPort)]
+      ? ['run', 'start', '--', '--localhost', '--go', '--port', String(expoPort)]
       : isRemoteMode
         ? ['run', 'start:remote', '--', '--go']
         : ['run', 'start', '--', '--offline', '--go'];
     const expoEnvironment = {
       EXPO_PUBLIC_API_PORT: String(apiPort),
+      // Expo SDK 58 resuelve localhost como ::1 en Windows. Tailscale Serve
+      // reenvia de forma estable al loopback IPv4, por lo que se prioriza
+      // 127.0.0.1 sin cambiar la direccion 100.x anunciada al telefono.
+      ...(isTailscaleMode
+        ? {
+            NODE_OPTIONS: [process.env.NODE_OPTIONS, '--dns-result-order=ipv4first']
+              .filter(Boolean)
+              .join(' '),
+          }
+        : {}),
       ...(apiBaseUrl ? { EXPO_PUBLIC_API_BASE_URL: apiBaseUrl } : {}),
       ...(isTailscaleMode
         ? { REACT_NATIVE_PACKAGER_HOSTNAME: tailscaleIp }

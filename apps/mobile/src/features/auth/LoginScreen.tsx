@@ -109,74 +109,76 @@ export function LoginScreen() {
           showsVerticalScrollIndicator={false}
           bounces={false}
         >
-          {/* ENCABEZADO */}
-          <View style={styles.header}>
-            <View style={[styles.logoCard, { width: logoSize, height: logoSize }]}>
-              <Image
-                source={require('../../../assets/logo.png')}
-                style={styles.logoImage}
-                resizeMode="contain"
+          <View style={styles.loginRail}>
+            {/* ENCABEZADO */}
+            <View style={styles.header}>
+              <View style={[styles.logoCard, { width: logoSize, height: logoSize }]}>
+                <Image
+                  source={require('../../../assets/logo.png')}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text allowFontScaling={false} style={styles.appTitle}>CRELEALTAD</Text>
+              <View style={styles.subtitleRow}>
+                <Text allowFontScaling={false} style={styles.appSubtitle}>Sistema de Cobranza</Text>
+                <Text allowFontScaling={false} style={styles.appVersion}>v{appConfig.expo.version}</Text>
+              </View>
+            </View>
+
+            {/* TARJETA DE LOGIN */}
+            <View style={styles.loginCard}>
+              <AppTextInput
+                label="ABREVIATURA"
+                value={abreviatura}
+                onChangeText={(value) => {
+                  setAbreviatura(value.toUpperCase());
+                  setError('');
+                }}
+                placeholder="Ej. ANA_VAZQUEZ"
+                autoCapitalize="characters"
+                autoCorrect={false}
+                editable={!loading}
+                maxLength={100}
+                required
               />
-            </View>
-            <Text allowFontScaling={false} style={styles.appTitle}>CRELEALTAD</Text>
-            <View style={styles.subtitleRow}>
-              <Text allowFontScaling={false} style={styles.appSubtitle}>Sistema de Cobranza</Text>
-              <Text allowFontScaling={false} style={styles.appVersion}>v{appConfig.expo.version}</Text>
-            </View>
-          </View>
 
-          {/* TARJETA DE LOGIN */}
-          <View style={styles.loginCard}>
-            <AppTextInput
-              label="ABREVIATURA"
-              value={abreviatura}
-              onChangeText={(value) => {
-                setAbreviatura(value.toUpperCase());
-                setError('');
-              }}
-              placeholder="Ej. ANA_VAZQUEZ"
-              autoCapitalize="characters"
-              autoCorrect={false}
-              editable={!loading}
-              maxLength={100}
-              required
-            />
+              {/* PIN */}
+              <Text allowFontScaling={false} style={[styles.fieldLabel, { marginTop: spacing.lg }]}>
+                PIN DE ACCESO
+              </Text>
+              <PinKeypad
+                value={pin}
+                disabled={loading}
+                onChange={(value) => {
+                  setPin(value);
+                  setError('');
+                }}
+              />
 
-            {/* PIN */}
-            <Text allowFontScaling={false} style={[styles.fieldLabel, { marginTop: spacing.lg }]}>
-              PIN DE ACCESO
-            </Text>
-            <PinKeypad
-              value={pin}
-              disabled={loading}
-              onChange={(value) => {
-                setPin(value);
-                setError('');
-              }}
-            />
+              {/* Botón Entrar */}
+              <Pressable
+                style={[
+                  styles.loginButton,
+                  !canSubmit && styles.loginButtonDisabled,
+                ]}
+                onPress={handleLoginPress}
+                disabled={!canSubmit}
+              >
+                {loading ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <Text allowFontScaling={false} style={styles.loginButtonText}>Entrar</Text>
+                )}
+              </Pressable>
 
-            {/* Botón Entrar */}
-            <Pressable
-              style={[
-                styles.loginButton,
-                !canSubmit && styles.loginButtonDisabled,
-              ]}
-              onPress={handleLoginPress}
-              disabled={!canSubmit}
-            >
-              {loading ? (
-                <ActivityIndicator color={colors.white} />
+              {/* Mensaje de error */}
+              {error ? (
+                <Text allowFontScaling={false} style={styles.errorText}>{error}</Text>
               ) : (
-                <Text allowFontScaling={false} style={styles.loginButtonText}>Entrar</Text>
+                <View style={styles.errorPlaceholder} />
               )}
-            </Pressable>
-
-            {/* Mensaje de error */}
-            {error ? (
-              <Text allowFontScaling={false} style={styles.errorText}>{error}</Text>
-            ) : (
-              <View style={styles.errorPlaceholder} />
-            )}
+            </View>
           </View>
         </ScrollView>
 
@@ -216,6 +218,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 24,
+  },
+  loginRail: {
+    width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
   },
   logoCard: {
     backgroundColor: colors.white,

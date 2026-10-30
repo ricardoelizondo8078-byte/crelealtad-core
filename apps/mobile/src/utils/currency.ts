@@ -3,10 +3,11 @@ export const formatCurrency = (value: number | string | null | undefined): strin
     return '$ 0';
   }
 
-  // BUG 3 FIX: No eliminar el punto decimal, solo parsear directamente
-  const numeric = typeof value === 'number' ? value : parseFloat(String(value));
+  const numeric = typeof value === 'number'
+    ? value
+    : Number(String(value).replace(/[$,\s]/g, ''));
 
-  if (Number.isNaN(numeric)) {
+  if (!Number.isFinite(numeric)) {
     return '$ 0';
   }
 

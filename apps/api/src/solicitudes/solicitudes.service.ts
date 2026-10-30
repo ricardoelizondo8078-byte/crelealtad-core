@@ -43,6 +43,8 @@ interface SolicitudDocumentosInternos {
   doc_ine_beneficiario_fecha?: string;
   doc_solicitud_firmada_ruta?: string;
   doc_solicitud_firmada_fecha?: string;
+  doc_control_pagos_ruta?: string;
+  doc_control_pagos_fecha?: string;
   doc_comprobante_credito_ruta?: string;
   doc_comprobante_credito_fecha?: string;
 }
@@ -108,6 +110,10 @@ export class SolicitudesService {
         ruta: 'doc_solicitud_firmada_ruta',
         fecha: 'doc_solicitud_firmada_fecha',
       },
+      control_pagos: {
+        ruta: 'doc_control_pagos_ruta',
+        fecha: 'doc_control_pagos_fecha',
+      },
       comprobante_credito: {
         ruta: 'doc_comprobante_credito_ruta',
         fecha: 'doc_comprobante_credito_fecha',
@@ -146,6 +152,7 @@ export class SolicitudesService {
     integranteId: string,
     tipo: TipoDocumento,
     ruta: string | null | undefined,
+    cantidadArchivos?: number,
   ): Promise<boolean> {
     if (!ruta) return false;
     const prefijo = `/solicitudes/integrante/${integranteId}/documentos/${tipo}/`;
@@ -160,6 +167,7 @@ export class SolicitudesService {
         documentoId,
       );
       return documento.archivos.length > 0
+        && (cantidadArchivos === undefined || documento.archivos.length === cantidadArchivos)
         && this.documentosStorageService.confirmarExistencia(
           integranteId,
           tipo,
@@ -609,6 +617,7 @@ export class SolicitudesService {
       'doc_comprobante_ruta', 'doc_comprobante_fecha',
       'doc_ine_beneficiario_ruta', 'doc_ine_beneficiario_fecha',
       'doc_solicitud_firmada_ruta', 'doc_solicitud_firmada_fecha',
+      'doc_control_pagos_ruta', 'doc_control_pagos_fecha',
       'doc_comprobante_credito_ruta', 'doc_comprobante_credito_fecha',
     ]);
   }

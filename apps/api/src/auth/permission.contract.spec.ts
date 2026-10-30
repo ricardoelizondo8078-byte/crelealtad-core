@@ -11,6 +11,7 @@ describe('permission contract', () => {
     })).toEqual({
       modulos: ['documentacion'],
       acciones: ['leer'],
+      capacidades: [],
     });
   });
 
@@ -21,6 +22,7 @@ describe('permission contract', () => {
     })).toEqual({
       modulos: ['*'],
       acciones: ['*'],
+      capacidades: [],
     });
   });
 
@@ -39,5 +41,18 @@ describe('permission contract', () => {
     expect(tienePermiso(permisos, 'verificacion', 'leer')).toBe(true);
     expect(tienePermiso(permisos, 'verificacion', 'registrar')).toBe(false);
     expect(tienePermiso(permisos, 'expedientes', 'leer')).toBe(false);
+  });
+
+  it('acepta una capacidad exacta sin habilitar las demás acciones del módulo', () => {
+    const permisos = normalizarContratoPermisos({
+      modulos: ['documentacion', 'parametros'],
+      acciones: ['leer', 'actualizar'],
+      capacidades: ['parametros:leer', 'parametros:inventada', 'inventado:leer'],
+    });
+
+    expect(permisos.capacidades).toEqual(['parametros:leer']);
+    expect(tienePermiso(permisos, 'parametros', 'leer')).toBe(true);
+    expect(tienePermiso(permisos, 'parametros', 'actualizar')).toBe(false);
+    expect(tienePermiso(permisos, 'documentacion', 'actualizar')).toBe(true);
   });
 });

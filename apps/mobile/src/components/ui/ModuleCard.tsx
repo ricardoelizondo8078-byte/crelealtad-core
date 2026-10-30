@@ -45,11 +45,17 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
     >
       <Card style={[styles.card, { borderColor: theme.headerBg }]}>
         <View style={[styles.icon, { backgroundColor: theme.headerAccent }]}>
-          <Text allowFontScaling={false} style={[styles.iconText, { color: theme.headerBg }]}>
+          <Text
+            allowFontScaling={false}
+            style={[styles.iconText, { color: theme.moduleCardText ?? theme.headerBg }]}
+          >
             {iconLabel}
           </Text>
         </View>
-        <Text allowFontScaling={false} style={[styles.title, { color: theme.headerBg }]}>
+        <Text
+          allowFontScaling={false}
+          style={[styles.title, { color: theme.moduleCardText ?? theme.headerBg }]}
+        >
           {title}
         </Text>
         <Text allowFontScaling={false} style={styles.description}>

@@ -1,4 +1,6 @@
 import { EntrevistaGuardada, EntrevistaPayload } from './verificacion-entrevista.api';
+import { codigoParametroEntrevista, etiquetaParametroEntrevista } from './verificacion-entrevista-parametros';
+import { formatCurrency } from '../../utils/currency';
 
 const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -29,6 +31,7 @@ const FAMILIAR_DOMICILIO: Record<string, string> = {
 };
 const PERSONAS_CASA: Record<string, string> = { '≥6': '6_O_MAS' };
 const CONVIVIENTES: Record<string, string> = {
+  'Cónyuge': 'CONYUGE',
   Conyuge: 'CONYUGE',
   Hijos: 'HIJOS',
   Padres: 'PADRES',
@@ -60,10 +63,6 @@ const RAPIDEZ: Record<string, string> = {
   'Muy lento': 'MUY_LENTO',
 };
 
-const invertir = (mapa: Record<string, string>): Record<string, string> => (
-  Object.fromEntries(Object.entries(mapa).map(([etiqueta, codigo]) => [codigo, etiqueta]))
-);
-
 const booleano = (valor: string): boolean | null => {
   if (valor === 'Sí' || valor === 'Si') return true;
   if (valor === 'No') return false;
@@ -84,15 +83,8 @@ const importe = (valor: string): number | null => {
   return Number.isFinite(numero) ? numero : null;
 };
 const etiquetaImporte = (valor: number | null): string => (
-  valor == null ? '' : String(valor)
+  valor == null ? '' : formatCurrency(valor)
 );
-const codigo = (mapa: Record<string, string>, valor: string): string | null => (
-  valor ? mapa[valor] ?? null : null
-);
-const etiqueta = (mapa: Record<string, string>, valor: string | null): string => (
-  valor ? invertir(mapa)[valor] ?? '' : ''
-);
-
 export interface EntrevistaFormState {
   conoceAsesora: string;
   comoConocioAsesora: string;
@@ -111,6 +103,7 @@ export interface EntrevistaFormState {
   financieraCreditoGrupal: string;
   creditoGrupalAnteriorActivo: string;
   valorFichaCreditoGrupal: string;
+  montoUltimoPrestamoCreditoGrupal: string;
   semanaActualCreditoGrupal: string;
   mesDesembolsoCreditoGrupal: string;
   mesUltimoPagoCreditoGrupal: string;
@@ -159,9 +152,9 @@ export const crearEntrevistaPayload = (
   noSabeDomicilioValue: string,
 ): EntrevistaPayload => ({
   conoce_asesora: booleano(state.conoceAsesora),
-  como_conocio_asesora: codigo(COMO_CONOCIO_ASESORA, state.comoConocioAsesora),
+  como_conocio_asesora: codigoParametroEntrevista('COMO_CONOCIO_ASESORA', state.comoConocioAsesora, COMO_CONOCIO_ASESORA),
   conoce_integrantes: booleano(state.conoceIntegrantes),
-  tiempo_conoce_integrantes: codigo(ANTIGUEDAD, state.tiempoConoceIntegrantes),
+  tiempo_conoce_integrantes: codigoParametroEntrevista('ANTIGUEDAD_CONOCE_GRUPO', state.tiempoConoceIntegrantes, ANTIGUEDAD),
   sabe_montos_companeras: booleano(state.sabeMontosCompaneras),
   acuerdo_montos_companeras: booleano(state.acuerdoMontos),
   desacuerdos_montos: state.companerasMontoNoAcordadoIds.flatMap((integranteId) => {
@@ -185,6 +178,7 @@ export const crearEntrevistaPayload = (
   financiera_credito_grupal: texto(state.financieraCreditoGrupal),
   credito_grupal_anterior_activo: booleano(state.creditoGrupalAnteriorActivo),
   valor_ficha_credito_grupal: importe(state.valorFichaCreditoGrupal),
+  monto_ultimo_prestamo_credito_grupal: importe(state.montoUltimoPrestamoCreditoGrupal),
   semana_actual_credito_grupal: entero(state.semanaActualCreditoGrupal),
   mes_desembolso_credito_grupal: state.mesDesembolsoCreditoGrupal
     ? MESES.indexOf(state.mesDesembolsoCreditoGrupal) + 1
@@ -200,34 +194,41 @@ export const crearEntrevistaPayload = (
   motivo_no_renovacion_credito_grupal: texto(state.motivoNoRenovacionCreditoGrupal),
   vive_en_domicilio: booleano(state.viveEnDomicilioDeclarado),
   motivo_no_vive_domicilio: texto(state.motivoNoViveEnDomicilio),
-  tipo_domicilio: codigo(TIPO_DOMICILIO, state.tipoDomicilio),
-  familiar_domicilio: codigo(FAMILIAR_DOMICILIO, state.familiarDomicilio),
-  antiguedad_domicilio: codigo(ANTIGUEDAD, state.aniosEnDomicilio),
+  tipo_domicilio: codigoParametroEntrevista('TIPO_DOMICILIO', state.tipoDomicilio, TIPO_DOMICILIO),
+  familiar_domicilio: codigoParametroEntrevista('FAMILIAR_DOMICILIO', state.familiarDomicilio, FAMILIAR_DOMICILIO),
+  antiguedad_domicilio: codigoParametroEntrevista('ANTIGUEDAD_DOMICILIO', state.aniosEnDomicilio, ANTIGUEDAD),
   personas_viven_casa: state.personasVivenCasa
-    ? PERSONAS_CASA[state.personasVivenCasa] ?? state.personasVivenCasa
+    ? codigoParametroEntrevista('PERSONAS_VIVEN_CASA', state.personasVivenCasa, PERSONAS_CASA)
+      ?? state.personasVivenCasa
     : null,
-  convivientes: state.quienViveConUsted.flatMap((item) => CONVIVIENTES[item] ? [CONVIVIENTES[item]] : []),
+  convivientes: [...new Set(state.quienViveConUsted.flatMap((item) => {
+    const valor = codigoParametroEntrevista('CONVIVIENTES', item, CONVIVIENTES);
+    return valor ? [valor] : [];
+  }))],
   saben_del_credito: booleano(state.quienesVivenConUstedSabenDelCredito),
   otro_ingreso_hogar: booleano(state.tieneOtroIngresoHogar),
   otro_ingreso_semanal: importe(state.otroIngresoSemanal),
   capacidad_pago_semanal: importe(state.capacidadPagoSemanal),
   uso_credito: texto(state.motivoCredito),
-  fuentes_ingreso: state.fuentesIngresoPersonal.flatMap((item) => FUENTES_INGRESO[item] ? [FUENTES_INGRESO[item]] : []),
+  fuentes_ingreso: [...new Set(state.fuentesIngresoPersonal.flatMap((item) => {
+    const valor = codigoParametroEntrevista('FUENTES_INGRESO', item, FUENTES_INGRESO);
+    return valor ? [valor] : [];
+  }))],
   sueldo_semanal: importe(state.ingresosSemanalesDeclarados),
   lugar_trabajo: texto(state.lugarTrabajo),
-  antiguedad_laboral: codigo(ANTIGUEDAD_LABORAL, state.antiguedadLaboral),
+  antiguedad_laboral: codigoParametroEntrevista('ANTIGUEDAD_LABORAL', state.antiguedadLaboral, ANTIGUEDAD_LABORAL),
   tipo_negocio: texto(state.tipoNegocio),
   ingreso_libre_semanal_negocio: importe(state.ingresoLibreSemanalNegocio),
   ubicacion_negocio: texto(state.ubicacionNegocio),
   tiene_control_pagos: booleano(state.tieneControlPagos),
   motivo_sin_control_pagos: texto(state.motivoSinControl),
-  asesora_acudio_semanalmente: codigo(FRECUENCIA, state.asesoraAcudioSemanalmente),
-  firmaban_control_semanalmente: codigo(FRECUENCIA, state.firmabanControlSemanalmente),
-  trato_asesora_tesorera: codigo(CALIFICACION, state.tratoAsesoraTesorera),
+  asesora_acudio_semanalmente: codigoParametroEntrevista('FRECUENCIA_SERVICIO', state.asesoraAcudioSemanalmente, FRECUENCIA),
+  firmaban_control_semanalmente: codigoParametroEntrevista('FRECUENCIA_SERVICIO', state.firmabanControlSemanalmente, FRECUENCIA),
+  trato_asesora_tesorera: codigoParametroEntrevista('CALIFICACION_SERVICIO', state.tratoAsesoraTesorera, CALIFICACION),
   conoce_premio_tesorera: booleano(state.conocePremioTesorera),
-  opinion_credito: codigo(CALIFICACION, state.opinionCredito),
-  trato_desembolso: codigo(CALIFICACION, state.tratoDesembolso),
-  rapidez_desembolso: codigo(RAPIDEZ, state.rapidezDesembolso),
+  opinion_credito: codigoParametroEntrevista('CALIFICACION_SERVICIO', state.opinionCredito, CALIFICACION),
+  trato_desembolso: codigoParametroEntrevista('CALIFICACION_SERVICIO', state.tratoDesembolso, CALIFICACION),
+  rapidez_desembolso: codigoParametroEntrevista('RAPIDEZ_DESEMBOLSO', state.rapidezDesembolso, RAPIDEZ),
   informacion_credito_clara: booleano(state.informacionCreditoClara),
   recomendaria: booleano(state.recomendaria),
   motivo_recomendacion: texto(state.razonRecomendacion),
@@ -241,9 +242,9 @@ export const restaurarEntrevista = (
   noSabeDomicilioValue: string,
 ): EntrevistaRestaurada => ({
   conoceAsesora: etiquetaBooleano(data.conoce_asesora),
-  comoConocioAsesora: etiqueta(COMO_CONOCIO_ASESORA, data.como_conocio_asesora),
+  comoConocioAsesora: etiquetaParametroEntrevista('COMO_CONOCIO_ASESORA', data.como_conocio_asesora, COMO_CONOCIO_ASESORA),
   conoceIntegrantes: etiquetaBooleano(data.conoce_integrantes, false),
-  tiempoConoceIntegrantes: etiqueta(ANTIGUEDAD, data.tiempo_conoce_integrantes),
+  tiempoConoceIntegrantes: etiquetaParametroEntrevista('ANTIGUEDAD_CONOCE_GRUPO', data.tiempo_conoce_integrantes, ANTIGUEDAD),
   sabeMontosCompaneras: etiquetaBooleano(data.sabe_montos_companeras, false),
   acuerdoMontos: etiquetaBooleano(data.acuerdo_montos_companeras),
   companerasMontoNoAcordadoIds: data.desacuerdos_montos.map((item) => item.integrante_id),
@@ -261,6 +262,7 @@ export const restaurarEntrevista = (
   financieraCreditoGrupal: data.financiera_credito_grupal ?? '',
   creditoGrupalAnteriorActivo: etiquetaBooleano(data.credito_grupal_anterior_activo),
   valorFichaCreditoGrupal: etiquetaImporte(data.valor_ficha_credito_grupal),
+  montoUltimoPrestamoCreditoGrupal: etiquetaImporte(data.monto_ultimo_prestamo_credito_grupal),
   semanaActualCreditoGrupal: data.semana_actual_credito_grupal?.toString() ?? '',
   mesDesembolsoCreditoGrupal: data.mes_desembolso_credito_grupal
     ? MESES[data.mes_desembolso_credito_grupal - 1] ?? ''
@@ -276,34 +278,38 @@ export const restaurarEntrevista = (
   motivoNoRenovacionCreditoGrupal: data.motivo_no_renovacion_credito_grupal ?? '',
   viveEnDomicilioDeclarado: etiquetaBooleano(data.vive_en_domicilio),
   motivoNoViveEnDomicilio: data.motivo_no_vive_domicilio ?? '',
-  tipoDomicilio: etiqueta(TIPO_DOMICILIO, data.tipo_domicilio),
-  familiarDomicilio: etiqueta(FAMILIAR_DOMICILIO, data.familiar_domicilio),
-  aniosEnDomicilio: etiqueta(ANTIGUEDAD, data.antiguedad_domicilio),
-  personasVivenCasa: data.personas_viven_casa === '6_O_MAS'
-    ? '≥6'
-    : data.personas_viven_casa ?? '',
-  quienViveConUsted: data.convivientes.map((item) => invertir(CONVIVIENTES)[item]).filter(Boolean),
+  tipoDomicilio: etiquetaParametroEntrevista('TIPO_DOMICILIO', data.tipo_domicilio, TIPO_DOMICILIO),
+  familiarDomicilio: etiquetaParametroEntrevista('FAMILIAR_DOMICILIO', data.familiar_domicilio, FAMILIAR_DOMICILIO),
+  aniosEnDomicilio: etiquetaParametroEntrevista('ANTIGUEDAD_DOMICILIO', data.antiguedad_domicilio, ANTIGUEDAD),
+  personasVivenCasa: etiquetaParametroEntrevista('PERSONAS_VIVEN_CASA', data.personas_viven_casa, PERSONAS_CASA)
+    || data.personas_viven_casa
+    || '',
+  quienViveConUsted: data.convivientes
+    .map((item) => etiquetaParametroEntrevista('CONVIVIENTES', item, CONVIVIENTES))
+    .filter(Boolean),
   quienesVivenConUstedSabenDelCredito: etiquetaBooleano(data.saben_del_credito),
   tieneOtroIngresoHogar: etiquetaBooleano(data.otro_ingreso_hogar),
   otroIngresoSemanal: etiquetaImporte(data.otro_ingreso_semanal),
   capacidadPagoSemanal: etiquetaImporte(data.capacidad_pago_semanal),
   motivoCredito: data.uso_credito ?? '',
-  fuentesIngresoPersonal: data.fuentes_ingreso.map((item) => invertir(FUENTES_INGRESO)[item]).filter(Boolean),
+  fuentesIngresoPersonal: data.fuentes_ingreso
+    .map((item) => etiquetaParametroEntrevista('FUENTES_INGRESO', item, FUENTES_INGRESO))
+    .filter(Boolean),
   ingresosSemanalesDeclarados: etiquetaImporte(data.sueldo_semanal),
   lugarTrabajo: data.lugar_trabajo ?? '',
-  antiguedadLaboral: etiqueta(ANTIGUEDAD_LABORAL, data.antiguedad_laboral),
+  antiguedadLaboral: etiquetaParametroEntrevista('ANTIGUEDAD_LABORAL', data.antiguedad_laboral, ANTIGUEDAD_LABORAL),
   tipoNegocio: data.tipo_negocio ?? '',
   ingresoLibreSemanalNegocio: etiquetaImporte(data.ingreso_libre_semanal_negocio),
   ubicacionNegocio: data.ubicacion_negocio ?? '',
   tieneControlPagos: etiquetaBooleano(data.tiene_control_pagos),
   motivoSinControl: data.motivo_sin_control_pagos ?? '',
-  asesoraAcudioSemanalmente: etiqueta(FRECUENCIA, data.asesora_acudio_semanalmente),
-  firmabanControlSemanalmente: etiqueta(FRECUENCIA, data.firmaban_control_semanalmente),
-  tratoAsesoraTesorera: etiqueta(CALIFICACION, data.trato_asesora_tesorera),
+  asesoraAcudioSemanalmente: etiquetaParametroEntrevista('FRECUENCIA_SERVICIO', data.asesora_acudio_semanalmente, FRECUENCIA),
+  firmabanControlSemanalmente: etiquetaParametroEntrevista('FRECUENCIA_SERVICIO', data.firmaban_control_semanalmente, FRECUENCIA),
+  tratoAsesoraTesorera: etiquetaParametroEntrevista('CALIFICACION_SERVICIO', data.trato_asesora_tesorera, CALIFICACION),
   conocePremioTesorera: etiquetaBooleano(data.conoce_premio_tesorera),
-  opinionCredito: etiqueta(CALIFICACION, data.opinion_credito),
-  tratoDesembolso: etiqueta(CALIFICACION, data.trato_desembolso),
-  rapidezDesembolso: etiqueta(RAPIDEZ, data.rapidez_desembolso),
+  opinionCredito: etiquetaParametroEntrevista('CALIFICACION_SERVICIO', data.opinion_credito, CALIFICACION),
+  tratoDesembolso: etiquetaParametroEntrevista('CALIFICACION_SERVICIO', data.trato_desembolso, CALIFICACION),
+  rapidezDesembolso: etiquetaParametroEntrevista('RAPIDEZ_DESEMBOLSO', data.rapidez_desembolso, RAPIDEZ),
   informacionCreditoClara: etiquetaBooleano(data.informacion_credito_clara),
   recomendaria: etiquetaBooleano(data.recomendaria),
   razonRecomendacion: data.motivo_recomendacion ?? '',

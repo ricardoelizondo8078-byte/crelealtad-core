@@ -10,7 +10,7 @@ import {
 } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { ApiError, api } from '../../services/api-client';
-import { colors, spacing, typography } from '../../theme/tokens';
+import { colors, layout, spacing, typography } from '../../theme/tokens';
 import { PinKeypad } from './PinKeypad';
 
 type PinStep = 0 | 1 | 2;
@@ -188,6 +188,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    width: '100%',
+    maxWidth: layout.formMaxWidth,
+    alignSelf: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
   },

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   completeOfflineOperation,
+  discardBlockedOfflineOperationsByDedupe,
   enqueueOfflineOperation,
   getNextOfflineOperation,
   getOfflineDraft,
@@ -11,7 +12,7 @@ import {
   saveOfflineDraft,
   setOfflineServerVersion,
 } from './offline-sync.repository';
-import { OfflineJsonOperation } from './offline-sync.types';
+import { OfflineDocumentOperation, OfflineJsonOperation } from './offline-sync.types';
 
 jest.mock(
   '@react-native-async-storage/async-storage',
@@ -266,5 +267,45 @@ describe('offline-sync.repository', () => {
       'No se pudo recuperar la captura offline cifrada',
     );
     await expect(AsyncStorage.getItem(key)).resolves.toContain('contenido-invalido');
+  });
+
+  it('descarta una carga documental bloqueada para permitir elegir archivos nuevos', async () => {
+    const operation: OfflineDocumentOperation = {
+      version: 1,
+      id: 'operacion-documento-bloqueada',
+      userId,
+      module: 'DOCUMENTACION',
+      entityType: 'integrante',
+      entityId: 'integrante-1',
+      dedupeKey: 'documento:integrante-1:control_pagos',
+      draftKey,
+      kind: 'DOCUMENT_UPLOAD',
+      status: 'BLOCKED',
+      attempts: 1,
+      nextAttemptAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      lastError: 'La evidencia cifrada ya no existe',
+      request: {
+        integranteId: 'integrante-1',
+        tipo: 'control_pagos',
+        files: [{
+          uri: 'file:///document/operacion-documento-bloqueada/1-control.png.clenc',
+          name: 'control.png',
+          fieldName: 'archivos',
+          size: 128,
+          encryption: { version: 1, algorithm: 'AES-256-GCM' },
+        }],
+        progress: { cargaId: 'operacion-documento-bloqueada', nextIndex: 0 },
+      },
+    };
+    await enqueueOfflineOperation(operation);
+
+    await expect(discardBlockedOfflineOperationsByDedupe(
+      userId,
+      operation.dedupeKey,
+      operation.kind,
+    )).resolves.toEqual([operation.id]);
+    await expect(getOfflineOperation(userId, operation.id)).resolves.toBeNull();
   });
 });

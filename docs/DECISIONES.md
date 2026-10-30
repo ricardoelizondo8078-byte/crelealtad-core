@@ -3230,5 +3230,1825 @@ M12 y a los módulos posteriores.
 
 ---
 
-**Última actualización**: 2026-10-04
+## 2026-10-05 | PIN universal acotado al desarrollo local (DEC-176)
+
+**DECISION**: Durante el desarrollo local, M01 puede aceptar un PIN universal configurado mediante
+`DEV_UNIVERSAL_PIN` únicamente cuando `NODE_ENV=development`. El valor vive en el `.env` protegido,
+no se incorpora al código, documentación, logs, auditoría ni respuestas HTTP y se ignora si falta,
+es inválido o el entorno no es exactamente de desarrollo.
+
+La validación individual bcrypt permanece vigente. Cuando el acceso utiliza el PIN universal, el
+JWT identifica esa sesión de desarrollo, `LOGIN` registra únicamente el método
+`PIN_UNIVERSAL_DESARROLLO` y la sesión omite temporalmente `requiere_cambio_pin`. PostgreSQL conserva
+sin cambios el hash individual y la marca persistida. Desactivar la variable o salir de
+`development` elimina la excepción; los usuarios inactivos, roles inactivos, permisos y alcances
+continúan bloqueados normalmente.
+
+**MOTIVO**: Permitir pruebas operativas multiusuario durante la construcción de la app sin restaurar
+una credencial literal en el repositorio, sobrescribir PIN individuales o abrir un acceso de
+producción.
+
+**REVERSIÓN**: Retirar `DEV_UNIVERSAL_PIN` del entorno local. No requiere migración ni modificación
+de datos.
+
+**ESTADO**: CERRADA, TEMPORAL E IMPLEMENTADA EN API; DEBE RETIRARSE ANTES DE PRODUCCIÓN
+
+---
+
+## 2026-10-06 | Oportunidad de mejora opcional en Entrevista (DEC-177)
+
+**DECISION**: La pregunta `¿En qué cree usted que podemos mejorar?` permanece visible inmediatamente
+después de la recomendación dentro de la encuesta de servicio, pero su respuesta deja de ser
+obligatoria. Puede quedar vacía y no bloqueará el criterio de conclusión de la Entrevista cuando
+éste sea implementado.
+
+La API y PostgreSQL conservan `oportunidad_mejora` como campo nullable. Mobile retira únicamente la
+marca visual de obligatoriedad y continúa autoguardando cualquier respuesta que sí se capture.
+
+Esta decisión sustituye sólo la obligatoriedad definida en DEC-108 y en la decisión del 2026-09-29;
+no cambia la visibilidad, posición, redacción, longitud máxima ni persistencia del campo.
+
+**MOTIVO**: Permitir terminar la captura aunque la integrante no proporcione una oportunidad de
+mejora, sin retirar la posibilidad de registrarla cuando exista.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O ESQUEMA
+
+---
+
+## 2026-10-06 | Cierre operativo derivado de Entrevista y apertura contextual del selector (DEC-178)
+
+**DECISION**: Mobile muestra siempre la acción inferior `Terminar entrevista`. La acción se habilita
+cuando están contestados todos los campos visibles marcados como obligatorios y sus seguimientos
+condicionales, están confirmados el teléfono principal y la ruta vigente de Imágenes del domicilio,
+las evidencias obligatorias aplicables de control de pagos o entrega del folleto están confirmadas,
+la versión visible de la entrevista está sincronizada con el servidor y no existen evidencias en
+proceso o pendientes de envío.
+
+Cuando todavía no se satisface el criterio, la pantalla enumera las respuestas o confirmaciones
+faltantes en lenguaje operativo. `¿En qué cree usted que podemos mejorar?`, el teléfono secundario,
+el nombre y teléfono de la asesora de otra financiera, la ubicación escrita del negocio, las
+fotografías del negocio y las fotografías adicionales de otra financiera continúan siendo
+opcionales. Una captura opcional ya iniciada sí debe terminar de guardarse antes de cerrar.
+
+Al pulsar `Terminar entrevista`, la app regresa al concentrador y muestra la paloma de Entrevista
+derivada de esas confirmaciones; no crea un estado paralelo, no cambia el expediente y no representa
+dictamen ni autorización. El pop-up `¿Cómo conoció a la asesora?` se abre automáticamente sólo como
+consecuencia inmediata de elegir `Sí` en `¿Conoce a la asesora?` cuando todavía no existe una
+respuesta para ese seguimiento. Abrir, consultar o restaurar una entrevista que ya contiene esa
+respuesta nunca lo despliega por sí solo, aunque exista una orden de apertura anterior en memoria.
+
+**MOTIVO**: Permitir identificar exactamente qué falta, distinguir la terminación operativa de una
+simple salida y evitar interrupciones al consultar entrevistas ya capturadas.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API, ESQUEMA O ESTADO DEL EXPEDIENTE
+
+---
+
+## 2026-10-06 | Pop-ups condicionales de Entrevista sólo por una respuesta nueva (DEC-179)
+
+**DECISION**: Ningún selector condicional de Entrevista se abre automáticamente por entrar al
+proceso, consultar una captura o restaurar respuestas guardadas. La apertura automática ocurre
+únicamente como consecuencia inmediata de que la usuaria elija la respuesta que habilita ese
+seguimiento y sólo si el seguimiento todavía está vacío.
+
+La regla aplica a cómo conoció a la asesora, financiera del crédito externo, causa de no renovación,
+desacuerdos de monto, reconocimiento de tesorera, familiares del grupo, causa de no vivir en el
+domicilio, familiar propietario del domicilio, causa de falta del control de pagos y motivo de
+recomendación. Una respuesta ya capturada se muestra cerrada y puede corregirse tocando su renglón.
+
+**MOTIVO**: Evitar que al abrir una entrevista completa aparezca en cascada el primer selector
+condicional restaurado, interrumpiendo la consulta y dando la impresión de que falta responderlo.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; AJUSTE DE INTERACCIÓN SIN CAMBIO DE DATOS
+
+---
+
+## 2026-10-07 | Habilitación de Conclusiones en Verificación (DEC-180)
+
+**DECISION**: El botón `Conclusiones` del concentrador individual queda habilitado y abre la captura
+local existente de inconsistencias, residencia, recomendación y observaciones del verificador.
+
+La captura continúa limitada al estado local de la pantalla. No representa un dictamen financiero,
+no persiste en el servidor, no autoriza ni rechaza un crédito y no cambia el estado del expediente.
+Esta decisión sustituye únicamente la restricción temporal de DEC-122 y restablece el alcance
+acotado aprobado en DEC-121.
+
+**MOTIVO**: Permitir el acceso operativo a la captura ya construida sin adelantar el contrato,
+auditoría, permisos ni transiciones que todavía requieren definición.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; PERSISTENCIA Y DICTAMEN PENDIENTES
+
+---
+
+## 2026-10-07 | Resumen operativo al inicio de Conclusiones (DEC-181)
+
+**DECISION**: `Conclusiones` inicia con un resumen compacto de respuestas ya capturadas en
+Entrevista y no vuelve a formular preguntas. El primer renglón muestra `NUEVO` dentro de una
+burbuja amarilla cuando no existen ciclos previos confirmados, o el número de `CICLO / CICLOS` en
+verde cuando sí existen. Si el historial no está disponible, presenta `HISTORIAL N/D` sin inferir
+que la integrante sea nueva.
+
+Los renglones siguientes indican si la integrante sabe cuánto pidieron sus compañeras y si está de
+acuerdo con esos montos. Cuando no está de acuerdo, el resumen muestra en rojo los nombres de todas
+las integrantes seleccionadas. El conocimiento de la tesorera y del domicilio de recolección se
+presenta en verde para respuestas afirmativas y en rojo para negativas; cuando existe una selección
+positiva también muestra el nombre relacionado. Una respuesta ausente se identifica como pendiente.
+
+El resumen aporta contexto para la futura determinación del `Monto verificado`, pero esta entrega no
+crea el importe, una regla de cálculo, persistencia, dictamen, autorización ni transición de estado.
+
+**MOTIVO**: Permitir que el verificador comprenda de inmediato los datos relevantes para revisar el
+monto sin recorrer nuevamente una entrevista extensa ni confundir el resumen con una decisión
+financiera confirmada.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; MONTO VERIFICADO Y DICTAMEN PENDIENTES
+
+---
+
+## 2026-10-07 | Ciclo individual vigente en Conclusiones (DEC-182)
+
+**DECISION**: La primera burbuja del resumen de `Conclusiones` representa exclusivamente el ciclo
+individual vigente de la integrante y nunca el ciclo del grupo. Se calcula sumando el expediente
+actual al conteo de ciclos individuales previos confirmados, cuya consulta ya excluye el expediente
+en revisión.
+
+Una integrante sin ciclos previos confirmados muestra `CICLO 1` dentro de una burbuja amarilla con
+signo de advertencia `!`. Desde `CICLO 2`, la burbuja se presenta en verde. Cuando no existe una
+fuente individual suficiente y tampoco una marca explícita de integrante nueva, se muestra
+`CICLO INDIVIDUAL N/D` sin reutilizar ni inferir la numeración grupal.
+
+Esta decisión sustituye en DEC-181 la etiqueta `NUEVO` y la referencia visual al conteo de ciclos
+previos; el resto del resumen permanece sin cambios.
+
+**MOTIVO**: Identificar correctamente a la integrante que cursa su primer crédito y evitar que la
+trayectoria personal se confunda con el ciclo vigente del grupo.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O ESQUEMA
+
+---
+
+## 2026-10-07 | Fuente única del ciclo individual en encabezado y Conclusiones (DEC-183)
+
+**DECISION**: El encabezado de Verificación Individual y la primera burbuja del resumen de
+`Conclusiones` utilizan exactamente la misma presentación derivada del conteo individual
+`creditos_participados`. El resumen no suma el expediente actual ni realiza un segundo cálculo.
+
+El valor `1` se presenta como `1 CICLO` en amarillo con el signo `!`; desde `2 CICLOS` se presenta
+en verde. Un conteo cero acompañado por la marca explícita de integrante nueva muestra `NUEVO` en
+amarillo. Si el conteo individual no está disponible, ambos lugares muestran la indisponibilidad
+sin sustituirla por `solicitudes.ciclo_numero` ni por el ciclo del grupo.
+
+Esta decisión sustituye el cálculo de DEC-182 que sumaba uno al historial. El ciclo grupal continúa
+visible exclusivamente en el encabezado contextual derecho y no interviene en las burbujas de
+trayectoria individual.
+
+**MOTIVO**: Eliminar la contradicción observada donde el encabezado mostraba `1 CICLO` y
+Conclusiones `CICLO 2` para la misma integrante, preservando una sola fuente individual.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O ESQUEMA
+
+---
+
+## 2026-10-08 | Historiales crediticios dentro de Conclusiones (DEC-184)
+
+**DECISION**: Antes de `Conclusiones del verificador`, la pantalla muestra dos apartados separados
+mediante la franja ocre oficial de Verificación.
+
+`HISTORIAL CRELEALTAD` reutiliza exclusivamente el resumen individual confirmado que ya entrega la
+API: monto máximo, monto mínimo y hasta cinco ciclos recientes. Cuando la fuente confirma que la
+integrante no tiene historial, muestra un renglón rojo `SIN HISTORIAL`. Si la fuente es nula o
+inconsistente, muestra indisponibilidad neutral y no infiere ausencia. No usa la simulación visual
+de desarrollo.
+
+`HISTORIAL OTRAS FINANCIERAS` reutiliza las respuestas persistidas de Entrevista y resume la
+financiera, vigencia, ficha, semana y desembolso o último pago, ciclos, tasa declarada, asesora,
+teléfono, motivo de no renovación cuando aplica y conteo de evidencias. Una respuesta explícita
+`No` muestra en rojo `SIN HISTORIAL EN OTRAS FINANCIERAS`; una respuesta ausente permanece neutral.
+
+El cambio es de consulta y presentación: no crea una segunda fuente, no modifica Entrevista, no
+persiste conclusiones, no calcula el monto verificado y no emite dictamen o transición.
+
+**MOTIVO**: Concentrar la trayectoria crediticia necesaria para revisar el monto y distinguir
+claramente una ausencia confirmada de un dato pendiente o no disponible.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API, ESQUEMA O DICTAMEN
+
+---
+
+## 2026-10-08 | Ficha y antigüedad estimada del desembolso externo (DEC-185)
+
+**DECISION**: En `HISTORIAL OTRAS FINANCIERAS`, el valor semanal de la ficha se presenta como
+moneda mediante el patrón `$ #,###`, con espacio después del signo y separador de miles.
+
+Cuando el crédito externo está activo, el renglón `MES DE DESEMBOLSO` coloca el mes al inicio del
+espacio de valor y, a su derecha, muestra dos cantidades de semanas completas separadas por guion.
+La primera se calcula desde el día 1 del mes declarado hasta la fecha de captura de la Entrevista;
+la segunda, desde el último día de ese mes hasta la misma fecha. Por ejemplo, una captura del 8 de
+octubre con desembolso declarado en julio muestra `14 - 9 SEM`.
+
+La fecha de referencia es `updated_at` de la Entrevista confirmada por el servidor. Mientras existe
+un borrador local pendiente se usa su `updatedAt`, para conservar el momento real de captura y no
+recalcular contra la fecha posterior de consulta. Como Entrevista sólo solicita el mes, se utiliza la
+ocurrencia más reciente de ese mes que no sea posterior a la captura; si la captura pertenece al
+mismo mes, el extremo final se limita a la propia fecha de captura. Si falta el mes o la fecha, no se
+inventa el rango.
+
+**MOTIVO**: Facilitar la lectura del compromiso semanal y estimar la antigüedad posible del crédito
+sin aparentar una fecha exacta de desembolso que la entrevista no captura.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O ESQUEMA
+
+---
+
+## 2026-10-08 | Validación de semana actual contra rango externo (DEC-186)
+
+**DECISION**: En el crédito externo activo, el rango estimado se presenta de menor a mayor: primero
+las semanas completas desde el último día del mes declarado y después las semanas desde el primer
+día. El ejemplo anterior de julio al 8 de octubre se muestra como `9 - 14 SEM`.
+
+El rango aparece dentro de una burbuja verde con marca de confirmación cuando `SEMANA ACTUAL` es un
+entero comprendido entre ambos extremos, inclusive. Si la semana actual no pertenece al intervalo,
+falta o no es válida, la burbuja es roja y muestra una marca de rechazo. El texto y la marca evitan
+que el resultado dependa únicamente del color.
+
+Los renglones `ASESORA` y `TELÉFONO DE LA ASESORA` se retiran exclusivamente del resumen de
+`Conclusiones`; la captura y persistencia originales de Entrevista permanecen sin cambios.
+
+Esta decisión sustituye en DEC-185 únicamente el orden visual del rango y complementa su lectura
+con la validación de `SEMANA ACTUAL`.
+
+**MOTIVO**: Leer el intervalo en orden natural y señalar de inmediato si la semana declarada es
+compatible con el mes y la fecha de captura, eliminando datos que no son necesarios para esta
+revisión.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O ESQUEMA
+
+---
+
+## 2026-10-08 | Alineación del desembolso y consulta de evidencia externa (DEC-187)
+
+**DECISION**: El renglón `MES DE DESEMBOLSO` centra verticalmente la etiqueta y sus valores. El mes
+y el rango se agrupan hacia la derecha con separación breve. El mes usa su propia burbuja con el
+mismo tono verde o rojo derivado de la compatibilidad entre `SEMANA ACTUAL` y el rango; el rango
+conserva además la marca visible de confirmación o rechazo.
+
+Cuando existe al menos una fotografía guardada, el valor del renglón `EVIDENCIA` se presenta como
+una acción táctil de tamaño accesible. Al tocarla abre el visor institucional a pantalla completa con
+las evidencias guardadas de esa financiera y navegación entre páginas. Incluye tanto las imágenes
+vigentes del comprobante de línea de crédito provenientes de Documentación como las evidencias
+confirmadas agregadas en Entrevista; no incluye capturas todavía pendientes de guardar. Si no hay
+evidencia confirmada, el renglón permanece informativo y no simula una acción disponible.
+
+**MOTIVO**: Corregir la alineación visual del dato comparado y permitir revisar la evidencia desde
+el mismo resumen donde el verificador analiza el historial externo.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; REUTILIZA EVIDENCIA EXISTENTE, SIN CAMBIO DE API O ESQUEMA
+
+---
+
+## 2026-10-08 | Catálogo de financieras competidoras en Parámetros (DEC-188)
+
+**DECISION**: M11 Parámetros incorpora un catálogo institucional versionado de financieras
+competidoras. Cada financiera conserva nombre oficial y alias; cada versión define motivo
+obligatorio, vigencia, estado activo/inactivo y una clasificación cerrada: `OBJETIVO`, `REVISION`
+o `NO_PRIORITARIA`.
+
+La señal se presenta en Conclusiones con texto y color: verde para cartera objetivo, amarillo para
+revisión y rojo para cartera no prioritaria. Si no existe una versión publicada vigente a la fecha
+de captura de la Entrevista, se muestra `SIN CLASIFICAR`; nunca se infiere una clasificación a
+partir del nombre ni se precargan criterios no aprobados. Esta señal orienta la revisión, pero no
+autoriza, rechaza ni modifica automáticamente el monto verificado.
+
+Se aplica el doble control de DEC-175: Administración propone y publica; Gerencia aprueba o
+rechaza; quien aprobó no puede publicar y quien propuso no puede decidir. No se borra historial:
+las bajas se expresan mediante una versión inactiva. La consulta de Conclusiones usa la fecha de
+captura para que una publicación posterior no cambie retroactivamente una entrevista anterior.
+
+**MOTIVO**: Centralizar una política variable que hoy no tiene gobierno, permitir que operación
+clasifique la competencia con trazabilidad y dar al verificador una señal compacta sin hardcodear
+financieras ni convertir el catálogo en un motor automático de crédito.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN API, MOBILE Y POSTGRESQL MEDIANTE MIGRACIÓN 037.
+
+---
+
+## 2026-10-08 | Consulta temporal de Parámetros para todos los usuarios (DEC-189)
+
+**DECISION**: Durante la revisión operativa de M11, todos los roles activos pueden consultar el
+módulo Parámetros. La concesión se expresa como capacidad exacta `parametros:leer` y también se
+agrega a los permisos personalizados existentes, porque éstos sustituyen el permiso heredado del
+rol.
+
+Esta excepción no concede proponer, modificar, aprobar, rechazar ni publicar. Administración y
+Gerencia conservan las responsabilidades y la separación de actores establecidas por DEC-175 y
+DEC-188. No se habilitan usuarios inactivos ni rutas sin autenticación.
+
+La migración registra permisos antes/después en `audit_log`. La reversión restaura exactamente el
+valor anterior y se detiene si detecta cambios posteriores, para no sobrescribir administración de
+acceso legítima.
+
+**MOTIVO**: Permitir que todo el personal revise temporalmente la pantalla recién construida sin
+aprovechar el producto cartesiano del contrato heredado, que podría ampliar acciones distintas de
+lectura.
+
+**ESTADO**: CERRADA, TEMPORAL E IMPLEMENTADA EN API, MOBILE Y POSTGRESQL MEDIANTE MIGRACIONES 038–039.
+
+---
+
+## 2026-10-08 | Lista base y semáforo visible de financieras competidoras (DEC-190)
+
+**DECISION**: M11 muestra como catálogo base las trece financieras reales que existían en el
+selector de historial crediticio: Banco BanFeliz, Came, Compartamos Banco, Credi Ok, Crediclub,
+CrediMujer, Crédito Sí (Afirme), Exitus Contigo, Mi Tandita, Seamos Socios, Solidar, Todo Fácil y
+Tuiio (Santander). `Otra` continúa como opción funcional al final del selector de Entrevista y no
+se registra como si fuera una financiera.
+
+Cada financiera presenta tres casillas de selección exclusiva con texto y marca además del color:
+`Óptima` verde (`OBJETIVO`), `Atención` amarilla (`REVISION`) y `No interesa` roja
+(`NO_PRIORITARIA`). Elegir una casilla prepara la propuesta correspondiente; el motivo obligatorio,
+la aprobación de Gerencia y la publicación por Administración continúan vigentes. Agregar y quitar
+financieras usa el mismo gobierno. Quitar significa publicar una versión inactiva y nunca borrar la
+identidad ni su historial.
+
+Cuando la API responde, el pop-up de Entrevista usa únicamente las financieras disponibles en
+Parámetros y conserva una selección histórica aunque después se dé de baja. Si no hay conexión,
+usa las trece financieras iniciales como respaldo sin inventar clasificación. Las identidades base
+pueden aparecer `SIN CLASIFICAR` hasta que exista una versión aprobada y publicada.
+
+**MOTIVO**: Convertir Parámetros en la fuente operativa del selector, hacer inmediata la lectura del
+semáforo solicitado y permitir mantenimiento del catálogo sin perder captura offline ni historial.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN API, MOBILE Y POSTGRESQL MEDIANTE MIGRACIÓN 040.
+
+---
+
+## 2026-10-08 | Nombre oficial separado del alias visible en Verificación (DEC-191)
+
+**DECISION**: Cada financiera conserva en Parámetros su nombre oficial o razón social y uno o más
+alias operativos. El primer alias es el nombre principal con el que las integrantes identifican a la
+financiera y es el texto que muestra el pop-up de historial crediticio. Si todavía no existe alias,
+el pop-up usa temporalmente el nombre oficial para no perder la opción.
+
+El nombre oficial también forma parte de cada versión: Administración puede proponer su corrección,
+pero la identidad sólo cambia cuando Gerencia aprueba y Administración publica. El historial conserva
+el nombre oficial y el alias correspondientes a cada revisión. Para las trece identidades base, el
+texto conocido actual funciona inicialmente como alias visible aunque aún no exista una versión.
+
+**MOTIVO**: Mantener la razón social correcta para gobierno y auditoría, mientras la captura en campo
+usa el nombre cotidiano que reconocen las integrantes.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN API, MOBILE Y POSTGRESQL MEDIANTE MIGRACIÓN 041.
+
+---
+
+## 2026-10-08 | Captura inicial opcional y simplificada de financieras (DEC-192)
+
+**DECISION**: La propuesta de una financiera muestra, en este orden, únicamente: alias visible en
+el pop-up, nombre oficial y clasificación. Ninguno de esos tres datos es obligatorio de manera
+individual. La clasificación puede permanecer vacía y se representa como `SIN CLASIFICAR`.
+
+Motivo, vigencia y disponibilidad se retiran de esta captura. El servidor asigna como vigencia la
+fecha de propuesta y conserva la financiera activa salvo que la acción explícita sea quitarla o
+reactivarla. No se permite enviar una propuesta completamente vacía o sin cambios; para crear una
+identidad nueva se requiere al menos alias o nombre oficial, porque el catálogo necesita un texto
+visible. El doble control, la publicación, la auditoría y el historial permanecen vigentes.
+
+Esta decisión sustituye exclusivamente la obligatoriedad de clasificación y motivo establecida en
+DEC-188 y DEC-190; no modifica los roles ni convierte el semáforo en una decisión crediticia.
+
+**MOTIVO**: Permitir que Administración capture primero el nombre cotidiano reconocido por las
+integrantes y complete gradualmente la razón social o la clasificación sin inventar datos.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN API, MOBILE Y POSTGRESQL MEDIANTE MIGRACIÓN 042.
+
+---
+
+## 2026-10-08 | Catálogo separado por presencia en el pop-up (DEC-193)
+
+**DECISION**: La pantalla `Financieras competidoras` elimina la explicación introductoria y muestra
+primero el botón `Agregar financiera`. El catálogo se divide en dos secciones visibles:
+`SE MUESTRAN EN EL POP-UP` y `NO SE MUESTRAN`. Cada financiera ocupa un renglón delimitado que
+presenta únicamente su alias y un círculo con el color seleccionado; sin clasificación, el círculo
+permanece blanco.
+
+La sección se determina con la disponibilidad que ya está publicada. Las identidades del catálogo
+base se muestran mientras no exista una versión publicada que las desactive; una financiera nueva no
+se muestra hasta publicar su primera versión activa. Una propuesta pendiente no mueve el renglón antes
+de la aprobación de Gerencia y la publicación por Administración.
+
+**MOTIVO**: Hacer evidente qué opciones están disponibles durante la entrevista, reducir texto y
+separar visualmente las financieras incluidas de las excluidas sin romper el doble control.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN API Y MOBILE; SIN CAMBIO DE ESQUEMA.
+
+---
+
+## 2026-10-08 | Disponibilidad del pop-up dentro de la edición (DEC-194)
+
+**DECISION**: La pantalla `Propuesta de financiera` incorpora al final la pregunta
+`¿Se muestra en el pop-up?` con selección exclusiva `Sí / No`. La opción se presenta tanto al crear
+como al modificar una financiera. `Sí` propone incluirla en nuevas capturas y `No` propone retirarla
+del pop-up sin borrar su identidad ni su historial.
+
+La selección no se aplica al enviar el formulario: conserva la aprobación de Gerencia y la
+publicación por Administración. Hasta que se publique, la financiera permanece en la sección que
+corresponde a su versión vigente.
+
+**MOTIVO**: Permitir que Administración controle la presencia en el pop-up desde la misma pantalla
+en la que modifica alias, nombre y clasificación, sin depender de una acción separada ni confundir
+ocultar con eliminar.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; REUTILIZA EL CONTRATO Y ESQUEMA VIGENTES.
+
+---
+
+## 2026-10-08 | Datos complementarios y disponibilidad compacta (DEC-195)
+
+**DECISION**: La propuesta de una financiera conserva primero alias, nombre oficial y clasificación,
+y agrega después `Motivo de la clasificación` y `Vigencia desde`. El motivo continúa opcional, pero
+si se captura exige al menos cinco caracteres. La vigencia se precarga con la fecha local actual,
+acepta el formato `AAAA-MM-DD` y no permite fechas anteriores.
+
+La pregunta de disponibilidad se presenta exactamente como
+`¿Disponible para captura y conclusiones?`, mediante dos círculos pequeños `Sí` y `No`. Ambos usan
+escala de grises: la opción elegida queda con fondo gris claro y borde gris oscuro; no se usa verde o
+rojo para esta decisión. El alias permanece al inicio porque es el texto principal del pop-up; no se
+duplica como un segundo campo de alias conocidos.
+
+Motivo, vigencia y disponibilidad forman parte de la versión propuesta y sólo producen efectos tras
+la aprobación de Gerencia y la publicación por Administración.
+
+**MOTIVO**: Recuperar los datos complementarios de la ficha original y reproducir el control compacto
+solicitado sin alterar el orden previamente aprobado para alias y nombre oficial.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; REUTILIZA API Y POSTGRESQL VIGENTES.
+
+---
+
+## 2026-10-08 | Disponibilidad con selector institucional de Verificación (DEC-196)
+
+**DECISION**: La pregunta final de la propuesta cambia a `¿Se muestran en el pop-up?`. Sus respuestas
+`Sí / No` reutilizan directamente `SelectorField`, el mismo componente que emplean las preguntas
+binarias de Entrevista en Verificación. Por tanto, conservan exactamente su altura mínima de 40,
+borde redondeado tipo píldora, separación, tipografía y comportamiento de selección.
+
+El color seleccionado procede del tema gris de Parámetros; no se mantienen tamaños ni estilos
+locales para este control. Esta decisión sustituye el texto y el control circular específico definidos
+en DEC-195, sin cambiar el significado versionado de la disponibilidad.
+
+**MOTIVO**: Mantener consistencia visual con el resto de la aplicación y evitar círculos más grandes
+que los controles binarios institucionales ya utilizados en Verificación.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O ESQUEMA.
+
+---
+
+## 2026-10-08 | Márgenes y separación de franjas de sección (DEC-197)
+
+**DECISION**: Las franjas de sección deben conservar el mismo patrón visual en todos los módulos.
+Cuando la franja es hija directa de un cuerpo con el relleno institucional `spacing.lg`, usa
+`StickySectionHeader` con `placement="standalone"`: compensa lateralmente `spacing.xs`, por lo que
+queda ligeramente más larga que los campos y conserva un margen efectivo `spacing.md` respecto de
+la pantalla, igual que Verificación. Deja `spacing.lg` respecto del bloque anterior y `spacing.sm`
+antes del primer campo o dato.
+
+`fullBleed` queda reservado para una franja integrada dentro de una tarjeta u otro contenedor con
+relleno. En ese caso puede extenderse hasta los bordes del contenedor, como en los historiales de
+Verificación, pero nunca cancelar el margen lateral del cuerpo de pantalla.
+
+**MOTIVO**: Evitar franjas pegadas al bloque anterior, separar con claridad el primer dato y mantener
+la misma anchura visual de Verificación en Parámetros y en los módulos futuros.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN COMPONENTE COMPARTIDO Y M11; SIN CAMBIO DE API O ESQUEMA.
+
+---
+
+## 2026-10-08 | Descripción extensa del producto por financiera (DEC-198)
+
+**DECISION**: La propuesta de financiera incorpora el dato opcional `Descripción` inmediatamente
+después de `Refinanciamiento` y antes de `PARTICIPACIÓN MERCADO`. Es un área multilínea de texto
+libre con un máximo de 10,000 caracteres. Al normalizar se eliminan únicamente los espacios de los
+extremos; se conservan los espacios y saltos de línea internos.
+
+La descripción forma parte de la versión de la financiera y recorre el mismo flujo de propuesta,
+aprobación, publicación, ficha e historial. Se almacena como `TEXT NULL`; es un dato declarativo y no
+se interpreta para calcular, autorizar, rechazar ni modificar un crédito.
+
+**MOTIVO**: Permitir registrar explicaciones amplias del producto en el punto indicado sin forzarlas
+dentro de los siete campos breves ni perderlas cuando cambie la versión publicada.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 045.
+
+---
+
+## 2026-10-08 | Administración como autoridad final de Parámetros (DEC-199)
+
+**DECISIÓN**: El rol `ADMINISTRADOR` representa a las personas directoras de la financiera y es la
+autoridad final del módulo M11 Parámetros. Administración captura, revisa y publica cada cambio en
+un solo paso mediante `Guardar y publicar`; no lo envía a Gerencia ni existe devolución, aprobación
+o rechazo intermedio para este módulo.
+
+La API registra la versión directamente como `PUBLICADA` dentro de una transacción. Para conservar
+el esquema histórico y su trazabilidad, el mismo administrador ocupa las columnas técnicas de
+propuesta, decisión y publicación. Permanecen obligatorios JWT, capacidades exactas, rol
+`ADMINISTRADOR`, revisión esperada, vigencias sin traslape, historial y el evento auditable
+`FIN_PUBLICADA`. La migración 046 retira `parametros:aprobar` y `parametros:rechazar` de roles y
+excepciones individuales, garantiza `parametros:leer`, `parametros:actualizar` y
+`parametros:registrar` para Administración, y deja a Gerencia sólo con lectura de M11.
+
+Esta decisión sustituye DEC-175 y DEC-188 a DEC-195 únicamente en lo relativo a aprobación de
+Gerencia y publicación posterior de Administración en M11. M12 conserva el doble control aprobado;
+el rol `ADMINISTRADOR` no hereda por esta decisión permisos operativos o financieros de otros
+módulos. Las versiones y estados históricos anteriores no se borran ni se reinterpretan.
+
+**MOTIVO**: Las personas administradoras serán las directoras de la financiera y definirán sus
+parámetros. Un recorrido de envío, aprobación y regreso no agrega una separación real de autoridad y
+sí retrasa la aplicación de la política.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 046.
+
+---
+
+## 2026-10-08 | Acceso directo a Parámetros de financiera (DEC-200)
+
+**DECISIÓN**: Se elimina la pantalla intermedia `Detalle de financiera`. Cada renglón del catálogo
+`Financieras competidoras` funciona como botón y abre directamente `Parámetros de financiera` con
+los datos vigentes precargados. En ese único formulario Administración define la razón social, el
+alias del pop-up, la clasificación, la disponibilidad, el producto y la participación de mercado.
+
+El círculo del renglón inicial muestra exclusivamente la clasificación publicada vigente: verde para
+`Óptima`, amarillo para `Atención`, rojo para `No interesa` y blanco cuando no existe clasificación.
+Después de `Guardar y publicar`, la navegación regresa al catálogo actualizado. El historial se
+conserva como acción secundaria dentro del formulario y no como pantalla obligatoria de paso. Los
+usuarios sin permiso de modificación pueden consultar el mismo formulario en modo de sólo lectura.
+
+**MOTIVO**: Evitar una pantalla duplicada que sólo obligaba a tocar nuevamente `Modificar datos` y
+concentrar en un solo lugar la definición completa de cada financiera.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-08 | Vigencia visible en formato DD-MMM-AAAA (DEC-201)
+
+**DECISIÓN**: En `Parámetros de financiera`, `Vigencia desde` se precarga, presenta y captura como
+`DD-MMM-AAAA`, con la abreviatura española del mes en mayúsculas; por ejemplo,
+`08-OCT-2026`. El historial del módulo usa el mismo formato visible.
+
+Mobile convierte el valor a `AAAA-MM-DD` antes de enviarlo a la API. El contrato HTTP, el tipo
+`DATE` de PostgreSQL, la comparación cronológica y la auditoría conservan su representación ISO.
+
+**MOTIVO**: Facilitar la lectura cotidiana de la fecha sin sacrificar el formato canónico requerido
+para persistencia, orden y validación.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-08 | Nombre de financiera sin leyenda de clasificación en Conclusiones (DEC-202)
+
+**DECISIÓN**: En `HISTORIAL OTRAS FINANCIERAS`, el renglón `FINANCIERA` muestra dentro de la
+burbuja exclusivamente el nombre capturado o resuelto de la financiera. No agrega de forma visible
+`OBJETIVO`, `REVISAR`, `NO PRIORITARIA`, `SIN CLASIFICAR` ni ninguna otra leyenda de clasificación.
+
+La clasificación publicada vigente de M11 determina el color de la burbuja: verde para `OBJETIVO`,
+amarillo para `REVISION` y rojo para `NO_PRIORITARIA`. Si no existe clasificación, la burbuja queda
+con fondo blanco y marco oscuro. La semántica puede conservarse en la etiqueta de accesibilidad para
+no depender únicamente del color, pero no se muestra como texto en la pantalla.
+
+Esta decisión sustituye exclusivamente la presentación visible de la clasificación en Conclusiones
+definida por DEC-188. No cambia la captura, el catálogo de Parámetros, la resolución histórica, el
+monto verificado, la API ni PostgreSQL.
+
+**MOTIVO**: Mantener el resumen limpio, dar prioridad al nombre de la financiera y respetar el color
+configurado en Parámetros sin ocupar espacio con una leyenda redundante.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-08 | Clasificación vigente al revisar Conclusiones (DEC-203)
+
+**DECISIÓN**: El color de la burbuja `FINANCIERA` en `HISTORIAL OTRAS FINANCIERAS` se resuelve con
+la versión publicada vigente en M11 al momento de abrir o revisar la conclusión. Mobile consulta el
+catálogo vigente sin enviar como filtro la fecha histórica de actualización de la entrevista.
+
+La fecha de captura de la entrevista continúa siendo la referencia para calcular el rango de semanas
+desde el mes de desembolso y no se altera. Tampoco cambian el nombre declarado, las respuestas, las
+evidencias ni la auditoría de la entrevista. Una publicación posterior en Parámetros actualiza sólo
+la señal visual de análisis: verde, amarillo, rojo o blanco con marco oscuro.
+
+Esta decisión sustituye en DEC-188 la resolución de la clasificación a la fecha de captura y la
+referencia a resolución histórica de DEC-202. No modifica el versionado de M11, el monto verificado,
+el contrato HTTP de la API ni PostgreSQL.
+
+**MOTIVO**: La clasificación representa la política de análisis vigente. Una entrevista capturada
+antes de que Dirección clasifique la financiera no debe continuar apareciendo sin color cuando el
+verificador revisa actualmente la conclusión.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-09 | Ciclo y evidencia compactos en Conclusiones (DEC-204)
+
+**DECISIÓN**: La burbuja del ciclo individual elimina la marca de advertencia `!`. Únicamente
+`1 CICLO` usa fondo amarillo; desde `2 CICLOS` conserva la presentación verde y los estados
+`NUEVO` o no disponible permanecen neutrales. El texto usa el peso fuerte institucional de las
+demás burbujas. La misma presentación se reutiliza en el encabezado individual y en `Conclusiones`,
+sin cambiar la fuente `creditos_participados` ni sumar el expediente actual.
+
+En `HISTORIAL OTRAS FINANCIERAS`, la acción `EVIDENCIA` muestra un icono de cámara y el conteo
+compacto `N FOTO / N FOTOS`, sin la palabra `GUARDADA(S)`. La acción usa el patrón rectangular del
+botón secundario de Verificación: fondo blanco, borde ocre reforzado de dos puntos, radio medio y
+contenido centrado; no usa forma de píldora. Todos los datos de cada renglón del resumen quedan
+centrados verticalmente; la acción continúa abriendo únicamente las fotografías confirmadas
+mediante el visor institucional.
+
+Esta decisión sustituye en DEC-183 exclusivamente la marca `!` y la presentación amarilla de
+`NUEVO`, y precisa la presentación visual aprobada en DEC-187. No modifica datos, reglas de conteo,
+API, esquema, permisos ni persistencia.
+
+**MOTIVO**: Reducir ruido visual, reservar el amarillo para el primer ciclo y facilitar la lectura
+de evidencia y valores dentro de renglones de distinta altura.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-09 | Círculos claros en el catálogo de financieras (DEC-205)
+
+**DECISIÓN**: En `Financieras competidoras`, el círculo de clasificación usa fondo semántico claro
+y borde sólido del color correspondiente: verde para `Óptima`, amarillo para `Atención` y rojo para
+`No interesa`. `Sin clasificación` conserva fondo blanco y borde gris.
+
+La clasificación publicada, el texto accesible del renglón y el comportamiento al abrir la
+financiera permanecen sin cambios. Esta decisión precisa únicamente la presentación del círculo
+definido en DEC-193 y DEC-200.
+
+**MOTIVO**: Mantener el mismo tratamiento de color suave utilizado por los estados y resúmenes del
+resto de la aplicación, sin perder la identificación mediante el borde.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-09 | Integrantes asociadas a Evidencia de otra financiera (DEC-206)
+
+**DECISIÓN**: Después de tomar cada fotografía nueva en `Evidencia de otra financiera`, mobile
+debe abrir obligatoriamente un selector con todas las integrantes participantes del expediente.
+La usuaria puede marcar una, varias, cada una de forma individual o `Todas las integrantes`; no
+puede guardar la fotografía con el conjunto vacío.
+
+El archivo se almacena una sola vez y se relaciona con todas las integrantes seleccionadas. La API
+deriva el expediente desde la integrante de origen, rechaza UUID de otro expediente o integrantes
+que no participan en Verificación y conserva actor y fecha de cada asociación. La misma evidencia
+aparece al consultar cualquiera de las integrantes seleccionadas, sin copiar el archivo. Las
+evidencias existentes se asocian inicialmente sólo con su integrante de origen para preservar su
+significado histórico.
+
+Esta regla aplica únicamente a `HISTORIAL_CREDITO_ACTIVO` y `HISTORIAL_CREDITO_INACTIVO`; las
+fotografías de negocio, control de pagos y folleto continúan perteneciendo a la integrante
+entrevistada. Una captura que ya comenzó debe completar su selección y confirmación o permanecer
+pendiente; nunca se presenta como guardada antes de la respuesta del servidor.
+
+**MOTIVO**: La mayoría de los comprobantes externos son grupales y puede conservarlos físicamente
+una sola integrante, aunque documenten a varias o a todas las participantes.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 047.
+
+---
+
+## 2026-10-09 | Cancelar descarta la evidencia pendiente (DEC-207)
+
+**DECISIÓN**: En el selector de integrantes que aparece después de tomar una fotografía de otra
+financiera, `Cancelar` significa descartar por completo esa toma local. Debe cerrar el pop-up,
+eliminar de memoria la imagen, ubicación, clave idempotente y selección temporal, y habilitar de
+nuevo `Tomar fotografía` sin exigir que se elija ninguna integrante.
+
+La misma regla aplica al retroceso nativo del dispositivo y al cierre del pop-up tocando fuera de
+él. Cancelar no llama a la API, no crea asociaciones y no presenta la fotografía como guardada. La
+confirmación `Guardar evidencia` continúa exigiendo al menos una integrante conforme a DEC-206.
+
+**MOTIVO**: Permitir repetir una fotografía incorrecta sin obligar a relacionarla ni conservar una
+captura que la usuaria decidió desechar.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-09 | Corrección de integrantes desde el visor de evidencia (DEC-208)
+
+**DECISIÓN**: Las fotografías propias de `Evidencia de otra financiera` muestran en la base
+izquierda de cualquier visor que las abra, incluido el carrusel dentro de Historial crediticio y el
+visor desde Conclusiones, la acción `Integrantes` frente a los controles de zoom. La acción abre el
+mismo selector de una, varias o todas las integrantes con la selección vigente precargada y exige
+conservar al menos una antes de guardar. Los comprobantes heredados de Documentación permanecen
+en modo de consulta y no muestran esta acción.
+
+La API vuelve a validar permiso de registro, acceso a la evidencia, expediente y participación de
+cada UUID. La corrección no duplica ni elimina el archivo. Las relaciones retiradas se marcan
+inactivas y conservan su actor y fecha originales; altas o reactivaciones guardan el usuario y la
+fecha de modificación. Cada cambio registra en `audit_log` el conjunto anterior y el nuevo. Si la
+integrante desde cuya pantalla se hizo la corrección deja de estar seleccionada, la evidencia deja
+de aparecer en esa pantalla después de la confirmación del servidor.
+
+**MOTIVO**: Corregir directamente una asignación equivocada al revisar la fotografía, sin volver a
+tomarla, duplicarla ni perder el historial de a quién correspondió.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 048.
+
+---
+
+## 2026-10-09 | Semáforo por fotografía de otra financiera (DEC-209)
+
+**DECISIÓN**: Después de aceptar cada fotografía nueva en `Evidencia de otra financiera` y antes de
+abrir la selección de integrantes, mobile debe exigir una clasificación `VERDE`, `AMARILLO` o
+`ROJO`. La selección se presenta debajo de la vista previa mediante el control semántico oficial;
+`Continuar con integrantes` permanece deshabilitado hasta elegir un color. `Cancelar y repetir`
+descarta la toma local conforme a DEC-207 y no llama a la API.
+
+La clasificación se conserva por fotografía. En el carrusel y en el visor ampliado, las evidencias
+propias de Entrevista muestran una franja superior y otra inferior del color elegido, además del
+nombre visible y accesible del color para no depender únicamente de la percepción cromática. Los
+comprobantes heredados de Documentación no reciben clasificación ni marco.
+
+La API exige el valor sólo para nuevas evidencias `HISTORIAL_CREDITO_ACTIVO` o
+`HISTORIAL_CREDITO_INACTIVO` y rechaza aplicarlo a otros tipos. Las filas históricas permanecen con
+`NULL` y no reciben una clasificación inventada. Los colores registran la clasificación declarada
+por el verificador; por sí solos no determinan dictamen, autorización, estado ni consecuencia
+financiera automática.
+
+**MOTIVO**: Permitir identificar visualmente cómo clasificó el verificador cada fotografía de otra
+financiera, manteniendo la decisión ligada al archivo correcto antes de su asociación grupal.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 049.
+
+---
+
+## 2026-10-10 | Visor blanco único y bandas amplias para evidencia (DEC-210)
+
+**DECISIÓN**: La evidencia de otra financiera debe abrirse con el mismo `DocumentViewer` blanco
+tanto desde el carrusel de Entrevista como desde Conclusiones. Se retira el visor oscuro paralelo de
+`DocumentImageCarousel`; ambos accesos conservan título, ayuda de zoom, navegación, acción
+`Integrantes`, controles de ampliación y botón `Cerrar` dentro del formato compartido.
+
+Cuando la fotografía tiene semáforo, el espacio libre que produce `contain` alrededor de la imagen
+usa el color clasificado y se garantiza además una banda mínima de `64 px` en la parte superior y
+otra en la inferior. La etiqueta visible y accesible del color se conserva; el fondo de fotografías
+sin clasificación es blanco y el legado no recibe un color inferido.
+
+**MOTIVO**: Evitar que Entrevista y Conclusiones parezcan dos aplicaciones distintas y convertir el
+semáforo en una señal dominante y legible, no en una línea delgada perdida alrededor de la foto.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-10 | Deslizamiento entre evidencias y controles dentro de la franja (DEC-211)
+
+**DECISIÓN**: `DocumentViewer` sustituye las acciones `Anterior / Siguiente` por paginación
+horizontal directa. Con zoom en `100 %`, deslizar a izquierda o derecha cambia de fotografía;
+cuando la fotografía está ampliada, el gesto se reserva para recorrerla. El índice visible y la
+indicación de deslizamiento permanecen debajo de la imagen.
+
+En una evidencia clasificada, `Integrantes` y los controles de zoom se centran dentro de la banda
+inferior del semáforo, próximos al borde inferior y sin cubrir la zona útil de la fotografía.
+
+**MOTIVO**: Aprovechar el gesto natural de una galería móvil y evitar que los controles oculten la
+parte baja de la evidencia.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-10 | Entrevista inmersiva blanca y Conclusiones en panel (DEC-212)
+
+**DECISIÓN**: La evidencia de otra financiera conserva una sola implementación compartida en
+`DocumentViewer`, pero admite dos presentaciones blancas. Desde Entrevista, el carrusel abre una
+vista inmersiva opaca de pantalla completa: encabezado compacto con título, evidencia/índice y `X`,
+seguido por la fotografía ocupando todo el espacio restante. Desde Conclusiones permanece el panel
+blanco con ayuda, índice y acción `Cerrar`.
+
+La presentación inmersiva conserva semáforo, `Integrantes`, zoom y deslizamiento horizontal. No
+recupera ningún fondo oscuro. Esta decisión sustituye únicamente la igualdad visual declarada en
+DEC-210; mantiene el componente compartido, la superficie blanca, las bandas y DEC-211.
+
+**MOTIVO**: Recuperar en Entrevista el tamaño útil anterior de la fotografía sin perder la claridad
+del fondo blanco ni crear dos implementaciones independientes.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-10 | Bloqueo del carrusel durante pellizco y zoom (DEC-213)
+
+**DECISIÓN**: En `DocumentViewer`, el inicio de un gesto con dos dedos bloquea inmediatamente la
+paginación horizontal y devuelve el carrusel a la fotografía activa si alcanzó a desplazarse. El
+bloqueo permanece mientras la imagen esté ampliada; durante ese tiempo, arrastrar recorre sólo la
+misma fotografía y no puede traer una evidencia vecina, su semáforo ni sus controles.
+
+La paginación entre fotografías vuelve a habilitarse únicamente al regresar al `100 %`. Los botones
+`Integrantes` y zoom permanecen ligados a la banda inferior de su propia evidencia durante todo el
+gesto.
+
+**MOTIVO**: Evitar que un pellizco se interprete simultáneamente como cambio de fotografía y mezcle
+en pantalla dos imágenes, dos clasificaciones o controles de páginas distintas.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE; SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-10 | Un motivo obligatorio por fotografía clasificada (DEC-214)
+
+**DECISIÓN**: M11 incorpora tres pantallas independientes para que Administración registre los
+conceptos de evidencia verde, amarilla y roja. Cada concepto pertenece a un solo color, puede
+desactivarse o reactivarse y no se borra. No se precarga ningún concepto ni se infieren opciones;
+Administración debe capturar las definiciones reales de la operación.
+
+Después de seleccionar el color de una nueva fotografía de otra financiera, mobile abre un segundo
+selector con únicamente los conceptos activos de ese color. La usuaria debe elegir exactamente un
+motivo antes de habilitar `Continuar con integrantes`. Si el color no tiene opciones activas o el
+catálogo no pudo consultarse, la confirmación permanece bloqueada y no se simula un guardado.
+
+La API vuelve a exigir el motivo para `HISTORIAL_CREDITO_ACTIVO` y
+`HISTORIAL_CREDITO_INACTIVO`, valida que esté activo y que corresponda al color, y lo conserva como
+referencia por fotografía. Desactivar un concepto impide nuevas selecciones, pero mantiene las
+evidencias históricas que ya lo usaron. Las fotografías anteriores a esta decisión conservan
+motivo `NULL`; no reciben una explicación inventada. Color y motivo continúan siendo información
+declarada por el verificador y no determinan por sí solos dictamen, autorización, estado o monto.
+
+**MOTIVO**: Registrar de manera uniforme por qué se asignó cada color, evitando texto libre,
+múltiples explicaciones por una misma fotografía y cambios retroactivos en la evidencia histórica.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 050.
+
+---
+
+## 2026-10-10 | Cinco motivos iniciales por color y edición segura (DEC-215)
+
+**DECISIÓN**: M11 debe iniciar con cinco motivos activos para cada parámetro de fotografía: verde,
+amarillo y rojo. La carga es versionada y completa hasta cinco sin borrar ni sustituir conceptos
+que Administración ya haya registrado. En producción se conservan los tres motivos amarillos
+existentes y se agregan únicamente dos; verde y rojo reciben cinco cada uno.
+
+Administración puede editar el texto de un motivo mientras ninguna fotografía lo haya utilizado.
+Después del primer uso el concepto se vuelve histórico: puede desactivarse y reemplazarse mediante
+un alta nueva, pero no renombrarse de forma que cambie la explicación de evidencias anteriores.
+Cada edición registra actor, fecha, texto anterior y texto nuevo.
+
+**MOTIVO**: Permitir trabajar de inmediato con un catálogo inicial y ajustarlo posteriormente sin
+perder los conceptos ya capturados ni reescribir el significado histórico de una fotografía.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 051.
+
+---
+
+## 2026-10-10 | Orden configurable y encabezado fijo de motivos (DEC-216)
+
+**DECISIÓN**: Cada catálogo verde, amarillo y rojo conserva un orden positivo y único que
+Administración puede modificar con acciones explícitas de subir y bajar. El orden incluye motivos
+activos e inactivos para permanecer estable; el pop-up de Verificación filtra los inactivos sin
+alterar la secuencia de los restantes. Todo motivo nuevo se agrega al final.
+
+El renglón `CONCEPTOS REGISTRADOS` reutiliza la franja institucional de M11, con borde superior e
+inferior del color del módulo y extensión ligeramente mayor que las tarjetas. La franja permanece
+fija en la parte superior de la lista mientras sólo los motivos continúan desplazándose.
+
+Cada cambio de orden exige el catálogo completo del color, valida que no falte ni se duplique un
+UUID y registra en auditoría cada posición modificada. No renombra conceptos, no cambia su estado y
+no altera evidencias históricas.
+
+**MOTIVO**: Permitir que Dirección controle la prioridad visible del pop-up con una interacción
+precisa para uso móvil, sin depender de arrastre fino ni de un orden hardcodeado.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 052.
+
+---
+
+## 2026-10-10 | Cámara o carrete para evidencia de otra financiera (DEC-217)
+
+**DECISIÓN**: En las ramas activa e inactiva de `Evidencia de otra financiera`, la acción
+`Agregar evidencia` permite elegir entre tomar una fotografía con la cámara o seleccionar una
+imagen del carrete. Ambas alternativas conservan el mismo flujo obligatorio: clasificación
+`VERDE / AMARILLO / ROJO`, exactamente un motivo activo del mismo color y selección de una,
+varias o todas las integrantes correspondientes.
+
+La app registra la fuente real como `CAMARA` o `GALERIA`, obtiene la ubicación actual del
+dispositivo y la API deriva el actor del JWT. Una imagen elegida del carrete no inventa la fecha
+original de la fotografía: `foto_capturada_at` permanece `NULL`; la fecha y fuente de la lectura de
+ubicación sí se registran. La API rechaza `GALERIA` para `NEGOCIO`, `CONTROL_PAGOS` y
+`FOLLETO_PREMIO_TESORERA`, que continúan exclusivamente por cámara.
+
+**MOTIVO**: Permitir usar un comprobante que ya se encuentra en el teléfono sin debilitar la
+clasificación, asociación grupal, geolocalización actual, trazabilidad ni restricciones de las
+demás evidencias de campo.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE Y API. NO REQUIERE MIGRACIÓN; EL CONSTRAINT VIGENTE
+YA ADMITE `CAMARA` Y `GALERIA`.
+
+---
+
+## 2026-10-10 | Parámetros agrupados por módulo (DEC-218)
+
+**DECISIÓN**: El inicio de M11 organiza sus familias de parámetros según el módulo operativo donde
+se aplican. Presenta Documentación, Verificación, Análisis, Desembolsos, Cobranza, Recolección,
+Mora, Convenios y Reportes. Verificación abre un segundo nivel con `Financieras competidoras`,
+`Motivos verdes`, `Motivos amarillos` y `Motivos rojos`.
+
+Los módulos que todavía no tienen una familia de parámetros aprobada permanecen visibles pero
+deshabilitados con la etiqueta `Sin parámetros`. Su presencia no crea contratos, reglas, permisos ni
+valores para módulos futuros. Toda nueva familia deberá aprobarse antes de habilitar su tarjeta.
+
+**MOTIVO**: Mantener ordenado el crecimiento de Parámetros, hacer evidente a qué proceso pertenece
+cada configuración y evitar que catálogos de distintos módulos se mezclen en una sola pantalla.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-10 | Identidad gris y catálogos en renglón para M11 (DEC-219)
+
+**DECISIÓN**: Todas las tarjetas del primer nivel de Parámetros usan el tema gris de M11, incluidos
+Documentación, Verificación, Análisis, Desembolsos, Cobranza, Recolección, Mora, Convenios y
+Reportes. No muestran los colores institucionales de sus módulos porque esa composición se parece
+al Menú principal y puede confundir el nivel de navegación actual.
+
+Después de seleccionar un módulo con familias disponibles, cada catálogo se presenta en un renglón
+rectangular de ancho completo. El renglón conserva icono, título, descripción y flecha accesible de
+apertura mediante `TaskMenuButton`; no reutiliza la tarjeta cuadrada del selector de módulos.
+
+**MOTIVO**: Distinguir visualmente el selector interno de M11 del Menú principal y comunicar que el
+segundo nivel contiene parámetros concretos, no otros módulos de la aplicación.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE MEDIANTE COMPONENTES COMPARTIDOS. SIN CAMBIO DE API O
+POSTGRESQL.
+
+---
+
+## 2026-10-10 | Motivo visible y controles centrados en el semáforo (DEC-220)
+
+**DECISIÓN**: El visor de `Evidencia de otra financiera` presenta el motivo de la clasificación
+centrado dentro de la franja superior verde, amarilla o roja, con texto negro, fuerte y de tamaño
+legible. Las acciones `Integrantes` y zoom se elevan y quedan centradas visualmente dentro de la
+franja inferior. Las evidencias legacy sin clasificación o motivo no muestran texto inventado.
+
+El motivo visible reutiliza el concepto persistido para la fotografía; no introduce texto libre,
+no sustituye su etiqueta accesible y no cambia el dictamen, estado, monto ni asociaciones de la
+evidencia.
+
+**MOTIVO**: Hacer visible la razón del semáforo durante la revisión de la fotografía y evitar que
+los controles parezcan pegados al borde inferior en teléfonos altos.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE MEDIANTE `DocumentViewer` Y `ZoomableImage`. SIN CAMBIO
+DE API O POSTGRESQL.
+
+---
+
+## 2026-10-10 | Catálogos administrables de Entrevista (DEC-221)
+
+**DECISIÓN**: M11 incorpora `Entrevista` dentro de Parámetros de Verificación y administra 18
+familias de opciones usadas por la captura: origen de contacto, antigüedades, motivos de desacuerdo,
+no renovación y no residencia, domicilio y convivencia, fuentes de ingreso, control de pagos,
+frecuencia, calificación, rapidez y razones de recomendación.
+
+Cada opción conserva un código estable y permite editar su etiqueta, ordenarla, desactivarla o
+reactivarla sin borrar historial. Las seis familias de motivos admiten nuevas opciones porque se
+persisten como texto declarado. Las familias ligadas a enums cerrados permiten administrar sólo los
+códigos existentes; una alta nueva exige ampliar explícitamente el contrato de API. Cada catálogo
+debe conservar al menos una opción activa y toda mutación registra actor, fecha y antes/después.
+
+Verificación muestra únicamente opciones activas, pero consulta también las inactivas para resolver
+correctamente códigos de entrevistas previas. Si la consulta remota falla, mobile usa el catálogo
+local conocido y no bloquea una captura por una configuración que no pudo descargarse.
+
+No son parámetros los `Sí / No`, estados, permisos, tipos de evidencia, meses/años calendario,
+identificadores de integrantes ni límites numéricos validados por la API. Cambiarlos alteraría la
+estructura o una regla de negocio y requiere una decisión funcional distinta.
+
+**MOTIVO**: Permitir que Dirección ajuste el lenguaje y las opciones operativas de Entrevista sin
+desplegar código, sin admitir valores que la API no puede interpretar y sin reescribir el significado
+de capturas históricas.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 053.
+
+---
+
+## 2026-10-10 | Alcance visible y jerarquía de Parámetros de Entrevista (DEC-222)
+
+**DECISIÓN**: `Parámetros de verificación` presenta `Entrevista` como acceso único. Dentro de
+`Parámetros de entrevista` se agrupan Financieras competidoras, Motivos verdes, Motivos amarillos,
+Motivos rojos y siete familias directas: Cómo conoció a la asesora, Desacuerdo con montos, No
+renovación, No vive en el domicilio, Sin control de pagos, Razones para recomendarnos y Razones para
+no recomendarnos.
+
+Dejan de mostrarse como parámetros modificables Tiempo de conocer al grupo, Tipo de domicilio,
+Familiar propietario, Antigüedad en domicilio, Personas en casa, Convivientes, Fuentes de ingreso,
+Antigüedad laboral, Frecuencia del servicio, Calificación del servicio y Rapidez de desembolso. La
+retirada es administrativa y no elimina sus datos, códigos, preguntas ni significado histórico.
+
+`Cómo conoció a la asesora` admite altas con código estable generado por la API. Al guardar una
+entrevista, el servidor comprueba que el código pertenezca a esa familia y continúe activo. Esta
+decisión actualiza expresamente el alcance visible de DEC-218 y DEC-221 sin migración destructiva.
+
+**MOTIVO**: Concentrar todos los catálogos relacionados con la entrevista en una sola jerarquía y
+permitir que Dirección administre únicamente las opciones que deben variar operativamente.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE Y API. SIN BORRADO NI MIGRACIÓN DE POSTGRESQL.
+
+---
+
+## 2026-10-10 | Monto del último préstamo y formato monetario único (DEC-223)
+
+**DECISIÓN**: Cuando la integrante declara otro crédito grupal, la Entrevista pregunta
+`¿Qué monto fue su último préstamo?` inmediatamente después de `¿De qué valor es/era su ficha?`,
+tanto si ese crédito continúa activo como si ya finalizó. La respuesta es obligatoria para concluir
+esa rama y se persiste en `monto_ultimo_prestamo_credito_grupal` como `NUMERIC(12,2)` nullable para
+conservar el autoguardado parcial.
+
+Toda respuesta monetaria visible en la app utiliza el formato `$ 18,000`: signo de pesos, un espacio,
+separador de miles con coma y sin centavos visibles. La captura monetaria admite sólo pesos enteros;
+la regla de presentación no reduce la precisión contable almacenada por contratos existentes.
+
+**MOTIVO**: Poder comparar el valor de la ficha con el capital realmente recibido en la otra
+financiera y evitar que captura, reapertura y resúmenes presenten el mismo importe de formas distintas.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 054.
+
+---
+
+## 2026-10-11 | Color institucional del módulo Análisis (DEC-224)
+
+**DECISIÓN**: El módulo Análisis adopta el tono verde claro `#B5E6A2` de la muestra 2 para el
+encabezado, la barra de título, la acción primaria y la identidad visual de su tarjeta. Los textos
+sobre este tono se presentan en color oscuro para conservar su legibilidad. Las muestras 1
+(`#DAF2D0`) y 3 (`#C8ECBA`) quedan descartadas y dejan de mostrarse en `Colores definidos`.
+
+**MOTIVO**: Dirección seleccionó la muestra 2 después de comparar las tres alternativas en
+pantallas completas dentro de la aplicación.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Contraste de barra y botón de Análisis (DEC-225)
+
+**DECISIÓN**: Análisis conserva `#B5E6A2` en el encabezado y adopta `#8ED973` en la barra de título
+y el botón principal. La barra no utiliza el mismo tono del encabezado. El texto permanece oscuro
+en ambos fondos. Esta decisión precisa la distribución de color aprobada en DEC-224.
+
+**MOTIVO**: Diferenciar visualmente la barra y la acción principal sin perder la identidad verde
+seleccionada para Análisis.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Combinación definitiva de color para Análisis (DEC-226)
+
+**DECISIÓN**: Análisis adopta definitivamente `#DAF2D0` para el encabezado y `#8ED973` para la barra
+de título y el botón principal, con texto oscuro. La muestra anterior con encabezado `#B5E6A2`
+queda sustituida y se retira del visor de colores definidos. Esta decisión reemplaza la selección de
+encabezado de DEC-224 y DEC-225, y conserva el contraste de barra establecido en DEC-225.
+
+**MOTIVO**: Dirección seleccionó la combinación completa después de compararla en una pantalla real
+de la aplicación.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Orden y separación del historial externo en Conclusiones (DEC-227)
+
+**DECISIÓN**: Cuando el crédito externo está activo, el cuadro de Conclusiones integra el número de
+ciclos en el renglón `ESTADO`, entre la etiqueta y `ACTIVO`. A continuación muestra `SEMANA ACTUAL`
+y `MES DE DESEMBOLSO`, seguido por un borde del color de Verificación.
+
+`VALOR DE FICHA`, `ÚLTIMO PRÉSTAMO` y `TASA DECLARADA` forman una tabla donde la primera columna
+usa 46% del ancho para mantener los conceptos completos en una sola línea. El 54% restante se
+divide exactamente en dos columnas de 27%: el dato capturado ocupa la central y la derecha queda
+vacía. Los datos quedan centrados horizontal y verticalmente dentro de sus renglones. Dos
+divisiones verticales separan las columnas y un borde inferior cierra la tabla después de la tasa.
+La celda derecha no muestra ni infiere información.
+
+**MOTIVO**: Concentrar estado y antigüedad en una sola lectura, y reservar la tercera columna
+para la siguiente etapa de Conclusiones sin inventar todavía su contenido.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Acceso independiente a Conclusiones en Parámetros (DEC-228)
+
+**DECISIÓN**: `Parámetros de verificación` presenta dos renglones hermanos: `Entrevista` y
+`Conclusiones`. Tocar `Conclusiones` abre `Parámetros de conclusiones` como una pantalla
+independiente y el retroceso vuelve al selector de Verificación.
+
+Mientras Dirección no defina qué parámetros contiene, la pantalla muestra un estado vacío explícito
+y no crea opciones, reglas, cálculos, API, tablas ni persistencia. Esta decisión amplía la jerarquía
+visible de DEC-222, que deja de considerar `Entrevista` como acceso único.
+
+**MOTIVO**: Preparar un apartado separado para configurar Conclusiones sin mezclar sus futuras
+decisiones con los catálogos de Entrevista ni anticipar su contrato funcional.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Calificación parametrizada de la semana externa (DEC-229)
+
+**DECISIÓN**: El primer renglón de `Parámetros de conclusiones` es `Calificar semana del crédito`.
+Su pantalla presenta, en orden vertical, un círculo verde, uno amarillo y uno rojo. Junto a cada
+color existen dos selectores desplazables, `Desde` y `Hasta`, con valores del 1 al 16.
+
+Los tres rangos son inclusivos y deben formar una sola partición continua de las semanas 1 a 16:
+verde inicia en 1, amarillo inicia una semana después de terminar verde, rojo inicia una semana
+después de terminar amarillo y rojo termina en 16. No se publican huecos, traslapes o semanas fuera
+del intervalo. La configuración inicial es verde 1–10, amarillo 11–13 y rojo 14–16.
+
+Sólo ADMINISTRADOR puede guardar y publicar el cambio. La API vuelve a validar la partición, la
+mutación queda auditada y PostgreSQL conserva la misma restricción. Verificación consulta el valor
+vigente y colorea con éste el dato `SEMANA ACTUAL` del crédito en otra financiera; si no hay una
+consulta confirmada, el dato permanece neutral. El color no autoriza, rechaza, modifica montos ni
+emite dictamen.
+
+Esta decisión sustituye el estado vacío temporal de DEC-228, sin mezclar el parámetro con los
+catálogos de Entrevista.
+
+**MOTIVO**: Permitir que Dirección cambie la interpretación visual de las semanas externas desde un
+solo lugar, con cobertura completa y una regla verificable en UI, API y datos.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 055.
+
+---
+
+## 2026-10-11 | Rangos de semana independientes y sin traslapes (DEC-230)
+
+**DECISIÓN**: Los rangos verde, amarillo y rojo de `Calificar semana del crédito` no tienen un
+orden obligatorio entre colores y no necesitan cubrir continuamente todas las semanas 1 a 16.
+Cada color conserva extremos inclusivos dentro de 1–16 y su valor `Desde` debe ser menor o igual
+que `Hasta`. La única relación obligatoria entre colores es que sus rangos no se traslapen: una
+misma semana no puede pertenecer a dos colores.
+
+Son válidos, por ejemplo, verde 13–16, amarillo 9–12 y rojo 1–8; también son válidos rangos que
+dejen semanas sin color. Una semana no incluida en ningún rango permanece neutral en Conclusiones.
+
+Esta decisión sustituye expresamente la exigencia de orden, continuidad y cobertura completa de
+DEC-229. Conserva la administración exclusiva, la auditoría, el intervalo 1–16 y el carácter
+visual del parámetro, que no autoriza, rechaza, modifica montos ni emite dictamen.
+
+**MOTIVO**: Los colores representan rangos operativos independientes; su orden puede cambiar y la
+regla necesaria es evitar una clasificación ambigua de la misma semana.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE Y API; POSTGRESQL MEDIANTE MIGRACIÓN 056.
+
+---
+
+## 2026-10-11 | Calificación parametrizada de ciclos externos (DEC-231)
+
+**DECISIÓN**: `Parámetros de conclusiones` incorpora `Calificar número de ciclos`, con la misma
+presentación y reglas del parámetro de semanas. Verde, amarillo y rojo tienen extremos inclusivos
+seleccionables del 1 al 40, que es el mismo intervalo capturado por `Verificación > Entrevista >
+Ciclos en otra financiera`. Los colores pueden estar en cualquier orden y dejar números sin color,
+pero un mismo número de ciclos no puede pertenecer a dos rangos.
+
+El parámetro se persiste y audita de forma independiente. Su configuración inicial copia los rangos
+vigentes del parámetro de semanas para no inventar una segunda política; Administración puede
+publicar después sus límites propios. Verificación consulta el valor vigente y colorea únicamente
+`CICLOS EN ESA FINANCIERA` en Conclusiones. Si la consulta falla o el número queda fuera de los tres
+rangos, el dato permanece neutral. El color no autoriza, rechaza, modifica montos ni emite dictamen.
+
+**MOTIVO**: Permitir que Dirección configure desde Conclusiones la interpretación visual del número
+de ciclos declarado, usando exactamente el universo de valores ya capturado en Entrevista.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 058.
+
+---
+
+## 2026-10-11 | Tolerancia parametrizada de semana de desembolso (DEC-232)
+
+**DECISIÓN**: `Parámetros de conclusiones` incorpora `Calificar semana de desembolso`. El valor
+clasificado es la distancia de la `SEMANA ACTUAL` al rango estimado desde el mes de desembolso:
+vale 0 cuando está dentro del rango, o el número de semanas que queda antes o después del límite
+más cercano. La escala se limita a 0–10; el valor 10 representa diez semanas o más.
+
+Verde, amarillo y rojo tienen rangos inclusivos configurables con scroll de 0 a 10, admiten
+cualquier orden y huecos y no pueden traslaparse. La configuración inicial es verde 0, amarillo
+1–3 y rojo 4–10. La publicación es independiente, auditada y sólo cambia el tono de `MES DE
+DESEMBOLSO` y su rango estimado en Conclusiones; no modifica capturas, montos ni dictámenes. Si no
+se confirma el parámetro o faltan los datos para calcular la distancia, ambos valores permanecen
+neutrales.
+
+**MOTIVO**: Sustituir la comparación fija dentro/fuera por una tolerancia operativa graduable y
+administrable, simétrica para semanas anteriores o posteriores al rango estimado.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 059.
+
+---
+
+## 2026-10-11 | Cálculos cruzados de ficha y préstamo en Conclusiones (DEC-233)
+
+**DECISIÓN**: Cuando existe una tasa declarada positiva, la tercera columna del bloque económico de
+otras financieras muestra dos cálculos:
+
+- En `VALOR DE FICHA`: `(ÚLTIMO PRÉSTAMO de la columna 2 ÷ 1,000) × TASA DECLARADA`.
+- En `ÚLTIMO PRÉSTAMO`: `(VALOR DE FICHA de la columna 2 ÷ TASA DECLARADA) × 1,000`.
+
+Si la tasa declarada está vacía, no se calculan las terceras celdas de ficha ni préstamo. En la
+segunda columna de `TASA DECLARADA` se muestra `——` y la tercera calcula la tasa implícita mediante
+`VALOR DE FICHA ÷ (ÚLTIMO PRÉSTAMO ÷ 1,000)`, equivalente a
+`(VALOR DE FICHA ÷ ÚLTIMO PRÉSTAMO) × 1,000`. La tasa calculada se redondea al entero más cercano,
+en congruencia con el catálogo entero de tasas de Entrevista.
+
+Los resultados monetarios usan el formato institucional sin centavos. Cuando falta cualquiera de
+los operandos positivos requeridos, la celda calculada permanece vacía y no presenta un resultado
+ficticio.
+
+Estos valores son informativos para Conclusiones: no sustituyen la captura declarada, no se
+persisten, no modifican montos y no producen por sí mismos autorización, rechazo o dictamen.
+
+**MOTIVO**: Permitir que el verificador compare de inmediato la ficha y el préstamo declarados
+contra los valores que ambos implican al aplicar la tasa registrada.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Concordancia porcentual parametrizada de ficha y préstamo (DEC-234)
+
+**DECISIÓN**: `Parámetros de conclusiones` incorpora dos configuraciones independientes:
+`Calificar concordancia en ficha` y `Calificar concordancia en préstamo`. Cada una define rangos
+inclusivos verde, amarillo y rojo entre 0% y 100%, admite cualquier orden y huecos y prohíbe que un
+mismo porcentaje pertenezca a dos colores. La configuración inicial de ambas es verde 0–5%,
+amarillo 6–10% y rojo 11–100%.
+
+El valor clasificado es la diferencia porcentual absoluta entre el importe declarado y el importe
+calculado según DEC-233: `|calculado − declarado| ÷ declarado × 100`, redondeada al entero más
+cercano. Cero representa coincidencia exacta y 100 agrupa diferencias de 100% o mayores. Ficha y
+préstamo consultan y aplican exclusivamente su propio parámetro. Cuando falta la tasa, un importe
+positivo o la confirmación del parámetro, los valores permanecen neutrales.
+
+La publicación es exclusiva de Administración, independiente y auditada. El semáforo es informativo
+y se aplica únicamente a la tercera columna calculada. La segunda columna permanece neutral porque
+contiene el dato proporcionado por la integrante. No sustituye importes declarados, no persiste el
+cálculo derivado y no autoriza, rechaza ni emite dictamen.
+
+**MOTIVO**: Hacer visible y administrable la tolerancia operativa entre los importes declarados por
+la integrante y los valores que implica la tasa registrada, sin mezclar los criterios de ficha y
+préstamo.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 060.
+
+---
+
+## 2026-10-11 | Tasa opcional de otra financiera (DEC-235)
+
+**DECISIÓN**: En ambas ramas del historial crediticio externo, `¿Qué tasa maneja?` y
+`¿Qué tasa manejaba?` son preguntas opcionales. Mobile no muestra asterisco ni considera su ausencia
+como pendiente para `Terminar entrevista`. Si la tasa se captura, conserva el selector de enteros
+entre 65 y 100, el autoguardado y la restauración vigentes.
+
+La ausencia se conserva como `NULL`; no se sustituye por cero ni se infiere una respuesta. Esta
+decisión no modifica los cálculos informativos de Conclusiones definidos por DEC-233, que ya
+contemplan el caso sin tasa declarada.
+
+**MOTIVO**: Permitir completar la verificación cuando la integrante desconoce la tasa de la otra
+financiera, sin descartar el dato cuando sí puede proporcionarlo.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Porcentaje visible y proporción final del bloque económico (DEC-236)
+
+**DECISIÓN**: La tercera columna de `VALOR DE FICHA` y `ÚLTIMO PRÉSTAMO` muestra el importe
+calculado y el porcentaje absoluto de diferencia respecto al valor declarado de la segunda
+columna, en burbujas separadas y sobre la misma línea. Ese mismo entero porcentual se entrega al
+parámetro independiente de concordancia de la fila y determina su tono.
+
+Las columnas quedan en proporción explícita `37% / 27% / 36%`: concepto, valor declarado y
+resultado calculado. La segunda columna conserva exactamente 27%; la tercera recibe el espacio
+retirado de la primera para presentar importe y porcentaje sin mezclar sus responsabilidades.
+
+**MOTIVO**: Mostrar la magnitud que explica el semáforo parametrizado y mantener legible la
+comparación entre declarado y calculado.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Etiquetas abreviadas y mayor espacio para el resultado (DEC-237)
+
+**DECISIÓN**: En la tabla económica de Conclusiones, las etiquetas visibles se presentan como
+`VALOR DE FICHA`, `ÚLT. PRÉSTAMO` y `TASA`. Las columnas quedan en proporción explícita
+`33% / 27% / 40%`: concepto, valor declarado y resultado calculado. La primera columna reduce su
+relleno horizontal para conservar `VALOR DE FICHA` en una sola línea; todo el espacio liberado se
+asigna a la tercera columna.
+
+**MOTIVO**: Priorizar la lectura conjunta del importe calculado y su porcentaje sin perder la
+identificación completa de los conceptos.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE REGLAS, API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Acción destacada para revisar evidencia (DEC-238)
+
+**DECISIÓN**: El renglón final del historial de otras financieras se identifica como
+`REVISAR EVIDENCIA`. Cuando existe al menos una fotografía confirmada que puede abrirse, el botón
+usa el ocre oscuro del módulo de Verificación como fondo y borde, con el icono de cámara y el
+conteo de fotografías en blanco. Sin fotografías disponibles no se simula una acción habilitada.
+
+**MOTIVO**: Expresar claramente que el siguiente paso es revisar las fotografías y aumentar el
+contraste de la acción disponible.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE DATOS, API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Calificación independiente de evidencia por integrante (DEC-239)
+
+**DECISIÓN**: En el visor de evidencia de otra financiera, el verificador califica cada fotografía
+confirmada con `TACHA` o `PALOMITA` para la integrante que está revisando. La decisión pertenece a
+la relación evidencia–integrante: una misma fotografía compartida puede tener una calificación
+distinta para cada integrante sin duplicar el archivo ni modificar su clasificación original
+`VERDE / AMARILLO / ROJO` y su motivo.
+
+La API exige `verificacion:registrar`, valida que la asociación esté activa y pertenezca al mismo
+expediente y conserva usuario, fecha y auditoría de cada cambio. El legado permanece sin calificar.
+Mobile sólo cambia la selección después de la confirmación del servidor; ante error conserva el
+valor anterior. Los comprobantes procedentes de Documentación continúan sólo como consulta porque
+no pertenecen a la relación de evidencias de Entrevista.
+
+El botón `Cerrar` permanece habilitado y alineado en la misma barra inferior que la revisión. Salir
+del visor no califica automáticamente imágenes pendientes ni modifica decisiones ya confirmadas.
+
+**MOTIVO**: Permitir que el verificador emita una valoración precisa por imagen y por integrante,
+incluso cuando la fotografía fue asociada a varias personas.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 061.
+
+---
+
+## 2026-10-11 | Formato uniforme del visor sin color lateral (DEC-240)
+
+**DECISIÓN**: Todas las páginas del visor de evidencia de otra financiera reservan exactamente la
+misma banda superior de `64 px` y la misma banda inferior de controles de `72 px`, tengan o no una
+clasificación. En fotografías clasificadas, el color del semáforo se muestra exclusivamente en esas
+dos bandas; los laterales y el espacio libre alrededor de la imagen permanecen blancos. Las páginas
+sin clasificación usan bandas blancas de las mismas dimensiones.
+
+**MOTIVO**: Mantener idénticos el inicio, el final y el alto útil de cada fotografía al deslizar,
+evitando que una evidencia clasificada parezca más corta o más alta que una neutral.
+
+Esta decisión sustituye en DEC-210 únicamente el uso del semáforo para llenar el espacio libre
+alrededor de la fotografía; conserva el visor blanco compartido, la etiqueta y la accesibilidad.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Calificación roja, amarilla o verde por evidencia (DEC-241)
+
+**DECISIÓN**: La revisión independiente de cada fotografía por integrante incorpora una tercera
+opción amarilla entre la tacha roja y la palomita verde. En reposo, las tres opciones usan un tono
+claro con borde y símbolo más oscuros; la opción confirmada cambia a fondo sólido y conserva un
+símbolo contrastante. La selección amarilla se persiste como `AMARILLO`, junto con los valores
+vigentes `TACHA` y `PALOMITA`, y mantiene actor, fecha y auditoría.
+
+Esta decisión amplía DEC-239 sin sustituir la clasificación original de la fotografía ni su motivo.
+Cada valor continúa perteneciendo exclusivamente a la relación evidencia–integrante y mobile sólo
+cambia la selección visible después de la confirmación del servidor.
+
+**MOTIVO**: Permitir una valoración intermedia y hacer inequívoca la opción vigente al revisar
+varias fotografías consecutivas.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 062.
+
+---
+
+## 2026-10-11 | Indicador de revisión junto al acceso de fotografías (DEC-242)
+
+**DECISIÓN**: En el renglón `REVISAR EVIDENCIA` de Conclusiones, el botón ocre de fotografías
+reduce su proporción horizontal y se incorpora entre la etiqueta y la acción un círculo blanco de
+`44 px`, con borde negro de dos puntos y signo de interrogación negro centrado. El círculo es un
+indicador visual de sólo lectura; no crea una segunda acción y el renglón completo continúa abriendo
+el mismo visor de evidencias.
+
+**MOTIVO**: Separar visualmente la indicación de revisión del conteo de fotografías y conservar una
+composición clara dentro del último renglón del historial externo.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Zona táctil exclusiva del botón de fotografías (DEC-243)
+
+**DECISIÓN**: En `REVISAR EVIDENCIA`, únicamente el rectángulo ocre con cámara y `N FOTO(S)` abre
+el visor. La etiqueta, el círculo con signo de interrogación y el espacio restante del renglón son
+elementos informativos y no reaccionan al toque. El botón conserva su rol, etiqueta accesible y
+altura táctil institucional.
+
+Esta decisión sustituye en DEC-242 únicamente la apertura desde el renglón completo; conserva su
+composición, tamaños y colores.
+
+**MOTIVO**: Hacer que la respuesta táctil coincida exactamente con el control que comunica la
+acción y evitar aperturas accidentales al tocar información contigua.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-11 | Conteo semaforizado de fotografías revisadas (DEC-244)
+
+**DECISIÓN**: En el renglón `REVISAR EVIDENCIA` de Conclusiones, la etiqueta se presenta arriba de
+una cápsula alargada dividida en tres secciones iguales: verde claro a la izquierda, amarillo claro
+al centro y rojo claro a la derecha. La cápsula usa una altura intermedia de `32 px` y números
+con jerarquía de cuerpo reforzado para facilitar su lectura. Cada sección muestra cuántas fotografías de Entrevista fueron
+calificadas respectivamente con `PALOMITA`, `AMARILLO` o `TACHA` para la integrante consultada.
+
+Las fotografías sin calificación no se suman a ningún segmento. Las imágenes del comprobante
+procedentes de Documentación permanecen incluidas en el total del botón de fotografías, pero no en
+los conteos semaforizados porque no pertenecen a la relación calificable evidencia–integrante. La
+cápsula es informativa; conserva como única acción táctil el botón ocre de fotografías definido en
+DEC-243.
+
+**MOTIVO**: Permitir conocer de un vistazo la distribución de la revisión individual sin abrir el
+visor ni mezclar calificaciones de otras integrantes o fotografías que todavía no fueron valoradas.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-12 | Promedio de calificación de evidencias completas (DEC-245)
+
+**DECISIÓN**: El círculo blanco del renglón `REVISAR EVIDENCIA` muestra un promedio de `0` a `100`
+únicamente cuando todas las fotografías calificables de Entrevista asociadas a la integrante
+consultada tienen una decisión. Cada fotografía verde aporta `100` puntos, cada amarilla `50` y
+cada roja `0`; la suma se divide entre el número de fotografías calificables y el resultado se
+redondea al entero más cercano para presentarlo en el círculo.
+
+Si no existen fotografías calificables o al menos una continúa sin decisión, el círculo conserva
+el signo de interrogación. Las imágenes del comprobante procedentes de Documentación no forman
+parte del denominador porque no pertenecen a la relación calificable evidencia–integrante. El
+promedio es informativo y no convierte el círculo en un botón.
+
+**MOTIVO**: Resumir la calidad de la evidencia individual sólo cuando la revisión está completa,
+sin presentar resultados parciales ni penalizar fotografías que no admiten esa calificación.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-12 | Semáforo parametrizable del promedio de fotografías (DEC-246)
+
+**DECISIÓN**: Administración configura en `Parámetros > Verificación > Conclusiones` tres rangos
+inclusivos e independientes, verde, amarillo y rojo, para calificar el promedio de fotografías en
+una escala entera de `0` a `100`. Los rangos pueden ir en cualquier orden y dejar huecos, pero no
+pueden traslaparse. La configuración inicial es rojo `0–33`, amarillo `34–66` y verde `67–100`.
+
+Cuando el promedio definido en DEC-245 está completo, el círculo que contiene el número usa el
+color del rango publicado. Mientras no existan fotografías calificables, falte calificar alguna o
+no pueda confirmarse el parámetro, conserva el signo `?` o el número correspondiente en presentación
+neutral; no se inventa una clasificación. El círculo sigue siendo informativo y no táctil.
+
+**MOTIVO**: Permitir que Dirección ajuste la interpretación visual del promedio sin hardcodear una
+política variable y sin comunicar resultados parciales como definitivos.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 063.
+
+---
+
+## 2026-10-12 | Accesos agrupados a fotografías en Conclusiones (DEC-247)
+
+**DECISIÓN**: Antes de `Conclusiones del verificador`, el resumen incorpora un divisor ocre largo
+`FOTOGRAFÍAS` y dos botones tipo cápsula: `Casa` y `Negocio`. `Casa` abre un solo visor con las
+imágenes confirmadas de fachada, medidor de luz y fachada con la integrante, en ese orden y sólo
+cuando cada una exista. `Negocio` abre todas las evidencias fotográficas confirmadas del negocio de
+la integrante consultada.
+
+Los dos accesos permanecen visibles y cada uno se deshabilita cuando su grupo no contiene imágenes
+confirmadas. Las fotografías locales pendientes de envío no se presentan en Conclusiones ni se
+cuentan como disponibles. Ambos visores son de consulta, conservan zoom y navegación horizontal y
+no crean copias ni cambian las evidencias originales.
+
+**MOTIVO**: Permitir que el verificador consulte rápidamente la evidencia física y comercial antes
+de emitir sus conclusiones, manteniendo separados los dos contextos y la fuente de verdad vigente.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-12 | Formato principal para accesos de fotografías (DEC-248)
+
+**DECISIÓN**: Los botones `Casa` y `Negocio` del bloque `FOTOGRAFÍAS` adoptan el mismo formato del
+botón `Cerrar` del visor: fondo ocre sólido del módulo, texto blanco, forma rectangular con esquinas
+redondeadas mediante `radius.md` y altura táctil principal. Ambos conservan el mismo ancho dentro
+del renglón y mantienen su estado deshabilitado cuando no existen fotografías confirmadas.
+
+Esta decisión sustituye en DEC-247 únicamente la presentación tipo cápsula; conserva la agrupación,
+el contenido de cada visor y la exclusión de capturas pendientes.
+
+**MOTIVO**: Unificar visualmente las acciones de consulta con el botón de cierre ya reconocido por
+las usuarias y reducir la apariencia de selectores cuando en realidad son acciones.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-12 | Iconos de los accesos Casa y Negocio (DEC-249)
+
+**DECISIÓN**: Los botones del bloque `FOTOGRAFÍAS` incorporan un icono blanco antes de su texto:
+`Casa` usa una casa y `Negocio` un maletín. Ambos iconos usan el tamaño de acción institucional y
+el mismo blanco del texto sobre el fondo ocre definido en DEC-248. El texto permanece visible; el
+icono no lo sustituye ni constituye una acción independiente.
+
+**MOTIVO**: Facilitar la identificación inmediata de cada grupo fotográfico sin depender únicamente
+de la lectura, conservando una señal visual coherente y accesible.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-18 | Opciones múltiples parametrizadas en Visita al vecino (DEC-250)
+
+**DECISIÓN**: Al tocar `Sí` o `No` en `¿La conoce? ¿Sabe dónde vive?`, mobile abre
+automáticamente un pop-up de selección múltiple. Cada rama usa un catálogo independiente de M11:
+`VISITA_VECINO_RESPUESTA_SI` o `VISITA_VECINO_RESPUESTA_NO`. Una respuesta nueva sólo puede
+confirmarse con una o más opciones activas de la familia correspondiente y una ubicación actual
+válida; respuesta, opciones y ubicación se guardan en la misma transacción.
+
+Administración puede agregar, editar, ordenar, desactivar y reactivar las opciones desde
+`Parámetros > Verificación > Visita al vecino`. Ambos catálogos comienzan vacíos: no se inventan
+textos operativos. Si el catálogo requerido está vacío o no puede consultarse, el guardado se
+bloquea y se informa que debe configurarse. Cada selección histórica conserva una instantánea de
+etiqueta y orden; cambios posteriores del catálogo no alteran visitas confirmadas. Las visitas
+anteriores a la migración 064 permanecen sin opciones inferidas.
+
+**MOTIVO**: Permitir que Dirección defina las explicaciones reales de cada resultado y que campo
+registre más de una circunstancia, sin hardcodear políticas variables ni reescribir historial.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 064.
+
+---
+
+## 2026-10-18 | Respuesta única en los dos pop-ups de Visita al vecino (DEC-251)
+
+**DECISIÓN**: Los pop-ups que se abren después de responder `Sí` o `No` a `¿La conoce? ¿Sabe
+dónde vive?` permiten seleccionar exactamente una opción de su catálogo. Si la persona usuaria
+toca otra alternativa, la selección anterior se sustituye. `Guardar respuesta` continúa bloqueado
+hasta elegir una opción y no admite confirmar dos o más.
+
+La API conserva `opcion_ids` como arreglo compatible, pero exige cardinalidad exacta de uno y
+rechaza cualquier envío con cero o más de una opción. La base protege el máximo de una relación por
+visita mediante una restricción única. Se mantienen sin cambio los catálogos independientes de
+`Sí` y `No`, su administración en M11, el guardado atómico con ubicación, las instantáneas de
+etiqueta y orden y las visitas históricas sin explicaciones inferidas.
+
+**MOTIVO**: Registrar una sola explicación inequívoca para cada respuesta de Visita al vecino y
+evitar combinaciones ambiguas en campo.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 065. SUSTITUYE
+ÚNICAMENTE LA MULTIPLICIDAD DE DEC-250.
+
+---
+
+## 2026-10-21 | Pasos obligatorios por tipo de integrante en Verificación (DEC-252)
+
+**DECISIÓN**: M11 incorpora `Parámetros > Verificación > Pasos obligatorios` con una matriz de los
+seis procesos `Documentos`, `Llamada`, `Visita al vecino`, `Imágenes del domicilio`, `Entrevista` y
+`Conclusiones` para cuatro tipos calculados exclusivamente por la API: `NUEVA`,
+`NUEVA_CON_EVIDENCIA`, `CICLO_2_MAS` y `CICLO_2_MAS_CON_EVIDENCIA`.
+
+El historial con CRELEALTAD se deriva de créditos anteriores vinculados por `persona_id`; una
+participación anterior convierte la solicitud actual en ciclo 2 o posterior. La evidencia externa
+existe únicamente cuando la solicitud vigente conserva en servidor una ruta no local para
+`doc_comprobante_credito_ruta`. No se infiere por respuestas de Entrevista ni por archivos todavía
+pendientes de sincronización.
+
+Los procesos pueden abrirse y realizarse en cualquier orden. Marcar un proceso como opcional no lo
+oculta ni lo deshabilita: únicamente evita que bloquee el cierre formal cuando dicho cierre sea
+aprobado e implementado. `Conclusiones` también es configurable. La API es la autoridad para
+clasificar a la integrante y devolver la versión y las reglas aplicables; mobile sólo presenta ese
+resultado.
+
+Administración publica siempre la matriz completa, con control de revisión optimista, versión
+inmutable, actor, fecha y auditoría. La configuración inicial conserva los seis procesos como
+obligatorios para los cuatro tipos, de modo que la migración no relaja silenciosamente la operación.
+La publicación no habilita el dictamen ni las transiciones finales todavía pendientes de M03.
+
+**MOTIVO**: Permitir que Dirección ajuste la obligatoriedad del proceso a la situación crediticia
+real de cada integrante sin hardcodear políticas, imponer una secuencia artificial ni confundir una
+evidencia local con un comprobante confirmado por el servidor.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN M11, MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 066; EL
+BLOQUEO DEL CIERRE FORMAL QUEDA PREPARADO PARA LA FUTURA TRANSICIÓN APROBADA DE M03.
+
+---
+
+## 2026-10-21 | Obligatoriedad condicional por días en Verificación (DEC-253)
+
+**DECISIÓN**: Cada regla de la matriz de DEC-252 admite tres modalidades: `OBLIGATORIO`,
+`OPCIONAL` y `OBLIGATORIO_DESPUES_DIAS`. La tercera conserva un plazo entero configurable entre 1
+y 3650 días para cada proceso y tipo de integrante. Mientras no venza el plazo desde la última
+terminación confirmada del mismo proceso, el paso se considera opcional; al cumplirlo se vuelve
+obligatorio. Sin terminación previa confirmada, la modalidad condicional es obligatoria.
+
+La publicación continúa siendo completa, versionada, inmutable, optimista y auditada. Las versiones
+anteriores se convierten sin pérdida a obligatorio u opcional. Esta parametrización no habilita por
+sí misma el dictamen o la transición final pendiente de M03. `Conclusiones` no calcula todavía el
+plazo porque carece de cierre persistido en servidor; no se usará una fecha local o inferida.
+
+**MOTIVO**: Permitir que una revisión reciente siga disponible sin bloquear el cierre y exigirla
+nuevamente cuando su antigüedad supere el plazo definido por Dirección.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN CONFIGURACIÓN M11, MOBILE, API Y POSTGRESQL MEDIANTE
+MIGRACIÓN 067; EL CONSUMO DEL VENCIMIENTO EN EL CIERRE FORMAL DE M03 CONTINÚA PENDIENTE.
+
+---
+
+## 2026-10-22 | Contacto del asesor en Verificación de Grupo (DEC-254)
+
+**DECISIÓN**: La tarjeta superior de `Verificación de Grupo` comienza con un solo renglón que
+presenta `ASESOR`, el nombre de la persona responsable del expediente y, al extremo derecho, su
+teléfono celular dentro de una acción con icono que abre el marcador del dispositivo. El resumen de
+integrantes aprobadas y monto total aprobado se presenta inmediatamente debajo.
+
+Se eliminan por completo los cuatro indicadores secundarios `TOTAL`, `APROBADAS`, `PENDIENTES` y
+`NO APROBADAS`. La API entrega únicamente el identificador, nombre y teléfono celular de la asesora
+asignada; si no existe teléfono válido, la casilla permanece visible como no disponible y no simula
+una llamada.
+
+**MOTIVO**: Priorizar el contacto operativo inmediato con la asesora responsable y retirar un bloque
+de conteos redundante que ocupaba espacio antes de la lista de integrantes.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE Y API. SIN CAMBIO DE POSTGRESQL NI REGLAS DE ESTADO.
+
+---
+
+## 2026-10-22 | Resumen solicitado y verificado de Verificación de Grupo (DEC-255)
+
+**DECISIÓN**: El recuadro de resumen de `Verificación de Grupo` contiene dos renglones. El primero
+presenta en azul la cantidad total de integrantes activas y la suma de sus montos solicitados. El
+segundo presenta en el ocre del módulo la cantidad de integrantes cuya revisión ya concluyó y la
+suma de sus montos verificados reales.
+
+Una revisión concluida puede ser aprobada o rechazada; por ello el conteo verificado incluye ambos
+resultados y excluye únicamente las pendientes. El monto verificado no se infiere del solicitado ni
+del autorizado. Mientras no exista ninguna integrante verificada se muestra `$ 0`; si ya existe una
+revisión concluida pero falta su importe persistido, el total muestra `—`. La interfaz queda lista
+para consumir `monto_verificado` cuando se aprueben e implementen su captura, persistencia y contrato
+de servidor.
+
+**MOTIVO**: Distinguir de un vistazo lo pedido por el grupo de lo efectivamente determinado durante
+la revisión, sin confundir conceptos financieros ni simular un dato que todavía no existe.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN PRESENTACIÓN MOBILE. LA CAPTURA Y PERSISTENCIA DEL MONTO
+VERIFICADO CONTINÚAN PENDIENTES DE SU CONTRATO FUNCIONAL.
+
+---
+
+## 2026-10-22 | Azul suave para el resumen solicitado de grupo (DEC-256)
+
+**DECISIÓN**: El primer renglón del resumen de `Verificación de Grupo`, correspondiente a
+integrantes activas y monto total solicitado, usa el mismo fondo celeste claro de la burbuja de
+distancia respecto a la tesorera y conserva sus cifras en azul legible. El segundo renglón de
+integrantes y monto verificados mantiene el ocre del módulo.
+
+Esta decisión sustituye en DEC-255 únicamente la intensidad visual del renglón solicitado; no
+modifica conteos, cálculos, estados ni fuentes de datos.
+
+**MOTIVO**: Disminuir la intensidad del azul y mantener continuidad con una señal informativa ya
+reconocible en las tarjetas de integrantes.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-22 | Resumen grupal más compacto (DEC-257)
+
+**DECISIÓN**: Los renglones solicitado y verificado del resumen de `Verificación de Grupo` reducen
+su relleno vertical y eliminan la separación adicional entre la etiqueta y la cifra. Conservan la
+tipografía de los valores, el celeste informativo del solicitado, el ocre del verificado y la
+separación visual entre ambos conceptos.
+
+**MOTIVO**: Mostrar la misma información ocupando menos altura antes de la lista de integrantes.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+## 2026-10-22 | Contacto compacto del asesor por abreviatura (DEC-258)
+
+**DECISIÓN**: El renglón de contacto de `Verificación de Grupo` muestra `usuarios.abreviatura` en
+lugar del nombre completo del asesor. La acción telefónica adopta una franja celeste compacta con el
+número en azul oscuro reforzado, y un cuadro reducido del mismo fondo con el icono telefónico oscuro
+al extremo derecho. Ambos segmentos forman una sola acción accesible de al menos 44 puntos que abre
+el marcador y deja mayor ancho disponible para la abreviatura.
+
+`GET /expedientes/:id` incorpora `asesora.abreviatura` junto con el resumen de contacto ya aprobado.
+Si la cuenta no tiene abreviatura, mobile muestra `SIN ABREV.` sin inventar iniciales.
+
+**MOTIVO**: Permitir que abreviatura, teléfono e icono permanezcan completos en un solo renglón y
+alinear el contacto con el formato visual de datos telefónicos usado en las tarjetas individuales.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE Y API. SIN CAMBIO DE POSTGRESQL.
+
+---
+
+## 2026-10-22 | Integrantes verificadas requeridas para finalizar el grupo (DEC-259)
+
+**DECISIÓN**: El primer acceso de `Parámetros > Verificación` permite que Administración publique
+un número entero mayor que cero de integrantes verificadas requeridas. `Finalizar Verificación de
+Grupo` se habilita cuando el conteo de revisiones individuales concluidas alcanza esa cantidad,
+aunque otras integrantes continúen pendientes. Conforme a DEC-255, cuentan tanto las revisiones
+aprobadas como las rechazadas y no cuentan las pendientes ni las integrantes retiradas.
+
+La política se conserva en versiones inmutables con revisión optimista, actor, fecha y auditoría.
+No se precarga una cantidad inicial: mientras Administración no publique el valor, o si la consulta
+operativa falla, mobile bloquea el botón y explica la causa. Alcanzar el umbral habilita únicamente
+el control visual; no simula éxito ni crea el dictamen, monto verificado o transición final de M03,
+cuyos contratos funcionales continúan pendientes.
+
+**MOTIVO**: Permitir que Dirección determine cuántas revisiones individuales necesita un grupo
+antes de habilitar su cierre, sin hardcodear la cantidad, exigir que termine todo el grupo ni perder
+trazabilidad de cambios.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN M11, MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 068; LA
+TRANSICIÓN FINAL DEL GRUPO CONTINÚA PENDIENTE.
+
+---
+
+## 2026-10-22 | Selector de integrantes verificadas de 0 a 12 (DEC-260)
+
+**DECISIÓN**: El parámetro `Integrantes para finalizar` se captura mediante un selector desplazable
+con todos los valores enteros de 0 a 12, donde 12 es el límite vigente del producto. El valor 0 es
+válido y significa que no se exige ninguna revisión individual concluida para habilitar el botón;
+los valores de 1 a 12 conservan el conteo aprobado en DEC-259.
+
+Esta decisión sustituye en DEC-259 únicamente el rango anteriormente descrito como mayor que cero.
+La ausencia de una publicación y los errores de consulta continúan bloqueando el botón. La
+habilitación sigue siendo exclusivamente visual mientras permanezca pendiente el contrato de
+dictamen y transición final de M03.
+
+**MOTIVO**: Ajustar el control al límite real del producto, facilitar la captura en campo y permitir
+expresamente una política sin mínimo de revisiones individuales.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN M11, MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 069; LA
+TRANSICIÓN FINAL DEL GRUPO CONTINÚA PENDIENTE.
+
+---
+
+## 2026-10-30 | Control de pagos CRELEALTAD obligatorio desde ciclo individual 2 (DEC-261)
+
+**DECISIÓN**: El Paso 7 de Documentación incorpora `Control de pagos CRELEALTAD` como documento
+independiente. Se presenta en la primera posición y es obligatorio únicamente cuando la integrante
+tiene al menos una participación individual previa confirmada con CRELEALTAD, es decir, desde su
+ciclo individual 2. La clasificación se deriva en la API por `persona_id`; no se usa el ciclo del
+grupo ni se infiere historial cuando la fuente es indeterminada.
+
+El documento contiene exactamente dos imágenes. Mobile permite obtener ambas desde la cámara o
+seleccionarlas del carrete, y la API rechaza cualquier versión con una cantidad distinta de dos.
+Sólo una versión confirmada y existente en servidor completa este requisito. Las integrantes nuevas
+conservan los tres documentos obligatorios anteriores.
+
+`Control de pagos CRELEALTAD` no sustituye ni modifica `Comprobante Línea de Crédito`: este último
+continúa siendo la evidencia opcional de otra financiera y admite todas las fotografías necesarias
+conforme a DEC-172.
+
+**MOTIVO**: Incorporar la evidencia interna que corresponde a renovaciones sin mezclarla con el
+historial de otras financieras ni exigirla a una integrante que participa por primera vez dentro de
+un grupo con ciclos anteriores.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN MOBILE, API Y POSTGRESQL MEDIANTE MIGRACIÓN 070.
+
+---
+
+## 2026-10-30 | Composición responsive para formularios y revisión documental (DEC-263)
+
+**DECISIÓN**: Los formularios largos y flujos por pasos de la aplicación web para computadora usan
+dos columnas como composición predeterminada. La columna izquierda mantiene visibles los siete
+pasos, identifica el paso activo y distingue los concluidos; la columna derecha concentra el
+formulario del paso actual, su progreso, autoguardado, validaciones y acciones de navegación.
+
+La aplicación móvil conserva sus pantallas actuales de una sola columna y no adopta la composición
+de escritorio comprimida. El modal centrado queda reservado para tareas breves y contenidas. La
+presentación inmersiva se utiliza únicamente cuando la tarea principal sea revisar documentos o
+imágenes en grande, con el visor institucional aprobado en DEC-262; no se emplea como contenedor
+general para formularios.
+
+Esta regla define la composición responsive, pero no cambia permisos, validaciones, reglas de
+negocio, secuencia de pasos ni contratos de guardado.
+
+**MOTIVO**: Hacer la captura de escritorio más ágil e intuitiva al mantener el contexto del flujo
+visible, reducir regresos y evitar que la navegación compita con el formulario. Al mismo tiempo se
+conserva la experiencia móvil diseñada para teléfono y se reserva el máximo espacio visual para la
+revisión documental que realmente lo necesita.
+
+**ESTADO**: CERRADA E IMPLEMENTADA EN EXPO WEB PARA EL FLUJO ACTIVO DE SOLICITUD. MOBILE CONSERVA
+SU COMPOSICIÓN DE UNA COLUMNA. SIN CAMBIO DE API O POSTGRESQL.
+
+---
+
+**Última actualización**: 2026-10-30
 **Responsable**: Ricardo Elizondo (ricardoelizondo8078@gmail.com)

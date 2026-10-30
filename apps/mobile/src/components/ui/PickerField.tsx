@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View, ScrollView } from 'react-native';
-import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
+import {
+  colors,
+  moduleThemes,
+  radius,
+  spacing,
+  typography,
+  type ModuleThemeKey,
+} from '../../theme/tokens';
 import { FormField } from './FormField';
-
-type ModuleThemeKey = 'documentation' | 'verification' | 'disbursement';
 
 interface PickerFieldProps {
   label: string;
@@ -19,6 +24,7 @@ interface PickerFieldProps {
   confirmSelection?: boolean;
   highlightSelectedValue?: boolean;
   selectionTone?: 'default' | 'danger';
+  disabled?: boolean;
 }
 
 export const PickerField: React.FC<PickerFieldProps> = ({
@@ -35,6 +41,7 @@ export const PickerField: React.FC<PickerFieldProps> = ({
   confirmSelection = false,
   highlightSelectedValue = false,
   selectionTone = 'default',
+  disabled = false,
 }) => {
   const [open, setOpen] = useState(autoOpen);
   const [pendingValue, setPendingValue] = useState(value);
@@ -44,6 +51,7 @@ export const PickerField: React.FC<PickerFieldProps> = ({
   const dangerSelection = selectionTone === 'danger';
 
   const handleOpen = () => {
+    if (disabled) return;
     setPendingValue(value);
     setOpen(true);
   };
@@ -65,7 +73,7 @@ export const PickerField: React.FC<PickerFieldProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, disabled && styles.disabled]}>
       <FormField
         label={label}
         required={required}
@@ -75,6 +83,8 @@ export const PickerField: React.FC<PickerFieldProps> = ({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${label}. ${value || placeholder}`}
+          accessibilityState={{ disabled }}
+          disabled={disabled}
           style={[
             styles.trigger,
             showHighlightedValue && {
@@ -118,7 +128,7 @@ export const PickerField: React.FC<PickerFieldProps> = ({
         </Pressable>
       </FormField>
 
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+      <Modal visible={open && !disabled} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setOpen(false)}>
           <Pressable style={styles.modalSheet} onPress={() => undefined}>
             <View style={[styles.modalHeader, { backgroundColor: themeColors.primary }]}>
@@ -187,6 +197,7 @@ export const PickerField: React.FC<PickerFieldProps> = ({
 
 const styles = StyleSheet.create({
   container: {},
+  disabled: { opacity: 0.6 },
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',

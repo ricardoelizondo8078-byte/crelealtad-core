@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { IntegranteEntity } from '../integrantes/integrante.entity';
+import { ParametrosEvidenciaMotivosModule } from '../parametros-evidencia-motivos/parametros-evidencia-motivos.module';
 import { EntrevistaEvidenciaStorageService } from './entrevista-evidencia-storage.service';
 import { VerificacionEntrevistaDesacuerdoMontoEntity } from './verificacion-entrevista-desacuerdo-monto.entity';
 import { VerificacionEntrevistaEvidenciaEntity } from './verificacion-entrevista-evidencia.entity';
@@ -10,13 +11,16 @@ import { VerificacionEntrevistaController } from './verificacion-entrevista.cont
 import { VerificacionEntrevistaService } from './verificacion-entrevista.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([
-    VerificacionEntrevistaEntity,
-    VerificacionEntrevistaFamiliarEntity,
-    VerificacionEntrevistaDesacuerdoMontoEntity,
-    VerificacionEntrevistaEvidenciaEntity,
-    IntegranteEntity,
-  ])],
+  imports: [
+    ParametrosEvidenciaMotivosModule,
+    TypeOrmModule.forFeature([
+      VerificacionEntrevistaEntity,
+      VerificacionEntrevistaFamiliarEntity,
+      VerificacionEntrevistaDesacuerdoMontoEntity,
+      VerificacionEntrevistaEvidenciaEntity,
+      IntegranteEntity,
+    ]),
+  ],
   controllers: [VerificacionEntrevistaController],
   providers: [VerificacionEntrevistaService, EntrevistaEvidenciaStorageService],
 })

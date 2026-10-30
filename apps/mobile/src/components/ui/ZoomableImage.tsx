@@ -9,22 +9,57 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { colors, radius, spacing, typography } from '../../theme/tokens';
+import {
+  colors,
+  layout,
+  radius,
+  shadows,
+  spacing,
+  typography,
+} from '../../theme/tokens';
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.5;
+const IMAGE_CONTROL_HEIGHT = 56;
 
 interface TouchPoint {
   pageX: number;
   pageY: number;
 }
 
+export interface ZoomableImageAction {
+  title: string;
+  accessibilityLabel?: string;
+  disabled?: boolean;
+  onPress: () => void | Promise<void>;
+}
+
+export const getEvidenceClassificationFrameStyle = (
+  frameColor?: string,
+): ViewStyle => ({
+  backgroundColor: colors.white,
+  borderBottomColor: frameColor ?? colors.white,
+  borderBottomWidth: layout.evidenceControlsBandHeight,
+  borderTopColor: frameColor ?? colors.white,
+  borderTopWidth: layout.evidenceClassificationBandHeight,
+});
+
+export const getEvidenceClassificationControlsStyle = (
+  _frameColor?: string,
+): ViewStyle => ({
+  bottom: -layout.evidenceControlsBandHeight + spacing.sm,
+});
+
 interface ZoomableImageProps {
   uri: string;
   headers?: Record<string, string>;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel: string;
+  leftAction?: ZoomableImageAction;
+  frameColor?: string;
+  frameLabel?: string;
+  onPagingLockChange?: (locked: boolean) => void;
 }
 
 const clamp = (value: number, min: number, max: number): number => (
@@ -44,6 +79,10 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
   headers,
   style,
   accessibilityLabel,
+  leftAction,
+  frameColor,
+  frameLabel,
+  onPagingLockChange,
 }) => {
   const scale = useRef(new Animated.Value(MIN_ZOOM)).current;
   const translateX = useRef(new Animated.Value(0)).current;
@@ -52,7 +91,19 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
   const layoutRef = useRef({ width: 0, height: 0 });
   const pinchStartRef = useRef<{ distance: number; scale: number } | null>(null);
   const lastPanPointRef = useRef<TouchPoint | null>(null);
+  const pagingLockedRef = useRef(false);
+  const onPagingLockChangeRef = useRef(onPagingLockChange);
   const [zoomLevel, setZoomLevel] = useState(MIN_ZOOM);
+
+  useEffect(() => {
+    onPagingLockChangeRef.current = onPagingLockChange;
+  }, [onPagingLockChange]);
+
+  const setPagingLocked = (locked: boolean, notifyWhenUnchanged = false) => {
+    const changed = pagingLockedRef.current !== locked;
+    pagingLockedRef.current = locked;
+    if (changed || notifyWhenUnchanged) onPagingLockChangeRef.current?.(locked);
+  };
 
   const getConstrainedTranslation = (nextScale: number, x: number, y: number) => {
     const maxX = layoutRef.current.width * (nextScale - MIN_ZOOM) / 2;
@@ -82,7 +133,10 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
     ]).start();
   };
 
-  const resetZoom = () => animateTransform(MIN_ZOOM, 0, 0);
+  const resetZoom = () => {
+    setPagingLocked(false);
+    animateTransform(MIN_ZOOM, 0, 0);
+  };
 
   useEffect(() => {
     transformRef.current = { scale: MIN_ZOOM, x: 0, y: 0 };
@@ -90,28 +144,30 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
     translateX.setValue(0);
     translateY.setValue(0);
     setZoomLevel(MIN_ZOOM);
+    setPagingLocked(false);
   }, [scale, translateX, translateY, uri]);
 
   const panResponder = useRef(PanResponder.create({
     onStartShouldSetPanResponderCapture: (event) => (
-      event.nativeEvent.touches.length >= 2 || transformRef.current.scale > MIN_ZOOM
+      (event?.nativeEvent?.touches?.length ?? 0) >= 2 || transformRef.current.scale > MIN_ZOOM
     ),
     onMoveShouldSetPanResponderCapture: (event) => (
-      event.nativeEvent.touches.length >= 2 || transformRef.current.scale > MIN_ZOOM
+      (event?.nativeEvent?.touches?.length ?? 0) >= 2 || transformRef.current.scale > MIN_ZOOM
     ),
     onStartShouldSetPanResponder: (event) => (
-      event.nativeEvent.touches.length >= 2 || transformRef.current.scale > MIN_ZOOM
+      (event?.nativeEvent?.touches?.length ?? 0) >= 2 || transformRef.current.scale > MIN_ZOOM
     ),
     onMoveShouldSetPanResponder: (event, gestureState) => (
-      event.nativeEvent.touches.length >= 2
+      (event?.nativeEvent?.touches?.length ?? 0) >= 2
       || (
         transformRef.current.scale > MIN_ZOOM
-        && Math.abs(gestureState.dx) + Math.abs(gestureState.dy) > 2
+        && Math.abs(gestureState?.dx ?? 0) + Math.abs(gestureState?.dy ?? 0) > 2
       )
     ),
     onPanResponderGrant: (event) => {
       const touches = event.nativeEvent.touches;
       if (touches.length >= 2) {
+        setPagingLocked(true);
         pinchStartRef.current = {
           distance: getTouchDistance(touches),
           scale: transformRef.current.scale,
@@ -125,6 +181,7 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
       const touches = event.nativeEvent.touches;
 
       if (touches.length >= 2) {
+        setPagingLocked(true);
         const distance = getTouchDistance(touches);
         if (!pinchStartRef.current) {
           pinchStartRef.current = {
@@ -167,12 +224,14 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
       if (transformRef.current.scale <= MIN_ZOOM + 0.02) {
         resetZoom();
       } else {
+        setPagingLocked(true);
         setZoomLevel(transformRef.current.scale);
       }
     },
     onPanResponderTerminate: () => {
       pinchStartRef.current = null;
       lastPanPointRef.current = null;
+      setPagingLocked(transformRef.current.scale > MIN_ZOOM + 0.02);
       setZoomLevel(transformRef.current.scale);
     },
     onPanResponderTerminationRequest: () => false,
@@ -184,12 +243,17 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
       resetZoom();
       return;
     }
+    setPagingLocked(true);
     animateTransform(nextScale, transformRef.current.x, transformRef.current.y);
   };
 
   return (
     <View
-      style={[styles.container, style]}
+      style={[
+        styles.container,
+        style,
+        getEvidenceClassificationFrameStyle(frameColor),
+      ]}
       onLayout={(event) => {
         layoutRef.current = event.nativeEvent.layout;
         setTransformImmediately(
@@ -199,7 +263,30 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
         );
       }}
     >
-      <View style={styles.gestureSurface} {...panResponder.panHandlers}>
+      <View
+        testID="zoomable-image-gesture-surface"
+        style={styles.gestureSurface}
+        onTouchStart={(event) => {
+          if (
+            event.nativeEvent.touches.length >= 2
+            || transformRef.current.scale > MIN_ZOOM + 0.02
+          ) {
+            setPagingLocked(true, true);
+          }
+        }}
+        onTouchMove={(event) => {
+          if (event.nativeEvent.touches.length >= 2) setPagingLocked(true);
+        }}
+        onTouchEnd={(event) => {
+          if (
+            event.nativeEvent.touches.length === 0
+            && transformRef.current.scale <= MIN_ZOOM + 0.02
+          ) {
+            setPagingLocked(false);
+          }
+        }}
+        {...panResponder.panHandlers}
+      >
         <Animated.Image
           source={{ uri, headers }}
           resizeMode="contain"
@@ -218,7 +305,47 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
         />
       </View>
 
-      <View style={styles.controls}>
+      {frameColor && frameLabel ? (
+        <View
+          pointerEvents="none"
+          style={styles.frameLabelContainer}
+        >
+          <Text
+            allowFontScaling={false}
+            numberOfLines={2}
+            style={styles.frameLabelText}
+          >
+            {frameLabel}
+          </Text>
+        </View>
+      ) : null}
+
+      {leftAction ? (
+        <Pressable
+          testID="zoomable-image-left-action"
+          accessibilityRole="button"
+          accessibilityLabel={leftAction.accessibilityLabel ?? leftAction.title}
+          accessibilityState={{ disabled: leftAction.disabled }}
+          disabled={leftAction.disabled}
+          hitSlop={spacing.sm}
+          onPress={leftAction.onPress}
+          style={({ pressed }) => [
+            styles.leftAction,
+            getEvidenceClassificationControlsStyle(frameColor),
+            leftAction.disabled && styles.controlButtonDisabled,
+            pressed && styles.controlButtonPressed,
+          ]}
+        >
+          <Text allowFontScaling={false} style={styles.leftActionText}>
+            {leftAction.title}
+          </Text>
+        </Pressable>
+      ) : null}
+
+      <View testID="zoomable-image-controls" style={[
+        styles.controls,
+        getEvidenceClassificationControlsStyle(frameColor),
+      ]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Alejar imagen"
@@ -267,7 +394,7 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.white,
   },
   gestureSurface: {
     position: 'absolute',
@@ -285,15 +412,53 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  frameLabelContainer: {
+    position: 'absolute',
+    top: -layout.evidenceClassificationBandHeight,
+    right: spacing.lg,
+    left: spacing.lg,
+    height: layout.evidenceClassificationBandHeight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  frameLabelText: {
+    ...typography.contextTitle,
+    color: colors.gray[900],
+    textAlign: 'center',
+  },
   controls: {
     position: 'absolute',
     right: spacing.sm,
     bottom: spacing.sm,
+    height: IMAGE_CONTROL_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.xs,
     borderRadius: radius.pill,
-    backgroundColor: colors.overlay,
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.gray[500],
+    ...shadows.stickyHeader,
+  },
+  leftAction: {
+    position: 'absolute',
+    left: spacing.sm,
+    bottom: spacing.sm,
+    height: IMAGE_CONTROL_HEIGHT,
+    maxWidth: '44%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.gray[500],
+    ...shadows.stickyHeader,
+  },
+  leftActionText: {
+    ...typography.captionStrong,
+    color: colors.gray[900],
+    textAlign: 'center',
   },
   controlButton: {
     width: 44,
@@ -313,14 +478,14 @@ const styles = StyleSheet.create({
     opacity: 0.35,
   },
   controlButtonPressed: {
-    backgroundColor: colors.gray[700],
+    backgroundColor: colors.gray[200],
   },
   controlText: {
     ...typography.contextTitle,
-    color: colors.white,
+    color: colors.gray[900],
   },
   levelText: {
     ...typography.caption,
-    color: colors.white,
+    color: colors.gray[900],
   },
 });

@@ -1,6 +1,6 @@
 # 16 UI COMPONENT STANDARD — CRELEALTAD CORE
 
-Versión: 1.4.7
+Versión: 1.6.0
 Estado: VIGENTE — BASE OBLIGATORIA  
 Ámbito: Aplicación móvil React Native / Expo  
 Autoridad documental relacionada: `01_PROJECT_CONSTITUTION.md`, `13_DEVELOPMENT_STANDARDS.md`, `15_UI_UX_STANDARDS.md`
@@ -33,7 +33,7 @@ Se detectaron los siguientes riesgos:
 4. Badges de estado duplicados y con reglas visuales locales.
 5. Varios patrones de scroll sin una clasificación oficial.
 6. Botones y áreas presionables construidos directamente con `Pressable` o `TouchableOpacity`.
-7. La selección múltiple todavía no cuenta con un componente oficial.
+7. La adopción del componente oficial de selección múltiple todavía no cubre todas las pantallas.
 8. Las pantallas largas mezclan estructura, estilos, reglas de negocio y componentes locales.
 9. El sistema de diseño escrito no define contratos técnicos suficientemente precisos.
 10. No existe una plantilla obligatoria por tipo de pantalla.
@@ -326,12 +326,26 @@ Debe vivir dentro de un componente oficial de visor, no dentro de cada pantalla 
 
 `DocumentViewer` utiliza `ZoomableImage`: permite pellizcar o usar controles táctiles para
 ampliar hasta 4×, desplazar la imagen ampliada y restablecerla al 100 %. Los controles deben
-mantener un área táctil mínima de 44 × 44 y etiquetas accesibles.
+mantener un área táctil mínima de 44 × 44 y etiquetas accesibles. La superficie siempre es blanca y
+el componente admite dos presentaciones: `panel` para consulta contextual y `immersive` para ocupar
+la pantalla completa con encabezado compacto, índice y cierre superior. La variante no cambia el
+contrato de páginas, zoom, semáforo o accesibilidad.
 
 `DocumentImageCarousel` presenta documentos de varias caras mediante paginación horizontal.
-Tocar una cara abre un modal opaco de pantalla completa que reutiliza `ZoomableImage`; al
-100 % el gesto horizontal cambia de página y, con zoom, el arrastre recorre la imagen. La
+Tocar una cara abre `DocumentViewer` en la página elegida. Con zoom en `100 %`, la navegación dentro
+del visor usa paginación horizontal por deslizamiento. En cuanto comienza un pellizco,
+`ZoomableImage` solicita bloquear la paginación y `DocumentViewer` recentra la página activa; el
+bloqueo continúa mientras el zoom sea mayor al `100 %`, de modo que el arrastre recorra sólo esa
+imagen. El visor conserva un índice textual y accesible, sin acciones `Anterior / Siguiente`. La
 pantalla consumidora resuelve autorización, orden y disponibilidad antes de entregar las páginas.
+Cuando una fotografía tiene una clasificación semántica persistida, la página puede entregar
+`frameColor` para pintar exclusivamente las bandas superior e inferior tanto en la vista previa como
+en el visor. Todas las páginas reservan las mismas dimensiones de banda, incluso sin clasificación,
+para que la zona útil de cada fotografía mantenga un alto uniforme durante el deslizamiento. Los
+laterales y el espacio libre de la imagen permanecen blancos. La clasificación debe acompañarse
+siempre con una etiqueta visible y `frameAccessibilityLabel`; el color nunca será la única señal.
+Una fotografía legacy sin clasificación conserva ambas bandas blancas y no recibe un color inferido.
+Las acciones contextuales y los controles de zoom se centran dentro de la banda inferior.
 
 ---
 
@@ -385,7 +399,15 @@ Reglas:
 
 Para mostrar grupo, solicitante, ciclo o sección actual se utilizará un componente separado, por ejemplo `ContextHeader` o `StickySectionHeader`.
 
-Estado verificado al 2026-10-02: `ContextHeader` está implementado con tema de módulo, variante de acento institucional y un texto contextual corto opcional al extremo derecho sin desplazar el título centrado; `StickySectionHeader` admite variantes suave y sólida para secciones pegajosas. La variante sólida centraliza tipografía, altura, sombra, extensión lateral y un tono semántico opcional para retiradas.
+Estado verificado al 2026-10-08: `ContextHeader` está implementado con tema de módulo, variante de acento institucional y un texto contextual corto opcional al extremo derecho sin desplazar el título centrado; `StickySectionHeader` admite variantes suave y sólida para secciones pegajosas. La variante sólida centraliza tipografía, altura, sombra, extensión lateral y un tono semántico opcional para retiradas.
+
+Una franja hija directa de un cuerpo con relleno institucional `spacing.lg` usa
+`placement="standalone"`: compensa lateralmente `spacing.xs`, queda ligeramente más larga que los
+campos y conserva un margen efectivo `spacing.md` respecto de la pantalla, igual que la composición
+de Verificación. Deja `spacing.lg` respecto del bloque anterior y `spacing.sm` antes del primer campo
+o dato. `fullBleed` se reserva para una franja `embedded` dentro de una tarjeta u otro contenedor con
+relleno y sólo puede extenderse hasta los bordes de ese contenedor; nunca debe llegar hasta los
+bordes de la pantalla.
 
 No se deberá modificar `ScreenTitleBar` para cada caso.
 
@@ -414,6 +436,8 @@ No se deberá modificar `ScreenTitleBar` para cada caso.
 8. No usar color para distinguir acciones si el componente ya define su jerarquía.
 9. `PrimaryButton.leadingIcon` y `SecondaryButton.leadingIcon` pueden identificar un canal o marca cuando el texto operativo permanece visible; el icono es decorativo y no sustituye la etiqueta accesible. `trailingContent` se reserva para indicadores compactos accesibles que no dependan sólo del color.
 10. `SecondaryButton.moduleTheme` aplica un borde reforzado del color principal del módulo manteniendo fondo blanco. `size="large"` se reserva para acciones de campo equivalentes que requieren un objetivo táctil prominente. `contentLayout="columns"` alinea ícono, título e indicador final cuando varias acciones equivalentes deben conservar las mismas columnas; estas variantes deben usarse desde el componente compartido.
+11. `PrimaryButton.size="compact"` se reserva para acciones breves dentro de componentes compartidos. Conserva un objetivo táctil mínimo de 44 puntos y toma sólo el ancho necesario; la alineación la define el contenedor oficial.
+12. `EvidenceReviewChoice` presenta una decisión compacta por evidencia mediante `Revisa`, tacha roja, advertencia amarilla y palomita verde. Las tres opciones usan superficie tenue en reposo y fondo sólido al seleccionarse, además de borde, símbolo, área táctil mínima y estado de radio accesible. En el visor comparte la misma fila y alineación vertical con el cierre compacto para priorizar el área de imagen; recibe un valor controlado y no persiste ni interpreta la decisión.
 
 ### 9.3 Posición
 
@@ -489,6 +513,7 @@ Reglas:
 
 - la tarjeta completa es el objetivo táctil;
 - el título y el icono siempre tienen etiqueta accesible;
+- puede incluir una descripción breve bajo el título para distinguir catálogos dentro de un módulo;
 - el componente no calcula avance ni finalización;
 - puede recibir un estado `completed` calculado por su pantalla para mostrar una paloma verde
   y anunciar `Realizado`, sin convertir ese indicador visual en persistencia;
@@ -526,6 +551,8 @@ Reglas:
 - un color de módulo no sustituye un estado;
 - el color nunca será la única señal: deberá acompañarse de texto o icono.
 - `StatusBadge.leadingMark` permite anteponer una marca circular breve, como `T`, sin crear badges locales; siempre se acompaña de una etiqueta textual explícita.
+- La etiqueta de `StatusBadge` usa el peso fuerte de `typography.captionStrong` para mantener la
+  misma jerarquía que las demás burbujas compactas.
 
 ### 11.1 Selecciones obligatorias de rol
 
@@ -533,6 +560,29 @@ Reglas:
 - `SingleSelectOption` presenta cada candidata como radio accesible dentro de `BottomSheetSelector`.
 - La pantalla filtra las opciones con datos validados por la API y bloquea su acción final cuando no existe selección válida.
 - Un rol operativo no debe comunicarse únicamente mediante una letra o un color; la marca siempre se acompaña del nombre del rol.
+
+### 11.2 Resúmenes declarativos de consulta
+
+- `SummaryStatusRow` presenta un resultado de sólo lectura con texto y marca además del color. Sus
+  tonos tipados son positivo, negativo y neutral; no funciona como selector ni persiste respuestas.
+- `SummaryDetailsCard` presenta una lista compacta de etiqueta y valor dentro de una tarjeta
+  oficial. Puede dividir opcionalmente el espacio de valor entre un dato principal alineado a la
+  izquierda y una referencia breve alineada a la derecha. Esa referencia puede usar un tono
+  semántico positivo o negativo dentro de una burbuja, siempre con marca visible además del color;
+  cuando ambos datos comparten estado pueden agruparse, centrarse verticalmente y usar el mismo
+  tono. Etiqueta, valor, referencias y acciones se centran verticalmente en todos los renglones. Un
+  renglón puede convertirse en acción de consulta mediante `onPress`, con área táctil mínima, rol
+  accesible, texto explícito y un icono opcional resuelto por el componente compartido. Cuando la
+  acción incluye icono usa el patrón rectangular del botón secundario del módulo: borde reforzado
+  de dos puntos, `radius.md`, fondo blanco y contenido centrado; no usa `radius.pill`. La pantalla
+  puede solicitar una acción compacta con un indicador circular intermedio de sólo lectura; el
+  componente conserva columnas separadas, no convierte ese indicador en otro botón y limita la
+  interacción al rectángulo de acción cuando el resto del renglón es informativo. La etiqueta puede
+  apilar una cápsula de tres segmentos semánticos con valores de sólo lectura; el componente aplica
+  tonos, separación y accesibilidad, mientras la pantalla calcula los valores y conserva en su
+  propia capa las reglas de dominio.
+- Ambos componentes se usan para resúmenes donde repetir las preguntas o controles de captura
+  aumentaría la carga cognitiva.
 
 ---
 
@@ -590,6 +640,18 @@ Cada campo deberá soportar:
 
 `SelectorField` mantendrá dos presentaciones:
 
+`SemanticChoiceGroup` representa entre dos y tres alternativas semánticas exclusivas visibles al
+mismo tiempo. Cada opción incluye un círculo, marca, texto y tono `positive`, `warning` o `negative`;
+el círculo usa el tono claro en reposo y se llena con el color sólido al seleccionarse. Cada opción
+conserva un borde completo de `2` para distinguirla y el color nunca es la única señal. Se usa cuando
+comparar las alternativas de un vistazo es parte de la pregunta operativa, como el semáforo de
+financieras en Parámetros. Cuando la respuesta sea opcional, `allowClear` permite tocar nuevamente la
+opción seleccionada para regresar al estado vacío; esta capacidad debe explicarse con texto de ayuda.
+
+`TextInput.strongBorder` y `SelectorField.strongBorder` refuerzan a `2` el borde gris de controles
+que necesitan una separación visual más marcada. Son variantes explícitas de pantalla y no sustituyen
+el borde normal del resto de formularios.
+
 ### Opciones cortas
 
 Hasta siete opciones: chips o botones segmentados, siempre que todas sean legibles.
@@ -630,27 +692,31 @@ Reglas:
 
 ## 14. Selección múltiple
 
-Se creará `MultiSelectField` como componente oficial.
+`MultiSelectPickerField` es el componente oficial vigente para selección múltiple confirmada.
 
 ### 14.1 Presentación
 
 - 2 a 7 opciones breves: chips seleccionables con selección múltiple.
 - Más de 7 opciones: bottom sheet con lista, checkbox, buscador opcional y botones “Cancelar” / “Aplicar”.
+- Cuando el dominio admita el conjunto completo, el mismo modal puede ofrecer una primera fila
+  `Todas las integrantes`; debe reflejar estado marcado, desmarcado o mixto y no sustituye la
+  confirmación explícita.
 
 ### 14.2 Contrato
 
 ```ts
-interface MultiSelectFieldProps<T extends string> {
+interface MultiSelectPickerFieldProps {
   label: string;
-  values: readonly T[];
-  options: readonly { value: T; label: string; disabled?: boolean }[];
+  value: string[];
+  options: { value: string; label: string }[];
   required?: boolean;
   helperText?: string;
   errorText?: string;
   minSelections?: number;
   maxSelections?: number;
-  searchable?: boolean;
-  onChange: (values: T[]) => void;
+  selectAllLabel?: string;
+  confirmLabel?: string;
+  onSelect: (values: string[]) => void;
 }
 ```
 
@@ -793,6 +859,17 @@ Los formularios largos deberán:
 
 El estado de autoguardado deberá extraerse a un componente `AutoSaveIndicator` y a un hook reutilizable.
 
+En Expo Web, `StepFlowLayout` aplica la composición responsive aprobada por DEC-263:
+
+- desde `breakpoints.desktop`, muestra un riel lateral estable y el contenido del paso activo en la
+  segunda columna;
+- recibe los pasos y su estado desde el flujo consumidor; no inventa conclusión ni permite saltar
+  validaciones;
+- por debajo del breakpoint devuelve únicamente el contenido original y no agrega el riel, de modo
+  que la composición móvil permanece intacta;
+- consume exclusivamente tokens de `layout`, `spacing`, `radius`, `colors`, `typography` y del tema
+  de módulo correspondiente.
+
 ---
 
 ## 19. Plantillas oficiales de pantalla
@@ -844,6 +921,7 @@ Incluye:
 - AppHeader;
 - ScreenTitleBar;
 - contexto de persona o expediente;
+- `StepFlowLayout` en escritorio para el riel de pasos y el contenido activo;
 - AutoSaveIndicator;
 - StickySectionHeader;
 - ScrollView único;

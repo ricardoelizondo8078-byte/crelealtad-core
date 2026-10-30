@@ -18,6 +18,7 @@ export interface TextInputProps extends Omit<RNTextInputProps, 'style'> {
   required?: boolean;
   moduleTheme?: ModuleThemeKey;
   highlightWhenFilled?: boolean;
+  strongBorder?: boolean;
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -29,6 +30,7 @@ export const TextInput: React.FC<TextInputProps> = ({
   required = false,
   moduleTheme = 'general',
   highlightWhenFilled = false,
+  strongBorder = false,
   ...rest
 }) => {
   const answered = highlightWhenFilled && value.trim().length > 0;
@@ -41,6 +43,7 @@ export const TextInput: React.FC<TextInputProps> = ({
         onChangeText={onChangeText}
         style={[
           styles.input,
+          strongBorder && styles.inputStrong,
           answered && {
             borderWidth: 2,
             borderColor: themeColors.primary,
@@ -67,5 +70,9 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: '#B91C1C',
+  },
+  inputStrong: {
+    borderWidth: 2,
+    borderColor: colors.gray[400],
   },
 });

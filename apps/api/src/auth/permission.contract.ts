@@ -36,10 +36,23 @@ export type AccionAutorizable = (typeof ACCIONES_AUTORIZABLES)[number];
 export interface PermisosRol {
   modulos: string[];
   acciones: string[];
+  capacidades?: string[];
 }
 
 const modulosConocidos = new Set<string>(MODULOS_AUTORIZABLES);
 const accionesConocidas = new Set<string>(ACCIONES_AUTORIZABLES);
+
+function normalizarCapacidades(valores: unknown): string[] {
+  if (!Array.isArray(valores)) return [];
+
+  return [...new Set(valores.filter((valor): valor is string => {
+    if (typeof valor !== 'string') return false;
+    const [modulo, accion, adicional] = valor.split(':');
+    return !adicional
+      && modulosConocidos.has(modulo)
+      && accionesConocidas.has(accion);
+  }))];
+}
 
 function normalizarLista(
   valores: unknown,
@@ -64,6 +77,7 @@ export function normalizarContratoPermisos(permisos?: unknown): PermisosRol {
   return {
     modulos: normalizarLista(candidato.modulos, modulosConocidos),
     acciones: normalizarLista(candidato.acciones, accionesConocidas),
+    capacidades: normalizarCapacidades(candidato.capacidades),
   };
 }
 
@@ -72,6 +86,14 @@ export function tienePermiso(
   modulo: ModuloAutorizable,
   accion: AccionAutorizable,
 ): boolean {
+  const prefijoModulo = `${modulo}:`;
+  const capacidadesModulo = permisos.capacidades?.filter(
+    (capacidad) => capacidad.startsWith(prefijoModulo),
+  ) ?? [];
+  if (capacidadesModulo.length > 0) {
+    return capacidadesModulo.includes(`${modulo}:${accion}`);
+  }
+
   const tieneModulo = permisos.modulos.includes(PERMISO_TOTAL)
     || permisos.modulos.includes(modulo);
   const tieneAccion = permisos.acciones.includes(PERMISO_TOTAL)

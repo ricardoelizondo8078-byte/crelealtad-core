@@ -8,7 +8,7 @@ import React, {
   useState,
 } from 'react';
 import { AppState } from 'react-native';
-import { api } from '../services/api-client';
+import { getPendingReviews } from '../services/pending-reviews.api';
 import { useAuth } from './AuthContext';
 
 export interface PendingReviewGroup {
@@ -17,11 +17,6 @@ export interface PendingReviewGroup {
   grupo_nombre: string;
   integrantes_pendientes: number;
   solicitado_desde: string;
-}
-
-interface PendingReviewsResponse {
-  total_pendientes: number;
-  grupos: PendingReviewGroup[];
 }
 
 interface PendingReviewsContextData {
@@ -54,9 +49,15 @@ export function PendingReviewsProvider({ children }: { children: React.ReactNode
   const [inboxVisible, setInboxVisible] = useState(false);
   const [requestedExpedienteId, setRequestedExpedienteId] = useState<string | null>(null);
   const requestVersionRef = useRef(0);
+  const inFlightRequestRef = useRef<{
+    userId: string;
+    promise: Promise<void>;
+  } | null>(null);
 
   const loadPendingReviews = useCallback(async (initialLoad = false) => {
-    if (!canReadExpedientes) {
+    const userId = usuario?.id;
+
+    if (!canReadExpedientes || !userId) {
       requestVersionRef.current += 1;
       setGroups([]);
       setTotalPending(0);
@@ -64,6 +65,11 @@ export function PendingReviewsProvider({ children }: { children: React.ReactNode
       setLoading(false);
       setRefreshing(false);
       return;
+    }
+
+    const inFlightRequest = inFlightRequestRef.current;
+    if (inFlightRequest?.userId === userId) {
+      return inFlightRequest.promise;
     }
 
     const requestVersion = requestVersionRef.current + 1;
@@ -75,25 +81,37 @@ export function PendingReviewsProvider({ children }: { children: React.ReactNode
       setRefreshing(true);
     }
 
+    const request = (async () => {
+      try {
+        const response = await getPendingReviews();
+        if (requestVersion !== requestVersionRef.current) return;
+        setGroups(Array.isArray(response.grupos) ? response.grupos : []);
+        setTotalPending(Number(response.total_pendientes) || 0);
+        setError(null);
+      } catch (loadError) {
+        if (requestVersion !== requestVersionRef.current) return;
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : 'No se pudieron actualizar los pendientes.',
+        );
+      } finally {
+        if (requestVersion !== requestVersionRef.current) return;
+        setLoading(false);
+        setRefreshing(false);
+      }
+    })();
+
+    inFlightRequestRef.current = { userId, promise: request };
+
     try {
-      const response = await api.get<PendingReviewsResponse>('/pendientes/revision-documental');
-      if (requestVersion !== requestVersionRef.current) return;
-      setGroups(Array.isArray(response.grupos) ? response.grupos : []);
-      setTotalPending(Number(response.total_pendientes) || 0);
-      setError(null);
-    } catch (loadError) {
-      if (requestVersion !== requestVersionRef.current) return;
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : 'No se pudieron actualizar los pendientes.',
-      );
+      await request;
     } finally {
-      if (requestVersion !== requestVersionRef.current) return;
-      setLoading(false);
-      setRefreshing(false);
+      if (inFlightRequestRef.current?.promise === request) {
+        inFlightRequestRef.current = null;
+      }
     }
-  }, [canReadExpedientes, usuario?.id, usuario?.requiere_cambio_pin]);
+  }, [canReadExpedientes, usuario?.id]);
 
   const refresh = useCallback(
     () => loadPendingReviews(false),
@@ -101,7 +119,7 @@ export function PendingReviewsProvider({ children }: { children: React.ReactNode
   );
 
   useEffect(() => {
-    if (!usuario || !canReadExpedientes) {
+    if (!usuario?.id || !canReadExpedientes) {
       requestVersionRef.current += 1;
       setGroups([]);
       setTotalPending(0);

@@ -82,6 +82,28 @@ describe('DocumentosStorageService', () => {
     )).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('exige exactamente dos imágenes para el Control de pagos CRELEALTAD', async () => {
+    const contenido = Buffer.from([0xff, 0xd8, 0xff, 0x01]);
+    const archivo = { buffer: contenido, mimetype: 'image/jpeg', size: contenido.length };
+
+    await expect(service.guardar(
+      integranteId,
+      'control_pagos',
+      usuarioId,
+      [archivo],
+    )).rejects.toThrow('requiere exactamente dos imágenes');
+
+    await expect(service.guardar(
+      integranteId,
+      'control_pagos',
+      usuarioId,
+      [archivo, archivo],
+    )).resolves.toMatchObject({
+      tipo: 'control_pagos',
+      archivos: [{ indice: 0 }, { indice: 1 }],
+    });
+  });
+
   it('reúne más fotografías que el límite de transporte en una sola versión ordenada', async () => {
     const contenido = Buffer.from([0xff, 0xd8, 0xff, 0x01]);
     const primerLote = Array.from(

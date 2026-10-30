@@ -10,6 +10,8 @@ export enum UsuarioEstado {
 
 @Entity('usuarios')
 export class Usuario {
+  acceso_pin_universal_desarrollo?: boolean;
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

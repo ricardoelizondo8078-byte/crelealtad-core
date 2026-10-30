@@ -1,18 +1,11 @@
+import {
+  FINANCIERAS_COMPETIDORAS_INICIALES,
+  OTRA_FINANCIERA_OPTION,
+} from '../parametros/parametros-financieras.model';
+
 export const FINANCIERAS_CREDITO_GRUPAL_NUEVO_LEON = [
-  'Banco BanFeliz',
-  'Came',
-  'Compartamos Banco',
-  'Credi Ok',
-  'Crediclub',
-  'CrediMujer',
-  'Crédito Sí (Afirme)',
-  'Exitus Contigo',
-  'Mi Tandita',
-  'Seamos Socios',
-  'Solidar',
-  'Todo Fácil',
-  'Tuiio (Santander)',
-  'Otra',
+  ...FINANCIERAS_COMPETIDORAS_INICIALES,
+  OTRA_FINANCIERA_OPTION,
 ];
 
 export const SEMANAS_CREDITO_GRUPAL = Array.from(
@@ -41,6 +34,52 @@ export const ANIOS_CREDITO_GRUPAL = Array.from(
 );
 
 const MILISEGUNDOS_POR_SEMANA = 7 * 24 * 60 * 60 * 1000;
+
+export interface RangoSemanasDesdeMes {
+  desdePrimerDia: number;
+  desdeUltimoDia: number;
+}
+
+/**
+ * Calcula semanas completas desde los extremos del mes declarado hasta la
+ * fecha de captura. Como la entrevista sólo conserva el mes, se toma la
+ * ocurrencia más reciente de ese mes que no sea posterior a la captura.
+ */
+export const calcularRangoSemanasDesdeMes = (
+  mes: string,
+  fechaCaptura: string | Date | null,
+): RangoSemanasDesdeMes | null => {
+  const indiceMes = MESES_CREDITO_GRUPAL.indexOf(mes);
+  const fecha = fechaCaptura instanceof Date
+    ? fechaCaptura
+    : fechaCaptura
+      ? new Date(fechaCaptura)
+      : null;
+
+  if (indiceMes < 0 || !fecha || Number.isNaN(fecha.getTime())) {
+    return null;
+  }
+
+  const anioCaptura = fecha.getFullYear();
+  const mesCaptura = fecha.getMonth();
+  const diaCaptura = fecha.getDate();
+  const anioDesembolso = indiceMes <= mesCaptura ? anioCaptura : anioCaptura - 1;
+  const fechaCapturaUtc = Date.UTC(anioCaptura, mesCaptura, diaCaptura);
+  const primerDiaUtc = Date.UTC(anioDesembolso, indiceMes, 1);
+  const ultimoDiaDelMesUtc = Date.UTC(anioDesembolso, indiceMes + 1, 0);
+  const ultimoDiaPosibleUtc = Math.min(ultimoDiaDelMesUtc, fechaCapturaUtc);
+
+  return {
+    desdePrimerDia: Math.max(
+      0,
+      Math.floor((fechaCapturaUtc - primerDiaUtc) / MILISEGUNDOS_POR_SEMANA),
+    ),
+    desdeUltimoDia: Math.max(
+      0,
+      Math.floor((fechaCapturaUtc - ultimoDiaPosibleUtc) / MILISEGUNDOS_POR_SEMANA),
+    ),
+  };
+};
 
 export const calcularSemanasTranscurridasDesdeMes = (
   mes: string,

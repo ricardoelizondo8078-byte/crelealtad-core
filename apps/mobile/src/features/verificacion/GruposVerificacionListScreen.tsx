@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { AppHeader, Card, ScreenContainer, ScreenState, ScreenTitleBar, StatusCard } from '../../components/ui';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  AppHeader,
+  Card,
+  ScreenContainer,
+  ScreenState,
+  ScreenTitleBar,
+  StatusCard,
+  getResponsiveColumnCount,
+  useResponsiveLayout,
+} from '../../components/ui';
 import { api } from '../../services/api-client';
-import { colors, spacing, typography } from '../../theme/tokens';
+import { colors, layout, spacing, typography } from '../../theme/tokens';
 
 export interface GrupoVerificacion {
   id: string;
@@ -26,10 +35,17 @@ export const GruposVerificacionListScreen: React.FC<GruposVerificacionListScreen
   refreshKey = 0,
   onBack
 }) => {
+  const { width } = useResponsiveLayout();
   const [grupos, setGrupos] = useState<GrupoVerificacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const columnCount = getResponsiveColumnCount(width, {
+    mobile: 1,
+    tablet: 2,
+    desktop: 2,
+    wide: 3,
+  });
 
   const calcularDiasEnEstado = (estadoFecha?: string): number => {
     if (!estadoFecha) {
@@ -79,21 +95,32 @@ export const GruposVerificacionListScreen: React.FC<GruposVerificacionListScreen
           onAction={() => setRetryKey((currentKey) => currentKey + 1)}
         />
       ) : (
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
-          <Text allowFontScaling={false} style={styles.subtitle}>
-            Selecciona un grupo para realizar la verificación de crédito.
-          </Text>
-          {grupos.length === 0 ? (
+        <FlatList
+          key={`verification-groups-${columnCount}`}
+          style={styles.scroll}
+          data={grupos}
+          numColumns={columnCount}
+          keyExtractor={(grupo) => grupo.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.list}
+          columnWrapperStyle={columnCount > 1 ? styles.row : undefined}
+          ListHeaderComponent={(
+            <Text allowFontScaling={false} style={styles.subtitle}>
+              Selecciona un grupo para realizar la verificación de crédito.
+            </Text>
+          )}
+          ListEmptyComponent={(
             <Card>
               <Text allowFontScaling={false} style={styles.emptyText}>
                 No hay grupos pendientes de verificación
               </Text>
             </Card>
-          ) : (
-            grupos.map((grupo, index) => {
-              const requiereRevisionDocumental = grupo.requiere_revision_documental === true;
+          )}
+          renderItem={({ item: grupo, index }) => {
+            const requiereRevisionDocumental = grupo.requiere_revision_documental === true;
 
-              return (
+            return (
+              <View style={styles.gridItem}>
                 <Pressable
                   key={grupo.id}
                   accessibilityRole="button"
@@ -143,10 +170,10 @@ export const GruposVerificacionListScreen: React.FC<GruposVerificacionListScreen
                   )}
                   </StatusCard>
                 </Pressable>
-              );
-            })
-          )}
-        </ScrollView>
+              </View>
+            );
+          }}
+        />
       )}
     </ScreenContainer>
   );
@@ -155,9 +182,14 @@ export const GruposVerificacionListScreen: React.FC<GruposVerificacionListScreen
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
   list: {
+    width: '100%',
+    maxWidth: layout.contentMaxWidth,
+    alignSelf: 'center',
     padding: spacing.lg,
     gap: spacing.md
   },
+  row: { gap: spacing.lg },
+  gridItem: { flex: 1 },
   subtitle: {
     color: colors.textSecondary,
     marginBottom: spacing.xs,

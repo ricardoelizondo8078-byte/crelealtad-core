@@ -20,6 +20,17 @@ export interface GrupoEnVerificacionResumen {
   requiere_revision_documental: boolean;
 }
 
+export interface AsesoraExpedienteResumen {
+  id: string;
+  nombre: string;
+  abreviatura: string | null;
+  telefono: string | null;
+}
+
+export type ExpedienteDetalle = ExpedienteEntity & {
+  asesora: AsesoraExpedienteResumen | null;
+};
+
 @Injectable()
 export class ExpedientesService {
   constructor(
@@ -45,11 +56,34 @@ export class ExpedientesService {
     });
   }
 
-  async getById(id: string, scope: AccessScope): Promise<ExpedienteEntity | null> {
+  async getById(id: string, scope: AccessScope): Promise<ExpedienteDetalle | null> {
     await assertExpedienteAccess(this.dataSource, id, scope);
-    return this.expedienteRepository.findOne({
+    const expediente = await this.expedienteRepository.findOne({
       where: { id },
       relations: { grupo: true },
+    });
+
+    if (!expediente) {
+      return null;
+    }
+
+    const rows = expediente.asesora_id
+      ? await this.dataSource.query(
+        `SELECT empleado.id,
+                usuario.nombre,
+                usuario.abreviatura,
+                contacto.telefono_celular AS telefono
+           FROM empleados empleado
+           INNER JOIN usuarios usuario ON usuario.id = empleado.usuario_id
+           LEFT JOIN empleados_contacto contacto ON contacto.empleado_id = empleado.id
+          WHERE empleado.id = $1
+          LIMIT 1`,
+        [expediente.asesora_id],
+      ) as Array<AsesoraExpedienteResumen>
+      : [];
+
+    return Object.assign(expediente, {
+      asesora: rows[0] ?? null,
     });
   }
 

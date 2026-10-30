@@ -7,6 +7,7 @@ interface MigrationDescriptor {
   version: string;
   sequence: number;
   checksum: string;
+  compatibleChecksums?: string[];
   path: string;
 }
 
@@ -70,6 +71,26 @@ describe('MigrationCatalog', () => {
       sequence: 1,
       checksum: createHash('sha256').update(content).digest('hex'),
     });
+  });
+
+  it('calcula el mismo checksum con finales de línea LF o CRLF', () => {
+    writeFileSync(join(directory, '001_inicial.sql'), 'BEGIN;\r\nSELECT 1;\r\nCOMMIT;\r\n');
+    const checksumCrLf = new MigrationCatalog(directory).discover()[0].checksum;
+
+    writeFileSync(join(directory, '001_inicial.sql'), 'BEGIN;\nSELECT 1;\nCOMMIT;\n');
+    const checksumLf = new MigrationCatalog(directory).discover()[0].checksum;
+
+    expect(checksumCrLf).toBe(checksumLf);
+  });
+
+  it('conserva compatibilidad con checksums históricos calculados sobre CRLF', () => {
+    const crlfContent = 'BEGIN;\r\nSELECT 1;\r\nCOMMIT;\r\n';
+    writeFileSync(join(directory, '001_inicial.sql'), crlfContent);
+
+    const migration = new MigrationCatalog(directory).discover()[0];
+    const historicalChecksum = createHash('sha256').update(crlfContent).digest('hex');
+
+    expect(migration.compatibleChecksums).toContain(historicalChecksum);
   });
 
   it('ordena la cadena por nombre canónico', () => {
@@ -162,5 +183,22 @@ describe('MigrationLedger', () => {
     expect(analysis.pending).toEqual(['006_pendiente.sql']);
     expect(analysis.drift).toEqual(['005_segunda.sql']);
     expect(analysis.unknown).toEqual(['004_desconocida.sql']);
+  });
+
+  it('acepta un checksum histórico compatible por diferencia CRLF/LF', () => {
+    const discovered: MigrationDescriptor[] = [{
+      version: '001_inicial.sql',
+      sequence: 1,
+      checksum: 'a'.repeat(64),
+      compatibleChecksums: ['a'.repeat(64), 'b'.repeat(64)],
+      path: '',
+    }];
+
+    const analysis = new MigrationLedger('crelealtad_test').analyze(discovered, [{
+      version: '001_inicial.sql',
+      checksum: 'b'.repeat(64),
+    }]);
+
+    expect(analysis.drift).toEqual([]);
   });
 });

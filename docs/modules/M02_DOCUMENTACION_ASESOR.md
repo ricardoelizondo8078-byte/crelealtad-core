@@ -16,7 +16,10 @@
 
 - Problema que resuelve: completar solicitudes y evidencias sin confundir captura local con respaldo institucional.
 - Resultado esperado: cada documento obligatorio queda marcado como sincronizado solo cuando la API confirma archivo y referencia persistida.
-- Indicadores de éxito: compilación móvil limpia, carga autenticada, tres tipos obligatorios y dos tipos opcionales soportados, comprobante de línea de crédito sin límite de fotos impuesto por la aplicación y error recuperable en la sesión.
+- Indicadores de éxito: compilación móvil limpia, carga autenticada, tres tipos siempre obligatorios,
+  Control de pagos CRELEALTAD obligatorio desde ciclo individual 2 y dos tipos opcionales
+  soportados, comprobante de línea de crédito sin límite de fotos impuesto por la aplicación y
+  error recuperable en la sesión.
 
 ## 3. Alcance
 
@@ -26,6 +29,8 @@
 - Una excepción individual de permisos no sustituye el rol `ASESOR` ni elimina ese alcance por responsable.
 - Registro de `created_by` y `asesora_id` desde el JWT para altas nuevas.
 - INE de la integrante, comprobante de domicilio y solicitud firmada como evidencias obligatorias.
+- Control de pagos CRELEALTAD como primera evidencia y exactamente dos imágenes obligatorias para
+  integrantes con al menos una participación individual previa confirmada por `persona_id`.
 - INE de beneficiario y comprobante de línea de crédito como evidencias opcionales; su ausencia nunca bloquea la conclusión de la integrante.
 - El comprobante de línea de crédito admite todas las fotografías necesarias dentro de una misma versión documental; los demás tipos conservan su cantidad vigente.
 - Captura por cámara o selección desde galería.
@@ -52,7 +57,9 @@
 1. El asesor abre los documentos de una integrante.
 2. La aplicación bloquea edición y navegación mientras recupera la solicitud completa, y muestra un error con reintento si la lectura falla.
 3. La aplicación consulta la solicitud y prioriza documentos obligatorios pendientes.
-4. El asesor captura o selecciona las imágenes: una o dos según el documento y sin límite de cantidad impuesto por la aplicación para el comprobante de línea de crédito.
+4. El asesor captura o selecciona las imágenes: exactamente dos para Control de pagos CRELEALTAD,
+   una o dos según los demás documentos y sin límite de cantidad impuesto por la aplicación para
+   el comprobante de línea de crédito.
 5. La aplicación muestra `Subiendo` y envía multipart con JWT.
 6. La API valida tipo, tamaño, integrante y permiso; escribe una versión inmutable.
 7. La API actualiza ruta y fecha en `solicitudes_documentos`.
@@ -70,7 +77,7 @@
 | Entidad/campo | Origen | Obligatorio | Validación | Historial |
 |---|---|---:|---|---:|
 | `integrante_id` | Ruta API | Sí | UUID e integrante existente | Sí |
-| tipo documental | Ruta API | Según tipo | Tres obligatorios; INE de beneficiario y comprobante de línea de crédito opcionales | Sí |
+| tipo documental | Ruta API | Según tipo | Tres siempre obligatorios; Control de pagos CRELEALTAD obligatorio desde ciclo individual 2; INE de beneficiario y comprobante de línea de crédito opcionales | Sí |
 | archivo | Dispositivo | Sí | JPEG, PNG o PDF; máximo 10 MB por archivo; cantidad ilimitada sólo para comprobante de línea de crédito | Sí |
 | campos `doc_*_ruta` | API | Sí para completitud | Ruta confirmada de servidor | Referencia vigente |
 | campos `doc_*_fecha` | API | Sí al subir | Fecha del servidor | Referencia vigente |
@@ -103,7 +110,8 @@ No se agregan estados oficiales de documento ni expediente en este incremento.
 - Metadatos: `GET /solicitudes/integrante/:integranteId/documentos/:tipo/:documentoId`.
 - Contenido: `GET /solicitudes/integrante/:integranteId/documentos/:tipo/:documentoId/archivos/:indice`.
 - Servicio: almacenamiento documental local configurable mediante `DOCUMENT_STORAGE_PATH`.
-- Tablas: `solicitudes` y `solicitudes_documentos`; sin cambio de esquema.
+- Tablas: `solicitudes` y `solicitudes_documentos`; migración 070 agrega
+  `doc_control_pagos_ruta` y `doc_control_pagos_fecha`.
 - El límite del Paso 6 proviene del producto asignado al expediente; mientras los expedientes históricos no tengan `producto_id`, se usa el primer producto activo. El valor de contingencia vigente es $100,000 si no existe configuración utilizable.
 - Idempotencia: la cola conserva un UUID estable por carga, reanuda desde el siguiente lote y la API
   devuelve una carga parcial o final idéntica sin crear otra versión ni auditoría. Una sustitución
@@ -115,8 +123,15 @@ No se agregan estados oficiales de documento ni expediente en este incremento.
 - RN-003, RN-005, RN-026, RN-029, RN-032 y RN-035.
 - La ruta local no completa Paso 7; solo la ruta emitida por la API es válida.
 - Reemplazar crea una versión nueva y no borra la anterior.
+- Al confirmar una carga, la cola elimina su copia cifrada local y mobile deja de conservar esa URI
+  en el borrador; la consulta posterior usa la ruta vigente del servidor. Si continúa pendiente,
+  la URI cifrada se conserva para reintento y vista previa.
+- Elegir de nuevo después de un error sustituye la operación documental bloqueada y sus archivos
+  asociados; no sustituye operaciones que continúan pendientes o sincronizándose.
 - Todas las fotos del comprobante de línea de crédito seleccionado se guardan ordenadas dentro de la misma versión y se recorren lateralmente con el carrusel compartido de Verificaciones; tocar una abre el visor opaco de pantalla completa con zoom. Reemplazar el conjunto crea otra versión.
-- La completitud exige exclusivamente INE de la integrante, comprobante de domicilio y solicitud firmada sincronizados; INE de beneficiario y comprobante de línea de crédito no participan en ese cálculo.
+- La completitud exige INE de la integrante, comprobante de domicilio y solicitud firmada
+  sincronizados. Desde el ciclo individual 2 exige además Control de pagos CRELEALTAD con dos
+  imágenes confirmadas. INE de beneficiario y comprobante de línea de crédito no participan.
 - El monto precargado es únicamente una referencia. El Paso 6 no queda completo hasta que exista un `monto_solicitado` positivo capturado por el asesor y confirmado por la API; la validación del backend impide avanzar a `SUJETA_CREDITO` sin esa confirmación.
 - Las tarjetas de integrantes y el encabezado del formulario dejan vacío el monto formal mientras `monto_solicitado_confirmado_at` sea `NULL`; nunca presentan la precarga histórica como captura del asesor.
 - La API rechaza el guardado por encima de `productos_credito.monto_maximo`; la interfaz muestra el error y mantiene bloqueado el avance. Un dato inválido creado antes de esta validación se conserva para auditoría, pero debe corregirse antes de completar el Paso 6.
@@ -133,7 +148,9 @@ La bandeja y el detalle de grupos aplican alcance por responsable para `ASESOR`.
 ## 11. Estados técnicos de UI
 
 - Carga: indicador mientras se recupera solicitud.
-- Vacío: tres documentos obligatorios pendientes y dos documentos opcionales disponibles.
+- Vacío: tres documentos obligatorios pendientes para una integrante nueva; desde ciclo individual
+  2 se agrega primero el Control de pagos CRELEALTAD pendiente. Los dos documentos opcionales
+  permanecen disponibles.
 - Error: mensaje accionable y reintento.
 - Sin conexión: se conserva selección solo durante la sesión actual.
 - Timeout: las cargas asignan 120 segundos por cada bloque de hasta dos archivos; ante agotarlo, el cliente solicita revisar la conexión/reintentar y conserva el conjunto durante la sesión.
@@ -157,6 +174,8 @@ La bandeja y el detalle de grupos aplican alcance por responsable para `ASESOR`.
 - [x] La carga exige JWT y permiso de actualización.
 - [x] El estado móvil distingue pendiente, subiendo, sincronizado y error.
 - [x] Los dos documentos opcionales se aceptan y su ausencia no bloquea la conclusión.
+- [x] Una integrante con historial individual confirmado ve primero Control de pagos CRELEALTAD,
+  sólo puede confirmar exactamente dos imágenes y no completa el Paso 7 mientras falte esa versión.
 - [x] El comprobante de línea de crédito permite seleccionar o capturar todas las fotos necesarias, previsualizarlas y consultarlas lateralmente, abrir cada una a pantalla completa con zoom y guardarlas como una sola versión, sin ampliar la cantidad de los demás documentos.
 - [x] La pantalla no permite navegar sobre un formulario vacío mientras recupera una solicitud existente.
 - [x] Guardar o retroceder persiste únicamente los campos del paso visible.

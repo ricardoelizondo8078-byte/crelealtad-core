@@ -115,6 +115,32 @@ export const formatISODateToDDMMMYYYY = (value: string): string => {
   return formatDDMMYYYYToDDMMMYYYY(ddmmyyyy);
 };
 
+export const toISODateFromDDMMMYYYY = (value: string): string => {
+  const match = /^(\d{2})-([A-Z]{3})-(\d{4})$/.exec(value.trim().toUpperCase());
+  if (!match) {
+    return '';
+  }
+
+  const [, dayText, monthLabel, yearText] = match;
+  const monthIndex = SPANISH_MONTHS_3.indexOf(monthLabel);
+  if (monthIndex < 0) {
+    return '';
+  }
+
+  const day = Number(dayText);
+  const year = Number(yearText);
+  const candidateDate = new Date(year, monthIndex, day);
+  if (
+    candidateDate.getFullYear() !== year
+    || candidateDate.getMonth() !== monthIndex
+    || candidateDate.getDate() !== day
+  ) {
+    return '';
+  }
+
+  return `${yearText}-${String(monthIndex + 1).padStart(2, '0')}-${dayText}`;
+};
+
 export const maskDateDDMMYYYY = formatDateDDMMYYYY;
 
 export const isValidDateDDMMYYYY = validateRealDate;

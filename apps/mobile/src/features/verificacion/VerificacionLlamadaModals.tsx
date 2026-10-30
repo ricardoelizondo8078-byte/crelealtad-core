@@ -206,7 +206,6 @@ export const VerificacionLlamadaModals: React.FC<VerificacionLlamadaModalsProps>
         mimeType: 'image/jpeg',
       }] : []}
       onClose={onCloseEvidenciaTelefono}
-      fullScreen
       moduleTheme="verification"
       secondaryAction={{
         title: 'Cambiar evidencia',

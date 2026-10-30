@@ -54,6 +54,7 @@ Botón-tarjeta compacto para concentradores de tareas o procesos equivalentes.
 ### Props
 
 - `title: string`
+- `description?: string`
 - `iconLabel: string`
 - `moduleTheme: ModuleThemeKey`
 - `onPress?: () => void | Promise<void>`
@@ -65,6 +66,7 @@ Botón-tarjeta compacto para concentradores de tareas o procesos equivalentes.
 ### Design notes
 
 - Presenta acciones pares sin convertir ninguna en un avance primario obligatorio.
+- Puede mostrar una descripción breve debajo del título cuando el renglón representa un catálogo.
 - Usa el tema del módulo, la tarjeta base y las medidas táctiles oficiales.
 - La tarjeta completa es táctil y el indicador de apertura no sustituye la etiqueta accesible.
 - `completed` muestra una palomita de proceso realizado; `result` muestra una palomita verde
@@ -78,17 +80,48 @@ Carrusel de consulta para documentos con más de una imagen, como el frente y re
 ### Props
 
 - `title: string`
-- `pages: readonly { uri: string; label: string; headers?: Record<string, string> }[]`
+- `pages: readonly { uri: string; label: string; headers?: Record<string, string>; leftAction?: ZoomableImageAction; frameColor?: string; frameAccessibilityLabel?: string }[]`
 - `moduleTheme?: ModuleThemeKey`
 
 ### Design notes
 
 - Permite cambiar de imagen con un gesto horizontal y comunica la cara e índice actuales.
-- Tocar una imagen abre un modal opaco de pantalla completa; la aplicación no permanece visible detrás del documento.
-- En pantalla completa reutiliza `ZoomableImage`, conserva el gesto lateral al 100 % y captura el arrastre para recorrer la imagen cuando existe zoom.
-- Virtualiza tanto la vista previa como la pantalla completa: monta únicamente la fotografía visible y
-  sus vecinas para que un conjunto numeroso de imágenes de alta resolución no bloquee la interfaz.
+- Tocar una imagen abre el único `DocumentViewer` institucional en la página seleccionada: tarjeta
+  amplia, encabezado del módulo, ayuda contextual y `X` superior. No existe una presentación visual
+  paralela ni un botón inferior `Cerrar`.
+- Al `100 %`, el visor cambia de página mediante deslizamiento horizontal. Al iniciar un pellizco,
+  `ZoomableImage` usa `onPagingLockChange` para bloquear y recentrar el paginador; mientras conserve
+  zoom, el arrastre recorre sólo esa fotografía. La paginación vuelve al restablecer `100 %`. El
+  índice permanece visible y accesible, sin botones `Anterior / Siguiente`.
+- Cada página puede incluir una acción izquierda contextual; el carrusel se cierra antes de ejecutarla para no apilar modales.
+- La acción contextual y los controles de zoom usan una superficie clara con borde para mantener contraste sobre fotografías y fondos oscuros.
+- Todas las páginas reservan la misma banda superior y la misma banda inferior. `frameColor` pinta
+  exclusivamente esas dos bandas cuando el dominio necesita una clasificación visual; los laterales
+  y el espacio libre de la imagen permanecen blancos. Siempre debe acompañarse de
+  `frameAccessibilityLabel` y texto visible en `label` para no depender sólo del color. La acción
+  izquierda y los controles de zoom se centran dentro de la banda inferior.
+- La vista previa y el visor compartido mantienen virtualizadas la página visible y sus vecinas.
 - No decide el orden documental, descarga archivos ni persiste resultados; recibe páginas ya autorizadas y resueltas por la pantalla.
+
+## StepFlowLayout
+
+Composición responsive para formularios largos y flujos por pasos.
+
+### Props
+
+- `steps: readonly { id: number | string; title: string; complete?: boolean }[]`
+- `currentStepId: number | string`
+- `moduleTheme: ModuleThemeKey`
+- `sidebarTitle?: string`
+
+### Design notes
+
+- En escritorio presenta un riel lateral estable y el contenido del paso activo en la segunda
+  columna; en móvil devuelve únicamente el contenido original.
+- El riel anuncia a accesibilidad el paso actual, los concluidos y los pendientes, sin convertirlos
+  en navegación ni permitir saltos no autorizados.
+- Consume los anchos, separación, colores, tipografía y radios oficiales. No contiene reglas de
+  completitud: recibe cada estado ya calculado por el flujo.
 
 ## PrimaryButton y SecondaryButton
 
@@ -100,15 +133,33 @@ Botón de baja jerarquía visual para acciones secundarias.
 - `leadingIcon?: React.ReactNode`
 - `trailingContent?: React.ReactNode`
 - `accessibilityLabel?: string`
+- `size?: 'default' | 'compact'` (solo `PrimaryButton`)
 
 ### Design notes
 
 - `danger` usa fondo rojo suave, borde y texto rojos para acciones como cerrar sesión.
 - `leadingIcon` permite anteponer un icono decorativo con la misma separación en ambos botones, sin sustituir el texto operativo ni su etiqueta accesible.
 - `trailingContent` permite añadir un indicador compacto al final; el contenido debe conservar una etiqueta accesible y no depender sólo del color.
+- `PrimaryButton` usa `compact` para acciones breves dentro de componentes compartidos; conserva un objetivo táctil mínimo de 44 puntos y no ocupa todo el ancho disponible.
 - Conserva la altura táctil y el comportamiento accesible del botón secundario base.
 - Las acciones asíncronas se ejecutan mediante el controlador global de procesamiento: un segundo
   toque se ignora y la pantalla permanece bloqueada hasta que la promesa concluye.
+
+## EvidenceReviewChoice
+
+Control compacto de revisión visual para una evidencia individual.
+
+### Design notes
+
+- Presenta `Revisa`, una tacha roja, una advertencia amarilla y una palomita verde como opciones de
+  radio accesibles.
+- Dentro del visor comparte la misma fila y alineación vertical con la acción compacta de cierre,
+  liberando el resto de la altura para la fotografía.
+- Las tres opciones conservan fondo tenue, borde y símbolo oscuros en reposo. La seleccionada usa
+  fondo sólido, borde reforzado y símbolo con contraste para no depender únicamente del color.
+- Mantiene un objetivo táctil mínimo de 44 puntos y no decide persistencia ni reglas de cierre.
+- Recibe valor y estado deshabilitado controlados por la pantalla; no conserva una selección local
+  que pudiera mostrarse como guardada sin confirmación del servidor.
 
 ## ProcessingOverlay
 
@@ -158,13 +209,34 @@ Superficie modal única para comunicar y bloquear una operación en curso.
 
 - `ContextHeader` presenta grupo, integrante, ciclo u otro contexto inmediatamente debajo de la barra de título; admite texto inverso o acento amarillo institucional, y puede mostrar un `trailingText` compacto en el extremo derecho sin desplazar el título centrado. Siempre consume el tema del módulo.
 - `StickySectionHeader` mantiene su variante suave y agrega `variant="solid"` para encabezados de sección a todo lo ancho que permanecen visibles durante el desplazamiento; la variante sólida estandariza altura, tipografía y sombra entre pantallas.
-- `textTone="withdrawn"` aplica el rojo claro institucional con contraste legible sobre verde; `fullBleed` permite extender el renglón dentro de contenedores con relleno horizontal.
+- `textTone="withdrawn"` aplica el rojo claro institucional con contraste legible sobre verde.
+- `placement="standalone"` se usa cuando la franja es hija directa de un cuerpo con el relleno institucional `spacing.lg`: aplica una compensación lateral de `spacing.xs`, por lo que la franja queda ligeramente más larga que los campos y conserva un margen efectivo `spacing.md` respecto de la pantalla, igual que en Verificación. También aplica `spacing.lg` antes y `spacing.sm` después.
+- `fullBleed` se reserva para `placement="embedded"` dentro de una tarjeta u otro contenedor con relleno; extiende la franja únicamente hasta los bordes de ese contenedor. Nunca debe cancelar el margen lateral del cuerpo de pantalla.
 - Ninguno contiene lógica de negocio ni colores definidos por la pantalla.
 
 ## SummaryMetricsBar
 
 - Presenta dos indicadores operativos con valores grandes y etiquetas compactas, usando el color primario del módulo.
 - Se coloca fuera del contenedor desplazable cuando los indicadores deben permanecer visibles durante el scroll; recibe valores ya calculados y no contiene reglas de negocio.
+
+## SummaryDetailsCard
+
+- Presenta renglones compactos de etiqueta y valor, centrados verticalmente aunque alguno ocupe más
+  altura por una burbuja, una referencia o una acción.
+- Una acción puede recibir un icono tipado; el componente aplica tamaño, color y separación desde el
+  tema y los tokens. Con icono adopta el botón rectangular secundario del módulo: fondo blanco,
+  borde de dos puntos, `radius.md` y contenido centrado; no usa forma de píldora. La cámara identifica
+  la consulta de fotografías confirmadas sin sustituir el texto ni la etiqueta accesible.
+- Una acción compacta puede incluir un indicador intermedio no interactivo. El componente reserva
+  su columna, aplica forma circular y mantiene separado el indicador del botón. Cuando la acción
+  pertenece sólo al botón, la etiqueta, el indicador y el resto del renglón permanecen de lectura.
+  El indicador admite un valor y una etiqueta accesible preparados por la pantalla, por ejemplo un
+  signo pendiente o un promedio ya calculado, sin incorporar reglas de dominio.
+- La columna de etiqueta puede apilar debajo una cápsula informativa de tres segmentos semánticos.
+  El componente resuelve sus tonos, altura intermedia, números reforzados y
+  accesibilidad; la pantalla entrega los conteos ya calculados y la cápsula no amplía la zona táctil
+  de la acción.
+- Recibe valores y reglas de tono ya resueltos; no calcula dominio ni persistencia.
 
 ## RequiredSelectionBar y SingleSelectOption
 
@@ -173,6 +245,20 @@ Superficie modal única para comunicar y bloquear una operación en curso.
 - En conjunto permiten seleccionar un único rol operativo sin depender sólo del color; la marca breve siempre se acompaña de su nombre completo.
 - La tesorera usa el círculo amarillo `T` junto con la etiqueta explícita `TESORERA`.
 - La marca interior no aumenta la altura exterior del badge; `TESORERA` y estados como `COMPLETA` conservan la misma medida y alineación.
+
+## SemanticChoiceGroup
+
+- Presenta dos o tres alternativas exclusivas simultáneas como radios accesibles.
+- Cada alternativa combina un círculo, símbolo, texto y tono semántico `positive`, `warning` o
+  `negative`; el círculo usa un fondo claro en reposo y color sólido al seleccionarse.
+- Los contenedores conservan borde completo de dos puntos para distinguir cada alternativa y nunca
+  dependen sólo del color.
+- `allowClear` permite que una pregunta opcional vuelva a `null` al tocar de nuevo la alternativa
+  seleccionada; el control lo anuncia mediante accesibilidad.
+- Recibe valores y etiquetas ya definidos por el dominio y no persiste cambios por sí mismo.
+
+`TextInput` y `SelectorField` admiten `strongBorder` cuando una pantalla operativa necesita separar
+con mayor claridad todos sus controles sin cambiar el estilo global de otros módulos.
 
 ## StatusStripe y StatusCard
 

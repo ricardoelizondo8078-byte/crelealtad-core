@@ -1,8 +1,8 @@
 # 08 Entity Catalog — Catálogo Integral de Entidades
 
-Versión: 2.15.0
+Versión: 2.21.0
 Estado: Vigente y verificado
-Fecha de auditoría: 2026-10-04
+Fecha de auditoría: 2026-10-18
 Fuente: PostgreSQL `crelealtad`, entidades TypeORM, API y mobile activos
 
 ## Criterio de lectura
@@ -26,7 +26,7 @@ Integridad de estado: `ACTIVA`, `INACTIVA`, `BLOQUEADA` y `DEPURADA_LOGICA`, pro
 Objetivo: identidad de acceso al sistema.
 Persistencia: `usuarios`.
 Cobertura: PostgreSQL, TypeORM, Auth API y login mobile; cada acceso exitoso actualiza `ultimo_login` y registra un evento `LOGIN` no sensible en la misma transacción.
-Relaciones: un rol y una sucursal por usuario en el modelo vigente; `permisos_personalizados` puede reemplazar de forma excepcional y auditable el conjunto efectivo sin cambiar el rol.
+Relaciones: un rol y una sucursal por usuario en el modelo vigente; `permisos_personalizados` puede reemplazar de forma excepcional y auditable el conjunto efectivo sin cambiar el rol. El contrato admite capacidades exactas aditivas `modulo:accion` para excepciones acotadas.
 Implementación para asesores: abreviatura operativa como identificador de login, PIN en `password_hash`, marca `requiere_cambio_pin`, sucursal `MATRIZ`, zona sin asignar y estado `ACTIVO`.
 Integridad de estado: `ACTIVO`, `INACTIVO`, `SUSPENDIDO` y `BLOQUEADO`, protegidos por `ck_usuarios_estado`.
 Cobertura de carga: 49 usuarios vinculados a 49 registros de `empleados` y 49 registros de datos laborales.
@@ -38,7 +38,7 @@ matriz funcional aprobada en DEC-175.
 
 Objetivo: agrupar módulos y acciones permitidas.
 Persistencia: `roles`, con permisos JSONB.
-Cobertura: datos iniciales, rol incluido en JWT y permisos evaluados por el guard global contra un catálogo técnico central. La migración 035 valida en PostgreSQL la forma JSONB y que módulos/acciones contengan texto.
+Cobertura: datos iniciales, rol incluido en JWT y permisos evaluados por el guard global contra un catálogo técnico central. La migración 035 valida en PostgreSQL la forma JSONB y que módulos/acciones contengan texto; la 038 valida el arreglo opcional `capacidades` y concede temporalmente `parametros:leer`; la 039 fija los pares exactos de gobierno para que ese módulo no herede acciones cartesianas.
 Integridad de estado: `ACTIVO` e `INACTIVO`, protegidos por `ck_roles_estado`.
 Brecha: la matriz funcional y sus alcances fueron aprobados en DEC-175; faltan contrato v2,
 migración, aplicación territorial y retiro controlado de DEC-023.
@@ -135,17 +135,22 @@ oficial y no una certificación criptográfica del dispositivo.
 
 Objetivo: conservar cada confirmación declarada por el verificador sobre si el vecino conoce a
 la integrante y sabe dónde vive.
-Persistencia: `verificacion_visitas_vecino`.
-Cobertura: PostgreSQL mediante migraciones 018 y 019, entidad TypeORM, API autenticada y
-captura mobile conectada.
+Persistencia: `verificacion_visitas_vecino` y su relación
+`verificacion_visita_vecino_opciones`.
+Cobertura: PostgreSQL mediante migraciones 018, 019, 064 y 065, entidad TypeORM para la visita, relación
+validada mediante SQL/trigger, API autenticada y captura mobile conectada.
 Campos de trazabilidad: `integrante_id`, `fachada_id`, `conoce_y_sabe_donde_vive`, `registrada_por`,
 `created_at`, `idempotency_key`, latitud, longitud, precisión horizontal opcional, fecha/hora de
 lectura y fuente `DISPOSITIVO`.
 Reglas cerradas: una fila histórica por confirmación enviada; llaves foráneas restrictivas hacia
 integrante y usuario; idempotencia única por actor; ubicación válida obligatoria para cada fila.
-Las filas nuevas requieren la fachada más reciente; las filas anteriores a la migración 020
-conservan `fachada_id = NULL`. El resumen recupera sólo el resultado más reciente y no expone coordenadas. No duplica nombre,
-domicilio o INE y su existencia no define todavía la conclusión de la visita.
+Las filas nuevas requieren la fachada más reciente y exactamente una opción activa de la familia
+que corresponda al resultado `Sí` o `No`. La relación conserva `etiqueta_snapshot` y
+`orden_snapshot`; sus FKs son restrictivas, un trigger impide mezclar ramas o usar opciones
+inactivas y la migración 065 limita cada visita a una relación. Las filas anteriores a la migración
+020 conservan `fachada_id = NULL` y las siete visitas anteriores a la 064 permanecen sin opciones
+inferidas. El resumen recupera sólo el resultado más reciente con su opción y no expone coordenadas. No duplica nombre, domicilio o INE
+y su existencia no define por sí sola la conclusión de la visita.
 
 ## 8.6 Evidencia posterior a la respuesta del vecino
 
@@ -183,16 +188,38 @@ para el módulo de destino todavía pendiente. Resumen y auditoría omiten las c
 
 Objetivo: conservar las fotografías opcionales de negocio, control de pagos, folleto e historial
 crediticio externo que el verificador anexa durante Entrevista.
-Persistencia: metadatos en `verificacion_entrevista_evidencias` y archivo en almacenamiento protegido
-fuera de PostgreSQL. La migración 031 sustituyó el nombre histórico
+Persistencia: metadatos en `verificacion_entrevista_evidencias`, asociaciones grupales en
+`verificacion_entrevista_evidencia_integrantes` y archivo único en almacenamiento protegido fuera
+de PostgreSQL. La migración 031 sustituyó el nombre histórico
 `verificacion_entrevista_negocio_evidencias` sin perder sus filas.
 Cobertura: captura repetible exclusivamente desde cámara en mobile, API autenticada, ruta privada y
-migraciones 024, 025, 031 y 032.
-Campos de trazabilidad: integrante, tipo controlado, ruta, MIME, tamaño, SHA-256, origen `CAMARA`,
-actor, idempotencia, fecha de foto, ubicación, precisión disponible y fecha de registro.
+migraciones 024, 025, 031, 032, 047, 048, 049, 050 y 051.
+Campos de trazabilidad: expediente e integrante de captura, tipo controlado, ruta, MIME, tamaño,
+SHA-256, origen `CAMARA`, actor, idempotencia, fecha de foto, ubicación, precisión disponible y
+fecha de registro; cada asociación conserva integrante, actor y fecha. Las fotografías nuevas de
+historial externo conservan además `clasificacion_semaforo` con `VERDE`, `AMARILLO` o `ROJO` y una
+referencia a `motivos_clasificacion_evidencia`; `NULL` identifica el legado sin clasificación o
+motivo declarado.
 Reglas cerradas: cero fotografías es válido; pueden agregarse todas las necesarias y no existe máximo
 funcional de cantidad. Cada archivo debe ser JPEG o PNG válido y pesar hasta 10 MB. Cada confirmación
-crea historial; no define el estado ni la conclusión general de Entrevista.
+crea historial; no define el estado ni la conclusión general de Entrevista. Para historial de otra
+financiera, cada archivo nuevo exige una o más integrantes participantes del mismo expediente y se
+muestra al consultar cualquiera de ellas. Antes de asociarlo exige su semáforo y exactamente un
+motivo activo del mismo color; ninguno produce por sí solo dictamen o estado. El legado se asocia
+sólo con su integrante de origen y no recibe un motivo inferido.
+
+## 8.9 Motivos de clasificación de evidencia
+
+Objetivo: administrar las explicaciones institucionales disponibles después de elegir verde,
+amarillo o rojo en una fotografía de otra financiera.
+Persistencia: `motivos_clasificacion_evidencia`, con UUID, color, concepto original y normalizado,
+baja lógica, actores y fechas. La referencia compuesta desde la evidencia garantiza que motivo y
+color coincidan; `ON DELETE RESTRICT` conserva el significado histórico.
+Cobertura: API administrativa de alta, edición segura y cambio de estado, lectura operativa de
+activos, tres pantallas M11 y migraciones 050–051.
+Reglas cerradas: concepto único normalizado dentro de cada color; sólo Administración muta; no hay
+borrado; cada color parte de cinco opciones activas y cada evidencia nueva de historial externo
+elige una sola referencia. Un concepto sólo se renombra antes de su primer uso.
 
 ## 9. Solicitud
 
@@ -320,8 +347,81 @@ Historia individual: vive en `expedientes`, `integrantes` y `solicitudes`; no ex
 Objetivo: detectar migraciones pendientes, archivos alterados y entradas desconocidas antes de desplegar.
 Persistencia: `schema_migrations`.
 Cobertura: versión de archivo, SHA-256, origen `MIGRATION` o `BASELINE`, fecha, usuario PostgreSQL y
-duración opcional. `crelealtad_test` y `crelealtad` tienen las 33 migraciones canónicas aplicadas hasta la 036, sin pendientes, drift ni entradas desconocidas.
+duración opcional. `crelealtad_test` y `crelealtad` tienen las 38 migraciones canónicas aplicadas
+hasta la 041, sin pendientes, drift ni entradas desconocidas. El checksum canónico
+normaliza LF/CRLF y conserva compatibilidad con registros históricos creados en ambos formatos.
 Regla técnica: un checksum distinto bloquea el baseline; la tabla no contiene datos de negocio.
+
+## 23. Financiera competidora y clasificación versionada
+
+Objetivo: gobernar la señal institucional de competencia que consume Verificación sin hardcodear
+la política ni reescribir conclusiones históricas.
+
+Persistencia vigente:
+
+- `financieras_competidoras`: identidad estable, nombre oficial normalizado, pertenencia al catálogo
+  base, actor y fechas.
+- `financieras_competidoras_versiones`: revisión, nombre oficial propuesto, clasificación, motivo,
+  alias principal y alternos, vigencia, baja lógica, siete datos breves de producto, descripción
+  extensa opcional, estado y columnas históricas de propuesta, decisión y publicación. Desde
+  DEC-199, una publicación directa de Administración registra al mismo actor en esas columnas para
+  conservar el contrato y la trazabilidad sin introducir una aprobación intermedia.
+- `financieras_competidoras_sucursales_version`: sucursales ordenadas de una versión, con zona,
+  dirección, número de asesoras y valor declarado; las filas vacías conservan la cantidad capturada.
+
+Integridad: nombre normalizado único, ninguna versión abierta antes de publicar un nuevo cambio,
+máximo diez
+sucursales ordenadas por versión, cantidades de asesoras no negativas, catálogos cerrados mediante
+checks, FKs `ON DELETE RESTRICT`, rango de vigencia válido e índices por vigencia y alias.
+Estado: la migración canónica 037 y su reversión fueron validadas en PostgreSQL temporal; 037 a 039
+se aplicaron primero en `crelealtad_test` y después en `crelealtad` con respaldo verificado. El
+catálogo inició vacío, sin clasificaciones inferidas o precargadas. La migración 040 incorporó las
+trece identidades iniciales sin crear versiones ni asignarles clasificación; pasó aplicación,
+rollback y reaplicación en `crelealtad_test` antes de aplicarse con respaldo a `crelealtad`.
+
+## 24. Opciones parametrizadas de Verificación
+
+Objetivo: permitir que Dirección administre las opciones operativas visibles en Entrevista y en la
+respuesta de Visita al vecino sin modificar códigos persistidos ni reescribir respuestas históricas.
+
+Persistencia: `parametros_entrevista_opciones` conserva UUID, familia, código estable, etiqueta
+original y normalizada, orden positivo único por familia, baja lógica, actores y fechas. La familia,
+el código y la etiqueta normalizada son únicos dentro de su alcance. Los actores referencian
+`usuarios` con `ON DELETE RESTRICT`.
+
+La migración 053 carga 88 opciones en 18 familias de Entrevista. Seis familias textuales de motivos
+admiten altas; las doce ligadas a enums de API sólo permiten editar, ordenar o cambiar disponibilidad
+de códigos existentes. La migración 064 agrega dos familias extensibles y sin precarga para Visita
+al vecino: `VISITA_VECINO_RESPUESTA_SI` y `VISITA_VECINO_RESPUESTA_NO`. No se borra ninguna opción
+y cada catálogo configurado conserva al menos una opción activa mediante la API.
+
+`verificacion_visita_vecino_opciones` registra exactamente una opción por respuesta nueva mediante
+PK compuesta, unicidad adicional de `visita_id`, FKs restrictivas e instantáneas de etiqueta y orden. El trigger
+`validar_opcion_respuesta_visita_vecino` exige que la opción siga activa y pertenezca a la familia
+correspondiente al valor booleano de la visita; los cambios futuros de etiqueta u orden no alteran
+el historial ya confirmado.
+
+`parametros_verificacion_pasos_versiones` y `parametros_verificacion_pasos_reglas` conservan la
+matriz completa de obligatoriedad por cuatro tipos de integrante y seis procesos. La migración 068
+agrega `parametros_verificacion_cierre_grupo_versiones`, con UUID, revisión única positiva, cantidad
+de integrantes verificadas requeridas, actor y fecha. La migración 069 limita esa cantidad al rango
+0–12 del producto. No contiene una fila inicial: la
+ausencia es un bloqueo explícito y no un valor implícito.
+La migración 041 versiona el nombre oficial y define el primer alias como texto operativo del pop-up.
+La 042 permite clasificación y motivo opcionales. La 043 incorpora producto y sucursales versionadas;
+pasó aplicación, rollback y reaplicación en prueba antes de aplicarse con respaldo en operación. La
+044 reduce a diez el máximo permitido y pasó el mismo control. La 045 agrega una descripción
+opcional `TEXT` a la versión y también pasó aplicación, rollback y reaplicación en prueba antes de
+aplicarse con respaldo en operación. La 046 retira las capacidades de aprobar/rechazar M11, conserva
+`parametros:leer` en Gerencia y asegura `parametros:leer`, `parametros:actualizar` y
+`parametros:registrar` en Administración; se probó con aplicación, rollback y reaplicación antes del
+  corte operativo. La migración 047 agregó las asociaciones de evidencia grupal y la 048 incorporó
+  vigencia e historial de corrección, ambas con ida/vuelta en prueba y respaldo operativo verificado.
+  La 049 incorporó el semáforo por fotografía. La 050 creó `motivos_clasificacion_evidencia` y la
+  referencia del mismo color desde la evidencia. La 051 completó hasta cinco motivos activos por
+  color sin sustituir los tres amarillos ya existentes en operación; pasó aplicación, rollback y
+  reaplicación en prueba y despliegue operativo con respaldo verificado. Ambas bases quedaron 48/48,
+  sin pendientes, drift ni entradas desconocidas.
 
 ## Artefactos no canónicos
 
@@ -333,8 +433,7 @@ Regla técnica: un checksum distinto bloquea el baseline; la tabla no contiene d
 - Verificación como dictamen y bitácora formal del resto de procesos; los intentos de llamada ya tienen entidad dedicada.
 - Análisis.
 - Desembolso como evento explícito.
-- Parámetro.
-- Regla versionada.
+- Otras familias de parámetros y reglas aún no especificadas.
 - Observación estructurada.
 - Excepción operativa.
 - Cola de sincronización offline.

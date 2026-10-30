@@ -38,7 +38,8 @@ export class AuthController {
       rol_nombre: usuario.rol.nombre,
       sucursal_id: usuario.sucursal_id,
       estado: usuario.estado,
-      requiere_cambio_pin: usuario.requiere_cambio_pin,
+      requiere_cambio_pin: usuario.requiere_cambio_pin
+        && !usuario.acceso_pin_universal_desarrollo,
       permisos: resolverPermisosEfectivos(usuario),
     };
   }

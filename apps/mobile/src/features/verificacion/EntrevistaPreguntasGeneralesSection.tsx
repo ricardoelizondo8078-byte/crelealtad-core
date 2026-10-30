@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -27,6 +27,7 @@ import {
   NO_SABE_DOMICILIO_RECOLECCION_LABEL,
   NO_SABE_DOMICILIO_RECOLECCION_VALUE,
 } from './verificacion-entrevista.catalog';
+import { useOpcionesEntrevista } from './verificacion-entrevista-parametros';
 import type { IntegranteData } from './verificacion-individual.types';
 
 interface EntrevistaPreguntasGeneralesSectionProps {
@@ -37,6 +38,7 @@ interface EntrevistaPreguntasGeneralesSectionProps {
   guardadoLocalPendiente: boolean;
   conoceAsesora: string;
   comoConocioAsesora: string;
+  abrirComoConocioAsesora: boolean;
   conoceIntegrantes: string;
   tiempoConoceIntegrantes: string;
   sabeMontosCompaneras: string;
@@ -78,6 +80,7 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
   guardadoLocalPendiente,
   conoceAsesora,
   comoConocioAsesora,
+  abrirComoConocioAsesora,
   conoceIntegrantes,
   tiempoConoceIntegrantes,
   sabeMontosCompaneras,
@@ -107,8 +110,16 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
   onDomicilioRecoleccionChange,
   onTieneFamiliarGrupoChange,
   onFamiliaresGrupoChange,
-}) => (
-  <>
+}) => {
+  const opcionesComoConocio = useOpcionesEntrevista('COMO_CONOCIO_ASESORA', ['Por otra integrante', 'En otra financiera', 'A través de Facebook', 'Otro']);
+  const opcionesAntiguedadGrupo = useOpcionesEntrevista('ANTIGUEDAD_CONOCE_GRUPO', ['0-1 años', '1-3 años', '3+ años']);
+  const opcionesDesacuerdoMontos = useOpcionesEntrevista('MOTIVO_DESACUERDO_MONTOS', MOTIVOS_DESACUERDO_MONTOS);
+  const [abrirDesacuerdoMontos, setAbrirDesacuerdoMontos] = useState(false);
+  const [abrirSeleccionTesorera, setAbrirSeleccionTesorera] = useState(false);
+  const [abrirSeleccionFamiliares, setAbrirSeleccionFamiliares] = useState(false);
+
+  return (
+    <>
     <View style={styles.sectionHeader}>
       <StickySectionHeader
         title="PREGUNTAS GENERALES"
@@ -146,18 +157,14 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
 
     {conoceAsesora === 'Sí' ? (
       <PickerField
+        key={`como-conocio-asesora-${abrirComoConocioAsesora && !comoConocioAsesora.trim() ? 'abrir' : 'cerrado'}`}
         label="¿Cómo conoció a la asesora?"
         value={comoConocioAsesora}
-        options={[
-          'Por otra integrante',
-          'En otra financiera',
-          'A través de Facebook',
-          'Otro',
-        ]}
+        options={[...opcionesComoConocio]}
         onSelect={onComoConocioAsesoraChange}
         placeholder="Seleccionar opción"
         moduleTheme="verification"
-        autoOpen
+        autoOpen={abrirComoConocioAsesora && !comoConocioAsesora.trim()}
         confirmSelection
         highlightSelectedValue
         required
@@ -177,7 +184,7 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
       <SelectorField
         label="¿Desde hace cuánto?"
         value={tiempoConoceIntegrantes}
-        options={['0-1 años', '1-3 años', '3+ años']}
+        options={[...opcionesAntiguedadGrupo]}
         onSelect={onTiempoConoceIntegrantesChange}
         moduleTheme="verification"
         required
@@ -197,7 +204,10 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
       label="¿Está de acuerdo con los montos de sus compañeras?"
       value={acuerdoMontos}
       options={['Sí', 'No']}
-      onSelect={onAcuerdoMontosChange}
+      onSelect={(respuesta) => {
+        setAbrirDesacuerdoMontos(respuesta === 'No');
+        onAcuerdoMontosChange(respuesta);
+      }}
       moduleTheme="verification"
       required
     />
@@ -215,7 +225,10 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
               montoTotalSolicitadoGrupo,
             )} · ${integranteGrupo.nombre} · ${formatCurrency(integranteGrupo.montoSolicitado)}`,
           }))}
-        onSelect={onCompanerasMontoNoAcordadoChange}
+        onSelect={(seleccion) => {
+          setAbrirDesacuerdoMontos(false);
+          onCompanerasMontoNoAcordadoChange(seleccion);
+        }}
         placeholder="Seleccionar integrantes"
         helperText={companerasMontoNoAcordadoIds.length > 0
           ? 'Cada integrante muestra debajo la causa registrada.'
@@ -226,7 +239,7 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
         moduleTheme="verification"
         selectedItemsTitle="Integrantes con monto no aceptado"
         minSelections={1}
-        openOnMount
+        openOnMount={abrirDesacuerdoMontos && companerasMontoNoAcordadoIds.length === 0}
         selectionTone="danger"
         selectedItemsAreTrigger
         followUp={{
@@ -236,7 +249,7 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
             );
             return `¿Por qué no está de acuerdo con ${companera?.nombre ?? 'esta integrante'}?`;
           },
-          options: MOTIVOS_DESACUERDO_MONTOS,
+          options: [...opcionesDesacuerdoMontos],
           values: motivosDesacuerdoMontosPorIntegrante,
           onChange: onMotivosDesacuerdoChange,
         }}
@@ -248,7 +261,10 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
       label="¿Conoce a la tesorera del grupo?"
       value={conoceTesoreraDelGrupo}
       options={['Sí', 'No']}
-      onSelect={onConoceTesoreraChange}
+      onSelect={(respuesta) => {
+        setAbrirSeleccionTesorera(respuesta === 'Sí');
+        onConoceTesoreraChange(respuesta);
+      }}
       moduleTheme="verification"
       required
     />
@@ -261,14 +277,17 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
           value: integranteGrupo.id,
           label: integranteGrupo.nombre,
         }))}
-        onSelect={(seleccion) => onQuienEsTesoreraChange(seleccion[0] ?? '')}
+        onSelect={(seleccion) => {
+          setAbrirSeleccionTesorera(false);
+          onQuienEsTesoreraChange(seleccion[0] ?? '');
+        }}
         placeholder="Seleccionar tesorera"
         modalSubtitle="Selecciona una integrante"
         moduleTheme="verification"
         selectedItemsTitle="Tesorera seleccionada"
         minSelections={1}
         maxSelections={1}
-        openOnMount
+        openOnMount={abrirSeleccionTesorera && !quienEsTesorera}
         selectedItemsAreTrigger
         hideLabelWhenSelected
         required
@@ -319,7 +338,10 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
       label="¿Tiene algún familiar en este grupo?"
       value={tieneFamiliarGrupo}
       options={['Sí', 'No']}
-      onSelect={onTieneFamiliarGrupoChange}
+      onSelect={(respuesta) => {
+        setAbrirSeleccionFamiliares(respuesta === 'Sí');
+        onTieneFamiliarGrupoChange(respuesta);
+      }}
       moduleTheme="verification"
       required
     />
@@ -334,7 +356,10 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
             value: integranteGrupo.id,
             label: integranteGrupo.nombre,
           }))}
-        onSelect={onFamiliaresGrupoChange}
+        onSelect={(seleccion) => {
+          setAbrirSeleccionFamiliares(false);
+          onFamiliaresGrupoChange(seleccion);
+        }}
         placeholder="Seleccionar familiares"
         helperText={familiaresGrupoIds.length > 0
           ? undefined
@@ -347,14 +372,15 @@ export const EntrevistaPreguntasGeneralesSection: React.FC<
         showSelectedItemsTitleWhenTrigger
         minSelections={1}
         disabled={integrantesGrupo.filter((item) => item.id !== integranteId).length === 0}
-        openOnMount
+        openOnMount={abrirSeleccionFamiliares && familiaresGrupoIds.length === 0}
         selectedItemsAreTrigger
         hideLabelWhenSelected
         required
       />
     ) : null}
-  </>
-);
+    </>
+  );
+};
 
 const styles = StyleSheet.create({
   sectionHeader: {

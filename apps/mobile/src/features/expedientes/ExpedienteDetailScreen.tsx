@@ -14,7 +14,7 @@ import {
   completarDistanciasAproximadas,
   DISTANCIA_MAXIMA_TESORERA_KM,
 } from '../../services/domicilio-distance';
-import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
+import { colors, layout, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
 import { esRutaDocumentoServidor } from '../../utils/documents';
 import { MAX_SOLICITUD_AMOUNT } from '../../config/parameters';
@@ -570,7 +570,7 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
             title="Integrantes"
             moduleTheme="documentation"
             variant="solid"
-            fullBleed
+            placement="standalone"
           />
 
           <View style={styles.integrantesList}>
@@ -599,7 +599,7 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
                   : comparacion.tendencia === 'disminuye'
                     ? `↓ ${formatCurrency(Math.abs(comparacion.diferencia))}`
                     : comparacion.tendencia === 'sin_cambio'
-                      ? '= $ 0'
+                      ? `= ${formatCurrency(0)}`
                       : null;
 
                 return (
@@ -686,7 +686,13 @@ export const ExpedienteDetailScreen: React.FC<ExpedienteDetailScreenProps> = ({ 
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  content: { padding: spacing.lg, paddingBottom: spacing.xl },
+  content: {
+    width: '100%',
+    maxWidth: layout.detailMaxWidth,
+    alignSelf: 'center',
+    padding: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
   loader: { marginTop: spacing.xl },
   grupoBanner: {
     backgroundColor: moduleThemes.documentation.headerBg,

@@ -63,6 +63,7 @@ describe('VerificacionVisitasVecinoController', () => {
     const dto = {
       fachada_id: '22222222-2222-4222-8222-222222222222',
       conoce_y_sabe_donde_vive: true,
+      opcion_ids: ['77777777-7777-4777-8777-777777777777'],
       idempotency_key: 'neighbor_20260922_abcdef',
       ubicacion_latitud: 25.6866142,
       ubicacion_longitud: -100.3161126,

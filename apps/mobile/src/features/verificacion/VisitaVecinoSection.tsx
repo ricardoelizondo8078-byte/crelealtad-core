@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import {
   ActivityIndicator,
@@ -10,6 +10,7 @@ import {
 import {
   Card,
   DocumentImageCarousel,
+  MultiSelectPickerField,
   PrimaryButton,
   ScreenState,
   SecondaryButton,
@@ -19,6 +20,7 @@ import {
 } from '../../components/ui';
 import type {
   DocumentImageCarouselPage,
+  MultiSelectPickerOption,
   YesNoValue,
 } from '../../components/ui';
 import {
@@ -32,6 +34,8 @@ import {
 import type {
   EvidenciaVisitaPendiente,
   FachadaVisitaPendiente,
+  OpcionVisitaVecino,
+  OpcionesVisitaVecino,
 } from './verificacion-visitas-vecino.api';
 
 interface FotoVisitaGuardada {
@@ -52,6 +56,10 @@ interface VisitaVecinoSectionProps {
   loadingIne: boolean;
   errorIne: string | null;
   vecinoConoceDomicilio: YesNoValue;
+  opcionesVisitaVecino: OpcionesVisitaVecino;
+  opcionesSeleccionadas: OpcionVisitaVecino[];
+  loadingOpciones: boolean;
+  errorOpciones: string | null;
   visitaActualId: string | null;
   errorResumenVisita: boolean;
   guardandoResultado: boolean;
@@ -63,7 +71,11 @@ interface VisitaVecinoSectionProps {
   onCaptureFachada: () => void;
   onSaveFachada: (pendiente: FachadaVisitaPendiente) => void;
   onRetryIne: () => void;
-  onRespuestaChange: (value: Exclude<YesNoValue, null>) => void;
+  onRetryOpciones: () => void;
+  onRespuestaChange: (
+    value: Exclude<YesNoValue, null>,
+    opcionIds: string[],
+  ) => void;
   onCaptureEvidencia: () => void;
   onSaveEvidencia: (pendiente: EvidenciaVisitaPendiente) => void;
 }
@@ -79,6 +91,10 @@ export const VisitaVecinoSection: React.FC<VisitaVecinoSectionProps> = ({
   loadingIne,
   errorIne,
   vecinoConoceDomicilio,
+  opcionesVisitaVecino,
+  opcionesSeleccionadas,
+  loadingOpciones,
+  errorOpciones,
   visitaActualId,
   errorResumenVisita,
   guardandoResultado,
@@ -90,10 +106,40 @@ export const VisitaVecinoSection: React.FC<VisitaVecinoSectionProps> = ({
   onCaptureFachada,
   onSaveFachada,
   onRetryIne,
+  onRetryOpciones,
   onRespuestaChange,
   onCaptureEvidencia,
   onSaveEvidencia,
-}) => (
+}) => {
+  const [respuestaPendiente, setRespuestaPendiente] = useState<Exclude<YesNoValue, null> | null>(null);
+  const [selectorRevision, setSelectorRevision] = useState(0);
+  const respuestaSelector = respuestaPendiente ?? vecinoConoceDomicilio;
+  const opcionesSelector = useMemo<MultiSelectPickerOption[]>(() => {
+    const opcionesActivas = respuestaSelector ? opcionesVisitaVecino[respuestaSelector] : [];
+    const opciones = opcionesActivas.map((opcion) => ({
+      value: opcion.id,
+      label: opcion.etiqueta,
+    }));
+    if (respuestaSelector !== vecinoConoceDomicilio) return opciones;
+
+    const ids = new Set(opciones.map((opcion) => opcion.value));
+    opcionesSeleccionadas.forEach((opcion) => {
+      if (!ids.has(opcion.id)) {
+        opciones.push({ value: opcion.id, label: opcion.etiqueta });
+      }
+    });
+    return opciones;
+  }, [opcionesSeleccionadas, opcionesVisitaVecino, respuestaSelector, vecinoConoceDomicilio]);
+  const idsSeleccionados = respuestaSelector === vecinoConoceDomicilio
+    ? opcionesSeleccionadas.map((opcion) => opcion.id)
+    : [];
+
+  const abrirOpciones = (respuesta: Exclude<YesNoValue, null>) => {
+    setRespuestaPendiente(respuesta);
+    setSelectorRevision((actual) => actual + 1);
+  };
+
+  return (
   <View style={styles.content}>
     <Card
       moduleTheme="verification"
@@ -228,15 +274,54 @@ export const VisitaVecinoSection: React.FC<VisitaVecinoSectionProps> = ({
                 yesLabel="Sí"
                 noLabel="No"
                 moduleTheme="verification"
-                disabled={guardandoResultado}
+                disabled={guardandoResultado || loadingOpciones || Boolean(errorOpciones)}
                 helperText={guardandoResultado
-                  ? 'Obteniendo ubicación y guardando la respuesta...'
-                  : 'Al responder se registrará la ubicación actual del teléfono.'}
-                errorText={errorResumenVisita
-                  ? 'No se pudo consultar la respuesta guardada. Puedes registrarla nuevamente.'
-                  : undefined}
-                onChange={onRespuestaChange}
+                  ? 'Guardando la respuesta y su opción...'
+                  : loadingOpciones
+                    ? 'Consultando las opciones disponibles...'
+                    : 'Después de elegir Sí o No, selecciona una opción.'}
+                errorText={errorOpciones
+                  ?? (errorResumenVisita
+                    ? 'No se pudo consultar la respuesta guardada. Puedes registrarla nuevamente.'
+                    : undefined)}
+                onChange={abrirOpciones}
               />
+              {errorOpciones ? (
+                <SecondaryButton
+                  title="Reintentar consulta"
+                  moduleTheme="verification"
+                  onPress={onRetryOpciones}
+                />
+              ) : null}
+              {respuestaSelector ? (
+                <MultiSelectPickerField
+                  key={`${respuestaSelector}-${selectorRevision}`}
+                  label={`Opciones de la respuesta ${respuestaSelector === 'si' ? 'Sí' : 'No'}`}
+                  value={idsSeleccionados}
+                  options={opcionesSelector}
+                  required
+                  openOnMount={Boolean(respuestaPendiente)}
+                  showTrigger={Boolean(vecinoConoceDomicilio)}
+                  selectedItemsAreTrigger
+                  hideLabelWhenSelected
+                  minSelections={1}
+                  maxSelections={1}
+                  placeholder="Seleccionar una opción"
+                  modalSubtitle="Marca una opción y confirma la respuesta"
+                  confirmLabel="Guardar respuesta"
+                  selectedItemsTitle="Opción seleccionada"
+                  selectedCountLabel="opción seleccionada"
+                  emptyMessage="No hay opciones activas. Administración debe configurarlas en Parámetros > Verificación > Visita al vecino."
+                  moduleTheme="verification"
+                  disabled={guardandoResultado || loadingOpciones || Boolean(errorOpciones)}
+                  onCancel={() => setRespuestaPendiente(null)}
+                  onSelect={(opcionIds) => {
+                    const respuesta = respuestaPendiente ?? vecinoConoceDomicilio;
+                    setRespuestaPendiente(null);
+                    if (respuesta) onRespuestaChange(respuesta, opcionIds);
+                  }}
+                />
+              ) : null}
             </Card>
 
             <Card
@@ -355,7 +440,8 @@ export const VisitaVecinoSection: React.FC<VisitaVecinoSectionProps> = ({
       </Card>
     )}
   </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   content: {

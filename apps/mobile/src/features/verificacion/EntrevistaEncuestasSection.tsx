@@ -1,5 +1,5 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   Card,
@@ -25,6 +25,7 @@ import {
   MOTIVOS_RECOMENDACION_SI,
   MOTIVOS_SIN_CONTROL_PAGOS,
 } from './verificacion-entrevista.catalog';
+import { useOpcionesEntrevista } from './verificacion-entrevista-parametros';
 
 type EvidenciaEntrevistaGuardando = 'CONTROL_PAGOS' | 'FOLLETO_PREMIO_TESORERA' | null;
 
@@ -112,8 +113,18 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
   onAbrirFolleto,
   onCapturarFolleto,
   onReintentarFolleto,
-}) => (
-  <>
+}) => {
+  const opcionesSinControl = useOpcionesEntrevista('MOTIVO_SIN_CONTROL_PAGOS', MOTIVOS_SIN_CONTROL_PAGOS);
+  const opcionesFrecuencia = useOpcionesEntrevista('FRECUENCIA_SERVICIO', ['Siempre', 'A veces', 'Nunca']);
+  const opcionesCalificacion = useOpcionesEntrevista('CALIFICACION_SERVICIO', ['Excelente', 'Bueno', 'Regular', 'Malo']);
+  const opcionesRapidez = useOpcionesEntrevista('RAPIDEZ_DESEMBOLSO', ['Muy rápido', 'Rápido', 'Lento', 'Muy lento']);
+  const opcionesRecomendacionSi = useOpcionesEntrevista('MOTIVO_RECOMENDACION_SI', MOTIVOS_RECOMENDACION_SI);
+  const opcionesRecomendacionNo = useOpcionesEntrevista('MOTIVO_RECOMENDACION_NO', MOTIVOS_RECOMENDACION_NO);
+  const [abrirMotivoSinControl, setAbrirMotivoSinControl] = useState(false);
+  const [abrirRazonRecomendacion, setAbrirRazonRecomendacion] = useState(false);
+
+  return (
+    <>
     {mostrarControlTesorera ? (
       <>
         <View style={styles.sectionHeader}>
@@ -134,6 +145,7 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
           value={tieneControlPagos}
           options={['Sí', 'No']}
           onSelect={(respuesta) => {
+            setAbrirMotivoSinControl(respuesta === 'No');
             onTieneControlPagosChange(respuesta);
             if (respuesta === 'Sí') onMotivoSinControlChange('');
           }}
@@ -162,13 +174,17 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
         {tieneControlPagos === 'No' ? (
           <>
             <PickerField
+              key={`motivo-sin-control-${abrirMotivoSinControl && !motivoSinControl.trim() ? 'abrir' : 'cerrado'}`}
               label="¿Qué pasó con el control de pagos?"
               value={motivoSinControl}
-              options={MOTIVOS_SIN_CONTROL_PAGOS}
-              onSelect={onMotivoSinControlChange}
+              options={[...opcionesSinControl]}
+              onSelect={(value) => {
+                setAbrirMotivoSinControl(false);
+                onMotivoSinControlChange(value);
+              }}
               placeholder="Seleccionar motivo"
               moduleTheme="verification"
-              autoOpen
+              autoOpen={abrirMotivoSinControl && !motivoSinControl.trim()}
               confirmSelection
               required
             />
@@ -189,7 +205,7 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
         <SelectorField
           label="¿La asesora acudió cada semana por el pago?"
           value={asesoraAcudioSemanalmente}
-          options={['Siempre', 'A veces', 'Nunca']}
+          options={[...opcionesFrecuencia]}
           onSelect={onAsesoraAcudioSemanalmenteChange}
           moduleTheme="verification"
           required
@@ -197,7 +213,7 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
         <SelectorField
           label="¿Firmaban su control semanalmente?"
           value={firmabanControlSemanalmente}
-          options={['Siempre', 'A veces', 'Nunca']}
+          options={[...opcionesFrecuencia]}
           onSelect={onFirmabanControlSemanalmenteChange}
           moduleTheme="verification"
           required
@@ -205,7 +221,7 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
         <SelectorField
           label="¿Cómo fue el trato de la asesora con ustedes?"
           value={tratoAsesoraTesorera}
-          options={['Excelente', 'Bueno', 'Regular', 'Malo']}
+          options={[...opcionesCalificacion]}
           onSelect={onTratoAsesoraTesoreraChange}
           moduleTheme="verification"
           required
@@ -261,7 +277,7 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
         <SelectorField
           label="¿Cómo le ha parecido su crédito con CRELEALTAD?"
           value={opinionCredito}
-          options={['Excelente', 'Bueno', 'Regular', 'Malo']}
+          options={[...opcionesCalificacion]}
           onSelect={onOpinionCreditoChange}
           moduleTheme="verification"
           required
@@ -269,7 +285,7 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
         <SelectorField
           label="¿Cómo fue el trato que recibió durante el desembolso?"
           value={tratoDesembolso}
-          options={['Excelente', 'Bueno', 'Regular', 'Malo']}
+          options={[...opcionesCalificacion]}
           onSelect={onTratoDesembolsoChange}
           moduleTheme="verification"
           required
@@ -277,7 +293,7 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
         <SelectorField
           label="¿Cómo considera el tiempo que tardamos en entregarle su crédito?"
           value={rapidezDesembolso}
-          options={['Muy rápido', 'Rápido', 'Lento', 'Muy lento']}
+          options={[...opcionesRapidez]}
           onSelect={onRapidezDesembolsoChange}
           moduleTheme="verification"
           required
@@ -295,6 +311,7 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
           value={recomendaria}
           options={['Sí', 'No']}
           onSelect={(respuesta) => {
+            setAbrirRazonRecomendacion(true);
             onRecomendariaChange(respuesta);
             onRazonRecomendacionChange('');
           }}
@@ -303,18 +320,21 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
         />
         {recomendaria ? (
           <PickerField
-            key={`motivo-recomendacion-${recomendaria}`}
+            key={`motivo-recomendacion-${recomendaria}-${abrirRazonRecomendacion && !razonRecomendacion.trim() ? 'abrir' : 'cerrado'}`}
             label={recomendaria === 'Sí'
               ? '¿Por qué sí nos recomendaría?'
               : '¿Por qué no nos recomendaría?'}
             value={razonRecomendacion}
             options={recomendaria === 'Sí'
-              ? MOTIVOS_RECOMENDACION_SI
-              : MOTIVOS_RECOMENDACION_NO}
-            onSelect={onRazonRecomendacionChange}
+              ? [...opcionesRecomendacionSi]
+              : [...opcionesRecomendacionNo]}
+            onSelect={(value) => {
+              setAbrirRazonRecomendacion(false);
+              onRazonRecomendacionChange(value);
+            }}
             placeholder="Seleccionar motivo"
             moduleTheme="verification"
-            autoOpen
+            autoOpen={abrirRazonRecomendacion && !razonRecomendacion.trim()}
             confirmSelection
             required
           />
@@ -328,12 +348,12 @@ export const EntrevistaEncuestasSection: React.FC<EntrevistaEncuestasSectionProp
           numberOfLines={3}
           moduleTheme="verification"
           highlightWhenFilled
-          required
         />
       </>
     ) : null}
-  </>
-);
+    </>
+  );
+};
 
 interface EvidenceCardProps {
   title: string;

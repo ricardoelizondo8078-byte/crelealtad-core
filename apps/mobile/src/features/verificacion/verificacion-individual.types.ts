@@ -7,6 +7,8 @@ import type {
   TipoImagenDomicilio,
 } from './verificacion-imagenes-domicilio.api';
 import type {
+  ClasificacionSemaforoEvidencia,
+  CalificacionRevisionEvidencia,
   EvidenciaEntrevistaPendiente,
   TipoEvidenciaEntrevista,
 } from './verificacion-entrevista.api';
@@ -137,6 +139,15 @@ export interface EvidenciaNegocioVista {
   registradaAt: string;
 }
 
+export interface EvidenciaHistorialCreditoVista extends EvidenciaNegocioVista {
+  integranteIds: string[];
+  clasificacionSemaforo: ClasificacionSemaforoEvidencia | null;
+  motivoClasificacionId: string | null;
+  motivoClasificacion: string | null;
+  calificacionRevision: CalificacionRevisionEvidencia | null;
+  calificadaAt: string | null;
+}
+
 export type TipoEvidenciaHistorialCredito = Extract<
   TipoEvidenciaEntrevista,
   'HISTORIAL_CREDITO_ACTIVO' | 'HISTORIAL_CREDITO_INACTIVO'
@@ -144,7 +155,7 @@ export type TipoEvidenciaHistorialCredito = Extract<
 
 export type EvidenciasHistorialCredito = Record<
   TipoEvidenciaHistorialCredito,
-  EvidenciaNegocioVista[]
+  EvidenciaHistorialCreditoVista[]
 >;
 
 export type EvidenciasHistorialCreditoPendientes = Record<

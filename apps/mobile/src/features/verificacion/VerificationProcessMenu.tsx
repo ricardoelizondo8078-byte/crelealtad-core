@@ -2,6 +2,10 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { TaskMenuButton } from '../../components/ui';
 import { colors, spacing, typography } from '../../theme/tokens';
+import type {
+  PasoVerificacionConfigurable,
+  RequisitosVerificacionIntegrante,
+} from '../parametros/parametros-verificacion-pasos.api';
 
 export type VerificationProcessKey =
   | 'documentos'
@@ -13,10 +17,37 @@ export type VerificationProcessKey =
 
 interface VerificationProcessMenuProps {
   onSelect: (process: VerificationProcessKey) => void;
+  documentosCompletados?: boolean;
   llamadaCompletada?: boolean;
   imagenesDomicilioCompletadas?: boolean;
+  entrevistaCompletada?: boolean;
   visitaVecinoResultado?: 'si' | 'no' | null;
+  requisitos?: RequisitosVerificacionIntegrante | null;
 }
+
+const PASO_CONFIG_POR_PROCESO: Record<VerificationProcessKey, PasoVerificacionConfigurable> = {
+  documentos: 'DOCUMENTOS',
+  'llamada-integrante': 'LLAMADA',
+  'visita-vecino': 'VISITA_VECINO',
+  'foto-domicilio': 'IMAGENES_DOMICILIO',
+  'validacion-integrante': 'ENTREVISTA',
+  observaciones: 'CONCLUSIONES',
+};
+
+const ETIQUETA_TIPO: Record<RequisitosVerificacionIntegrante['tipo_integrante'], string> = {
+  NUEVA: 'Nueva en CRELEALTAD',
+  NUEVA_CON_EVIDENCIA: 'Nueva con evidencia de otra financiera',
+  CICLO_2_MAS: 'Ciclo 2+ con CRELEALTAD',
+  CICLO_2_MAS_CON_EVIDENCIA: 'Ciclo 2+ con evidencia para aumento',
+};
+
+const describirRegla = (
+  regla: RequisitosVerificacionIntegrante['pasos'][number] | undefined,
+): string => {
+  if (!regla || regla.modalidad === 'OBLIGATORIO') return 'Siempre';
+  if (regla.modalidad === 'OPCIONAL') return 'Opcional';
+  return `Después de ${regla.dias_para_obligatorio} días`;
+};
 
 const PROCESSES: readonly {
   key: VerificationProcessKey;
@@ -59,16 +90,18 @@ const PROCESSES: readonly {
     key: 'observaciones',
     title: 'Conclusiones',
     iconLabel: '$',
-    accessibilityHint: 'Conclusiones todavía no está disponible',
-    disabled: true,
+    accessibilityHint: 'Abre la captura de conclusiones del verificador',
   },
 ];
 
 export const VerificationProcessMenu: React.FC<VerificationProcessMenuProps> = ({
   onSelect,
+  documentosCompletados = false,
   llamadaCompletada = false,
   imagenesDomicilioCompletadas = false,
+  entrevistaCompletada = false,
   visitaVecinoResultado = null,
+  requisitos = null,
 }) => (
   <View style={styles.container}>
     <Text allowFontScaling={false} style={styles.title}>
@@ -77,19 +110,30 @@ export const VerificationProcessMenu: React.FC<VerificationProcessMenuProps> = (
     <Text allowFontScaling={false} style={styles.helper}>
       Consulta los documentos, realiza los procesos o registra las conclusiones.
     </Text>
+    {requisitos ? (
+      <Text allowFontScaling={false} style={styles.memberType}>
+        {ETIQUETA_TIPO[requisitos.tipo_integrante]}
+      </Text>
+    ) : null}
 
     <View style={styles.actions}>
       {PROCESSES.map((process) => (
         <TaskMenuButton
           key={process.key}
           title={process.title}
+          description={requisitos
+            ? describirRegla(requisitos.pasos.find(
+              (regla) => regla.paso === PASO_CONFIG_POR_PROCESO[process.key],
+            ))
+            : undefined}
           iconLabel={process.iconLabel}
           moduleTheme="verification"
           disabled={process.disabled}
           completed={
-            process.key === 'documentos'
+            (process.key === 'documentos' && documentosCompletados)
             || (process.key === 'llamada-integrante' && llamadaCompletada)
             || (process.key === 'foto-domicilio' && imagenesDomicilioCompletadas)
+            || (process.key === 'validacion-integrante' && entrevistaCompletada)
           }
           result={
             process.key === 'visita-vecino' && visitaVecinoResultado
@@ -117,6 +161,10 @@ const styles = StyleSheet.create({
   helper: {
     ...typography.body,
     color: colors.textSecondary,
+  },
+  memberType: {
+    ...typography.bodyStrong,
+    color: colors.textPrimary,
   },
   actions: {
     gap: spacing.md,

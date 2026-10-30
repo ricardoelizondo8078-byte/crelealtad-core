@@ -74,7 +74,7 @@ export const colors = {
   },
 };
 
-export const moduleThemes: Record<ModuleThemeKey, {
+export interface ModuleTheme {
   headerBg: string;
   titleBarBg: string;
   headerAccent: string;
@@ -84,7 +84,10 @@ export const moduleThemes: Record<ModuleThemeKey, {
   statusBarStyle?: 'light-content' | 'dark-content';
   primary: string;
   primaryText: string;
-}> = {
+  moduleCardText?: string;
+}
+
+export const moduleThemes: Record<ModuleThemeKey, ModuleTheme> = {
   general: {
     headerBg: colors.gray[400],
     titleBarBg: colors.gray[500],
@@ -113,12 +116,16 @@ export const moduleThemes: Record<ModuleThemeKey, {
     primaryText: '#FFFFFF',
   },
   analysis: {
-    headerBg: '#1D4ED8',
-    titleBarBg: '#1E40AF',
-    headerAccent: '#DBEAFE',
-    headerText: '#FFFFFF',
-    primary: '#1D4ED8',
-    primaryText: '#FFFFFF',
+    headerBg: '#DAF2D0',
+    titleBarBg: '#8ED973',
+    headerAccent: colors.surface,
+    headerAccentText: colors.textPrimary,
+    headerSecondaryText: colors.textPrimary,
+    headerText: colors.textPrimary,
+    statusBarStyle: 'dark-content',
+    primary: '#8ED973',
+    primaryText: colors.textPrimary,
+    moduleCardText: colors.textPrimary,
   },
   disbursement: {
     headerBg: '#6D28D9',
@@ -286,7 +293,19 @@ export const touchTargets = {
   largeAction: 64,
 };
 
+export const breakpoints = {
+  tablet: 768,
+  desktop: 1024,
+  wide: 1366,
+};
+
 export const layout = {
+  contentMaxWidth: 1280,
+  detailMaxWidth: 1120,
+  formMaxWidth: 720,
+  desktopGutter: 32,
+  stepFlowRailWidth: 300,
+  stepFlowDesktopGap: spacing.xl,
   moduleCardMinHeight: 184,
   statusCardMinHeight: 128,
   statusStripeWidth: 36,
@@ -298,6 +317,8 @@ export const layout = {
   notificationCountPillMinSize: 28,
   buttonTrailingIndicatorWidth: 96,
   documentPreviewHeight: 320,
+  evidenceClassificationBandHeight: touchTargets.largeAction,
+  evidenceControlsBandHeight: 72,
   processingPanelMaxWidth: 320,
 };
 

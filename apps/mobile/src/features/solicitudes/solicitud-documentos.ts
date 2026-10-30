@@ -18,6 +18,7 @@ export type DocumentoApiClave =
   | 'comprobante'
   | 'ine_beneficiario'
   | 'solicitud_firmada'
+  | 'control_pagos'
   | 'comprobante_credito';
 
 export interface DocumentoRequerido {
@@ -29,6 +30,7 @@ export interface DocumentoRequerido {
   uriReverso?: string;
   urisLocales?: string[];
   rutaServidor?: string;
+  cantidadImagenesRequerida?: number;
 }
 
 export type { DocumentoRemoto } from '../../services/document-upload';
@@ -51,11 +53,46 @@ export const DOCUMENTOS_REQUERIDOS: DocumentoRequerido[] = [
   { id: 'comprobante_linea_credito', nombre: 'Comprobante Línea de Crédito', obligatorio: false, status: 'OPCIONAL' },
 ];
 
+export const crearDocumentosRequeridos = (
+  esIntegranteCicloDosMas: boolean,
+): DocumentoRequerido[] => {
+  const documentos = DOCUMENTOS_REQUERIDOS.map((documento) => ({ ...documento }));
+  if (!esIntegranteCicloDosMas) return documentos;
+
+  return [
+    {
+      id: 'control_pagos_crelealtad',
+      nombre: 'Control de pagos CRELEALTAD',
+      obligatorio: true,
+      status: 'PENDIENTE',
+      cantidadImagenesRequerida: 2,
+    },
+    ...documentos,
+  ];
+};
+
+export const reconciliarDocumentosRequeridos = (
+  documentosGuardados: readonly DocumentoRequerido[],
+  esIntegranteCicloDosMas: boolean,
+): DocumentoRequerido[] => crearDocumentosRequeridos(esIntegranteCicloDosMas).map((documentoBase) => {
+  const guardado = documentosGuardados.find((documento) => documento.id === documentoBase.id);
+  if (!guardado) return documentoBase;
+
+  return {
+    ...documentoBase,
+    ...guardado,
+    nombre: documentoBase.nombre,
+    obligatorio: documentoBase.obligatorio,
+    cantidadImagenesRequerida: documentoBase.cantidadImagenesRequerida,
+  };
+});
+
 export const TIPOS_DOCUMENTO_API: Record<string, DocumentoApiClave> = {
   ine_integrante: 'ine',
   comprobante_domicilio: 'comprobante',
   ine_beneficiario: 'ine_beneficiario',
   solicitud_firmada: 'solicitud_firmada',
+  control_pagos_crelealtad: 'control_pagos',
   comprobante_linea_credito: 'comprobante_credito',
 };
 
@@ -64,6 +101,7 @@ export const RUTAS_DOCUMENTO: Record<string, keyof SolicitudApiResponse> = {
   comprobante_domicilio: 'doc_comprobante_ruta',
   ine_beneficiario: 'doc_ine_beneficiario_ruta',
   solicitud_firmada: 'doc_solicitud_firmada_ruta',
+  control_pagos_crelealtad: 'doc_control_pagos_ruta',
   comprobante_linea_credito: 'doc_comprobante_credito_ruta',
 };
 

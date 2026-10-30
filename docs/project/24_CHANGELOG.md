@@ -1,5 +1,1517 @@
 # 24 Changelog - Historial de Cambios del Proyecto
 
+## [2026-10-30] - Infraestructura preparada para publicación web
+
+### Operación y despliegue
+
+- Se agregó un Blueprint de Render para publicar Expo Web, NestJS, PostgreSQL 17 privado y un
+  disco persistente para documentos y evidencias.
+- Los secretos JWT se generan en el proveedor; CORS queda limitado al origen web y PostgreSQL no
+  admite conexiones públicas.
+- El predeploy inicializa únicamente bases completamente vacías desde el esquema versionado y
+  aplica migraciones pendientes de forma transaccional. No carga personas, usuarios ni expedientes.
+- La activación externa, la creación de una identidad administrativa y cualquier transferencia de
+  datos operativos permanecen bloqueadas hasta autenticar la cuenta de alojamiento y aprobar el
+  tratamiento de credenciales y datos personales.
+
+## [2026-10-30] - Regla responsive para captura y revisión documental
+
+### Diseño UX
+
+- Se documentó la composición predeterminada de dos columnas para formularios largos y flujos por
+  pasos en escritorio: navegación del proceso a la izquierda y contenido del paso activo a la
+  derecha.
+- Mobile conserva sus pantallas actuales de una sola columna. El modal centrado queda para tareas
+  breves y el modo inmersivo sólo para revisar documentos o imágenes en el visor institucional.
+- El componente compartido `StepFlowLayout` materializa la regla en el flujo activo de Solicitud:
+  muestra los siete pasos, el actual y los concluidos junto al formulario, sin habilitar saltos que
+  el proceso no autoriza.
+- Mobile conserva el recorrido previo porque el riel se activa únicamente desde el breakpoint de
+  escritorio. No se modificaron API ni PostgreSQL.
+
+## [2026-10-30] - Primera capa responsive para escritorio
+
+### Mobile y Expo Web
+
+- Se incorporaron breakpoints institucionales y anchos máximos compartidos para contenido, detalles
+  y formularios, conservando la composición vigente en teléfono.
+- Login, encabezados, menú principal, Documentación, expedientes, Verificación y Parámetros dejan
+  de estirarse al ancho completo del monitor; las listas aptas usan rejillas progresivas.
+- Las listas de expedientes y grupos en Verificación adoptaron `FlatList` virtualizada de una a tres
+  columnas según el ancho disponible.
+- La validación visual cubrió 390 × 844 y 1440 × 900. TypeScript y lint terminaron sin errores; la
+  prueba nueva de breakpoints pasó. La suite mobile conserva fallos previos en dos suites no
+  relacionadas con responsive, documentados en el cierre de la tarea.
+
+## [2026-10-30] - Visor institucional único en toda la app
+
+### Mobile, Documentación y Verificación
+
+- `DocumentViewer` adopta una sola presentación: tarjeta amplia, encabezado con el color del módulo,
+  `X` superior, ayuda contextual, zoom, etiqueta de cara y puntos de paginación.
+- Se retiró el botón inferior `Cerrar`. Las acciones propias del flujo, como validar, calificar,
+  editar integrantes o reemplazar evidencia, conservan su espacio inferior.
+- Documentación, los carruseles ampliados, evidencias telefónicas, Entrevista, Conclusiones y el
+  modal documental de Verificación consumen el mismo visor compartido; se retiró la implementación
+  visual duplicada de Verificación.
+
+## [2026-10-30] - Control de pagos CRELEALTAD desde ciclo individual 2
+
+### M02, mobile, API y PostgreSQL
+
+- El Paso 7 coloca primero `Control de pagos CRELEALTAD` cuando la API confirma una participación
+  individual previa de la persona; las integrantes nuevas conservan el catálogo anterior.
+- El documento es obligatorio y requiere exactamente dos imágenes, obtenidas por cámara o carrete.
+  Mobile y API bloquean cantidades distintas y sólo una versión confirmada completa el paso.
+- Al consultar sus fotografías, Documentación abre directamente el visor compartido a pantalla
+  completa, con una zona de imagen amplia, zoom y deslizamiento lateral entre las dos capturas,
+  equivalente al formato de revisión usado en Verificación.
+- Una sincronización inmediata ya no devuelve al formulario la ruta cifrada que la cola elimina
+  después de confirmar el servidor. Las rutas `.clenc` permanecen únicamente durante reintentos
+  pendientes y una versión confirmada se consulta desde la API.
+- Si una operación documental quedó bloqueada porque su copia local desapareció, elegir nuevamente
+  las imágenes sustituye sólo esa operación bloqueada y limpia sus referencias; ya no reutiliza el
+  intento roto ni descarta la nueva selección.
+- El comprobante opcional de otra financiera permanece separado y conserva fotografías múltiples.
+- La migración 070 agregó ruta y fecha nullable en `solicitudes_documentos`. Se validó primero en
+  `crelealtad_test`; después del respaldo custom verificado
+  `database/backups/crelealtad-pre-070-20261030.backup` se aplicó en `crelealtad`. Ambas bases
+  quedaron con 67/67 migraciones, sin pendientes, deriva ni entradas desconocidas.
+
+## [2026-10-25] - Compatibilidad con Expo Go SDK 58 y acceso remoto estable
+
+### Mobile y entorno de desarrollo
+
+- Mobile se actualizó de Expo SDK 57 a SDK 58, React Native 0.88 y React 19.3 con las versiones
+  compatibles calculadas por Expo.
+- La pantalla de arranque se migró a la configuración vigente de `expo-splash-screen` y TypeScript
+  conserva temporalmente la condición legacy oficial de React Native mientras se adopta por etapas
+  la API estricta.
+- Metro y la API escuchan únicamente en loopback durante el modo Tailscale; Tailscale Serve publica
+  los puertos privados remotos sin competir con los procesos locales después de un reinicio.
+- Metro prioriza IPv4 en Windows para que el proxy privado pueda reenviar de forma estable.
+- Validación: Expo Doctor 20/20, TypeScript sin errores, lint sin errores (40 advertencias existentes),
+  manifiesto `exposdk:58.0.0`, bundle iOS y health de API con HTTP 200. La suite móvil conserva
+  167/172 pruebas aprobadas; cinco pruebas de componentes requieren adaptar sus mocks a Jest 30 y
+  React 19.3.
+
+## [2026-10-22] - Selector desplazable de 0 a 12 para el cierre grupal
+
+### M03, M11, mobile, API y PostgreSQL
+
+- `Integrantes para finalizar` sustituye la captura escrita por un selector desplazable con los 13
+  valores enteros de 0 a 12, límite vigente del producto.
+- El cero publicado es una política válida: habilita el control sin exigir revisiones individuales.
+  La falta de configuración o un error de consulta siguen bloqueándolo.
+- La API y PostgreSQL rechazan valores fuera de 0–12. La migración 069 se aplicó, revirtió y reaplicó
+  en `crelealtad_test`; después del respaldo
+  `database/backups/crelealtad_pre_069_schema_2026-10-22.sql` se aplicó en `crelealtad`. Ambas bases
+  quedaron con 66/66 migraciones, sin pendientes, deriva ni entradas desconocidas.
+
+## [2026-10-22] - Integrantes verificadas requeridas para finalizar el grupo
+
+### M03, M11, mobile, API y PostgreSQL
+
+- El primer acceso de `Parámetros > Verificación` permite publicar un entero mayor que cero con la
+  cantidad de revisiones individuales concluidas requerida para habilitar el botón grupal.
+- Verificación de Grupo cuenta aprobadas y rechazadas, informa cuántas faltan y bloquea el botón si
+  el parámetro está sin configurar o no pudo confirmarse.
+- La API separa lectura administrativa y lectura operativa por permisos; las publicaciones usan
+  revisión optimista, versiones inmutables y auditoría `PAR_VER_CIERRE_PUB`.
+- La migración 068 se aplicó, revirtió y reaplicó en `crelealtad_test`; después del respaldo
+  `database/backups/crelealtad_pre_068_schema_2026-10-22.sql` se aplicó en `crelealtad`. Ambas bases
+  quedaron con 65/65 migraciones, sin pendientes, deriva ni entradas desconocidas.
+- La migración no precarga una cantidad. La habilitación no ejecuta todavía el dictamen o la
+  transición final pendiente de M03 y ya no muestra un éxito local no confirmado por servidor.
+
+## [2026-10-22] - Contacto compacto por abreviatura
+
+### M03, mobile y API
+
+- Verificación de Grupo sustituye el nombre completo visible por `usuarios.abreviatura`.
+- El teléfono usa una franja celeste compacta con número azul oscuro reforzado; un cuadro celeste
+  reducido contiene el icono oscuro a la derecha. El objetivo táctil completo conserva 44 puntos y
+  libera espacio horizontal para la abreviatura.
+- El detalle de expediente incorpora `asesora.abreviatura` sin agregar datos personales ni cambiar
+  PostgreSQL.
+
+## [2026-10-22] - Resumen grupal más compacto
+
+### M03 y mobile
+
+- Los dos renglones de solicitado y verificado reducen su relleno vertical y eliminan el espacio
+  adicional entre etiqueta y cifra.
+- Se conservan la jerarquía tipográfica, los colores aprobados y la separación de conceptos.
+
+## [2026-10-22] - Azul suave para el resumen solicitado
+
+### M03 y mobile
+
+- El renglón de integrantes y monto solicitado adopta `colors.infoSoft`, el mismo celeste claro de
+  la burbuja de distancia a tesorera, y conserva cifras azules legibles.
+- El renglón verificado mantiene sin cambios el ocre del módulo.
+
+## [2026-10-22] - Resumen solicitado y verificado del grupo
+
+### M03 y mobile
+
+- La tarjeta superior separa en dos renglones el total solicitado y el resultado verificado.
+- Integrantes activas y monto total solicitado usan azul; integrantes con revisión concluida y monto
+  verificado usan el ocre del módulo.
+- El conteo verificado incluye revisiones aprobadas o rechazadas. El importe verificado muestra
+  `$ 0` sin revisiones concluidas y `—` si ya existe una revisión pero su monto real todavía no fue
+  persistido; nunca se reemplaza por el monto solicitado.
+- La vista queda preparada para consumir `monto_verificado` cuando se implemente su captura y
+  contrato de servidor, sin crear ahora una fuente paralela.
+
+## [2026-10-22] - Contacto del asesor en Verificación de Grupo
+
+### M03, mobile y API
+
+- El detalle de grupo coloca arriba un solo renglón con `ASESOR`, nombre y teléfono celular con
+  acceso al marcador del dispositivo.
+- El resumen de integrantes aprobadas y monto total se desplazó debajo del contacto y se retiraron
+  los cuatro indicadores redundantes de total, aprobadas, pendientes y no aprobadas.
+- `GET /expedientes/:id` incorpora únicamente `asesora.id`, `asesora.nombre` y
+  `asesora.telefono`, derivados de la asignación laboral vigente.
+- Se agregó cobertura focal del contrato de API y del renglón de llamada, incluido el estado sin
+  teléfono disponible.
+
+## [2026-10-21] - Obligatoriedad condicional por días
+
+### M03, M11, mobile, API y PostgreSQL
+
+- Cada uno de los seis procesos y cuatro tipos de integrante admite `Obligatorio`, `Opcional` u
+  `Obligatorio después de días`.
+- La modalidad condicional exige un plazo entero de 1 a 3650 días; mobile propone 30 al elegirla,
+  permite editarlo con teclado numérico y bloquea la publicación de valores inválidos.
+- Las versiones anteriores se conservan y se traducen sin pérdida desde el booleano histórico. La
+  publicación sigue siendo completa, inmutable, optimista y auditada.
+- La migración reversible 067 se validó primero en `crelealtad_test` y después se aplicó en
+  `crelealtad` tras verificar `.backups/crelealtad-pre-067-20261021.backup` (4,292,464 bytes).
+- El cierre formal de M03 continúa pendiente. Para aplicar el plazo contra operación se usará la
+  última terminación confirmada del mismo proceso; si no existe, la regla condicional será
+  obligatoria. Conclusiones no puede calcular todavía ese vencimiento porque carece de cierre
+  persistido en servidor.
+
+## [2026-10-21] - Pasos obligatorios por tipo de integrante
+
+### M03, M11, mobile, API y PostgreSQL
+
+- Parámetros de Verificación incorpora una matriz completa para definir como obligatorio u opcional
+  cada uno de seis procesos en cuatro tipos de integrante.
+- La API deriva el tipo con el historial interno por persona y la ruta de servidor del `Comprobante
+  Línea de Crédito`; mobile no permite seleccionar ni alterar manualmente esa clasificación.
+- Verificación Individual abre directamente el concentrador y permite ejecutar todos los procesos
+  en cualquier orden. Cada tarjeta muestra su obligatoriedad y los pasos opcionales permanecen
+  disponibles.
+- La publicación crea una versión inmutable, exige la revisión vigente, registra actor y auditoría
+  y conserva por defecto las 24 reglas como obligatorias.
+- La migración reversible 066 fue aplicada en `crelealtad_test`, validada con 24 combinaciones y
+  reversión transaccional, y después aplicada en `crelealtad` tras verificar el respaldo de esquema
+  `database/backups/crelealtad_pre_066_schema_2026-10-21.sql` de 206,886 bytes.
+- DEC-252 no habilita el dictamen ni la transición final pendiente de M03; deja disponible el
+  contrato de requisitos para que ese cierre futuro bloquee sólo los procesos configurados.
+
+## [2026-10-18] - Respuesta única en los pop-ups de Visita al vecino
+
+### M03, M11, mobile, API y PostgreSQL
+
+- Los dos pop-ups conservan todas las alternativas configuradas, pero usan controles de respuesta
+  única: tocar otra opción sustituye la anterior y `Guardar respuesta` exige exactamente una.
+- Mobile presenta las alternativas como radios. La API conserva el contrato `opcion_ids` y valida
+  que contenga un solo UUID activo de la rama elegida.
+- La migración 065 agrega unicidad por `visita_id` en `verificacion_visita_vecino_opciones`; fue
+  aplicada, revertida y reaplicada en `crelealtad_test` antes de producción. La integración verificó
+  el rechazo de una segunda relación directamente en PostgreSQL.
+- Antes de producción se verificó `database/backups/crelealtad-pre-065-20261018.backup` (4,285,141
+  bytes y 618 entradas). Las siete visitas históricas y sus cero explicaciones inferidas quedaron
+  intactas; ambas bases terminaron con 62 migraciones aplicadas, sin pendientes, deriva ni entradas
+  desconocidas. DEC-251 sustituye sólo la multiplicidad de DEC-250.
+
+## [2026-10-18] - Opciones múltiples parametrizadas en Visita al vecino
+
+### M03, M11, mobile, API y PostgreSQL
+
+- Tocar `Sí` o `No` en `¿La conoce? ¿Sabe dónde vive?` abre automáticamente un selector múltiple
+  y exige al menos una opción antes de solicitar ubicación y guardar la respuesta.
+- Parámetros de Verificación incorpora `Visita al vecino`, con catálogos independientes y
+  extensibles para las ramas afirmativa y negativa. Ambos inician vacíos; Administración debe
+  capturar las opciones reales y el flujo falla de forma cerrada si la rama no está configurada.
+- La API valida opciones activas de la familia correcta y guarda respuesta, selecciones e
+  instantáneas de etiqueta/orden en una sola transacción. La idempotencia compara también el
+  conjunto exacto de opciones y la auditoría conserva sus UUID sin coordenadas.
+- La migración 064 crea `verificacion_visita_vecino_opciones` y un trigger de integridad, preserva
+  las siete visitas operativas previas sin inferir explicaciones y amplía el catálogo existente con
+  las dos familias nuevas.
+- Aplicación, prueba de integración, rollback y reaplicación aprobaron en `crelealtad_test`. Antes
+  de producción se verificó `database/backups/crelealtad-pre-064-20261018.backup` (4,277,641 bytes
+  y 607 entradas); ambas bases quedaron con 61 migraciones aplicadas, sin pendientes, deriva ni
+  entradas desconocidas. DEC-250 formaliza la regla.
+
+## [2026-10-12] - Fotografías de casa y negocio en Conclusiones
+
+### M03 y mobile
+
+- Antes de `Conclusiones del verificador` se incorpora el divisor ocre `FOTOGRAFÍAS` y dos botones
+  tipo cápsula: `Casa` y `Negocio`.
+- `Casa` abre en orden las imágenes confirmadas de fachada, medidor de luz y fachada con la
+  integrante. `Negocio` abre todas las evidencias fotográficas confirmadas del negocio de esa
+  integrante.
+- Cada botón se deshabilita cuando no existen imágenes confirmadas de su grupo. Las capturas locales
+  pendientes de envío se excluyen para no simular evidencia disponible antes de la confirmación del
+  servidor. DEC-247 formaliza la agrupación.
+- `Casa` y `Negocio` adoptan el formato visual de `Cerrar`: fondo ocre sólido, texto blanco y
+  esquinas redondeadas rectangulares. DEC-248 sustituye únicamente su presentación tipo cápsula.
+- `Casa` incorpora un icono blanco de casa y `Negocio` un maletín blanco, ambos alineados antes del
+  texto y con el tamaño institucional de acción. DEC-249 formaliza esta señal visual.
+
+## [2026-10-12] - Semáforo configurable del promedio de fotografías
+
+### M03, M11, mobile, API y PostgreSQL
+
+- `Parámetros > Verificación > Conclusiones` incorpora `Calificar promedio de fotografías`, con
+  selectores de 0 a 100 para verde, amarillo y rojo, cualquier orden, huecos permitidos y sin
+  traslapes.
+- La configuración inicial es rojo 0–33, amarillo 34–66 y verde 67–100. La API publica el cambio
+  sólo para Administración, lo audita y Verificación lo consulta en una ruta operativa de lectura.
+- El círculo del promedio completo usa el tono publicado. Si todavía muestra `?`, la consulta falla
+  o el promedio cae en un hueco, permanece neutral. La migración 063 protege estos invariantes en
+  PostgreSQL y DEC-246 formaliza la regla.
+- Antes de producción se verificó el respaldo
+  `database/backups/crelealtad-pre-063-20261012.backup` (4,273,413 bytes y 617 entradas). La
+  migración se probó primero en `crelealtad_test`, incluido el rechazo de un traslape, y ambas bases
+  quedaron con 60 migraciones aplicadas, sin pendientes, deriva ni entradas desconocidas.
+
+## [2026-10-12] - Promedio completo de evidencia por integrante
+
+### M03 y mobile
+
+- El círculo blanco de `REVISAR EVIDENCIA` muestra el promedio sólo cuando todas las fotografías
+  calificables de Entrevista de la integrante tienen decisión; de lo contrario conserva `?`.
+- Verde aporta 100 puntos, amarillo 50 y rojo 0. El total se divide entre las fotografías
+  calificables y se redondea al entero más cercano para mostrar una escala de 0 a 100.
+- Los comprobantes de Documentación continúan en el total del botón, pero se excluyen del promedio
+  porque no admiten calificación evidencia–integrante. DEC-245 formaliza la regla.
+
+## [2026-10-11] - Refinamiento visual del visor de evidencia externa
+
+### M03 y mobile
+
+- `Cerrar` queda habilitado en todo momento y continúa compacto en el extremo derecho.
+- Encabezado, ayuda, contador y barra inferior reciben márgenes y separadores uniformes; la imagen
+  conserva la mayor altura disponible.
+- `Revisa`, tacha y palomita permanecen alineados con `Cerrar`; las decisiones amplían su círculo a
+  48 puntos y usan un borde seleccionado menos pesado.
+- Salir del visor no inventa calificaciones pendientes ni altera las ya confirmadas.
+- `Integrantes` y el bloque de zoom comparten una altura real de 56 puntos y el mismo anclaje
+  inferior, evitando el desfase visual tanto en fotografías clasificadas como neutrales.
+- Todas las fotografías reservan una franja inferior exclusiva de 72 puntos; los controles quedan
+  centrados con 8 puntos de separación respecto de la imagen y dejan de superponerse a la foto.
+- Todas las páginas reservan también la misma franja superior de 64 puntos. El semáforo se limita a
+  las franjas superior e inferior y se elimina de los laterales, por lo que fotografías clasificadas
+  y neutrales conservan exactamente el mismo alto útil durante el deslizamiento.
+
+## [2026-10-11] - Calificación de evidencia por integrante
+
+### M03, mobile, API y PostgreSQL
+
+- El visor presenta rojo, amarillo y verde en ese orden. En reposo usa tonos suaves y la opción
+  elegida cambia a fondo sólido con símbolo contrastante para identificarla inmediatamente.
+- El visor guarda `TACHA`, `AMARILLO` o `PALOMITA` para cada combinación de fotografía e integrante; una
+  evidencia compartida ya no obliga a compartir la misma valoración.
+- La selección se recupera al abrir de nuevo, se actualiza sólo tras confirmación del servidor y
+  conserva el valor anterior ante falla.
+- La API valida permiso, expediente, tipo y asociación activa y audita actor, fecha y antes/después.
+- La migración 061 agrega campos nullable, checks de consistencia y FK de actor. La migración 062
+  amplía el catálogo persistente con `AMARILLO`; pasó aplicación, rechazo de valores inválidos,
+  rollback protegido y reaplicación en `crelealtad_test` antes de aplicarse en operación.
+- La 061 se aplicó y verificó
+  primero en `crelealtad_test` y después en `crelealtad`, respaldada previamente en
+  `database/backups/crelealtad-pre-061-20261012005049.backup` (4,270,111 bytes, 598 entradas y
+  SHA-256 `49997332651e9c57b3c8ff4eb5ab8b1cc975c8106d6c5fa5c40df0b14eb77ea0`).
+- Ambas bases quedaron con 59 migraciones aplicadas, sin pendientes, deriva ni entradas desconocidas;
+  las 41 asociaciones históricas de `crelealtad` permanecen `SIN_CALIFICAR`.
+- El respaldo previo a 062 quedó en
+  `database/backups/crelealtad-pre-062-20261011-213911.backup` (4,272,870 bytes, 602 entradas y
+  SHA-256 `96b182ae56008850c4ab21b08368046b647fe20be2d1b7dc253fb4b9ea1aeac2`).
+- DEC-239 formaliza que esta calificación no sustituye el semáforo ni el motivo de la fotografía;
+  DEC-241 incorpora el estado intermedio amarillo.
+
+## [2026-10-11] - Acción destacada para revisar evidencia externa
+
+### M03 y mobile
+
+- La etiqueta `EVIDENCIA` cambia a `REVISAR EVIDENCIA` en el resumen de otras financieras.
+- Cuando hay fotografías confirmadas, el botón usa fondo ocre oscuro de Verificación y presenta
+  cámara y conteo en blanco; reduce su proporción horizontal para incorporar entre la etiqueta y la
+  acción un círculo blanco con borde negro y signo de interrogación negro.
+- El indicador, la etiqueta y el resto del renglón son de sólo lectura; únicamente el botón ocre
+  abre el visor. DEC-238 formaliza la acción, DEC-242 precisa su composición visual y DEC-243 limita
+  su zona táctil, sin cambios de datos, API o PostgreSQL.
+- `REVISAR EVIDENCIA` se eleva dentro de su columna y debajo incorpora una cápsula alargada en tres
+  segmentos: verde, amarillo y rojo. Los números corresponden sólo a las calificaciones guardadas
+  de las evidencias de Entrevista asociadas a la integrante visible; las no calificadas y los
+  comprobantes de Documentación no se atribuyen a ningún color. DEC-244 formaliza este resumen.
+
+## [2026-10-11] - Tasa opcional de otra financiera
+
+### M03 y mobile
+
+- `¿Qué tasa maneja?` y `¿Qué tasa manejaba?` dejan de mostrar asterisco y ya no bloquean
+  `Terminar entrevista` cuando permanecen vacías.
+- Si se captura una tasa, conserva el selector entero de 65 a 100, el autoguardado y la restauración
+  existentes; no se modificó el contrato nullable de API ni PostgreSQL.
+- Las pruebas focales cubren tanto la presentación sin asterisco como la terminación con tasa vacía.
+- DEC-235 formaliza la obligatoriedad retirada en ambas ramas del historial crediticio externo.
+
+## [2026-10-11] - Concordancia parametrizada de ficha y préstamo
+
+### M11, M03, mobile, API y PostgreSQL
+
+- `Parámetros de conclusiones` incorpora pantallas independientes para concordancia en ficha y en
+  préstamo, con selectores porcentuales de 0% a 100%.
+- La diferencia se calcula como `|calculado − declarado| ÷ declarado × 100`, redondeada al entero más
+  cercano; 100 agrupa diferencias iguales o mayores a 100%.
+- La configuración inicial es verde 0–5%, amarillo 6–10% y rojo 11–100%. Mobile, API y PostgreSQL
+  admiten orden libre y huecos y rechazan límites invertidos, traslapes o valores fuera de rango.
+- Cada fila de Conclusiones consume exclusivamente su parámetro y aplica el tono sólo al importe
+  calculado de la tercera columna, donde también muestra el porcentaje que produce la clasificación.
+  El importe declarado por la integrante permanece neutral en la segunda columna. Sin datos
+  suficientes o consulta confirmada, el cálculo también queda neutral.
+- El bloque económico usa anchos explícitos `33% / 27% / 40%`; la columna declarada permanece en
+  27% y la calculada muestra en la misma línea burbujas separadas para importe y porcentaje.
+- Las etiquetas visibles se compactan a `ÚLT. PRÉSTAMO` y `TASA`; `VALOR DE FICHA` permanece
+  completo y en una sola línea mediante un relleno horizontal más reducido.
+- La migración 060 se validó primero en `crelealtad_test`, incluido el rechazo de traslapes, y luego
+  se aplicó en `crelealtad` después del respaldo
+  `database/backups/crelealtad-pre-060-20261011-231938.backup` (4,262,608 bytes).
+- Ambas bases quedaron con 57 migraciones aplicadas, sin pendientes, deriva ni entradas desconocidas.
+- DEC-234 formaliza el cálculo, la independencia de ambos parámetros y su carácter informativo.
+
+## [2026-10-11] - Cálculos cruzados en Conclusiones
+
+### M03 y experiencia móvil
+
+- La tercera columna calcula la ficha implícita como `(último préstamo ÷ 1,000) × tasa`.
+- El renglón de último préstamo calcula el importe implícito como `(ficha ÷ tasa) × 1,000`.
+- Si la tasa está vacía, esos dos cálculos se omiten, su segunda celda muestra `——` y la tercera
+  calcula `(ficha ÷ préstamo) × 1,000`, redondeada al entero más cercano.
+- Los resultados requieren operandos positivos; de lo contrario, la celda calculada queda vacía.
+- Las pruebas focales verifican fórmulas, presentación, accesibilidad y columnas.
+- DEC-233 formaliza el cálculo informativo; no cambia captura, API, PostgreSQL ni dictamen.
+
+## [2026-10-11] - Tolerancia parametrizada de semana de desembolso
+
+### M11, M03, mobile, API y PostgreSQL
+
+- `Parámetros de conclusiones` incorpora `Calificar semana de desembolso`, reutilizando la pantalla
+  compartida de rangos con valores desplazables de 0 a 10.
+- La tolerancia vale 0 dentro del rango estimado y mide semanas hacia el límite más cercano cuando
+  `SEMANA ACTUAL` queda antes o después; 10 agrupa diez semanas o más.
+- La configuración inicial es verde 0, amarillo 1–3 y rojo 4–10. Mobile, API y PostgreSQL admiten
+  cualquier orden y huecos y rechazan rangos invertidos, traslapes o valores fuera de 0–10.
+- Conclusiones aplica el tono confirmado a `MES DE DESEMBOLSO` y al rango estimado; una consulta
+  fallida o datos incompletos permanecen neutrales.
+- La migración 059 pasó en `crelealtad_test` la escritura de ambos extremos, auditoría, rechazo de
+  traslape y rollback. Después se aplicó en `crelealtad` con el respaldo
+  `database/backups/crelealtad-pre-059-20261011213841.backup` (4,258,163 bytes).
+- Ambas bases quedaron con 56 migraciones aplicadas, sin pendientes, deriva ni entradas desconocidas.
+
+## [2026-10-11] - Calificación parametrizada de ciclos externos
+
+### M11, M03, mobile, API y PostgreSQL
+
+- `Parámetros de conclusiones` incorpora `Calificar número de ciclos` con el mismo componente visual
+  de rangos usado por semanas y selectores del 1 al 40, iguales a los de Entrevista.
+- Mobile, API y PostgreSQL permiten cualquier orden y huecos, y rechazan valores fuera del intervalo,
+  rangos invertidos o un número de ciclos compartido por dos colores.
+- Conclusiones consulta el parámetro operativo y aplica el tono a `CICLOS EN ESA FINANCIERA`; una
+  consulta fallida o un valor no cubierto queda neutral.
+- La migración 058 crea persistencia y UUID de auditoría independientes, copiando como configuración
+  inicial los rangos vigentes de semanas. Pasó en `crelealtad_test` la escritura hasta 40, auditoría,
+  rechazo de traslape y rollback; después se aplicó en `crelealtad` con el respaldo
+  `database/backups/crelealtad-pre-058-20261011211654.backup` (4,254,268 bytes).
+- Ambas bases quedaron con 55 migraciones aplicadas, sin pendientes, deriva ni entradas desconocidas.
+- TypeScript de API y mobile pasó; 20 pruebas focales de API y 19 de mobile terminaron correctamente.
+
+## [2026-10-11] - Confirmación real al publicar rangos de semana
+
+### M11 y mobile
+
+- La pantalla relee sin caché el parámetro después de publicarlo y compara los seis límites con la
+  selección enviada.
+- El mensaje de éxito aparece únicamente cuando el `PUT`, su respuesta y la lectura posterior
+  coinciden. Una respuesta distinta o un valor no conservado mantiene el formulario y muestra que
+  el cambio no fue confirmado.
+- La consulta administrativa agrega un identificador único y `no-cache, no-store` para impedir que
+  una respuesta GET anterior restaure visualmente otra configuración.
+- La API extrae correctamente las filas de la respuesta estructurada `[filas, conteo]` que TypeORM
+  entrega para `UPDATE ... RETURNING`. Esto evita auditar un identificador indefinido y conserva en
+  una sola transacción tanto la publicación como su evento de auditoría.
+- La migración 057 agrega al parámetro único un `audit_id` UUID estable. El identificador operativo
+  `id = 1` se conserva, mientras `audit_log.registro_id` recibe el tipo correcto y deja de revertir
+  la publicación con `Internal server error`.
+- La migración y el INSERT de auditoría se probaron primero en `crelealtad_test` y luego en
+  `crelealtad`, usando transacciones de verificación con `ROLLBACK`. La base principal quedó con 54
+  migraciones aplicadas, sin pendientes, deriva ni entradas desconocidas. Respaldo previo:
+  `database/backups/crelealtad-pre-057-20261011210208.backup` (4,252,990 bytes).
+
+## [2026-10-11] - Rangos de semana sin orden obligatorio
+
+### M11, M03, mobile, API y PostgreSQL
+
+- `Calificar semana del crédito` acepta los colores en cualquier orden y permite dejar semanas sin
+  clasificación; cada rango conserva límites inclusivos entre 1 y 16.
+- Mobile, API y la migración 056 rechazan un rango con `Desde > Hasta` o cualquier semana compartida
+  por dos colores. El mensaje de validación ya no exige cobertura continua ni orden por color.
+- Una semana fuera de los tres rangos permanece neutral en Conclusiones.
+- DEC-230 sustituye en DEC-229 únicamente el orden, la continuidad y la cobertura completa; conserva
+  permisos, auditoría y el carácter exclusivamente visual del parámetro.
+- La migración 056 pasó aplicación, reversión y reaplicación en `crelealtad_test`; aceptó verde
+  13–16, amarillo 9–12 y rojo 1–8, y rechazó el traslape de la semana 8. Después se aplicó en
+  `crelealtad` con el respaldo verificado
+  `database/backups/crelealtad-pre-056-20261011140911.backup` (4,252,778 bytes, 577 entradas,
+  SHA-256 `d954b9fef846439c10a161bedc8f12661afe69d24966ff1dddf18d6e44803afd`). Ambas bases quedaron
+  con 53 migraciones aplicadas, sin pendientes, deriva ni entradas desconocidas.
+- TypeScript de API y mobile, build de API, lint sin errores y las seis pruebas focales terminaron
+  correctamente. El lint conserva las 42 advertencias conocidas.
+
+## [2026-10-11] - Calificación parametrizada de la semana externa
+
+### M11, M03, mobile, API y PostgreSQL
+
+- `Parámetros > Verificación > Conclusiones` incorpora `Calificar semana del crédito`.
+- La pantalla presenta, de arriba hacia abajo, los círculos verde, amarillo y rojo. Cada renglón tiene
+  dos selectores desplazables `Desde` y `Hasta`, ambos con semanas del 1 al 16.
+- La configuración inicial queda verde 1–10, amarillo 11–13 y rojo 14–16. Mobile, API y PostgreSQL
+  exigen una partición completa y contigua; no permiten huecos, traslapes ni valores fuera del rango.
+- La publicación es exclusiva de ADMINISTRADOR, se aplica directamente y registra actor, fecha,
+  valores anteriores y posteriores en `audit_log`.
+- Verificación consulta el parámetro con `verificacion:leer` y colorea `SEMANA ACTUAL` en
+  Conclusiones; si la consulta no queda confirmada, mantiene el dato neutral.
+- La migración 055 crea el registro único parametrizable. Pasó aplicación, rollback y reaplicación
+  en `crelealtad_test`; después del respaldo verificado
+  `database/backups/crelealtad-pre-055-20261011194818.backup` (4,249,750 bytes, 573 entradas,
+  SHA-256 `8c693d6c9266ebbc620a85fd77f5a50a3c981251dd24c0ab5ecaaa23009079fc`) se aplicó a
+  `crelealtad`. Ambas bases quedaron con 52 migraciones aplicadas, sin pendientes, drift ni entradas
+  desconocidas.
+- DEC-229 sustituye el estado vacío definido temporalmente en DEC-228; no cambia montos, dictamen ni
+  respuestas históricas de Entrevista.
+- TypeScript de API y mobile, build de API, 12 suites/37 pruebas móviles y 9 suites/52 pruebas API
+  aplicables terminaron correctamente. El lint conserva las 42 advertencias conocidas y no agrega
+  advertencias ni errores.
+
+## [2026-10-11] - Acceso de Conclusiones en Parámetros de Verificación
+
+### M11 y experiencia móvil
+
+- `Parámetros de verificación` presenta ahora dos renglones hermanos: `Entrevista` y `Conclusiones`.
+- `Conclusiones` abre una pantalla independiente con regreso al nivel anterior y un estado vacío
+  explícito; no se inventaron todavía opciones, reglas, API ni persistencia para ese apartado.
+- La navegación reutiliza `TaskMenuButton`, el tema gris de Parámetros y los componentes de estado
+  compartidos. DEC-228 amplía la jerarquía aprobada en DEC-222.
+
+## [2026-10-11] - Orden del historial externo en Conclusiones
+
+### M03 y experiencia móvil
+
+- El número de ciclos se integra en el renglón de Estado, antes de `ACTIVO`; deja de ocupar un
+  renglón independiente y conserva su semáforo parametrizado.
+- `SEMANA ACTUAL` queda debajo de Estado y conserva la validación verde/roja contra el rango
+  estimado del mes.
+- Ficha, último préstamo y tasa forman una tabla de tres columnas con concepto, dato capturado en
+  el centro y celda derecha vacía; dos bordes verticales y un cierre inferior delimitan la nueva
+  estructura.
+- La columna de conceptos ocupa 46% para mantener cada etiqueta en una línea; el espacio restante
+  se divide exactamente en dos columnas de 27%. Las cantidades permanecen centradas horizontal y
+  verticalmente dentro de cada renglón.
+- La prueba focal valida el orden accesible, el separador, los tonos del rango y ambos estados.
+- DEC-227 formaliza la composición; no cambia captura, API ni PostgreSQL.
+
+## [2026-10-11] - Color institucional de Análisis
+
+### M04, mobile y Design System
+
+- Análisis adopta el verde claro `#B5E6A2` seleccionado en la muestra 2 para encabezado, barra de
+  título, botón principal y borde de su tarjeta, con texto oscuro para conservar legibilidad.
+- `Colores definidos` conserva una sola pantalla de Análisis y elimina las muestras 1 y 3.
+- DEC-224 formaliza la selección; no cambia permisos, API ni PostgreSQL.
+- La precisión DEC-225 conserva `#B5E6A2` en el encabezado y cambia la barra de título y el botón
+  principal a `#8ED973`, evitando que la barra repita el mismo tono.
+- DEC-226 establece la combinación final: encabezado `#DAF2D0`, barra y botón `#8ED973`. La
+  variante anterior de Análisis se retiró de `Colores definidos`.
+
+## [2026-10-10] - Último préstamo externo y formato monetario uniforme
+
+### Entrevista, mobile, API y PostgreSQL
+
+- `HISTORIAL CREDITICIO` pregunta `¿Qué monto fue su último préstamo?` inmediatamente después de
+  la ficha, tanto para créditos externos activos como finalizados.
+- El nuevo importe participa en autoguardado, restauración, validación de cierre y Conclusiones.
+- La utilidad monetaria compartida presenta y normaliza las respuestas como `$ 18,000`; los
+  importes restaurados ya no reaparecen como números crudos y no se muestran centavos.
+- La migración 054 agrega un `NUMERIC(12,2) NULL` con restricciones de no negatividad y aplicación
+  condicional. Pasó aplicación, rollback y reaplicación en `crelealtad_test`.
+- Antes de aplicarla en `crelealtad` se verificó
+  `database/backups/crelealtad-pre-054-20261010214110.backup`: 4,246,682 bytes, 572 entradas y
+  SHA-256 `0680F692DD43AB3CCCECBCF999FBD1E3323AC07BB71343EB01D2D8F13EC2BA2B`.
+- Ambas bases quedaron 51/51, sin pendientes, drift ni entradas desconocidas; se regeneró el dump
+  canónico. API aprobó build y 32 pruebas focales; mobile aprobó TypeScript y 18 pruebas focales.
+- DEC-223 formaliza la posición de la pregunta y el formato monetario institucional.
+
+## [2026-10-10] - Depuración y nueva jerarquía de Parámetros de Entrevista
+
+### M11, Entrevista, API y experiencia móvil
+
+- `Parámetros de verificación` deja a `Entrevista` como acceso único; dentro de `Parámetros de
+  entrevista` se concentran Financieras competidoras y los motivos verdes, amarillos y rojos.
+- El selector administrativo de Entrevista conserva siete catálogos directos y retira once familias
+  que no deben modificarse desde M11, sin borrar sus opciones, preguntas ni historial.
+- `Cómo conoció a la asesora` admite nuevas opciones. La API genera un código estable y, al guardar
+  una entrevista, valida que el código siga activo en esa familia.
+- Los títulos cambian a `Razones para recomendarnos` y `Razones para no recomendarnos`.
+- Mobile aprobó TypeScript y 6 pruebas focales; API aprobó build y 27 pruebas focales.
+- DEC-222 actualiza la navegación y el alcance administrativo definidos por DEC-218 y DEC-221.
+
+## [2026-10-10] - Catálogos administrables de Entrevista
+
+### M11, Entrevista, API y PostgreSQL
+
+- Parámetros de Verificación incorpora `Entrevista` con 18 familias configurables que cubren
+  opciones, motivos y escalas operativas usadas por la captura vigente.
+- Administración puede editar etiquetas, ordenar, desactivar y reactivar sin cambiar el código
+  persistido. Las seis familias de motivos admiten altas; los catálogos ligados a enums cerrados no
+  permiten inventar códigos desde mobile.
+- Verificación consulta el catálogo remoto, filtra opciones inactivas y conserva respaldo local
+  cuando la consulta falla. La transformación etiqueta–código usa el código estable de M11.
+- La migración 053 creó `parametros_entrevista_opciones`, cargó 88 opciones en 18 familias y agregó
+  unicidad, orden diferible, baja lógica, actores y fechas. Se verificó aplicación, conteos,
+  rollback y reaplicación en `crelealtad_test`; después de un respaldo completo validado se aplicó
+  en `crelealtad` con 88 códigos y posiciones únicas.
+- API aprobó build y 7 pruebas focales; mobile aprobó TypeScript y 10 pruebas focales.
+- DEC-221 formaliza qué contenido de Entrevista es parámetro y qué estructura permanece fija.
+
+## [2026-10-10] - Motivo visible y controles centrados en evidencia
+
+### Verificación, visor y accesibilidad
+
+- La franja superior verde, amarilla o roja muestra ahora el motivo persistido de la fotografía con
+  texto negro, fuerte, centrado y de hasta dos líneas.
+- `Integrantes` y el control de zoom se elevaron con espaciado institucional para quedar centrados
+  visualmente en la franja inferior, sin reducir el área útil de la imagen.
+- `DocumentViewer`, `DocumentImageCarousel` y el visor inmersivo comparten el nuevo campo visual;
+  comprobantes documentales y evidencia legacy sin motivo permanecen sin texto añadido.
+- Mobile aprobó TypeScript, 2 suites/7 pruebas focales y lint sin errores, conservando las 42
+  advertencias conocidas.
+- DEC-220 cierra la presentación del motivo y la alineación de controles sin cambios de API o datos.
+
+## [2026-10-10] - Identidad gris y catálogos en renglón para Parámetros
+
+### M11 y experiencia móvil
+
+- Todas las tarjetas del selector de módulos usan ahora el tema gris de Parámetros; ya no reproducen
+  los colores del Menú principal.
+- `Parámetros de verificación` sustituyó la cuadrícula de cuatro tarjetas por renglones rectangulares
+  de ancho completo con icono, título, descripción y flecha de apertura.
+- `TaskMenuButton` admite una descripción opcional y la incorpora a su etiqueta accesible; los usos
+  existentes sin descripción conservan su comportamiento.
+- No cambiaron catálogos, navegación funcional, permisos, API ni PostgreSQL.
+- DEC-219 cierra esta presentación visual.
+
+## [2026-10-10] - Parámetros agrupados por módulo
+
+### M11 y experiencia móvil
+
+- El inicio de Parámetros dejó de mezclar todos los catálogos en una sola grilla y ahora muestra
+  Documentación, Verificación, Análisis, Desembolsos, Cobranza, Recolección, Mora, Convenios y
+  Reportes.
+- Verificación abre un segundo nivel con Financieras competidoras y los motivos verdes, amarillos y
+  rojos ya implementados.
+- Los demás módulos permanecen visibles y deshabilitados como `Sin parámetros`; no se agregaron
+  configuraciones, permisos, API ni datos para módulos futuros.
+- La navegación de regreso conserva la jerarquía catálogo → Verificación → inicio de Parámetros.
+- Mobile aprobó TypeScript, lint sin errores nuevos y la suite focal de Parámetros con 5 pruebas.
+- DEC-218 cierra esta organización visual sin cambio de API o PostgreSQL.
+
+## [2026-10-10] - Cámara o carrete para evidencia de otra financiera
+
+### Entrevista, evidencias y trazabilidad
+
+- `Agregar evidencia` en las ramas activa e inactiva de otra financiera abre una elección explícita
+  entre `Tomar foto` y `Elegir del carrete`.
+- Cámara y carrete continúan por el mismo semáforo, motivo obligatorio y selector de una, varias o
+  todas las integrantes antes del envío.
+- Mobile envía la fuente real y conserva la ubicación actual. Para carrete no fabrica una fecha de
+  toma original: `foto_capturada_at` se guarda como `NULL`.
+- La API admite `GALERIA` únicamente en `HISTORIAL_CREDITO_ACTIVO / INACTIVO`; negocio, control de
+  pagos y folleto continúan exclusivamente por cámara. No fue necesaria una migración porque el
+  constraint existente ya admite `CAMARA` y `GALERIA`.
+- API aprobó build y 2 suites/22 pruebas focales. Mobile aprobó TypeScript, 36 suites/106 pruebas y
+  lint sin errores, conservando las 42 advertencias conocidas. La regresión API completa quedó
+  impedida por el entorno: PostgreSQL local no escuchaba en `127.0.0.1:5432`; no se atribuye ese
+  fallo de conexión al cambio.
+- DEC-217 cierra la ampliación de fuente sólo para evidencia de otra financiera.
+
+## [2026-10-10] - Orden configurable y encabezado fijo de motivos
+
+### Parámetros, Verificación y datos
+
+- `CONCEPTOS REGISTRADOS` ahora usa `StickySectionHeader`: borde superior e inferior del tema de
+  Parámetros, ancho ligeramente mayor que las tarjetas y posición fija mientras los motivos hacen
+  scroll.
+- La celda fija tiene fondo opaco y elimina el margen superior transparente, por lo que ninguna
+  tarjeta o botón se ve detrás del encabezado al desplazar. Cada tarjeta muestra una insignia
+  numérica grande en una columna centrada verticalmente con su posición confirmada; ésta cambia
+  junto con el reordenamiento. Las acciones reducen separación y relleno sin bajar de 44 px táctiles.
+- Cada tarjeta conserva una sola fila compacta de acciones y agrega controles accesibles de subir y
+  bajar. El primer motivo no puede subir y el último no puede bajar.
+- Mobile envía el catálogo completo al nuevo `PUT /parametros/evidencia/motivos-clasificacion/orden`.
+  La API exige todos los UUID del color, aplica la nueva secuencia de forma transaccional y audita
+  cada posición modificada con `MOT_EVI_ORDEN`. Altas nuevas se agregan al final.
+- La consulta administrativa y la operativa ordenan por `orden`; el pop-up filtra inactivos sin
+  perder la secuencia definida por Administración.
+- La migración 052 agrega `orden INTEGER NOT NULL`, `CHECK orden >= 1` y unicidad diferible por
+  clasificación. Pasó aplicación, integridad, intercambio transaccional, reversión y reaplicación
+  en `crelealtad_test`.
+- Antes de operación se verificó `database/backups/crelealtad-pre-052-20261010221521.backup`:
+  4,232,149 bytes, 560 entradas y SHA-256
+  `86A138982D893A20575C48EBACBA313EC30F1A0E3383D5A68B612135C3FB027D`.
+- En `crelealtad` quedaron 17 motivos, cero órdenes inválidos y cero duplicados. Ambas bases quedaron
+  49/49, sin pendientes, drift ni entradas desconocidas; se regeneró el dump canónico.
+- El generador del dump ahora conserva tipos exactos —incluidos arreglos—, constraints compuestos,
+  restricciones `CHECK`, atributos `DEFERRABLE INITIALLY DEFERRED` e índices parciales/únicos, para
+  que las reconstrucciones de prueba representen fielmente la integridad e idempotencia reales.
+- API aprobó build y 49 suites/282 pruebas; Mobile aprobó TypeScript, 36 suites/105 pruebas y lint
+  sin errores, conservando las 42 advertencias conocidas.
+- La reconstrucción PostgreSQL aislada desde el dump aprobó 49 suites/284 pruebas adicionales.
+- DEC-216 cierra el orden configurable y la presentación fija del encabezado.
+
+## [2026-10-10] - Cambio de estado estable y renglones compactos para motivos
+
+### Parámetros y UX
+
+- Se corrigió la lectura de `INSERT/UPDATE ... RETURNING` del catálogo de motivos. TypeORM entrega
+  las mutaciones PostgreSQL como `[filas, conteo]`; el servicio trataba ese contenedor como si fuera
+  el motivo y enviaba `registro_id = NULL` a `audit_log`, causa exacta del HTTP 500 al activar o
+  desactivar. Alta, edición y cambio de estado comparten ahora la extracción correcta.
+- La ruta específica `PATCH /parametros/evidencia/motivos-clasificacion/:id/estado` se registra
+  antes de la edición genérica del concepto y cuenta con una regresión HTTP que confirma que
+  activar o desactivar llega al manejador de estado.
+- La reproducción HTTP completa pasó de 500 a 200 con el controlador, JWT, permisos, servicio,
+  PostgreSQL y auditoría reales. El cambio transaccional se verificó con rollback; la validación no
+  dejó cambios de estado ni eventos de auditoría persistidos.
+- Cada concepto reduce separación y relleno. `Editar` y `Desactivar` o `Reactivar` quedan en una
+  sola línea debajo del concepto, con un área táctil mínima de 44 px; guardar y cancelar edición
+  siguen el mismo patrón compacto.
+- API aprobó build, 2 suites/16 pruebas focales y la regresión completa de 49 suites/279 pruebas.
+  Mobile aprobó TypeScript, 1 suite/3 pruebas focales, la regresión completa de 36 suites/104
+  pruebas y lint sin errores, conservando las 42 advertencias conocidas.
+
+## [2026-10-10] - Cinco motivos activos por color y edición segura
+
+### Parámetros, Verificación y datos
+
+- La migración 051 completa hasta cinco motivos activos para verde, amarillo y rojo sin borrar,
+  sustituir ni reactivar conceptos que ya pertenecen a la operación. En `crelealtad` conservó
+  `Comprobante de 3-6 meses`, `De 1-3 ciclos` y `Sin Tickets`; agregó dos opciones amarillas, cinco
+  verdes y cinco rojas. El resultado final es 5/5/5, sin duplicados.
+- Administración puede editar el texto desde las tres pantallas mientras el concepto no tenga una
+  evidencia relacionada. Después del primer uso la API exige desactivarlo y crear el reemplazo para
+  no reescribir el motivo histórico. La edición usa `parametros:actualizar`, rol exacto
+  `ADMINISTRADOR` y auditoría `MOT_EVI_EDITA`.
+- La carga inicial registró 12 eventos `MOT_EVI_BASE` en operación. Las diez evidencias existentes
+  permanecieron intactas y ninguna recibió motivo retroactivo.
+- La 051 pasó aplicación, verificación 5/5/5, rollback y reaplicación en `crelealtad_test`. Antes de
+  operación se validó `database/backups/crelealtad-pre-051-20261010151251.backup`: 4,230,353 bytes,
+  560 entradas y SHA-256 `D2207CE392BBBEA0420BFC24E237AA08F467ED6D8BE234A97141276D1E46BEE5`.
+- Ambas bases quedaron 48/48, sin pendientes, drift ni entradas desconocidas. API aprobó build y
+  49 suites/277 pruebas aisladas; mobile aprobó TypeScript, lint con las 42 advertencias conocidas
+  y 36 suites/104 pruebas.
+- DEC-215 sustituye únicamente la decisión previa de iniciar vacío el catálogo y cierra la edición
+  segura antes del primer uso.
+
+## [2026-10-10] - Un motivo obligatorio por evidencia clasificada
+
+### Parámetros, Verificación y datos
+
+- El inicio de M11 agrega tres pantallas independientes: `Motivos verdes`, `Motivos amarillos` y
+  `Motivos rojos`. Administración puede registrar conceptos y aplicar baja lógica o reactivación;
+  no existe borrado ni precarga de opciones inventadas.
+- Después de elegir el semáforo de una fotografía de otra financiera, mobile abre el selector del
+  color correspondiente y exige exactamente un motivo antes de continuar con integrantes. Sin
+  opciones activas o ante error de consulta, la confirmación permanece bloqueada.
+- La API separa las rutas administrativas de la lectura operativa, vuelve a validar rol, permiso,
+  color y vigencia del motivo, e incluye la referencia y el concepto en consultas, idempotencia y
+  auditoría. Un reintento exacto sigue recuperando la evidencia confirmada aunque su motivo haya
+  sido desactivado posteriormente, sin habilitar ese concepto para fotografías nuevas. Altas y
+  cambios de estado registran `MOT_EVI_ALTA` y `MOT_EVI_ESTADO`.
+- La migración 050 crea `motivos_clasificacion_evidencia`, agrega
+  `motivo_clasificacion_id` y protege color, tipo, nuevas evidencias y borrado restrictivo. Pasó
+  aplicación, rollback protegido y reaplicación en `crelealtad_test`.
+- Antes del despliegue operativo se validó el respaldo
+  `database/backups/crelealtad-pre-050-20261010121102.backup`: 4,222,115 bytes, 547 entradas y
+  SHA-256 `C7A1AA18A86D8DE49D0D4267B9FCE1437BCB0F0FE6D0E72DA39E8D4CD438EA95`.
+- `crelealtad_test` y `crelealtad` quedaron 47/47, sin pendientes, drift ni entradas desconocidas.
+  Las diez evidencias operativas —nueve de historial externo y seis ya clasificadas— conservaron
+  sus datos y cero recibieron un motivo retroactivo; el catálogo inició vacío por diseño.
+- El dump canónico fue regenerado. API aprobó build y 49 suites/274 pruebas aisladas; mobile aprobó
+  TypeScript, lint con las 42 advertencias conocidas y 36 suites/103 pruebas.
+- DEC-214 cierra la selección única obligatoria y la preservación histórica del concepto.
+
+## [2026-10-10] - Pellizco aislado del deslizamiento entre evidencias
+
+### Mobile y UX
+
+- El segundo dedo bloquea inmediatamente la paginación de `DocumentViewer` y recentra la evidencia
+  activa si el carrusel alcanzó a moverse al comenzar el gesto.
+- Mientras la fotografía permanezca ampliada, arrastrar recorre sólo esa imagen; la evidencia
+  vecina, su semáforo y sus controles ya no entran parcialmente en pantalla.
+- El deslizamiento para cambiar de fotografía se recupera al volver a `100 %`. `Integrantes` y zoom
+  permanecen dentro de la franja inferior de su propia evidencia.
+- TypeScript mobile y las 4 suites/9 pruebas focales aprobaron. La regresión completa cerró con
+  34 suites y 96 pruebas aprobadas; el lint conserva las 42 advertencias conocidas y cero errores.
+- DEC-213 registra el arbitraje de gestos; no cambia API, persistencia ni clasificación histórica.
+
+## [2026-10-10] - Entrevista inmersiva con fondo blanco
+
+### Mobile y UX
+
+- La evidencia de otra financiera abierta desde Entrevista recupera la presentación amplia anterior:
+  pantalla completa, encabezado compacto, índice y cierre mediante `X`.
+- Toda superficie que antes era oscura ahora es blanca; no se reintroduce el modal negro.
+- La fotografía ocupa el espacio restante y conserva semáforo, `Integrantes`, zoom y deslizamiento.
+- Conclusiones permanece en el panel blanco vigente. Ambas presentaciones reutilizan
+  `DocumentViewer`; no se duplicó el visor.
+- TypeScript mobile, las 5 suites/13 pruebas focales y la regresión completa de 33 suites/94 pruebas
+  aprobaron. El lint conserva las 42 advertencias conocidas y no incorpora errores nuevos.
+- DEC-212 registra el refinamiento; no cambia API, persistencia ni clasificación histórica.
+
+## [2026-10-10] - Evidencias por deslizamiento y controles más bajos
+
+### Mobile y UX
+
+- `DocumentViewer` elimina `Anterior / Siguiente` y permite cambiar de fotografía con un gesto
+  horizontal cuando el zoom está en `100 %`; al ampliar, el arrastre continúa recorriendo la foto.
+- El visor conserva el índice actual y comunica visual y accesiblemente que se puede deslizar.
+- `Integrantes` y los controles de zoom bajan al centro de la franja inferior del semáforo para no
+  cubrir la parte útil de la evidencia.
+- TypeScript mobile, las 3 suites/6 pruebas focales y la regresión completa de 33 suites/93 pruebas
+  aprobaron. El lint conserva las 42 advertencias conocidas y no incorpora errores nuevos.
+- DEC-211 registra este refinamiento; no cambia API, persistencia ni clasificación histórica.
+
+## [2026-10-10] - Visor blanco único y semáforo de alto contraste
+
+### Mobile y UX
+
+- El carrusel de Entrevista deja de abrir su modal oscuro propio y reutiliza el mismo
+  `DocumentViewer` blanco de Conclusiones, incluyendo navegación, zoom, `Integrantes` y cierre.
+- `ZoomableImage` usa blanco como superficie neutral. Si existe clasificación, pinta con ese color
+  todo el espacio libre alrededor de la fotografía y agrega bandas superior e inferior de 64 px;
+  la misma presentación se aplica a la vista previa y al paso de clasificación.
+- `DocumentViewer` admite abrir en la página tocada y notifica cada cambio de página para que el
+  carrusel conserve la posición al cerrar.
+- TypeScript y lint mobile aprobaron; lint conserva las 42 advertencias conocidas. Las 9 pruebas
+  focales del visor, carrusel, zoom y selector de semáforo aprobaron; la suite mobile completa cerró
+  con 33 suites y 93 pruebas aprobadas.
+- DEC-210 registra la unificación visual; no cambia API, persistencia ni clasificación histórica.
+
+## [2026-10-09] - Semáforo por evidencia de otra financiera
+
+### Mobile, API y datos
+
+- Después de usar una fotografía nueva de `Evidencia de otra financiera`, mobile muestra debajo de
+  la vista previa el selector obligatorio `VERDE / AMARILLO / ROJO`. Sólo después habilita
+  `Continuar con integrantes`; cancelar descarta la toma local y permite repetirla.
+- La clasificación se conserva por archivo. El carrusel y los visores ampliados presentan franjas
+  superior e inferior del color elegido y también escriben el nombre del color en la etiqueta y en
+  accesibilidad; las imágenes heredadas de Documentación siguen sin clasificación ni marco.
+- La API exige el semáforo sólo para nuevas evidencias `HISTORIAL_CREDITO_ACTIVO` o
+  `HISTORIAL_CREDITO_INACTIVO`, lo incluye en idempotencia y auditoría, y rechaza enviarlo para los
+  demás tipos. El color no cambia estados ni produce un dictamen automático.
+- La migración 049 agrega `clasificacion_semaforo` nullable con restricción de tipo y valores. Pasó
+  aplicación, rollback protegido y reaplicación en `crelealtad_test`; el dump canónico fue
+  regenerado con el nuevo campo y su comentario.
+- Antes de aplicarla en `crelealtad` se verificó el respaldo
+  `database/backups/crelealtad-pre-049-20261010053306.backup`: 4,217,592 bytes, 546 entradas y
+  SHA-256 `E55FA850E051715046F432920FA7217395E0E2227C30287F6DD049ACB4B4F3FE`.
+- `crelealtad_test` y `crelealtad` quedaron 46/46, sin pendientes, drift ni entradas desconocidas.
+  En operación se verificaron cuatro evidencias previas, cero clasificadas retroactivamente y cero
+  valores inválidos.
+- API aprobó 47 suites y 261 pruebas contra PostgreSQL aislado; también aprobaron build y typecheck.
+  Mobile aprobó typecheck, lint con sus 42 advertencias conocidas y las 9 pruebas focales. La suite
+  móvil completa aprobó 31 de 32 suites y 89 de 90 pruebas; el único caso restante fue el timeout de
+  5 segundos ya conocido en `ParametrosScreen`, ajeno a este flujo.
+- DEC-209 cierra la secuencia de clasificación antes de integrantes y preserva el legado sin
+  inventar color.
+
+## [2026-10-09] - Editar integrantes desde el visor de evidencia
+
+### Mobile, API y datos
+
+- Las fotografías propias de `Evidencia de otra financiera` incorporan el botón `Integrantes` en
+  la base izquierda tanto del carrusel ampliado previo a terminar la Entrevista como del visor de
+  Conclusiones. La acción cierra primero el visor y después abre el selector; los comprobantes
+  provenientes de Documentación no la muestran.
+- Los controles de zoom y la acción contextual usan ahora una superficie blanca, borde gris y texto
+  oscuro para que no se pierdan visualmente contra el marco oscuro de la imagen ampliada.
+- El selector abre con la asignación vigente, permite corregir una, varias o todas las integrantes
+  y exige al menos una. Cancelar no modifica nada; el cambio sólo se refleja después de la
+  confirmación del servidor.
+- La API agrega `PUT /verificacion/integrantes/:integranteId/entrevista/evidencias/:evidenciaId/integrantes`,
+  vuelve a validar permiso, acceso, expediente y participación, y registra antes/después en
+  auditoría sin duplicar ni borrar la fotografía.
+- La migración 048 agrega estado activo, último actor y fecha de modificación a las asociaciones.
+  Las relaciones retiradas permanecen como historial y las consultas muestran sólo las activas.
+- La 048 pasó aplicación, rollback y reaplicación en `crelealtad_test`. Antes de aplicarla en
+  `crelealtad` se verificó el respaldo
+  `database/backups/crelealtad-pre-048-20261009163857.backup`: 4,215,309 bytes, 557 entradas y
+  SHA-256 `20BB4F68B47515FFD03EB298037B930549B342FE6196787F5C358A51E42CD954`.
+- Ambas bases quedaron 45/45, sin pendientes, drift ni entradas desconocidas. En la base operativa
+  se verificaron siete asociaciones activas, ninguna sin actor o fecha y cero filas huérfanas.
+- API aprobó 47 suites y 259 pruebas; typecheck de API/mobile, build de API, lint mobile con sus 42
+  advertencias conocidas y las pruebas focales del botón, selector e historial crediticio pasaron.
+  La suite móvil global aprobó 27 de 29 suites y 82 de 84 pruebas; los dos casos restantes agotaron
+  su límite de 5 segundos ya conocido (`ParametrosScreen` y restauración de Historial), y la prueba
+  focal de esta última aprobó por separado.
+- DEC-208 cierra el comportamiento y mantiene sólo de consulta las imágenes heredadas de
+  Documentación.
+
+## [2026-10-09] - Cancelar y repetir evidencia de otra financiera
+
+### Mobile y UX
+
+- `Cancelar selección`, el retroceso nativo y el toque fuera del pop-up descartan la fotografía
+  pendiente junto con su ubicación, clave idempotente y selección temporal.
+- La tarjeta vuelve inmediatamente al estado anterior y habilita `Tomar fotografía`; no se llama a
+  la API, no se crea asociación y la toma descartada no aparece en el carrusel.
+- `MultiSelectPickerField` incorpora un callback opcional de cancelación, por lo que el cambio no
+  altera los selectores existentes que no necesitan descartar trabajo local.
+- TypeScript móvil y las 3 pruebas focales aprobaron. DEC-207 precisa la cancelación de DEC-206 sin
+  cambio de esquema o datos.
+
+## [2026-10-09] - Evidencia de otra financiera para una, varias o todas
+
+### Mobile, API y datos
+
+- Después de tomar una fotografía nueva, Entrevista abre el selector compartido y exige marcar al
+  menos una integrante. La selección admite altas individuales y la acción `Todas las integrantes`;
+  sólo `Guardar evidencia` inicia el envío.
+- La API valida que todos los UUID pertenezcan al mismo expediente y participen en Verificación,
+  protege el reintento idempotente contra un conjunto distinto y devuelve la evidencia al consultar
+  cualquiera de sus integrantes seleccionadas.
+- La fotografía se guarda una sola vez. La migración 047 agrega el expediente derivado a
+  `verificacion_entrevista_evidencias` y crea
+  `verificacion_entrevista_evidencia_integrantes` con FKs compuestas, actor, fecha y llave única por
+  evidencia–integrante; el legado se asocia sólo a su integrante de origen.
+- Aplicación, rollback y reaplicación de 047 se validaron en `crelealtad_test`; las pruebas focales
+  cubren conjunto vacío, integrante externa, asociación múltiple y selección individual/total.
+- Antes del despliegue se verificó el respaldo
+  `database/backups/crelealtad-pre-047-20261009150013.backup`: 4,208,411 bytes, 545 entradas y
+  SHA-256 `28A95EAF70C4F58F07245A68EC6EB053C861E9CFFCDD519593222EEDB743137E`.
+- La migración quedó aplicada en `crelealtad_test` y `crelealtad`: ambas bases están 44/44, sin
+  pendientes, drift ni entradas desconocidas. Las tres evidencias operativas recibieron exactamente
+  una asociación de legado, sin filas huérfanas ni cruces de expediente.
+- API aprobó su reconstrucción aislada completa: 47 suites y 256 pruebas. TypeScript de API/mobile,
+  build de API, lint mobile con sus 42 advertencias conocidas, escaneo de secretos y las 2 pruebas
+  móviles focales finalizaron correctamente. La suite móvil completa aprobó 79 de 81 pruebas; los
+  dos casos restantes agotaron su límite de 5 segundos (`ParametrosScreen` y la restauración de
+  Historial crediticio), aunque la prueba focal de este flujo sí aprobó.
+- DEC-206 cierra el comportamiento funcional sin duplicar archivos ni ampliar permisos.
+
+## [2026-10-09] - Círculos claros en financieras competidoras
+
+### Mobile y UX
+
+- Los círculos del catálogo dejaron el relleno sólido: `Óptima`, `Atención` y `No interesa` usan
+  respectivamente los fondos institucionales verde, amarillo y rojo claros.
+- Cada círculo conserva un borde sólido del color semántico; `Sin clasificación` permanece blanco
+  con borde gris y la etiqueta accesible del renglón no cambia.
+- El ajuste reutiliza exclusivamente tokens existentes y no modifica clasificación, API, datos ni
+  PostgreSQL.
+
+## [2026-10-09] - Ciclo y fotografías compactos en Conclusiones
+
+### Mobile y UX
+
+- La burbuja de ciclo individual dejó de mostrar `!`: únicamente `1 CICLO` conserva el amarillo,
+  ahora con el mismo peso fuerte de las demás burbujas; desde `2 CICLOS` usa verde y `NUEVO` o
+  `N/D` permanecen neutrales tanto en el encabezado como en `Conclusiones`.
+- La acción `EVIDENCIA` muestra un icono de cámara y el conteo compacto `N FOTO / N FOTOS`, sin la
+  palabra `GUARDADA(S)`. Su forma replica el botón secundario de Verificación: rectangular, fondo
+  blanco, borde ocre de dos puntos, `radius.md` y contenido centrado; mantiene su etiqueta accesible
+  y el visor institucional existente.
+- Todos los datos de `SummaryDetailsCard` quedan centrados verticalmente dentro de cada renglón.
+- Se actualizaron las pruebas del modelo individual y del resumen de Conclusiones. DEC-204 registra
+  la sustitución visual de DEC-183/187 sin cambios en API, datos o PostgreSQL.
+
+## [2026-10-08] - Clasificación vigente de Parámetros en Conclusiones
+
+### Mobile y corrección funcional
+
+- Verificación dejó de solicitar el catálogo de financieras con la fecha histórica de la entrevista.
+  Ahora consulta la versión vigente de Parámetros al abrir o revisar la conclusión.
+- Esto corrige el caso observado de `CrediMujer`: su versión verde `OBJETIVO` comenzó el 8 de octubre,
+  mientras las entrevistas existentes habían sido actualizadas el 6 y 7 y recibían una clasificación
+  nula al consultar retrospectivamente.
+- La fecha de captura se conserva para el rango de semanas y los demás datos históricos; sólo la señal
+  visual de clasificación se actualiza con la política vigente.
+
+## [2026-10-08] - Nombre limpio y color parametrizado en Conclusiones
+
+### Mobile y UX
+
+- La burbuja `FINANCIERA` del historial externo muestra exclusivamente el nombre capturado o resuelto,
+  sin anexar `OBJETIVO`, `REVISAR`, `NO PRIORITARIA`, `SIN CLASIFICAR` ni otra leyenda.
+- La clasificación vigente de M11 conserva su función visual: verde, amarillo o rojo. Cuando no hay
+  clasificación, la burbuja queda blanca con marco oscuro.
+- La semántica de la clasificación permanece disponible para accesibilidad, sin agregar texto visible
+  ni alterar monto, captura, API o PostgreSQL.
+
+## [2026-10-08] - Vigencia visible en formato DD-MMM-AAAA
+
+### Mobile y UX
+
+- `Vigencia desde` se precarga, presenta y captura como `DD-MMM-AAAA`, con abreviatura española en
+  mayúsculas; por ejemplo, `08-OCT-2026`.
+- El historial de la financiera usa el mismo formato visible. Mobile convierte la captura a
+  `AAAA-MM-DD` antes de llamar a la API, por lo que PostgreSQL, el orden cronológico y los contratos
+  existentes permanecen sin cambios.
+- Se agregaron pruebas de conversión, meses en español y fechas inexistentes.
+
+## [2026-10-08] - Corrección de vigencia local en Parámetros
+
+### API
+
+- M11 compara y asigna `hoy` con el día calendario de `America/Mexico_City`, igual que la fecha
+  automática del teléfono; UTC ya no puede convertir la fecha local vigente en una fecha pasada.
+- El catálogo, la consulta para Verificación y la publicación directa comparten la misma fecha
+  operativa. No hubo cambio de esquema, datos, permisos ni contrato HTTP.
+- TypeScript de API terminó sin errores y las 2 suites focales aprobaron sus 8 pruebas, incluidas las
+  dos fronteras del cambio de día entre México y UTC.
+
+## [2026-10-08] - Acceso directo a Parámetros de financiera
+
+### Mobile y UX
+
+- Se eliminó la pantalla intermedia `Detalle de financiera` con sus acciones duplicadas de
+  clasificación, modificación y presencia en el pop-up.
+- Cada `FinancieraStatusRow` abre directamente `Parámetros de financiera` con datos, clasificación y
+  disponibilidad precargados. Publicar regresa al catálogo para mostrar de inmediato el círculo de
+  la versión vigente.
+- El círculo del renglón usa únicamente la clasificación publicada: verde, amarillo, rojo o blanco
+  sin clasificar. El historial se conserva como acción secundaria dentro del formulario.
+- El formulario queda en sólo lectura cuando el usuario no tiene permiso de modificación; para ello
+  `PickerField` y los campos específicos de M11 incorporan estado deshabilitado explícito.
+- DEC-200 cierra el cambio sin modificar la API, el contrato de publicación ni PostgreSQL.
+- Mobile aprobó las 6 suites y 16 pruebas focales de Parámetros, incluida la navegación directa;
+  TypeScript terminó sin errores y lint con cero errores y sus 42 advertencias conocidas.
+
+## [2026-10-08] - Administración publica directamente los parámetros
+
+### Gobierno, API, mobile y datos
+
+- `ADMINISTRADOR`, como representación de Dirección, define y publica M11 en un solo paso mediante
+  `Guardar y publicar`; se retiraron de la pantalla y de la API las acciones de aprobar, rechazar,
+  devolver o publicar posteriormente por Gerencia.
+- La pantalla de captura se denomina `Parámetros de financiera`, por lo que ya no presenta el cambio
+  directo como una propuesta pendiente.
+- La publicación se completa en una transacción: valida rol, capacidad, revisión y vigencia, cierra
+  la versión anterior cuando corresponde, crea la nueva versión `PUBLICADA` y registra
+  `FIN_PUBLICADA`. El mismo administrador queda como actor técnico de propuesta, decisión y
+  publicación para conservar el esquema histórico.
+- La migración 046 retira `parametros:aprobar` y `parametros:rechazar` de roles y excepciones,
+  conserva lectura para Gerencia y asegura lectura/actualización/registro para Administración. Pasó
+  aplicación, rollback y reaplicación en `crelealtad_test` antes de aplicarse a `crelealtad`; ambas
+  bases quedaron 43/43, sin pendientes, drift ni entradas desconocidas.
+- Respaldo: `database/backups/crelealtad-pre-046-20261008222037.backup`, 4,206,467 bytes,
+  530 entradas y SHA-256 `78BB9C17E4C6A54A2E4EB4CEAD6F1C0F8B3C4B27E81BD3124F85D4148256823E`.
+- API aprobó 4 suites y 19 pruebas focales; mobile aprobó 5 suites y 15 pruebas. TypeScript de API y
+  mobile, build de API y el catálogo de migraciones finalizaron sin errores. Lint mobile terminó con
+  cero errores y sus 42 advertencias conocidas.
+- DEC-199 sustituye el doble control sólo para M11. M12 conserva su gobierno separado y
+  Administración no recibe permisos operativos o financieros por herencia.
+
+## [2026-10-08] - Descripción extensa del producto por financiera
+
+### Parámetros, API y datos
+
+- `Propuesta de financiera` incorpora `Descripción` inmediatamente después de `Refinanciamiento` y
+  antes de `PARTICIPACIÓN MERCADO`.
+- Es un campo opcional, multilínea y de texto libre con capacidad de hasta 10,000 caracteres; se
+  conservan sus saltos de línea internos.
+- El dato participa en propuesta, aprobación, publicación, ficha e historial, sin ejecutar cálculos
+  ni alterar reglas de crédito.
+- La migración 045 agrega `descripcion TEXT NULL` a la versión de la financiera. Pasó aplicación,
+  rollback y reaplicación en `crelealtad_test` antes de aplicarse a `crelealtad`; ambas bases quedaron
+  42/42, sin pendientes, drift ni entradas desconocidas, y sin modificar las cero versiones existentes.
+- Respaldo: `database/backups/crelealtad-pre-045-20261008214808.backup`, 4,205,668 bytes,
+  529 entradas y SHA-256 `6A0EB8AD087B11A5E0D8AC6A2931A4D552704BE5A154D09BED73CD33EBCD2F7E`.
+- API aprobó 4 suites y 25 pruebas del módulo; mobile aprobó 4 suites y 14 pruebas. TypeScript de API
+  y mobile terminó sin errores; lint mobile terminó con cero errores y sus 42 advertencias conocidas.
+
+## [2026-10-08] - Márgenes institucionales para franjas de sección
+
+### Mobile y UX
+
+- `StickySectionHeader` distingue ahora una franja integrada en tarjeta de una sección independiente.
+- Las secciones independientes replican la medida efectiva de Verificación: compensan `spacing.xs`
+  dentro del cuerpo con `spacing.lg`, conservan `spacing.md` hasta la pantalla y usan `spacing.lg`
+  antes de la franja y `spacing.sm` antes del primer dato.
+- `fullBleed` queda reservado para extender una franja únicamente hasta los bordes del contenedor
+  que la incluye; no cancela el margen lateral de la pantalla.
+- `PRODUCTO`, `PARTICIPACIÓN MERCADO` e `Integrantes` adoptan el patrón compartido usado por
+  Verificación cuando la franja vive directamente en el cuerpo de pantalla.
+
+## [2026-10-08] - Selector confirmado de cero a diez sucursales
+
+### Parámetros, API y datos
+
+- `Número de sucursales` reutiliza el selector desplazable de Verificación con opciones `0` a `10`.
+- El número tocado se resalta dentro del selector como previsualización; los bloques de sucursal sólo
+  cambian después de pulsar `Confirmar selección`.
+- Mobile, validación de API y constraint PostgreSQL comparten el mismo máximo de diez. La migración
+  044 reduce el límite sin modificar registros y rechaza su aplicación si detecta datos incompatibles;
+  pasó aplicación, rollback y reaplicación en `crelealtad_test` antes de aplicarse en `crelealtad`.
+- Ambas bases quedaron 41/41, sin pendientes, drift ni entradas desconocidas. Respaldo:
+  `database/backups/crelealtad-pre-044-20261008205400.backup`, 4,205,602 bytes y SHA-256
+  `EFF1F1CAB3FBFC8A92A1ED0DF2D386116DD5621021735D866329DAB4A4780ED3`.
+- API aprobó 46 suites y 257 pruebas. La prueba focal del selector mobile aprobó; en la corrida
+  conjunta aprobaron 21 de 23 suites y 70 de 72 pruebas, mientras dos casos antiguos de Verificación
+  agotaron el tiempo y aprobaron al repetirse de forma aislada. Build API, TypeScript y lint mobile
+  terminaron sin errores.
+
+## [2026-10-08] - Producto y participación de mercado por financiera
+
+### Parámetros, API y datos
+
+- La propuesta de una financiera agrega los renglones `PRODUCTO` y `PARTICIPACIÓN MERCADO` después
+  de `¿Se muestran en el pop-up?`.
+- Producto captura opcionalmente semanas, tasa, seguro, apertura, retención, base y refinanciamiento.
+- La cantidad de sucursales abre un bloque independiente por sucursal con zona, dirección, número de
+  asesoras y valor declarado. Ningún dato nuevo es obligatorio ni ejecuta cálculos automáticos.
+- Los datos viajan en la propuesta, son revisables por Gerencia, se publican con el doble control ya
+  existente y permanecen visibles en la ficha y el historial.
+- La migración 043 agrega los siete datos a cada versión y la tabla relacional
+  `financieras_competidoras_sucursales_version`; pasó aplicación, rollback y reaplicación en
+  `crelealtad_test` y se aplicó después del respaldo a `crelealtad`. Ambas bases quedaron 40/40, sin
+  pendientes, drift ni entradas desconocidas.
+- Respaldo: `database/backups/crelealtad-pre-043-20261008202943.backup`, 4,199,008 bytes y SHA-256
+  `A398027D2C6DDB71518C23E16A9F6C49065BA285BFFB53845CD3E5D6FC7FD318`.
+- API aprobó 46 suites y 257 pruebas en PostgreSQL temporal aislado. Mobile ejecutó 23 suites y
+  72 pruebas; dos casos antiguos de Verificación agotaron el tiempo en la corrida conjunta y los
+  siete casos de esas suites aprobaron al repetirse de forma aislada. Build API, TypeScript móvil y
+  lint móvil terminaron sin errores.
+
+## [2026-10-08] - Selector institucional Sí/No para disponibilidad
+
+### Parámetros y UX
+
+- La pregunta final ahora dice exactamente `¿Se muestran en el pop-up?`.
+- Se retiró el control circular local de 56 puntos.
+- Las opciones `Sí / No` reutilizan `SelectorField`, igual que las preguntas binarias de Entrevista
+  en Verificación: altura mínima de 40, borde tipo píldora, separación y tipografía compartidas.
+- La selección utiliza el tema gris de Parámetros. No cambió la propuesta, aprobación, publicación,
+  API ni base de datos.
+
+## [2026-10-08] - Motivo, vigencia y disponibilidad compacta de financieras
+
+### Parámetros y UX
+
+- La edición agrega después de la clasificación `Motivo de la clasificación` y `Vigencia desde`.
+- El motivo es opcional y exige cinco caracteres únicamente cuando se captura; la vigencia se
+  precarga con la fecha local y valida el formato `AAAA-MM-DD`, hoy o una fecha futura.
+- La pregunta final ahora dice `¿Disponible para captura y conclusiones?` y usa círculos pequeños
+  `Sí / No` en grises, con fondo claro y borde oscuro para la selección.
+- El alias permanece como primer dato y alimenta el pop-up; no se agregó un campo duplicado.
+- Motivo, vigencia y disponibilidad viajan en la propuesta existente y conservan doble control. No
+  fue necesaria una migración ni un contrato nuevo de API.
+
+## [2026-10-08] - Disponibilidad del pop-up dentro de la edición
+
+### Parámetros y UX
+
+- `Propuesta de financiera` incorpora al final `¿Se muestra en el pop-up?` con botones `Sí / No`.
+- La misma captura permite editar alias, nombre oficial, clasificación y disponibilidad.
+- Elegir `No` propone mover la financiera a `NO SE MUESTRAN`; no la elimina ni borra su historial.
+- El cambio conserva la aprobación de Gerencia y la publicación por Administración antes de afectar
+  el pop-up o mover el renglón entre secciones.
+- Se reutilizaron el campo `activa`, la API y el esquema existentes; no fue necesaria una migración.
+
+## [2026-10-08] - Catálogo separado por disponibilidad en el pop-up
+
+### Parámetros, API y UX
+
+- `Financieras competidoras` muestra primero `Agregar financiera` y elimina la tarjeta explicativa.
+- El listado se divide en `SE MUESTRAN EN EL POP-UP` y `NO SE MUESTRAN`; cada sección conserva
+  renglones compactos con alias, borde y un único círculo de clasificación.
+- La ubicación usa el estado publicado: el catálogo base permanece visible hasta una baja publicada
+  y una financiera nueva entra al pop-up sólo después de publicar su primera versión activa.
+- La API administrativa expone `catalogo_base` para resolver la separación sin duplicar una lista en
+  la aplicación móvil. No se cambió el esquema ni el flujo de aprobación/publicación.
+
+## [2026-10-08] - Propuesta simplificada y campos opcionales de financieras
+
+### Parámetros, API y datos
+
+- La captura ordena `Alias para el pop-up`, `Nombre oficial` y `Clasificación`; retiró motivo,
+  vigencia y disponibilidad de la pantalla y ya no muestra asteriscos de obligatoriedad.
+- El semáforo admite estado vacío: tocar nuevamente el color seleccionado lo deja sin clasificar.
+- Ningún campo es obligatorio individualmente. Se bloquea únicamente una propuesta completamente
+  vacía o sin cambios; una financiera nueva necesita alias o nombre para tener identidad visible.
+- La API acepta clasificación y motivo nulos, asigna la vigencia del día y mantiene la disponibilidad
+  activa salvo una baja o reactivación explícita. El doble control y la auditoría no cambian.
+- La migración 042 se aplicó, inspeccionó, revirtió y reaplicó en `crelealtad_test`. Después del
+  respaldo verificado se aplicó en `crelealtad`; ambas bases quedaron con 39/39 migraciones, sin
+  pendientes, drift ni entradas desconocidas.
+- Respaldo: `database/backups/crelealtad-pre-042-20261009002702.backup`, 4,198,230 bytes,
+  513 entradas y SHA-256 `27B1238892AA33584D291D80FBDA9F9A6891AD6924A3D128679602B2E8674ED6`.
+- API aprobó 46 suites y 253 pruebas; mobile cubrió 21 suites y 69 pruebas. Dos casos antiguos de
+  Verificación agotaron el tiempo en la corrida conjunta y aprobaron al repetirse aislados.
+- Build API, TypeScript mobile, lint sin errores, catálogo de migraciones y escaneo de secretos
+  terminaron correctamente.
+
+## [2026-10-08] - Catálogo compacto y ficha individual de financieras
+
+### Mobile y UX
+
+- `Financieras competidoras` sustituye las tarjetas extensas por un renglón por financiera que
+  muestra únicamente el alias y un círculo de estado.
+- El círculo queda blanco con borde gris cuando no existe clasificación y usa verde, amarillo o
+  rojo sólido cuando existe una selección vigente o en propuesta.
+- Tocar el renglón abre `Detalle de financiera`, que concentra nombre oficial, alias, vigencia,
+  disponibilidad, motivo, propuesta, publicación programada, historial y acciones autorizadas.
+- La selección del semáforo se retiró del catálogo y permanece exclusivamente dentro de la ficha;
+  conserva el flujo de propuesta, aprobación de Gerencia y publicación de Administración.
+- Se agregó prueba de componente para el estado vacío, los tres colores y la apertura del renglón.
+- TypeScript y lint mobile terminan sin errores; las 21 suites y 68 pruebas tienen resultado
+  aprobatorio. Dos casos antiguos de Verificación agotaron su tiempo en la corrida conjunta y
+  aprobaron al ejecutarse de forma aislada.
+
+## [2026-10-08] - Bordes reforzados y semáforo circular en Parámetros
+
+### Mobile y UX
+
+- Los campos, selectores, tarjetas e historial de financieras usan bordes grises de dos puntos para
+  separar claramente cada recuadro sin modificar los formularios de otros módulos.
+- `SemanticChoiceGroup` sustituye la casilla cuadrada por un círculo de 38 puntos: verde, amarillo
+  o rojo claro en reposo y el mismo tono sólido con marca visible al seleccionarse.
+- La selección conserva radio accesible, texto y símbolo; no depende exclusivamente del color.
+- TypeScript mobile, lint sin errores y las ocho pruebas focales de semáforo y catálogo terminan
+  correctamente. La regresión mobile cubrió las 20 suites y sus 64 pruebas; dos casos antiguos de
+  Verificación agotaron el tiempo en la corrida conjunta y aprobaron al repetirse de forma aislada.
+
+## [2026-10-08] - Alias operativo visible y nombre oficial versionado
+
+### Parámetros y Verificación
+
+- El pop-up de historial crediticio muestra el primer alias publicado, que representa cómo las
+  integrantes identifican a la financiera; sin alias conserva el nombre oficial como respaldo.
+- El formulario distingue `Nombre oficial` de `Alias para el pop-up`, permite corregir ambos y
+  muestra esa diferencia en las tarjetas, propuestas e historial.
+- El nombre oficial propuesto no cambia la identidad al enviarse: queda versionado y sólo se aplica
+  después de la aprobación de Gerencia y la publicación de Administración.
+- La migración 041 agrega a cada versión el nombre oficial y su valor normalizado, con backfill y
+  reversión conservadora. Pasó aplicación, verificación, rollback y reaplicación en prueba antes de
+  aplicarse en operación; ambas bases quedaron 38/38 sin pendientes ni drift.
+- TypeScript y lint pasan; la suite completa termina con 45 suites/251 pruebas de API y
+  20 suites/64 pruebas de mobile.
+- El respaldo `database/backups/crelealtad-pre-041-20261008-151220.backup` quedó verificado con
+  4,197,143 bytes, 511 entradas y SHA-256
+  `373938A6DD0CD7AF930F5A56582CB1C42FA52F958D9C6E9F62E432FD05AA1D0C`.
+
+## [2026-10-08] - Lista base y semáforo editable de financieras
+
+### Parámetros y Verificación
+
+- La pantalla de financieras muestra por cada renglón tres casillas exclusivas: `Óptima` verde,
+  `Atención` amarilla y `No interesa` roja. Cada opción conserva texto, marca y semántica accesible;
+  elegirla abre la propuesta con la clasificación ya seleccionada.
+- `Agregar financiera`, `Quitar de la lista` y `Volver a incluir` hacen explícito el mantenimiento
+  solicitado sin omitir motivo, aprobación de Gerencia ni publicación de Administración.
+- La migración 040 incorpora como identidades sin clasificación las trece financieras del selector
+  histórico. `Otra` permanece al final del pop-up como opción genérica y no se convierte en entidad.
+- Con respuesta de la API, Entrevista usa solamente el catálogo disponible de Parámetros; una baja
+  publicada lo retira de nuevas selecciones. Sin conexión usa la lista inicial como respaldo y una
+  respuesta histórica ya guardada nunca desaparece del formulario.
+
+### Verificado
+
+- TypeScript de API y mobile pasa.
+- Las pruebas focales cubren el catálogo conectado, el respaldo offline, la selección histórica,
+  el grupo accesible verde/amarillo/rojo y la consulta API de identidades base sin clasificación.
+- La suite completa pasa con 45 suites/251 pruebas de API y 20 suites/63 pruebas de mobile. El lint
+  termina con las 42 advertencias preexistentes permitidas y sin errores.
+- La migración 040 pasó aplicación, verificación, rollback conservador y reaplicación en
+  `crelealtad_test`; luego se aplicó en `crelealtad`. Ambas bases quedaron 37/37, sin pendientes,
+  drift ni entradas desconocidas.
+- La base operativa confirma 13 identidades base, cero versiones/clasificaciones precargadas y 13
+  eventos `FIN_CATALOGO_BASE`.
+- `database/schema-dump.sql` se regeneró desde el esquema operativo posterior a 040 y el setup de
+  pruebas ahora comprueba tablas, versiones y `catalogo_base` antes de declarar la copia válida.
+- El respaldo `database/backups/crelealtad-pre-040-20261008-134526.backup` quedó verificado con
+  4,195,742 bytes, 526 entradas y SHA-256
+  `3B0F7F946D92615B9C38AE1991595C0BB58CC394999BD0C45FD8C405A3BD460F`.
+
+## [2026-10-08] - Consulta temporal de Parámetros para todos los usuarios
+
+### Acceso y seguridad
+
+- Se agregó la capacidad exacta y aditiva `parametros:leer` al contrato API/mobile para evitar que
+  el producto cartesiano heredado exponga acciones de modificación al habilitar un módulo.
+- La migración canónica 038 concede esa capacidad a todos los roles y a los permisos personalizados
+  existentes; la 039 declara los pares exactos de gobierno de Administración y Gerencia. Ambas
+  registran el antes/después en auditoría y contienen una reversión conservadora.
+- Proponer/publicar continúa limitado a Administración y aprobar/rechazar a Gerencia; DEC-189 no
+  altera el doble control ni habilita rutas anónimas.
+- El catálogo canónico normaliza CRLF a LF antes de calcular checksums, evitando falsos positivos
+  de deriva al ejecutar el mismo repositorio en Windows sin alterar el contenido SQL; conserva
+  compatibilidad con el checksum CRLF histórico de la migración 001.
+
+### Verificado
+
+- Las pruebas del contrato comprueban que la capacidad exacta abre lectura y mantiene denegada la
+  actualización del mismo módulo.
+- Las migraciones 037–039 pasaron aplicación y reversión en PostgreSQL temporal, se aplicaron en
+  `crelealtad_test` y luego en `crelealtad`; ambas bases quedaron 36/36, sin pendientes ni drift.
+- El respaldo `database/backups/crelealtad-pre-037-038-20261008-130645.backup` quedó verificado con
+  4,183,358 bytes, 495 entradas y SHA-256
+  `1C4038B95200F3B54B5888B2925300A4EBE85B239B1305F7E32C52EE452B0A98`.
+- La base real confirma nueve roles y una excepción individual con lectura, cero permisos omitidos,
+  diez eventos de auditoría de lectura, dos de gobierno exacto y cero financieras precargadas.
+- El respaldo previo a 039 `database/backups/crelealtad-pre-039-20261008-131251.backup` quedó
+  verificado con 4,195,510 bytes, 511 entradas y SHA-256
+  `3EF04FF5217F94A0CD24BEDF2629C62CAB99A7298EF5B6A5742DBBD08DB41D70`.
+
+## [2026-10-08] - Catálogo versionado de financieras competidoras
+
+### Parámetros, API y datos
+
+- M11 deja de ser sólo una tarjeta planeada: el menú lo habilita mediante `parametros:leer` y su
+  inicio conserva la grilla, encabezados, tarjetas, estados y acciones compartidas.
+- Se agregó el catálogo de financieras competidoras con nombre, alias, motivo, vigencia, baja
+  lógica e historial; no se precargó ninguna clasificación operativa.
+- Administración propone y publica; Gerencia aprueba o rechaza. La API refuerza rol, permiso,
+  separación de actores, concurrencia y auditoría en cada transición.
+- La migración canónica 037 crea tablas, FKs, checks e índices e incluye reversión revisada; quedó
+  aplicada en prueba y base real mediante el despliegue controlado descrito arriba.
+
+### Verificación y UX
+
+- El selector de otra financiera combina el catálogo publicado con la lista local de respaldo para
+  mantener la captura disponible si no hay conexión.
+- Conclusiones resuelve nombre o alias contra la versión vigente a la fecha de captura, muestra sólo
+  el nombre y usa la clasificación para colorear la burbuja en verde, amarillo o rojo; sin
+  clasificación, usa fondo blanco con marco oscuro y ninguna leyenda adicional.
+- La clasificación es informativa: no autoriza, rechaza ni cambia el monto verificado.
+
+### Verificado
+
+- TypeScript de API y mobile termina correctamente.
+- Las pruebas nuevas cubren permisos de endpoints, normalización, doble control, semáforo y
+  navegación por permiso; la migración directa y su reversión se validan en PostgreSQL temporal.
+
+## [2026-10-08] - Mes alineado y evidencia consultable en Conclusiones
+
+### Mobile y UX
+
+- `MES DE DESEMBOLSO`, la burbuja del mes y el rango quedan centrados verticalmente dentro del
+  renglón.
+- El mes se agrupa junto al rango hacia la derecha y usa el mismo tono verde o rojo de
+  compatibilidad.
+- Cuando hay fotografías guardadas, `EVIDENCIA` muestra una acción táctil con señal visual; al
+  tocarla abre el visor institucional a pantalla completa y permite recorrer todas las imágenes.
+- El visor reutiliza el comprobante vigente de Documentación y las evidencias confirmadas de
+  Entrevista. Las capturas pendientes no se cuentan como guardadas ni se muestran en este acceso.
+
+### Verificado
+
+- La prueba de componente confirma ambos tonos para mes y rango y ejecuta la acción de evidencia.
+- El visor usa las páginas ya cargadas; no se agregó persistencia, endpoint o tabla.
+
+## [2026-10-08] - Compatibilidad de semana actual con rango externo
+
+### Mobile y UX
+
+- El rango se invirtió al orden natural de menor a mayor: `9 - 14 SEM`.
+- Si `SEMANA ACTUAL` pertenece al intervalo inclusivo, el rango aparece en una burbuja verde con
+  confirmación; si queda fuera o no es válida, aparece en rojo con rechazo.
+- Se retiraron `ASESORA` y `TELÉFONO DE LA ASESORA` del resumen de otras financieras, sin eliminar
+  esos datos de la Entrevista ni de su persistencia.
+- La burbuja conserva texto y marca semántica para no depender solamente del color.
+
+### Verificado
+
+- La prueba de componente cubre semana `13` dentro de `9 - 14` y semana `8` fuera del intervalo,
+  además de confirmar la ausencia de los dos renglones retirados.
+
+## [2026-10-08] - Formato de ficha y rango de semanas del desembolso externo
+
+### Mobile y UX
+
+- `VALOR DE FICHA` se presenta con signo de pesos, espacio y separador de miles, por ejemplo
+  `$ 2,500`.
+- Para un crédito externo activo, el mes de desembolso se recorre al inicio del espacio de valor y
+  a su derecha aparece el rango de semanas completas desde el primero y el último día del mes hasta
+  la fecha de captura, por ejemplo `Julio    14 - 9 SEM`.
+- El rango usa la actualización confirmada de la Entrevista o la actualización del borrador local
+  pendiente, por lo que no cambia al volver a consultar la ficha después.
+- `SummaryDetailsCard` admite ahora un valor complementario sin duplicar el componente visual.
+
+### Verificado
+
+- Las pruebas cubren formato monetario, el rango julio–octubre, cambio de año, captura dentro del
+  mismo mes y datos inválidos.
+- TypeScript y lint mobile terminan correctamente.
+
+## [2026-10-08] - Historiales crediticios dentro de Conclusiones
+
+### Mobile y UX
+
+- Se agregaron antes de `Conclusiones del verificador` las franjas amarillas `HISTORIAL
+  CRELEALTAD` e `HISTORIAL OTRAS FINANCIERAS`.
+- El primer apartado reutiliza la tabla institucional de máximo, mínimo y hasta cinco ciclos
+  confirmados. Una ausencia confirmada muestra `SIN HISTORIAL` en rojo; un dato indeterminado se
+  mantiene neutral y no se interpreta como ausencia.
+- El segundo apartado resume financiera, estado, ficha, semana o último pago, ciclos, tasa,
+  asesora, teléfono, motivo y evidencias ya capturadas en Entrevista. Una negativa explícita muestra
+  `SIN HISTORIAL EN OTRAS FINANCIERAS` en rojo.
+- Se incorporaron `SummaryStatusRow` y `SummaryDetailsCard` a la biblioteca compartida para evitar
+  estilos locales y mantener los resúmenes accesibles y compactos.
+
+### Verificado
+
+- La prueba de componente cubre la tabla con CRELEALTAD, el resumen de otra financiera y los dos
+  estados rojos de ausencia, además de la ruta finalizada; la regresión mobile completa termina con
+  16 suites y 48 pruebas.
+- TypeScript y lint mobile terminan correctamente.
+
+## [2026-10-07] - Fuente única del ciclo individual
+
+### Mobile y UX
+
+- Se eliminó la suma adicional que producía `1 CICLO` en el encabezado y `CICLO 2` en
+  Conclusiones para la misma integrante.
+- Encabezado y resumen reutilizan ahora una sola presentación basada directamente en
+  `creditos_participados`; el ciclo grupal no participa.
+- `1 CICLO` aparece amarillo con `!`, desde `2 CICLOS` aparece verde y una integrante nueva con
+  conteo cero conserva `NUEVO` amarillo.
+
+### Verificado
+
+- Las pruebas protegen la presentación compartida de `1 CICLO` y de múltiples ciclos sin sumar el
+  expediente actual.
+
+## [2026-10-07] - Ciclo individual en el resumen de Conclusiones
+
+### Mobile y UX
+
+- La primera burbuja ya no muestra `NUEVO` ni reutiliza el ciclo del grupo.
+- El ciclo individual vigente se obtiene como ciclos previos confirmados de la integrante más uno
+  por el expediente actual.
+- `CICLO 1` usa fondo amarillo y signo `!`; desde `CICLO 2` la burbuja usa verde.
+- Si no existe información individual suficiente, muestra `CICLO INDIVIDUAL N/D`.
+
+### Verificado
+
+- Las pruebas cubren `CICLO 1` con advertencia y un ciclo individual posterior derivado de la
+  trayectoria confirmada.
+
+## [2026-10-07] - Resumen operativo dentro de Conclusiones
+
+### Mobile y UX
+
+- `Conclusiones` inicia con un resumen declarativo y compacto; no repite las preguntas de
+  Entrevista.
+- La primera burbuja muestra `NUEVO` en amarillo, el número de ciclos previos en verde o
+  `HISTORIAL N/D` cuando la fuente no permite determinarlo.
+- El resumen identifica conocimiento y acuerdo de montos; un desacuerdo muestra los nombres de
+  todas las integrantes seleccionadas.
+- Tesorera y domicilio de recolección usan verde para respuestas afirmativas, rojo para negativas y
+  gris para capturas todavía pendientes.
+- El bloque prepara la revisión del futuro monto verificado sin crear importe, cálculo, persistencia
+  o transición.
+
+### Verificado
+
+- Pruebas de componente cubren integrante nueva, ciclos, nombres de desacuerdo y estados positivos
+  y negativos.
+
+## [2026-10-07] - Habilitación de Conclusiones en Verificación
+
+### Mobile y UX
+
+- `Conclusiones` deja de mostrarse deshabilitado y abre la captura local existente desde el
+  concentrador individual.
+- La etiqueta accesible comunica ahora la acción disponible.
+- El cambio no agrega persistencia, dictamen, autorización ni transición del expediente.
+
+### Verificado
+
+- Se agregó una prueba de componente que confirma el estado habilitado y la navegación a
+  `observaciones`.
+
+## [2026-10-06] - Terminación operativa de Entrevista
+
+### Mobile y UX
+
+- La navegación inferior muestra siempre `Terminar entrevista` en vez de caer en la salida genérica
+  `Volver a procesos`.
+- El botón se habilita cuando todos los campos obligatorios visibles y condicionales, el teléfono
+  principal, las imágenes del domicilio y las evidencias obligatorias están confirmados, la versión
+  visible está sincronizada y no existen envíos pendientes.
+- Al final del formulario se enumera cada respuesta, evidencia o sincronización faltante. La
+  oportunidad de mejora y los demás campos expresamente opcionales no bloquean el cierre.
+- La evidencia adicional de otra financiera muestra `OPCIONAL` mientras no tenga fotografías, en
+  concordancia con el criterio de cierre; una captura iniciada sí debe terminar de guardarse.
+- Al terminar se vuelve al concentrador y Entrevista muestra una paloma derivada, sin crear estado
+  nuevo, dictamen o transición del expediente.
+- `¿Cómo conoció a la asesora?` ya no abre su pop-up por entrar, consultar o restaurar una
+  entrevista ya contestada. La restauración también borra cualquier orden de apertura conservada;
+  sólo se autoabre después de elegir `Sí` cuando el seguimiento todavía está vacío.
+- Se aplicó la misma protección a financiera anterior, no renovación, desacuerdos de monto,
+  tesorera, familiares, domicilio, control de pagos y recomendación, evitando que aparezca el
+  siguiente pop-up condicional después de cerrar el anterior.
+
+### Verificado
+
+- Se agregaron pruebas unitarias del criterio de completitud y pruebas de componente para la
+  apertura contextual del selector.
+
+## [2026-10-06] - Oportunidad de mejora opcional en Entrevista
+
+### Mobile y contrato funcional
+
+- `¿En qué cree usted que podemos mejorar?` permanece visible al final de la encuesta de servicio,
+  pero deja de mostrar la marca de campo obligatorio.
+- Una respuesta vacía no bloquea el criterio vigente de terminación de Entrevista; cuando exista
+  contenido, se continúa autoguardando en `oportunidad_mejora`.
+- La API y PostgreSQL ya admitían `NULL`, por lo que no se modificó el contrato HTTP ni el esquema.
+
+### Verificado
+
+- Se agregó una prueba de componente que protege la visibilidad de la pregunta y la ausencia del
+  indicador obligatorio.
+
+## [2026-10-05] - PIN universal temporal para desarrollo local
+
+### Seguridad y acceso
+
+- M01 acepta opcionalmente un PIN universal sólo cuando `NODE_ENV=development` y
+  `DEV_UNIVERSAL_PIN` contiene cuatro dígitos en el entorno local protegido.
+- El PIN individual bcrypt sigue siendo válido. El acceso universal no modifica `password_hash` ni
+  `requiere_cambio_pin`; la excepción vive sólo en el JWT de esa sesión y desaparece al desactivar
+  la configuración.
+- `audit_log.LOGIN` distingue `PIN_INDIVIDUAL` de `PIN_UNIVERSAL_DESARROLLO` sin almacenar la
+  credencial. Usuarios y roles inactivos, permisos y alcance continúan aplicándose.
+- Fuera de `development`, con variable ausente o inválida, la API falla cerrado. El archivo de
+  ejemplo documenta la variable vacía y no incluye credenciales.
+
+### Verificado
+
+- Pruebas unitarias cubren acceso universal local, rechazo fuera de desarrollo, auditoría sin PIN y
+  omisión temporal del cambio obligatorio sin alterar la cuenta.
+
 ## [2026-10-04] - Primera vertical offline para Documentación y Verificación
 
 ### Mobile y sincronización

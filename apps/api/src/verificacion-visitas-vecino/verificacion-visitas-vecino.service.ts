@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import {
   AccessScope,
   assertIntegranteAccess,
@@ -33,8 +33,23 @@ export interface ResumenVisitaVecino {
     conoce_y_sabe_donde_vive: boolean;
     visita_id: string;
     fachada_id: string | null;
+    opciones_seleccionadas: OpcionSeleccionadaVisitaVecino[];
     registrada_at: Date;
   } | null;
+}
+
+export interface OpcionSeleccionadaVisitaVecino {
+  id: string;
+  codigo: string;
+  etiqueta: string;
+  orden: number;
+}
+
+interface OpcionParametroVisitaVecino {
+  id: string;
+  codigo: string;
+  etiqueta: string;
+  orden: number;
 }
 
 export interface ResumenEvidenciaVisitaVecino {
@@ -68,6 +83,17 @@ const esViolacionUnica = (error: unknown): error is PostgresError => (
 const redondear = (valor: number, decimales: number): number => (
   Number(valor.toFixed(decimales))
 );
+
+const familiaOpcionesVisita = (respuesta: boolean) => (
+  respuesta ? 'VISITA_VECINO_RESPUESTA_SI' : 'VISITA_VECINO_RESPUESTA_NO'
+);
+
+const mismosIds = (izquierda: readonly string[], derecha: readonly string[]): boolean => {
+  if (izquierda.length !== derecha.length) return false;
+  const izquierdaOrdenada = [...izquierda].sort();
+  const derechaOrdenada = [...derecha].sort();
+  return izquierdaOrdenada.every((id, index) => id === derechaOrdenada[index]);
+};
 
 @Injectable()
 export class VerificacionVisitasVecinoService {
@@ -345,6 +371,21 @@ export class VerificacionVisitasVecinoService {
     const integrante = await this.obtenerIntegrante(integranteId, scope);
     this.validarIntegranteParaRegistro(integrante);
 
+    const reintentoExistente = await this.visitaRepository.findOne({
+      where: {
+        registrada_por: scope.usuarioId,
+        idempotency_key: input.idempotency_key,
+      },
+    });
+    if (reintentoExistente) {
+      await this.validarReintento(
+        reintentoExistente,
+        integranteId,
+        input,
+      );
+      return this.presentarRegistro(reintentoExistente, integranteId);
+    }
+
     const fachadaActual = await this.fachadaRepository.findOne({
       where: { integrante_id: integranteId },
       order: { created_at: 'DESC', id: 'DESC' },
@@ -359,6 +400,7 @@ export class VerificacionVisitasVecinoService {
 
     try {
       visita = await this.dataSource.transaction(async (manager) => {
+        const opciones = await this.validarOpcionesActivas(manager, input);
         const repository = manager.getRepository(VerificacionVisitaVecinoEntity);
         const guardada = await repository.save(repository.create({
           integrante_id: integranteId,
@@ -375,6 +417,15 @@ export class VerificacionVisitasVecinoService {
           ubicacion_fuente: 'DISPOSITIVO',
         }));
 
+        await manager.query(
+          `INSERT INTO verificacion_visita_vecino_opciones
+             (visita_id, opcion_id, etiqueta_snapshot, orden_snapshot)
+           SELECT $1, id, etiqueta, orden
+           FROM parametros_entrevista_opciones
+           WHERE id = ANY($2::uuid[])`,
+          [guardada.id, opciones.map((opcion) => opcion.id)],
+        );
+
         await registrarAuditoria(manager, {
           tabla: 'verificacion_visitas_vecino',
           registroId: guardada.id,
@@ -384,6 +435,7 @@ export class VerificacionVisitasVecinoService {
             integrante_id: integranteId,
             conoce_y_sabe_donde_vive: guardada.conoce_y_sabe_donde_vive,
             fachada_id: guardada.fachada_id,
+            opcion_ids: opciones.map((opcion) => opcion.id),
             ubicacion_fuente: guardada.ubicacion_fuente,
           },
         });
@@ -402,18 +454,64 @@ export class VerificacionVisitasVecinoService {
         },
       });
 
-      if (
-        !existente
-        || existente.integrante_id !== integranteId
-        || existente.conoce_y_sabe_donde_vive !== input.conoce_y_sabe_donde_vive
-        || existente.fachada_id !== input.fachada_id
-      ) {
+      if (!existente) {
         throw new ConflictException('La clave del intento ya fue utilizada con otros datos');
       }
-
+      await this.validarReintento(existente, integranteId, input);
       visita = existente;
     }
 
+    return this.presentarRegistro(visita, integranteId);
+  }
+
+  private async validarOpcionesActivas(
+    manager: EntityManager,
+    input: RegistrarVisitaVecinoDto,
+  ): Promise<OpcionParametroVisitaVecino[]> {
+    if (input.opcion_ids.length !== 1) {
+      throw new BadRequestException('Selecciona exactamente una opción');
+    }
+
+    const opciones = await manager.query(
+      `SELECT id, codigo, etiqueta, orden
+       FROM parametros_entrevista_opciones
+       WHERE familia = $1
+         AND activo = TRUE
+         AND id = ANY($2::uuid[])
+       ORDER BY orden, id
+       FOR SHARE`,
+      [familiaOpcionesVisita(input.conoce_y_sabe_donde_vive), input.opcion_ids],
+    ) as OpcionParametroVisitaVecino[];
+
+    if (opciones.length !== input.opcion_ids.length) {
+      throw new BadRequestException(
+        'Selecciona una opción activa que corresponda a la respuesta',
+      );
+    }
+
+    return opciones;
+  }
+
+  private async validarReintento(
+    existente: VerificacionVisitaVecinoEntity,
+    integranteId: string,
+    input: RegistrarVisitaVecinoDto,
+  ): Promise<void> {
+    const opciones = await this.obtenerOpcionesGuardadas(existente.id);
+    if (
+      existente.integrante_id !== integranteId
+      || existente.conoce_y_sabe_donde_vive !== input.conoce_y_sabe_donde_vive
+      || existente.fachada_id !== input.fachada_id
+      || !mismosIds(opciones.map((opcion) => opcion.id), input.opcion_ids)
+    ) {
+      throw new ConflictException('La clave del intento ya fue utilizada con otros datos');
+    }
+  }
+
+  private async presentarRegistro(
+    visita: VerificacionVisitaVecinoEntity,
+    integranteId: string,
+  ) {
     return {
       visita: {
         id: visita.id,
@@ -467,16 +565,37 @@ export class VerificacionVisitasVecinoService {
       order: { created_at: 'DESC', id: 'DESC' },
     });
 
+    const opciones = visita
+      ? await this.obtenerOpcionesGuardadas(visita.id)
+      : [];
+
     return {
       resultado: visita
         ? {
             conoce_y_sabe_donde_vive: visita.conoce_y_sabe_donde_vive,
             visita_id: visita.id,
             fachada_id: visita.fachada_id,
+            opciones_seleccionadas: opciones,
             registrada_at: visita.created_at,
           }
         : null,
     };
+  }
+
+  private async obtenerOpcionesGuardadas(
+    visitaId: string,
+  ): Promise<OpcionSeleccionadaVisitaVecino[]> {
+    return this.dataSource.query(
+      `SELECT relacion.opcion_id AS id,
+              opcion.codigo,
+              relacion.etiqueta_snapshot AS etiqueta,
+              relacion.orden_snapshot AS orden
+       FROM verificacion_visita_vecino_opciones relacion
+       JOIN parametros_entrevista_opciones opcion ON opcion.id = relacion.opcion_id
+       WHERE relacion.visita_id = $1
+       ORDER BY relacion.orden_snapshot, relacion.opcion_id`,
+      [visitaId],
+    ) as Promise<OpcionSeleccionadaVisitaVecino[]>;
   }
 
   private async obtenerResumenFachadaGuardada(

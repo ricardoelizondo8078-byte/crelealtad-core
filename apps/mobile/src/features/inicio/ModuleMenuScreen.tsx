@@ -4,13 +4,16 @@ import {
   AppHeader,
   Card,
   ModuleCard,
+  ResponsiveContent,
   ScreenContainer,
   ScreenState,
   ScreenTitleBar,
   SecondaryButton,
   SectionTitle,
+  getResponsiveColumnCount,
+  useResponsiveLayout,
 } from '../../components/ui';
-import { ModuleThemeKey, spacing, typography, colors } from '../../theme/tokens';
+import { layout, ModuleThemeKey, spacing, typography, colors } from '../../theme/tokens';
 import { usePendingReviews } from '../../context/PendingReviewsContext';
 import { PendingReviewSummary } from '../pendientes';
 
@@ -31,6 +34,7 @@ interface ModuleMenuScreenProps {
 }
 
 export const ModuleMenuScreen: React.FC<ModuleMenuScreenProps> = ({ modules, onLogout }) => {
+  const { width, isDesktop } = useResponsiveLayout();
   const { totalPending, error, refresh } = usePendingReviews();
   const showPendingPanel = totalPending > 0 || Boolean(error);
   const hasPlannedModules = modules.some((module) => module.statusLabel === 'Próximamente');
@@ -40,9 +44,17 @@ export const ModuleMenuScreen: React.FC<ModuleMenuScreenProps> = ({ modules, onL
     : hasPlannedModules
       ? 'Tus módulos habilitados están activos. Los demás estarán disponibles próximamente.'
       : 'Aquí aparecen los módulos habilitados para tu cuenta.';
-  const gridModules: (ModuleMenuOption | null)[] = modules.length % 2 === 0
-    ? modules
-    : [...modules, null];
+  const columnCount = getResponsiveColumnCount(width, {
+    mobile: 2,
+    tablet: 3,
+    desktop: 4,
+    wide: 4,
+  });
+  const missingCells = (columnCount - (modules.length % columnCount)) % columnCount;
+  const gridModules: (ModuleMenuOption | null)[] = [
+    ...modules,
+    ...Array.from({ length: missingCells }, () => null),
+  ];
 
   useEffect(() => {
     void refresh();
@@ -53,9 +65,10 @@ export const ModuleMenuScreen: React.FC<ModuleMenuScreenProps> = ({ modules, onL
       <AppHeader moduleTheme="general" />
       <ScreenTitleBar title="Menú principal" moduleTheme="general" />
       <FlatList
+        key={`module-grid-${columnCount}`}
         style={styles.moduleList}
         data={gridModules}
-        numColumns={2}
+        numColumns={columnCount}
         keyExtractor={(item, index) => item?.key ?? `grid-spacer-${index}`}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
@@ -93,13 +106,15 @@ export const ModuleMenuScreen: React.FC<ModuleMenuScreenProps> = ({ modules, onL
           />
         ) : <View style={styles.gridSpacer} />}
       />
-      <View style={styles.logoutArea}>
-        <SecondaryButton
-          title="Cerrar sesión"
-          onPress={onLogout}
-          tone="danger"
-          style={styles.logoutButton}
-        />
+      <View style={styles.logoutShell}>
+        <ResponsiveContent style={styles.logoutArea}>
+          <SecondaryButton
+            title="Cerrar sesión"
+            onPress={onLogout}
+            tone="danger"
+            style={isDesktop ? styles.logoutButtonDesktop : styles.logoutButton}
+          />
+        </ResponsiveContent>
       </View>
     </ScreenContainer>
   );
@@ -110,6 +125,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   list: {
+    width: '100%',
+    maxWidth: layout.contentMaxWidth,
+    alignSelf: 'center',
     padding: spacing.lg,
     paddingBottom: spacing.xxl,
     gap: spacing.lg,
@@ -129,13 +147,20 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.sm,
   },
+  logoutShell: {
+    backgroundColor: colors.background,
+  },
   logoutArea: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.xl,
-    backgroundColor: colors.background,
   },
   logoutButton: {
     flex: 0,
+  },
+  logoutButtonDesktop: {
+    flex: 0,
+    width: 240,
+    alignSelf: 'flex-end',
   },
 });

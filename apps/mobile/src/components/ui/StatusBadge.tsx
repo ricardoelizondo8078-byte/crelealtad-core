@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: spacing.md,
   },
-  label: { ...typography.caption, color: colors.textPrimary },
+  label: { ...typography.captionStrong, color: colors.textPrimary },
   leadingMark: {
     width: spacing.lg,
     height: spacing.lg,

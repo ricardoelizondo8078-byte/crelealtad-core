@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { useProcessingAction } from '../../context/ProcessingContext';
-import { moduleThemes, ModuleThemeKey, radius, spacing, touchTargets, typography } from '../../theme/tokens';
+import { moduleThemes, ModuleTheme, ModuleThemeKey, radius, spacing, touchTargets, typography } from '../../theme/tokens';
 
 interface PrimaryButtonProps {
   title: string;
@@ -12,6 +12,8 @@ interface PrimaryButtonProps {
   trailingContent?: React.ReactNode;
   accessibilityLabel?: string;
   style?: ViewStyle;
+  themeOverride?: ModuleTheme;
+  size?: 'default' | 'compact';
 }
 
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
@@ -23,9 +25,12 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   trailingContent,
   accessibilityLabel,
   style,
+  themeOverride,
+  size = 'default',
 }) => {
-  const theme = moduleThemes[moduleTheme];
+  const theme = themeOverride ?? moduleThemes[moduleTheme];
   const handlePress = useProcessingAction(onPress);
+  const isCompact = size === 'compact';
 
   return (
     <Pressable
@@ -36,6 +41,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       disabled={disabled}
       style={({ pressed }) => [
         styles.button,
+        isCompact && styles.compactButton,
         { backgroundColor: theme.primary, opacity: disabled ? 0.5 : pressed ? 0.9 : 1 },
         style,
       ]}
@@ -59,6 +65,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  compactButton: {
+    flex: 0,
+    minHeight: touchTargets.minimum,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xxl,
   },
   content: {
     flexDirection: 'row',

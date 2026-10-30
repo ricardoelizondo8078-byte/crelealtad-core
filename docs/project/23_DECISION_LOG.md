@@ -1,8 +1,8 @@
 # 13 Decision Log - Registro de Decisiones
 
-Version: 1.126.0
+Version: 1.156.0
 Estado: Vigente
-Fecha de actualizacion: 2026-10-04
+Fecha de actualizacion: 2026-10-21
 
 ## Formato de registro
 
@@ -189,6 +189,67 @@ Fecha de actualizacion: 2026-10-04
 - DEC-172 | 2026-10-03 | El comprobante de línea de crédito del Paso 7 admite todas las fotografías necesarias dentro de una sola versión documental, mediante selección múltiple o capturas consecutivas; conserva 10 MB por archivo, orden, consulta y reemplazo con historial, y reutiliza el carrusel lateral y visor opaco de pantalla completa con zoom de Verificaciones, mientras los demás documentos mantienen su cantidad vigente | Evitar que comprobantes compuestos por varias hojas queden incompletos o divididos sin ampliar innecesariamente el resto del contrato documental | Medio | Documentación, Solicitudes, Mobile, API, Evidencias, UX | Dirección | Aprobada e implementada sin cambio de esquema; el documento continúa siendo opcional para completitud.
 - DEC-174 | 2026-10-04 | `Evidencia de otra financiera` muestra primero todas las imágenes vigentes del comprobante de línea de crédito capturado en Documentación y permite agregar fotografías propias de Entrevista sin copiar ni sustituir el documento original | Reutilizar la evidencia ya disponible, evitar capturas duplicadas y conservar separadas la fuente documental y las evidencias geolocalizadas agregadas durante la visita | Medio | Documentación, Verificación, Entrevista, Mobile, Evidencias, UX | Dirección | Aprobada e implementada sin cambio de esquema ni duplicación de archivos.
 - DEC-175 | 2026-10-04 | Se aprueba la matriz institucional inicial de M12: capacidades por par módulo–acción, alcances `PROPIO`/`SUCURSAL`/`ZONA`/`GLOBAL`, sin comodines productivos, M04–M10 bloqueados hasta sus especificaciones, doble control en M11/M12, excepciones restrictivas y Administración sin herencia operativa o financiera | Aplicar menor privilegio, eliminar combinaciones ambiguas y preparar una autorización escalable y auditable | Alto | Todos, Seguridad, M01, M11, M12, API, Mobile, PostgreSQL | Dirección | Aprobada; implementación técnica pendiente y DEC-023 continúa temporalmente vigente hasta el corte controlado.
+- DEC-176 | 2026-10-05 | Durante el desarrollo local puede configurarse un PIN universal mediante `DEV_UNIVERSAL_PIN`; sólo funciona con `NODE_ENV=development`, nunca se versiona ni registra, cada login audita el método y la sesión omite temporalmente `requiere_cambio_pin` sin modificar el hash o la marca persistida | Recuperar continuidad de pruebas multiusuario sin reintroducir una credencial literal ni ampliar el acceso productivo | Alto y temporal | M01, API, Seguridad, Auditoría | Dirección | Aprobada e implementada; debe retirarse antes de producción.
+- DEC-177 | 2026-10-06 | `¿En qué cree usted que podemos mejorar?` permanece visible pero deja de ser obligatoria y una respuesta vacía no bloquea la terminación de Entrevista | Permitir cerrar la captura cuando la integrante no proporciona una oportunidad de mejora | Bajo | Verificación, Entrevista, Mobile, UX | Dirección | Aprobada e implementada en mobile; sustituye sólo la obligatoriedad de DEC-108.
+- DEC-178 | 2026-10-06 | `Terminar entrevista` permanece visible y se habilita con campos obligatorios aplicables, teléfono principal, imágenes y evidencias obligatorias confirmados, versión sincronizada y sin envíos pendientes; enumera faltantes y deriva la paloma sin estado paralelo. `¿Cómo conoció a la asesora?` se abre automáticamente sólo tras seleccionar `Sí` con el seguimiento vacío, nunca al abrir, consultar o restaurar una respuesta ya capturada | Dar un cierre operativo verificable e impedir pop-ups inesperados al consultar | Medio | Verificación, Entrevista, Mobile, UX | Dirección | Aprobada e implementada en mobile; no crea dictamen ni transición.
+- DEC-179 | 2026-10-06 | Todos los pop-ups condicionales de Entrevista se autoabren sólo por una respuesta habilitadora nueva y con seguimiento vacío; nunca por entrar, consultar o restaurar una captura | Evitar aperturas en cascada de financiera, motivos, tesorera, familiares y demás selectores ya contestados | Medio | Verificación, Entrevista, Mobile, UX | Dirección | Aprobada e implementada en mobile; ajuste de interacción sin cambio de datos.
+- DEC-180 | 2026-10-07 | `Conclusiones` queda habilitado en el concentrador individual y abre la captura local existente; no persiste, no dicta, no autoriza y no cambia el estado del expediente | Recuperar el acceso operativo aprobado originalmente sin atribuirle efectos financieros o de servidor inexistentes | Bajo | Verificación, Mobile, UX | Dirección | Aprobada e implementada en mobile; sustituye únicamente el bloqueo temporal de DEC-122.
+- DEC-181 | 2026-10-07 | `Conclusiones` inicia con un resumen sin preguntas: `NUEVO` amarillo o ciclos previos verdes; conocimiento y acuerdo de montos con nombres de desacuerdo; tesorera y domicilio de recolección verdes o rojos según la respuesta. Los faltantes permanecen pendientes y el bloque no captura todavía el monto verificado | Dar al verificador contexto inmediato y compacto para la futura determinación del monto sin repetir la entrevista ni simular una decisión persistida | Medio | Verificación, Entrevista, Mobile, UX | Dirección | Aprobada e implementada en mobile; sin cambio de API, esquema, dictamen o transición.
+- DEC-182 | 2026-10-07 | La primera burbuja de `Conclusiones` representa el ciclo individual vigente y nunca el ciclo grupal: se obtiene sumando el expediente actual a los ciclos previos confirmados de la integrante; `CICLO 1` usa amarillo con `!` y los ciclos posteriores usan verde | Distinguir correctamente a una integrante en su primer ciclo y evitar mezclar su trayectoria personal con la numeración del grupo | Medio | Verificación, Integrantes, Mobile, UX, Datos | Dirección | Aprobada e implementada en mobile; sustituye en DEC-181 la etiqueta `NUEVO` y la referencia visual a ciclos previos.
+- DEC-183 | 2026-10-07 | El encabezado individual y el resumen de `Conclusiones` reutilizan una sola presentación derivada directamente de `creditos_participados`, sin sumar el expediente actual: `1 CICLO` usa amarillo con `!`, desde `2 CICLOS` usa verde y el ciclo grupal nunca interviene | Eliminar la contradicción visual `1 CICLO / CICLO 2` observada para la misma integrante y conservar una única fuente individual | Alto | Verificación, Integrantes, Mobile, UX, Datos | Dirección | Aprobada e implementada en mobile; sustituye el cálculo de DEC-182.
+- DEC-184 | 2026-10-08 | `Conclusiones` incorpora dos apartados ocres antes de la captura del verificador: historial confirmado con CRELEALTAD mediante la tabla institucional o `SIN HISTORIAL` rojo, e historial de otras financieras mediante un resumen de las respuestas ya persistidas o su ausencia explícita. Los datos indeterminados permanecen neutrales y no se simulan | Dar al verificador la trayectoria crediticia relevante en el mismo punto donde revisará el monto, sin volver a recorrer Entrevista ni confundir ausencia con falla de datos | Medio | Verificación, Entrevista, Mobile, UX | Dirección | Aprobada e implementada en mobile; sin cambio de API, esquema, dictamen o transición.
+- DEC-185 | 2026-10-08 | El historial externo de `Conclusiones` formatea la ficha como `$ #,###` y, para un crédito activo, presenta junto al mes el rango descendente de semanas completas desde el primero y el último día de ese mes hasta la fecha de captura de la Entrevista. La referencia es `updated_at` confirmado o `updatedAt` del borrador pendiente; el año se infiere como la ocurrencia más reciente del mes no posterior a la captura y no se inventa un rango sin datos válidos | Mostrar el compromiso semanal y la antigüedad posible del crédito sin convertir un mes declarado en una fecha exacta ficticia ni cambiar el resultado al consultar después | Medio | Verificación, Entrevista, Mobile, UX | Dirección | Aprobada e implementada en mobile; sin cambio de API o esquema.
+- DEC-186 | 2026-10-08 | El rango externo se muestra de menor a mayor, desde el último día y después desde el primero del mes. Usa una burbuja verde con confirmación cuando `SEMANA ACTUAL` está dentro del intervalo inclusivo y roja con rechazo cuando está fuera o no es válida. Asesora y teléfono se omiten sólo del resumen de `Conclusiones` | Facilitar la lectura del intervalo, detectar inmediatamente una semana incompatible y retirar datos innecesarios de este resumen | Medio | Verificación, Entrevista, Mobile, UX | Dirección | Aprobada e implementada en mobile; sustituye sólo el orden visual de DEC-185 y no cambia API, esquema o captura.
+- DEC-187 | 2026-10-08 | El renglón de desembolso centra verticalmente etiqueta, mes y rango; agrupa a la derecha dos burbujas con el mismo tono semántico. Cuando existen fotos guardadas, `EVIDENCIA` se convierte en una acción accesible que abre el visor institucional con el comprobante vigente y las evidencias confirmadas de Entrevista, excluyendo pendientes | Mejorar la lectura visual y revisar la evidencia externa directamente desde el resumen sin duplicar archivos ni visores | Medio | Verificación, Entrevista, Documentación, Mobile, UX | Dirección | Aprobada e implementada en mobile; reutiliza datos y visor existentes, sin cambio de API o esquema.
+- DEC-188 | 2026-10-08 | M11 administra financieras competidoras mediante nombre y alias, clasificación `OBJETIVO`/`REVISION`/`NO_PRIORITARIA`, motivo, vigencia, baja lógica e historial. Administración propone/publica y Gerencia aprueba/rechaza con actores separados. Conclusiones consulta la versión vigente a la fecha de captura, muestra texto más verde/amarillo/rojo o `SIN CLASIFICAR`, y la señal no decide ni modifica el monto | Gobernar una política variable sin hardcodearla, preservar la lectura histórica y orientar al verificador sin automatizar la decisión crediticia | Alto | M11, M03, API, Mobile, PostgreSQL, Seguridad, Auditoría, UX | Dirección | Aprobada e implementada en código y PostgreSQL mediante migración 037.
+- DEC-189 | 2026-10-08 | Durante la revisión de M11, todos los roles activos reciben exclusivamente la capacidad exacta `parametros:leer`; las excepciones individuales existentes reciben el mismo par. No se conceden acciones de propuesta, aprobación, rechazo o publicación, que conservan el doble control de DEC-175/188. La excepción es temporal, auditable y reversible | Permitir que todo el personal revise la nueva pantalla sin ampliar accidentalmente acciones mediante el contrato cartesiano heredado | Medio y temporal | M01, M11, M12, API, Mobile, PostgreSQL, Seguridad | Dirección | Aprobada e implementada en API, mobile y PostgreSQL mediante migraciones 038–039.
+- DEC-192 | 2026-10-08 | La propuesta muestra sólo alias, nombre oficial y clasificación, en ese orden, sin campos individualmente obligatorios; el servidor asigna vigencia y disponibilidad, y bloquea propuestas completamente vacías o sin cambios | Permitir captura gradual sin inventar motivo, razón social o clasificación | Alto | M11, API, Mobile, PostgreSQL, Auditoría, UX | Dirección | Aprobada e implementada mediante migración 042; sustituye sólo la obligatoriedad de clasificación y motivo de DEC-188/190.
+- DEC-193 | 2026-10-08 | El catálogo elimina la explicación superior y separa renglones de alias y círculo en `SE MUESTRAN EN EL POP-UP` y `NO SE MUESTRAN`, usando sólo la disponibilidad ya publicada para cambiar de sección | Hacer explícita la lista que verá Verificación sin adelantar propuestas pendientes | Medio | M11, API, Mobile, UX | Dirección | Aprobada e implementada sin cambio de esquema.
+- DEC-194 | 2026-10-08 | La edición incorpora al final `¿Se muestra en el pop-up?` con `Sí / No`; cambiar la opción crea una propuesta y sólo altera la sección después de aprobación y publicación | Controlar inclusión y exclusión desde la misma pantalla de datos sin borrar historial | Medio | M11, Mobile, UX, Auditoría | Dirección | Aprobada e implementada reutilizando el contrato vigente.
+- DEC-195 | 2026-10-08 | La propuesta recupera motivo y vigencia después de la clasificación, y renombra la disponibilidad como `¿Disponible para captura y conclusiones?` con círculos pequeños grises `Sí / No`; el alias conserva el primer lugar y no se duplica | Completar la ficha solicitada y reproducir el control visual de referencia sin contradecir el orden del alias | Medio | M11, Mobile, UX, Auditoría | Dirección | Aprobada e implementada reutilizando API y esquema vigentes.
+- DEC-196 | 2026-10-08 | La pregunta final cambia a `¿Se muestran en el pop-up?` y reutiliza `SelectorField`, igual que las preguntas `Sí / No` de Entrevista en Verificación, con el tema gris de Parámetros y sin tamaños locales | Corregir los círculos sobredimensionados y mantener un solo formato institucional | Medio | M11, M03, Mobile, UX | Dirección | Aprobada e implementada; sustituye el texto y el control específico de DEC-195.
+- DEC-197 | 2026-10-08 | Las franjas independientes dentro de un cuerpo con `spacing.lg` compensan `spacing.xs`: quedan ligeramente más largas que los campos, conservan un margen efectivo `spacing.md` y usan `spacing.lg` antes y `spacing.sm` después, replicando los valores de Verificación. `fullBleed` sólo extiende una franja integrada hasta los bordes de su contenedor | Mantener en todos los módulos la misma composición real de Verificación y evitar encabezados pegados, cortos o extendidos hasta la pantalla | Medio | Mobile, UX, Design System, M02, M11 | Dirección | Aprobada e implementada en `StickySectionHeader`; aplicada a Producto, Participación mercado e Integrantes.
+- DEC-198 | 2026-10-08 | La propuesta de financiera agrega `Descripción` después de `Refinanciamiento` y antes de `PARTICIPACIÓN MERCADO`; es opcional, multilínea, admite hasta 10,000 caracteres libres, conserva saltos internos y se versiona en `TEXT NULL` | Registrar explicaciones amplias del producto sin comprimirlas en los campos breves ni perder trazabilidad histórica | Medio | M11, Mobile, API, PostgreSQL | Dirección | Aprobada e implementada mediante migración 045.
+- DEC-199 | 2026-10-08 | `ADMINISTRADOR` representa a Dirección y es la autoridad final de M11: define y publica parámetros en un solo paso, sin aprobación, rechazo o devolución de Gerencia. Gerencia conserva lectura; M12 mantiene su doble control y Administración no hereda permisos operativos o financieros | Evitar recorridos de ida y vuelta cuando la misma Dirección define la política, conservando versión, vigencia, validación y auditoría | Alto | M11, M12, Mobile, API, PostgreSQL, Seguridad | Dirección | Aprobada e implementada mediante migración 046.
+- DEC-200 | 2026-10-08 | Se elimina `Detalle de financiera`: cada renglón del catálogo abre directamente `Parámetros de financiera`, donde se definen datos, presencia en el pop-up y clasificación. El círculo inicial refleja sólo la clasificación publicada; el historial queda como acción secundaria del formulario | Evitar una pantalla duplicada y concentrar la definición de la financiera en un solo lugar | Medio | M11, Mobile, UX | Dirección | Aprobada e implementada; sin cambio de API o PostgreSQL.
+- DEC-201 | 2026-10-08 | `Vigencia desde` y el historial de M11 presentan `DD-MMM-AAAA` con mes español en mayúsculas; mobile convierte la captura a `AAAA-MM-DD` antes de llamar a la API y conserva sin cambios PostgreSQL, orden y auditoría | Facilitar la lectura de la fecha sin perder el contrato canónico de persistencia | Bajo | M11, Mobile, UX | Dirección | Aprobada e implementada; sin cambio de API o PostgreSQL.
+- DEC-202 | 2026-10-08 | La burbuja `FINANCIERA` de Conclusiones muestra sólo el nombre, sin ninguna leyenda de clasificación. La versión vigente de M11 aporta verde, amarillo o rojo; sin clasificación se usa fondo blanco con marco oscuro. La semántica permanece en accesibilidad | Mantener limpio el resumen y respetar la señal parametrizada sin ocupar espacio con texto redundante | Bajo | M03, M11, Mobile, UX, Accesibilidad | Dirección | Aprobada e implementada en mobile; sustituye sólo la presentación visible de DEC-188 y no cambia API o PostgreSQL.
+- DEC-203 | 2026-10-08 | El color de `FINANCIERA` en Conclusiones usa la versión publicada vigente de M11 al momento de revisión, sin filtrar el catálogo por la fecha histórica de la entrevista. La fecha de captura permanece únicamente para semanas y datos temporales | Evitar que una entrevista anterior a la clasificación vigente continúe sin color, como ocurrió con CrediMujer | Medio | M03, M11, Mobile, UX | Dirección | Aprobada e implementada en mobile; sustituye la resolución histórica de clasificación de DEC-188/202 y no cambia API o PostgreSQL.
+- DEC-204 | 2026-10-09 | La burbuja individual elimina `!`, usa texto fuerte y reserva el amarillo exclusivamente para `1 CICLO`; `NUEVO` y N/D son neutrales, y desde `2 CICLOS` usa verde. `EVIDENCIA` muestra cámara más `N FOTO(S)` dentro del botón rectangular secundario de Verificación —borde ocre de dos puntos y radio medio, no píldora— y todos los valores del resumen se centran verticalmente por renglón | Reducir ruido visual y hacer uniforme la lectura del resumen y su acción fotográfica | Bajo | M03, Mobile, UX, Accesibilidad | Dirección | Aprobada e implementada en mobile; sustituye sólo la presentación de DEC-183/187, sin cambio de datos, API o PostgreSQL.
+- DEC-205 | 2026-10-09 | Los círculos del catálogo de financieras usan fondo verde, amarillo o rojo claro con borde sólido del color semántico; sin clasificación permanece blanco con borde gris | Igualar el tratamiento suave de estados del resto de la app sin perder identificación | Bajo | M11, Mobile, UX, Accesibilidad | Dirección | Aprobada e implementada en mobile; precisa sólo la presentación de DEC-193/200, sin cambio de API o PostgreSQL.
+- DEC-206 | 2026-10-09 | Cada fotografía nueva de `Evidencia de otra financiera` exige seleccionar una, varias o todas las integrantes participantes del expediente; el servidor guarda un solo archivo, valida el conjunto y lo relaciona de forma auditable para que aparezca en cada integrante seleccionada | Representar evidencia grupal aunque la fotografía se capture desde la entrevista de una sola integrante, sin duplicar archivos ni permitir relaciones cruzadas | Alto | M03, Mobile, API, PostgreSQL, Evidencias, UX, Auditoría | Dirección | Aprobada e implementada mediante migración 047; el legado se asocia sólo con su integrante de origen.
+- DEC-207 | 2026-10-09 | `Cancelar` en el selector posterior a la cámara descarta la fotografía local pendiente, su ubicación, idempotencia y selección temporal; también aplica al retroceso nativo o cierre exterior, no llama a la API y vuelve a habilitar la cámara | Permitir repetir una toma incorrecta sin obligar a asociarla ni conservarla | Medio | M03, Mobile, UX, Evidencias | Dirección | Aprobada e implementada en mobile; precisa la cancelación de DEC-206 sin cambio de API o PostgreSQL.
+- DEC-208 | 2026-10-09 | Cada visor de una fotografía propia de `Evidencia de otra financiera`, incluido el carrusel de Historial crediticio y el acceso desde Conclusiones, muestra `Integrantes` para corregir una, varias o todas las integrantes; el servidor conserva el archivo, desactiva relaciones retiradas y audita el antes/después. Las imágenes de Documentación permanecen sólo de consulta | Corregir una asignación equivocada al revisar la fotografía sin repetir la toma, duplicar el archivo ni borrar historial | Alto | M03, Mobile, API, PostgreSQL, Evidencias, UX, Auditoría | Dirección | Aprobada e implementada mediante migración 048.
+- DEC-209 | 2026-10-09 | Después de aceptar una fotografía nueva de otra financiera y antes de elegir sus integrantes, mobile exige clasificarla como `VERDE`, `AMARILLO` o `ROJO`; la elección se persiste por archivo y se muestra con franjas superior/inferior más texto accesible. El legado permanece sin clasificación y el color no produce por sí solo un dictamen o estado | Identificar de inmediato la clasificación declarada por el verificador sin alterar evidencia histórica ni depender sólo del color | Alto | M03, Mobile, API, PostgreSQL, Evidencias, UX, Accesibilidad | Dirección | Aprobada e implementada mediante migración 049.
+- DEC-210 | 2026-10-10 | Entrevista y Conclusiones abren la evidencia de otra financiera con el mismo `DocumentViewer` blanco. El semáforo llena el espacio libre alrededor de la fotografía y garantiza bandas superior e inferior de 64 px, conservando texto accesible; el legado permanece blanco y sin color inferido | Unificar el formato dentro de la app y hacer que la clasificación sea una señal dominante en vez de una línea delgada | Medio | M03, Mobile, UX, Accesibilidad, Design System | Dirección | Aprobada e implementada en mobile; sin cambio de API o PostgreSQL.
+- DEC-211 | 2026-10-10 | El visor compartido elimina `Anterior / Siguiente`: al 100 % el gesto horizontal cambia de fotografía y con zoom recorre la imagen. En evidencia clasificada, `Integrantes` y zoom se centran dentro de la banda inferior | Usar el gesto natural de galería y liberar la zona útil de la fotografía | Medio | M03, Mobile, UX, Accesibilidad, Design System | Dirección | Aprobada e implementada en mobile; precisa la navegación de DEC-210 sin cambio de API o PostgreSQL.
+- DEC-212 | 2026-10-10 | La evidencia de otra financiera conserva `DocumentViewer` compartido y blanco, pero Entrevista usa una presentación inmersiva de pantalla completa con encabezado compacto y `X`; Conclusiones conserva el panel blanco | Recuperar el mayor tamaño útil de la fotografía en Entrevista sin reintroducir el fondo oscuro ni duplicar el visor | Medio | M03, Mobile, UX, Accesibilidad, Design System | Dirección | Aprobada e implementada en mobile; sustituye sólo la igualdad visual de DEC-210 y mantiene DEC-211.
+- DEC-213 | 2026-10-10 | El inicio de un pellizco bloquea y recentra el carrusel en la fotografía activa; mientras el zoom sea mayor a 100 %, el arrastre recorre sólo esa imagen y la paginación vuelve a habilitarse al restablecer el zoom | Impedir que el gesto de ampliación mezcle fotografías, semáforos o controles de páginas vecinas | Medio | M03, Mobile, UX, Accesibilidad, Design System | Dirección | Aprobada e implementada en mobile; precisa el arbitraje de gestos de DEC-211 sin cambio de API o PostgreSQL.
+- DEC-216 | 2026-10-10 | Los motivos de evidencia tienen un orden configurable por color. Administración los mueve con acciones explícitas de subir/bajar; `CONCEPTOS REGISTRADOS` permanece fijo con la franja institucional y Verificación muestra en el pop-up los activos conservando ese orden | Hacer administrable la prioridad visible sin depender de arrastre fino, hardcodear opciones ni alterar evidencias históricas | Medio | M11, M03, Mobile, API, PostgreSQL, UX, Auditoría | Dirección | Aprobada e implementada mediante migración 052.
+- DEC-217 | 2026-10-10 | `Evidencia de otra financiera` permite agregar una imagen desde cámara o carrete; ambas fuentes conservan semáforo, motivo e integrantes obligatorios, ubicación actual y actor. `GALERIA` no inventa la fecha original de foto y la API la rechaza para las demás evidencias de Entrevista | Aprovechar comprobantes ya disponibles en el teléfono sin perder trazabilidad ni ampliar el carrete a evidencias de campo que deben tomarse en el momento | Medio | M03, Mobile, API, Evidencias, UX, Auditoría | Dirección | Aprobada e implementada sin migración; el constraint vigente ya admite ambas fuentes.
+- DEC-218 | 2026-10-10 | El inicio de M11 agrupa los parámetros por módulo operativo. Verificación abre en un segundo nivel las cuatro familias vigentes; Documentación, Análisis, Desembolsos, Cobranza, Recolección, Mora, Convenios y Reportes permanecen visibles como `Sin parámetros` hasta contar con un contrato aprobado | Ordenar el crecimiento de M11 y evitar mezclar catálogos de distintos procesos sin inventar reglas para módulos futuros | Medio | M11, Mobile, UX | Dirección | Aprobada e implementada en mobile; sin cambio de API o PostgreSQL.
+- DEC-219 | 2026-10-10 | Las tarjetas del selector inicial de M11 usan únicamente grises del tema Parámetros; dentro del módulo seleccionado, cada familia se presenta como un renglón rectangular de ancho completo con icono, título, descripción y apertura | Distinguir el selector interno del Menú principal y hacer que el segundo nivel se lea como una lista de parámetros, no como otra lista de módulos | Bajo | M11, Mobile, UX, Design System | Dirección | Aprobada e implementada en mobile mediante componentes compartidos; sin cambio de API o PostgreSQL.
+- DEC-220 | 2026-10-10 | El visor muestra el motivo persistido centrado y en negro dentro de la franja superior del semáforo, y centra visualmente `Integrantes` y zoom dentro de la franja inferior; el legado sin motivo no recibe texto inventado | Comunicar la razón de la clasificación durante la revisión y corregir la alineación de controles en teléfonos altos | Bajo | M03, Mobile, UX, Accesibilidad, Design System | Dirección | Aprobada e implementada en componentes compartidos; sin cambio de API o PostgreSQL.
+- DEC-221 | 2026-10-10 | M11 administra 18 catálogos de Entrevista mediante código estable, etiqueta y orden editables, baja lógica y auditoría. Sólo las seis familias de motivos admiten altas; enums de API, sí/no, estados, permisos, evidencias, meses y límites numéricos permanecen fuera de configuración. Verificación consume activos con respaldo local y conserva el significado de capturas históricas | Evitar opciones operativas hardcodeadas sin convertir la estructura del contrato ni decisiones sensibles en configuración libre | Alto | M03, M11, API, Mobile, PostgreSQL, Auditoría | Dirección | Aprobada e implementada mediante migración 053.
+- DEC-222 | 2026-10-10 | M11 expone siete familias directas de Entrevista, incorpora dentro de ese nivel financieras y motivos por color, habilita altas para Cómo conoció a la asesora y renombra las razones de recomendación. Las once familias retiradas conservan datos y consumo operativo | Limitar la administración a opciones que Dirección desea cambiar y concentrar en una sola entrada todo lo usado por la entrevista | Alto | M03, M11, API, Mobile, Auditoría | Dirección | Aprobada e implementada; actualiza DEC-218 y DEC-221.
+- DEC-223 | 2026-10-10 | Cuando existe otro crédito grupal, Entrevista pregunta `¿Qué monto fue su último préstamo?` inmediatamente después del valor de ficha en las ramas activa y finalizada. La respuesta se persiste como importe y toda presentación monetaria de la app usa signo, espacio, separador de miles y cero centavos visibles, por ejemplo `$ 18,000` | Comparar ficha y capital recibido sin ambigüedad y eliminar formatos monetarios distintos entre captura, restauración y resumen | Alto | M03, Mobile, API, PostgreSQL, UX | Dirección | Aprobada e implementada mediante migración 054; no reduce la precisión contable almacenada en otros contratos.
+- DEC-224 | 2026-10-11 | M04 Análisis adopta `#B5E6A2` de la muestra 2 para encabezado, barra, acción primaria e identidad de tarjeta, con texto oscuro; las muestras 1 y 3 se descartan | Diferenciar visualmente Análisis después de comparar las alternativas en pantallas completas | Bajo | M04, Mobile, UX, Design System | Dirección | Aprobada e implementada en mobile; sin cambio de API o PostgreSQL.
+- DEC-225 | 2026-10-11 | M04 conserva `#B5E6A2` en el encabezado y usa `#8ED973` en la barra de título y el botón principal, siempre con texto oscuro | Separar visualmente la barra y la acción principal del encabezado | Bajo | M04, Mobile, UX, Design System | Dirección | Aprobada e implementada en mobile; precisa DEC-224 sin cambio de API o PostgreSQL.
+- DEC-226 | 2026-10-11 | M04 adopta definitivamente `#DAF2D0` en el encabezado y `#8ED973` en la barra de título y el botón principal, con texto oscuro; se retira la variante anterior | Conservar la combinación elegida después de compararla en una pantalla real | Bajo | M04, Mobile, UX, Design System | Dirección | Aprobada e implementada en mobile; sustituye el encabezado de DEC-224 y DEC-225 sin cambio de API o PostgreSQL.
+- DEC-227 | 2026-10-11 | El historial activo de otras financieras en Conclusiones integra el número de ciclos en `ESTADO`, entre la etiqueta y `ACTIVO`; después muestra `SEMANA ACTUAL` y `MES DE DESEMBOLSO`. El bloque económico usa columnas explícitas de 37% para concepto, 27% para dato declarado y 36% para resultado, conservando centrado y divisiones institucionales | Concentrar estado y antigüedad en una línea y disponer espacio legible para la comparación calculada | Bajo | M03, Mobile, UX, Accesibilidad | Dirección | Aprobada e implementada en mobile; precisa la composición de DEC-185/186 sin cambio de API o PostgreSQL.
+- DEC-228 | 2026-10-11 | `Parámetros de verificación` agrega `Conclusiones` como renglón hermano de `Entrevista`; abre una pantalla propia con estado vacío hasta que Dirección defina su contenido | Separar desde ahora el futuro gobierno de Conclusiones sin mezclarlo con Entrevista ni inventar parámetros | Bajo | M11, M03, Mobile, UX | Dirección | Aprobada e implementada en mobile; amplía DEC-222 sin cambio de API o PostgreSQL.
+- DEC-229 | 2026-10-11 | El primer parámetro de Conclusiones califica `SEMANA ACTUAL` de un crédito externo mediante tres rangos configurables, inclusivos y contiguos sobre las semanas 1–16; inicia verde 1–10, amarillo 11–13 y rojo 14–16 | Permitir que Dirección defina desde Administración el color operativo de cada semana sin dejar huecos ni duplicar semanas | Alto | M11, M03, Mobile, API, PostgreSQL, Auditoría | Dirección | Aprobada e implementada con migración 055; sustituye el estado vacío de DEC-228 y no cambia montos ni dictamen.
+- DEC-230 | 2026-10-11 | Los rangos verde, amarillo y rojo de la semana externa son independientes: pueden aparecer en cualquier orden y dejar semanas sin color; cada rango debe tener `Desde <= Hasta` dentro de 1–16 y ningún par puede compartir una semana | Representar la operación sin imponer una secuencia artificial y evitar únicamente clasificaciones ambiguas | Alto | M11, M03, Mobile, API, PostgreSQL, Auditoría | Dirección | Aprobada; sustituye en DEC-229 la cobertura, continuidad y orden obligatorios mediante migración 056.
+- DEC-231 | 2026-10-11 | Conclusiones administra rangos independientes verde, amarillo y rojo para `CICLOS EN ESA FINANCIERA`, usando los valores 1–40 ya capturados en Entrevista; permite cualquier orden y huecos, prohíbe traslapes y deja neutral cualquier valor no cubierto o no confirmado | Parametrizar la interpretación visual de los ciclos externos sin hardcodearla ni convertirla en dictamen | Alto | M11, M03, Mobile, API, PostgreSQL, Auditoría | Dirección | Aprobada e implementada mediante migración 058; la configuración inicial copia los rangos vigentes de semanas y después evoluciona de forma independiente.
+- DEC-232 | 2026-10-11 | Conclusiones calcula una tolerancia simétrica de 0–10 entre `SEMANA ACTUAL` y el rango estimado desde el mes de desembolso; 0 significa dentro del rango y 10 representa diez semanas o más. Administración define rangos verde, amarillo y rojo sin traslapes | Reemplazar la comparación fija dentro/fuera por un semáforo gradual, auditable y configurable | Alto | M11, M03, Mobile, API, PostgreSQL, Auditoría | Dirección | Aprobada e implementada mediante migración 059; inicio verde 0, amarillo 1–3 y rojo 4–10.
+- DEC-233 | 2026-10-11 | Con tasa declarada, la tercera columna calcula `FICHA = (ÚLTIMO PRÉSTAMO ÷ 1,000) × TASA` y `PRÉSTAMO = (VALOR DE FICHA ÷ TASA) × 1,000`. Sin tasa, esos dos cálculos se omiten, la columna 2 muestra `——` en Tasa y la columna 3 calcula `TASA = VALOR DE FICHA ÷ (ÚLTIMO PRÉSTAMO ÷ 1,000)`; todo resultado requiere operandos positivos | Comparar ficha, préstamo y tasa declarados, o recuperar la tasa implícita cuando sea el único dato ausente, sin simular los otros cálculos | Medio | M03, Mobile, UX, Reglas de cálculo | Dirección | Aprobada e implementada en mobile; cálculo sólo informativo, sin persistencia, dictamen, API o cambio de PostgreSQL.
+- DEC-234 | 2026-10-11 | M11 administra por separado la concordancia porcentual de ficha y préstamo con rangos verde, amarillo y rojo de 0% a 100%, sin traslapes. La diferencia absoluta usa el importe declarado como base: `|calculado − declarado| ÷ declarado × 100`, redondeada y limitada a 100 | Hacer visible y configurable la tolerancia de cada importe sin mezclar ambos criterios | Alto | M11, M03, Mobile, API, PostgreSQL, Auditoría | Dirección | Aprobada e implementada mediante migración 060; sustituye únicamente la base porcentual originalmente calculada sobre el importe derivado.
+- DEC-235 | 2026-10-11 | La tasa de otra financiera es opcional tanto para crédito activo como para crédito anterior: no muestra asterisco ni bloquea `Terminar entrevista`; si se captura, conserva el selector entero de 65 a 100 y la persistencia vigente | Permitir completar la verificación cuando la integrante desconoce la tasa sin perder el dato cuando sí lo conoce | Medio | M03, Mobile, UX | Dirección | Aprobada e implementada en mobile; sin cambio de API o PostgreSQL.
+- DEC-236 | 2026-10-11 | La tercera columna muestra, en una misma línea y en burbujas separadas, el importe calculado y el porcentaje absoluto de diferencia respecto al importe declarado; el mismo porcentaje alimenta el parámetro independiente de concordancia de ficha o préstamo y su semáforo | Exponer la magnitud que explica el color parametrizado y aprovechar el ancho 37/27/36 sin ocultar la base de comparación | Medio | M03, M11, Mobile, UX, Accesibilidad | Dirección | Aprobada e implementada en mobile; precisa DEC-227 y DEC-234 sin cambio de API o PostgreSQL.
+- DEC-237 | 2026-10-11 | El bloque económico abrevia las etiquetas visibles a `ÚLT. PRÉSTAMO` y `TASA`, reduce la columna de concepto al mínimo práctico y adopta proporción 33% / 27% / 40% | Dar prioridad visual al importe calculado y su porcentaje, conservando `VALOR DE FICHA` completo en una sola línea | Bajo | M03, Mobile, UX, Accesibilidad | Dirección | Aprobada e implementada en mobile; precisa DEC-227 y DEC-236 sin cambio de reglas, API o PostgreSQL.
+- DEC-238 | 2026-10-11 | El renglón final del historial externo cambia su etiqueta visible a `REVISAR EVIDENCIA`; cuando existen fotos confirmadas, su botón usa fondo ocre oscuro de Verificación con cámara y texto blancos | Hacer explícita la acción y elevar su contraste sin cambiar el visor ni la disponibilidad real de evidencias | Bajo | M03, Mobile, UX, Accesibilidad | Dirección | Aprobada e implementada en mobile; sustituye sólo la presentación de DEC-204 sin cambio de datos, API o PostgreSQL.
+- DEC-250 | 2026-10-18 | En `¿La conoce? ¿Sabe dónde vive?`, tocar `Sí` o `No` abre un selector múltiple obligatorio con catálogos independientes administrados en M11. Cada respuesta nueva exige al menos una opción activa de su rama; respuesta, opciones y ubicación se guardan atómicamente, y el historial conserva instantáneas de etiqueta y orden. Los catálogos inician vacíos y las visitas anteriores no reciben opciones inferidas | Permitir que Dirección defina las explicaciones reales de cada resultado sin hardcodearlas ni reescribir confirmaciones históricas | Alto | M03, M11, Mobile, API, PostgreSQL, Auditoría | Dirección | Aprobada e implementada mediante migración 064.
+- DEC-251 | 2026-10-18 | Los dos pop-ups de Visita al vecino permiten seleccionar exactamente una opción de su catálogo. Elegir otra sustituye la anterior; la API rechaza cero o más de una opción y PostgreSQL impide asociar una segunda opción a la misma visita. Se conservan los dos catálogos independientes, su administración en M11, la ubicación atómica y las instantáneas históricas | Evitar respuestas ambiguas y hacer que cada resultado `Sí` o `No` tenga una sola explicación confirmada | Alto | M03, M11, Mobile, API, PostgreSQL, Auditoría | Dirección | Aprobada e implementada mediante migración 065; sustituye sólo la multiplicidad definida en DEC-250.
 
 ## Contradicciones documentadas
 
@@ -371,6 +432,203 @@ Tratamiento vigente: ABIERTA. La auditoria no modifico la regla ni el flujo. Dir
   pares módulo–acción, alcance territorial, denegación de módulos sin especificación, doble control
   en M11/M12, excepciones restrictivas y ausencia de permisos operativos heredados para
   Administración. La implementación técnica queda pendiente de migración y pruebas controladas.
+- Dirección aprobó expresamente DEC-176 el 2026-10-05 para recuperar un PIN universal exclusivamente
+  local durante el desarrollo, configurado fuera del repositorio, auditado por método, sin mutar las
+  credenciales individuales y deshabilitado fuera de `development`.
+- Dirección aprobó expresamente DEC-177 el 2026-10-06 para conservar visible pero hacer opcional
+  `¿En qué cree usted que podemos mejorar?`; una respuesta vacía no bloqueará la conclusión de la
+  Entrevista. Sustituye únicamente la obligatoriedad definida por DEC-108.
+- Dirección aprobó expresamente DEC-178 el 2026-10-06 para mostrar siempre `Terminar entrevista`,
+  enumerar requisitos faltantes, habilitarlo sólo con datos confirmados y derivar la paloma sin
+  estado paralelo; el selector de cómo conoció a la asesora sólo se autoabre con `Sí` y seguimiento
+  vacío, nunca al abrir, consultar o restaurar una respuesta ya capturada.
+- Dirección aprobó expresamente DEC-179 el 2026-10-06 para extender esa protección a todos los
+  selectores condicionales de Entrevista y evitar aperturas en cascada al restaurar la captura.
+- Dirección aprobó expresamente DEC-180 el 2026-10-07 para habilitar `Conclusiones` y abrir la
+  captura local existente, sin persistencia, dictamen, autorización ni transición de estado;
+  sustituye únicamente el bloqueo temporal de DEC-122.
+- Dirección aprobó expresamente DEC-181 el 2026-10-07 para iniciar `Conclusiones` con un resumen
+  declarativo de historial, montos, tesorera y recolección, usando colores semánticos y nombres en
+  los desacuerdos, sin repetir preguntas ni crear todavía el monto verificado.
+- Dirección aprobó expresamente DEC-182 el 2026-10-07 para mostrar en la primera burbuja el ciclo
+  individual vigente, nunca el del grupo: `CICLO 1` amarillo con `!` y ciclos posteriores verdes.
+- Dirección aprobó expresamente DEC-183 el 2026-10-07 para eliminar la suma adicional y reutilizar
+  exactamente el mismo ciclo individual en el encabezado y en Conclusiones; el ciclo grupal no
+  participa en ninguno de esos dos indicadores.
+- Dirección aprobó expresamente DEC-184 el 2026-10-08 para agregar en Conclusiones los apartados
+  separados de historial con CRELEALTAD y otras financieras, reutilizando exclusivamente datos
+  confirmados o declarados y distinguiendo en rojo la ausencia explícita.
+- Dirección aprobó expresamente DEC-185 el 2026-10-08 para formatear la ficha como moneda y mostrar
+  junto al mes de desembolso externo el rango de semanas completas calculado contra la fecha de
+  captura de la Entrevista, sin inventar una fecha exacta.
+- Dirección aprobó expresamente DEC-186 el 2026-10-08 para ordenar el rango de menor a mayor,
+  validarlo de forma inclusiva contra `SEMANA ACTUAL` mediante una burbuja verde o roja, y retirar
+  asesora y teléfono exclusivamente del resumen de Conclusiones.
+- Dirección aprobó expresamente DEC-187 el 2026-10-08 para centrar y agrupar las burbujas de mes y
+  rango, y convertir la evidencia confirmada del historial externo en una acción que abre el visor
+  institucional sin duplicar archivos.
+- Dirección aprobó expresamente DEC-188 el 2026-10-08 para administrar en M11 la clasificación
+  versionada de financieras competidoras, aplicar doble control y mostrar en Conclusiones la señal
+  vigente a la fecha de captura sin decidir ni modificar automáticamente el monto.
+- Dirección aprobó expresamente DEC-189 el 2026-10-08 para permitir temporalmente a todos los roles
+  consultar M11 mediante el par exacto `parametros:leer`, sin extender ninguna acción de cambio.
+- Dirección aprobó expresamente DEC-190 el 2026-10-08 para incorporar en M11 las trece financieras
+  reales del selector, mostrar por renglón las opciones exclusivas verde/amarillo/rojo y hacer que
+  Entrevista consuma el catálogo activo de Parámetros. Las altas y bajas conservan el doble control;
+  una baja es una versión inactiva y `Otra` sigue siendo una opción funcional, no una financiera.
+- Dirección aprobó expresamente DEC-191 el 2026-10-08 para conservar la razón social como nombre
+  oficial versionado y mostrar en el pop-up el primer alias, entendido como el nombre cotidiano con
+  el que las integrantes identifican a la financiera; sin alias se usa el nombre oficial como respaldo.
+- Dirección aprobó expresamente DEC-192 el 2026-10-08 para reducir la propuesta a alias, nombre
+  oficial y clasificación opcionales; vigencia y disponibilidad se derivan en servidor, mientras una
+  alta nueva conserva como protección mínima al menos un alias o nombre visible.
+- Dirección aprobó expresamente DEC-193 el 2026-10-08 para eliminar la explicación superior y
+  separar el catálogo en financieras que se muestran o no se muestran en el pop-up. El cambio de
+  sección ocurre únicamente con la disponibilidad publicada, no con una propuesta pendiente.
+- Dirección aprobó expresamente DEC-194 el 2026-10-08 para agregar al final de la edición la opción
+  `¿Se muestra en el pop-up?` mediante `Sí / No`, conservando aprobación y publicación antes de
+  cambiar la disponibilidad.
+- Dirección aprobó expresamente DEC-195 el 2026-10-08 para recuperar motivo y vigencia en la edición,
+  y mostrar `¿Disponible para captura y conclusiones?` mediante círculos pequeños grises `Sí / No`.
+- Dirección aprobó expresamente DEC-196 el 2026-10-08 para cambiar la pregunta a
+  `¿Se muestran en el pop-up?` y reutilizar exactamente el selector `Sí / No` de Verificación.
+- Dirección aprobó expresamente DEC-199 el 2026-10-08 para que `ADMINISTRADOR`, como representación
+  de Dirección, defina y publique M11 en un solo paso. Se elimina la aprobación, rechazo o devolución
+  de Gerencia sólo para Parámetros; M12 conserva el doble control y Administración no adquiere
+  permisos operativos o financieros por herencia.
+- Dirección aprobó expresamente DEC-200 el 2026-10-08 para eliminar la pantalla intermedia de detalle
+  y abrir directamente el formulario desde cada renglón de financiera. El círculo del catálogo
+  refleja la clasificación publicada y el historial permanece como acción secundaria del formulario.
+- Dirección aprobó expresamente DEC-202 el 2026-10-08 para mostrar en la burbuja de Conclusiones sólo
+  el nombre de la financiera, tomar su color de M11 y usar blanco con marco oscuro cuando no exista
+  clasificación, sin agregar una leyenda visible.
+- Dirección aprobó expresamente DEC-203 el 2026-10-08 para tomar ese color de la clasificación
+  publicada vigente al revisar la conclusión, sin usar la fecha histórica de la entrevista como
+  filtro; esa fecha se conserva para el rango de semanas.
+- Dirección aprobó expresamente DEC-204 el 2026-10-09 para retirar `!`, reservar el amarillo para
+  `1 CICLO` con texto fuerte, presentar la evidencia con cámara y `N FOTO(S)` dentro del botón
+  rectangular ocre de Verificación, y centrar verticalmente todos los datos del resumen por renglón.
+- Dirección aprobó expresamente DEC-206 el 2026-10-09 para exigir la selección de una, varias o
+  todas las integrantes antes de guardar cada evidencia nueva de otra financiera, conservando un
+  solo archivo y relaciones auditables limitadas al mismo expediente.
+- Dirección aprobó expresamente DEC-207 el 2026-10-09 para que cancelar ese selector descarte la
+  toma pendiente y permita abrir de nuevo la cámara sin guardar ni asociar evidencia.
+- Dirección aprobó expresamente DEC-214 el 2026-10-10 para administrar en M11 tres catálogos de
+  conceptos por color y exigir exactamente un motivo activo por cada fotografía nueva de otra
+  financiera, preservando el legado con `NULL` y sin inferir opciones.
+- Dirección aprobó expresamente DEC-215 el 2026-10-10 para disponer de cinco motivos activos por
+  color, completar sin sustituir conceptos existentes y permitir editar sólo motivos todavía no
+  utilizados; después del primer uso se desactivan y reemplazan sin reescribir evidencia histórica.
+- Dirección aprobó expresamente DEC-216 el 2026-10-10 para fijar el encabezado de conceptos y
+  permitir ordenar los motivos por color; ese mismo orden se usa en el pop-up de Verificación.
+- Dirección aprobó expresamente DEC-218 el 2026-10-10 para agrupar el inicio de M11 por módulo,
+  abrir los catálogos vigentes desde Verificación y mantener las demás áreas visibles como
+  `Sin parámetros` hasta que exista una familia aprobada, sin crear reglas ni permisos futuros.
+- Dirección aprobó expresamente DEC-219 el 2026-10-10 para conservar en gris todas las tarjetas del
+  selector interno de M11 y mostrar las familias del módulo seleccionado como renglones
+  rectangulares, diferenciando ambas pantallas del Menú principal.
+- Dirección aprobó expresamente DEC-222 el 2026-10-10 para concentrar financieras y motivos dentro
+  de Entrevista, limitar a siete las familias directas visibles, habilitar altas para el origen de
+  contacto y conservar sin borrado las once familias retiradas de la administración.
+- Dirección aprobó expresamente DEC-224 el 2026-10-11 para usar `#B5E6A2` como identidad visual de
+  Análisis y retirar del visor las muestras 1 y 3.
+- Dirección aprobó expresamente DEC-225 el 2026-10-11 para conservar `#B5E6A2` en el encabezado de
+  Análisis y diferenciar su barra de título y botón principal con `#8ED973`.
+- Dirección aprobó expresamente DEC-226 el 2026-10-11 como combinación definitiva de Análisis:
+  encabezado `#DAF2D0`, barra y botón `#8ED973`; la variante anterior se retiró del visor.
+- Dirección aprobó expresamente DEC-229 el 2026-10-11 para dividir las semanas 1–16 del crédito
+  externo en rangos verde, amarillo y rojo configurables desde Conclusiones y aplicarlos a
+  `SEMANA ACTUAL` sin modificar monto ni dictamen.
+- Dirección aprobó expresamente DEC-230 el 2026-10-11 para permitir cualquier orden y huecos entre
+  los rangos de color, conservando como única relación entre ellos la prohibición de traslapes.
+- Dirección aprobó expresamente DEC-231 el 2026-10-11 para parametrizar del 1 al 40 el color de
+  `CICLOS EN ESA FINANCIERA`, con rangos independientes sin traslapes y consumo neutral ante falla.
+- Dirección aprobó expresamente DEC-232 el 2026-10-11 para parametrizar entre 0 y 10 la tolerancia
+  simétrica de la semana de desembolso y aplicar ese tono al rango estimado de Conclusiones.
+- Dirección aprobó expresamente DEC-234 el 2026-10-11 para parametrizar por separado la diferencia
+  porcentual de ficha y préstamo, con rangos 0–100 sin traslapes y valores iniciales 0–5, 6–10 y
+  11–100.
+- Dirección aprobó expresamente DEC-235 el 2026-10-11 para hacer opcional la tasa de otra financiera
+  en ambas ramas del historial externo, conservando el rango 65–100 cuando se capture.
+- Dirección aprobó expresamente DEC-239 el 2026-10-11 para que el verificador califique cada imagen
+  de otra financiera con tacha o palomita de forma independiente por integrante, persistida y
+  auditada sin alterar la clasificación original de la fotografía.
+- Dirección aprobó expresamente DEC-240 el 2026-10-11 para reservar bandas superior e inferior de
+  dimensiones idénticas en todas las fotografías del visor y limitar el color del semáforo a esas
+  bandas, dejando blancos los laterales para conservar un alto útil uniforme.
+- Dirección aprobó expresamente DEC-241 el 2026-10-11 para incorporar una calificación amarilla
+  persistente entre la tacha roja y la palomita verde y mostrar la opción confirmada con fondo sólido.
+- Dirección aprobó expresamente DEC-242 el 2026-10-11 para reducir el botón de fotografías de
+  `REVISAR EVIDENCIA` e insertar antes un círculo blanco con borde y signo de interrogación negros.
+- Dirección aprobó expresamente DEC-243 el 2026-10-11 para que sólo el botón ocre de fotografías
+  abra el visor; la etiqueta, el círculo de interrogación y el resto del renglón quedan informativos.
+- Dirección aprobó expresamente DEC-244 el 2026-10-11 para colocar bajo `REVISAR EVIDENCIA` una
+  cápsula verde, amarilla y roja con los conteos de fotografías calificadas para la integrante
+  consultada, sin sumar comprobantes de Documentación ni evidencias aún sin calificar.
+- Dirección aprobó expresamente DEC-245 el 2026-10-12 para mostrar en el círculo blanco el promedio
+  entero de las evidencias calificables de la integrante sólo al completar toda la revisión, con
+  ponderaciones verde 100, amarillo 50 y rojo 0; mientras falte una conserva `?`.
+- Dirección aprobó expresamente DEC-246 el 2026-10-12 para parametrizar entre 0 y 100 el color del
+  círculo del promedio completo de fotografías, sin traslapes y con valores iniciales rojo 0–33,
+  amarillo 34–66 y verde 67–100; un resultado pendiente o sin parámetro permanece neutral.
+- Dirección aprobó expresamente DEC-247 el 2026-10-12 para agregar antes de las conclusiones un
+  bloque `FOTOGRAFÍAS` con accesos separados: `Casa` reúne fachada, medidor y fachada con integrante;
+  `Negocio` reúne todas sus evidencias comerciales confirmadas.
+- Dirección aprobó expresamente DEC-248 el 2026-10-12 para que `Casa` y `Negocio` usen el formato
+  del botón `Cerrar`: fondo ocre sólido, texto blanco y rectángulo con esquinas redondeadas.
+- Dirección aprobó expresamente DEC-249 el 2026-10-12 para añadir una casa blanca a `Casa` y un
+  maletín blanco a `Negocio`, siempre acompañados por su texto visible.
+- Dirección aprobó expresamente DEC-250 el 2026-10-18 para abrir un selector múltiple obligatorio
+  al tocar `Sí` o `No` en Visita al vecino y administrar ambas ramas como catálogos independientes
+  de M11, sin precargas ni explicaciones retroactivas.
+- Dirección aprobó expresamente DEC-251 el 2026-10-18 para que cada uno de esos dos pop-ups admita
+  exactamente una opción; elegir otra sustituye la anterior y DEC-250 permanece vigente en todo lo
+  demás.
+- Dirección aprobó expresamente DEC-252 el 2026-10-21 para parametrizar los seis procesos de
+  Verificación por cuatro tipos calculados desde historial CRELEALTAD y comprobante externo
+  confirmado, conservar disponibles los pasos opcionales y permitir cualquier orden de ejecución.
+- Dirección aprobó expresamente DEC-253 el 2026-10-21 para incorporar `Obligatorio después de
+  días` en cada regla de DEC-252, con plazo por proceso y tipo; sin terminación previa confirmada la
+  regla es obligatoria y no se inventa una fecha de Conclusiones mientras no exista cierre servidor.
+- Dirección aprobó expresamente DEC-254 el 2026-10-22 para retirar de Verificación de Grupo los
+  cuatro indicadores de total, aprobadas, pendientes y no aprobadas; el contacto del asesor ocupa
+  el primer renglón con teléfono accionable y el resumen de integrantes y monto se presenta debajo.
+- Dirección aprobó expresamente DEC-255 el 2026-10-22 para dividir el resumen del grupo en dos
+  renglones: integrantes y monto solicitado en azul; integrantes con revisión concluida y monto
+  verificado real en ocre. Un importe aún no persistido se muestra pendiente y nunca se infiere del
+  solicitado.
+- Dirección aprobó expresamente DEC-256 el 2026-10-22 para suavizar el renglón solicitado con el
+  mismo celeste claro de la burbuja de distancia a tesorera, conservando cifras azules y el renglón
+  verificado en ocre.
+- Dirección aprobó expresamente DEC-257 el 2026-10-22 para compactar verticalmente los dos
+  renglones del resumen grupal sin reducir la legibilidad de las cifras ni cambiar su semántica.
+- Dirección aprobó expresamente DEC-258 el 2026-10-22 para presentar en Verificación de Grupo la
+  abreviatura del asesor y dividir la acción telefónica en una franja celeste para el número y un
+  cuadro celeste con el icono a la derecha.
+- Dirección aprobó expresamente DEC-259 el 2026-10-22 para que el primer acceso de Parámetros de
+  Verificación publique el número de revisiones individuales concluidas que habilita el botón de
+  finalizar el grupo; cuentan aprobadas y rechazadas, y sin parámetro confirmado el control queda
+  bloqueado. Esta habilitación no ejecuta todavía la transición final pendiente de M03.
+- Dirección aprobó expresamente DEC-260 el 2026-10-22 para presentar ese parámetro como selector
+  desplazable de 0 a 12, límite vigente del producto. Cero significa que no se exige ninguna
+  revisión individual concluida; no sustituye el bloqueo por ausencia del parámetro ni implementa
+  la transición final pendiente de M03.
+- Dirección aprobó expresamente DEC-261 el 2026-10-30 para colocar primero `Control de pagos
+  CRELEALTAD` en el Paso 7 y exigir exactamente dos imágenes desde el ciclo individual 2, derivado
+  por historial confirmado de `persona_id`; integrantes nuevas no lo requieren y el comprobante
+  opcional de otra financiera conserva su contrato independiente.
+- Dirección aprobó expresamente DEC-262 el 2026-10-30 para unificar todos los visores de imágenes
+  en el formato institucional de Verificación: tarjeta al 95 % por 90 %, encabezado con el color
+  del módulo, cierre mediante `X` en la esquina superior derecha, franja de ayuda, imagen amplia,
+  zoom y paginación lateral. Se elimina el botón inferior `Cerrar`; las acciones funcionales de
+  validación o reemplazo permanecen cuando correspondan. Esta decisión sustituye las variantes
+  visuales de DEC-212, sin cambiar sus reglas de evidencia ni de navegación.
+- Dirección aprobó expresamente DEC-263 el 2026-10-30 para usar dos columnas como composición
+  predeterminada de formularios largos y flujos por pasos en escritorio: navegación estable a la
+  izquierda y formulario activo a la derecha. Mobile conserva su composición de una columna; el
+  modal centrado se limita a tareas breves y el modo inmersivo se reserva para revisar documentos
+  o imágenes mediante el visor institucional de DEC-262. El flujo activo de Solicitud ya consume
+  el componente compartido `StepFlowLayout` en Expo Web; no cambia reglas, permisos ni secuencia.
 - Toda contradiccion funcional futura debe documentarse y escalarse sin resolverse unilateralmente.
 
 ## Referencias cruzadas

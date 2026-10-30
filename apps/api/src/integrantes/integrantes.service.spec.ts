@@ -20,6 +20,10 @@ describe('IntegrantesService - monto formal de solicitud', () => {
     save: jest.fn(),
     merge: jest.fn((entity, changes) => ({ ...entity, ...changes })),
   };
+  const solicitudesService = {
+    getBySolicitanteInterno: jest.fn(),
+    documentoConfirmado: jest.fn(),
+  };
   let service: IntegrantesService;
   const scope = { usuarioId: 'usuario-1', rolNombre: 'VERIFICADOR' };
 
@@ -39,10 +43,12 @@ describe('IntegrantesService - monto formal de solicitud', () => {
     personaRepository.findOne.mockReset();
     personaRepository.save.mockReset();
     personaRepository.merge.mockClear();
+    solicitudesService.getBySolicitanteInterno.mockReset();
+    solicitudesService.documentoConfirmado.mockReset();
     service = new IntegrantesService(
       integranteRepository as never,
       personaRepository as never,
-      {} as never,
+      solicitudesService as never,
     );
   });
 
@@ -415,5 +421,43 @@ describe('IntegrantesService - monto formal de solicitud', () => {
       tiene_historial_interno: false,
       es_nueva_con_nosotros: true,
     }));
+  });
+
+  it('bloquea el Paso 7 por Control de pagos CRELEALTAD desde ciclo 2', async () => {
+    solicitudesService.getBySolicitanteInterno.mockResolvedValue({
+      ciclo_numero: 2,
+      monto_solicitado: 18000,
+      monto_solicitado_confirmado_at: '2026-10-30T12:00:00.000Z',
+      tiene_medidor_luz: 'SI',
+      vive_max_5km_tesorera: 'SI',
+      tiene_menos_70_anios: 'SI',
+      doc_control_pagos_ruta: null,
+      doc_ine_ruta: '/documentos/ine/confirmado',
+      doc_comprobante_ruta: '/documentos/comprobante/confirmado',
+      doc_solicitud_firmada_ruta: '/documentos/solicitud_firmada/confirmado',
+    });
+    integranteRepository.manager.query
+      .mockResolvedValueOnce([{
+        integrante_id: 'integrante-1',
+        tiene_historial_interno: true,
+        creditos_participados: '1',
+      }])
+      .mockResolvedValueOnce([{ monto_maximo: '100000.00' }]);
+    solicitudesService.documentoConfirmado.mockImplementation(
+      async (_integranteId: string, tipo: string) => tipo !== 'control_pagos',
+    );
+
+    const resultado = await service.validarSolicitudCompleta('integrante-1');
+
+    expect(resultado.camposFaltantes['Paso 7']).toEqual([
+      'Control de pagos CRELEALTAD (2 imágenes) - pendiente de subir',
+    ]);
+    expect(solicitudesService.documentoConfirmado).toHaveBeenNthCalledWith(
+      1,
+      'integrante-1',
+      'control_pagos',
+      null,
+      2,
+    );
   });
 });

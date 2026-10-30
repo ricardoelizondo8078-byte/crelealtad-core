@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
+import {
+  colors,
+  moduleThemes,
+  radius,
+  spacing,
+  typography,
+  type ModuleThemeKey,
+} from '../../theme/tokens';
 import { FormField } from './FormField';
 
-type ModuleThemeKey = 'documentation' | 'verification' | 'disbursement';
 type SelectorVariant = 'default' | 'countBubbles';
 
 interface SelectorFieldProps {
@@ -18,6 +24,7 @@ interface SelectorFieldProps {
   moduleTheme?: ModuleThemeKey;
   variant?: SelectorVariant;
   disabled?: boolean;
+  strongBorder?: boolean;
 }
 
 export const SelectorField: React.FC<SelectorFieldProps> = ({
@@ -32,6 +39,7 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
   moduleTheme = 'documentation',
   variant = 'default',
   disabled = false,
+  strongBorder = false,
 }) => {
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -75,7 +83,7 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
                     isCountBubble ? bubbleStyle : styles.chip,
                     isSelected
                       ? { backgroundColor: `${themeColors.primary}20`, borderColor: themeColors.primary }
-                      : styles.chipUnselected
+                      : [styles.chipUnselected, strongBorder && styles.strongBorder]
                   ]}
                   onPress={() => onSelect(option)}
                 >
@@ -96,7 +104,7 @@ export const SelectorField: React.FC<SelectorFieldProps> = ({
           </View>
         ) : (
           <Pressable
-            style={styles.trigger}
+            style={[styles.trigger, strongBorder && styles.strongBorder]}
             accessibilityRole="button"
             accessibilityState={{ disabled }}
             disabled={disabled}
@@ -192,6 +200,10 @@ const styles = StyleSheet.create({
   chipUnselected: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
+  },
+  strongBorder: {
+    borderWidth: 2,
+    borderColor: colors.gray[400],
   },
   chipText: {
     ...typography.caption,

@@ -3,7 +3,7 @@ import { Image, Pressable, StatusBar, StyleSheet, Text, View } from 'react-nativ
 import { useAuth } from '../../context/AuthContext';
 import { usePendingReviews } from '../../context/PendingReviewsContext';
 import { useProcessingAction } from '../../context/ProcessingContext';
-import { colors, layout, moduleThemes, ModuleThemeKey, radius, spacing, touchTargets, typography } from '../../theme/tokens';
+import { colors, layout, moduleThemes, ModuleTheme, ModuleThemeKey, radius, spacing, touchTargets, typography } from '../../theme/tokens';
 
 const crelealtadLogo = require('../../../assets/logo.png');
 
@@ -16,6 +16,7 @@ export interface AppHeaderProps {
   currentWeek?: string;
   avatarLabel?: string;
   showPendingIndicator?: boolean;
+  themeOverride?: ModuleTheme;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -27,11 +28,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   currentWeek = 'Semana 18',
   avatarLabel,
   showPendingIndicator = true,
+  themeOverride,
 }) => {
   const { usuario } = useAuth();
   const { totalPending, openInbox } = usePendingReviews();
   const handleBackPress = useProcessingAction(onBackPress);
-  const theme = moduleThemes[moduleTheme];
+  const theme = themeOverride ?? moduleThemes[moduleTheme];
   const compactWeekLabel = currentWeek.replace(/semana\s*/i, 'SEM ').toUpperCase();
   const resolvedUserName = userName ?? usuario?.abreviatura ?? usuario?.nombre ?? 'Usuario';
   const resolvedUserRole = userRole ?? usuario?.rol_nombre ?? 'Usuario';
@@ -48,7 +50,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     <View style={[styles.container, { backgroundColor: theme.headerBg }]}> 
       <StatusBar
         barStyle={theme.statusBarStyle ?? 'light-content'}
-        backgroundColor={theme.headerBg}
       />
       <View style={styles.topRow}>
         <View style={styles.brandBlock}>
@@ -113,13 +114,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    width: '100%',
+  },
+  topRow: {
+    width: '100%',
+    maxWidth: layout.contentMaxWidth,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   brandBlock: {
     flexDirection: 'row',

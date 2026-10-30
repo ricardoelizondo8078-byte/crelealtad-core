@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   StyleSheet,
   Text,
   View,
@@ -10,6 +11,7 @@ import {
   CreditHistorySummary,
   DocumentImageCarousel,
   MonthYearPickerField,
+  MultiSelectPickerField,
   PickerField,
   PrimaryButton,
   SecondaryButton,
@@ -19,7 +21,10 @@ import {
   StickySectionHeader,
   TextInput,
 } from '../../components/ui';
-import type { DocumentImageCarouselPage } from '../../components/ui';
+import type {
+  DocumentImageCarouselPage,
+  MultiSelectPickerOption,
+} from '../../components/ui';
 import {
   colors,
   moduleThemes,
@@ -28,6 +33,8 @@ import {
 } from '../../theme/tokens';
 import { normalizeCurrencyInput } from '../../utils/currency';
 import { formatPhone } from '../../utils/input';
+import { EvidenceTrafficLightPanel } from './EvidenceTrafficLightPanel';
+import type { MotivoClasificacionEvidencia } from '../parametros/parametros-evidencia-motivos.api';
 import {
   ANIOS_CREDITO_GRUPAL,
   CICLOS_CREDITO_GRUPAL,
@@ -37,18 +44,24 @@ import {
   SEMANAS_CREDITO_GRUPAL,
   TASAS_CREDITO_GRUPAL,
 } from './verificacion-entrevista.catalog';
+import { useOpcionesEntrevista } from './verificacion-entrevista-parametros';
 import { CREDIT_HISTORY_VISUAL_PREVIEW } from './verificacion-individual.model';
+import type {
+  ClasificacionSemaforoEvidencia,
+} from './verificacion-entrevista.api';
 import type {
   IntegranteData,
   TipoEvidenciaHistorialCredito,
 } from './verificacion-individual.types';
 
 interface EntrevistaHistorialCrediticioSectionProps {
+  financierasCreditoGrupalOptions?: readonly string[];
   historialInterno?: IntegranteData['historialCrediticioInterno'];
   tieneOtroCreditoGrupal: string;
   financieraCreditoGrupal: string;
   creditoGrupalAnteriorActivo: string;
   valorFichaCreditoGrupal: string;
+  montoUltimoPrestamoCreditoGrupal: string;
   semanaActualCreditoGrupal: string;
   mesDesembolsoCreditoGrupal: string;
   mesUltimoPagoCreditoGrupal: string;
@@ -66,12 +79,19 @@ interface EntrevistaHistorialCrediticioSectionProps {
   evidenciasPendientes: number;
   fotografiasGuardadas: number;
   paginasEvidencias: DocumentImageCarouselPage[];
+  opcionesIntegrantesEvidencia: MultiSelectPickerOption[];
+  motivosClasificacionEvidencia: MotivoClasificacionEvidencia[];
+  errorMotivosClasificacionEvidencia: string | null;
+  integrantesEvidenciaSeleccionadas: string[];
+  evidenciaPendienteClasificacion: { key: string; uri: string } | null;
+  evidenciaPendienteDeAsignar: boolean;
   errorEvidencias: string | null;
   errorComprobante: string | null;
   onTieneOtroCreditoGrupalChange: (value: string) => void;
   onFinancieraCreditoGrupalChange: (value: string) => void;
   onCreditoGrupalAnteriorActivoChange: (value: string) => void;
   onValorFichaCreditoGrupalChange: (value: string) => void;
+  onMontoUltimoPrestamoCreditoGrupalChange: (value: string) => void;
   onSemanaActualCreditoGrupalChange: (value: string) => void;
   onMesDesembolsoCreditoGrupalChange: (value: string) => void;
   onUltimoPagoCreditoGrupalChange: (month: string, year: string) => void;
@@ -84,17 +104,27 @@ interface EntrevistaHistorialCrediticioSectionProps {
   onLimpiarRutaCreditoGrupal: () => void;
   onReintentarComprobante: () => void;
   onCapturarEvidencia: (tipo: TipoEvidenciaHistorialCredito) => void;
+  onSeleccionarEvidenciaCarrete: (tipo: TipoEvidenciaHistorialCredito) => void;
+  onIntegrantesEvidenciaChange: (integranteIds: string[]) => void;
+  onGuardarEvidenciaParaIntegrantes: (integranteIds: string[]) => void;
+  onClasificarEvidencia: (
+    clasificacion: ClasificacionSemaforoEvidencia,
+    motivoClasificacionId: string,
+  ) => void;
+  onDescartarEvidenciaPendiente: () => void;
   onReintentarEvidencias: (tipo: TipoEvidenciaHistorialCredito) => void;
 }
 
 export const EntrevistaHistorialCrediticioSection: React.FC<
   EntrevistaHistorialCrediticioSectionProps
 > = ({
+  financierasCreditoGrupalOptions = FINANCIERAS_CREDITO_GRUPAL_NUEVO_LEON,
   historialInterno,
   tieneOtroCreditoGrupal,
   financieraCreditoGrupal,
   creditoGrupalAnteriorActivo,
   valorFichaCreditoGrupal,
+  montoUltimoPrestamoCreditoGrupal,
   semanaActualCreditoGrupal,
   mesDesembolsoCreditoGrupal,
   mesUltimoPagoCreditoGrupal,
@@ -112,12 +142,19 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
   evidenciasPendientes,
   fotografiasGuardadas,
   paginasEvidencias,
+  opcionesIntegrantesEvidencia,
+  motivosClasificacionEvidencia,
+  errorMotivosClasificacionEvidencia,
+  integrantesEvidenciaSeleccionadas,
+  evidenciaPendienteClasificacion,
+  evidenciaPendienteDeAsignar,
   errorEvidencias,
   errorComprobante,
   onTieneOtroCreditoGrupalChange,
   onFinancieraCreditoGrupalChange,
   onCreditoGrupalAnteriorActivoChange,
   onValorFichaCreditoGrupalChange,
+  onMontoUltimoPrestamoCreditoGrupalChange,
   onSemanaActualCreditoGrupalChange,
   onMesDesembolsoCreditoGrupalChange,
   onUltimoPagoCreditoGrupalChange,
@@ -130,9 +167,34 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
   onLimpiarRutaCreditoGrupal,
   onReintentarComprobante,
   onCapturarEvidencia,
+  onSeleccionarEvidenciaCarrete,
+  onIntegrantesEvidenciaChange,
+  onGuardarEvidenciaParaIntegrantes,
+  onClasificarEvidencia,
+  onDescartarEvidenciaPendiente,
   onReintentarEvidencias,
-}) => (
-  <>
+}) => {
+  const opcionesNoRenovacion = useOpcionesEntrevista('MOTIVO_NO_RENOVACION', MOTIVOS_NO_RENOVACION);
+  const [abrirFinanciera, setAbrirFinanciera] = useState(false);
+  const [abrirMotivoNoRenovacion, setAbrirMotivoNoRenovacion] = useState(false);
+
+  const abrirOpcionesEvidencia = () => {
+    if (!tipoEvidenciaActual) return;
+    Alert.alert('Agregar evidencia', 'Elige de dónde quieres obtener la imagen.', [
+      {
+        text: 'Tomar foto',
+        onPress: () => onCapturarEvidencia(tipoEvidenciaActual),
+      },
+      {
+        text: 'Elegir del carrete',
+        onPress: () => onSeleccionarEvidenciaCarrete(tipoEvidenciaActual),
+      },
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
+  };
+
+  return (
+    <>
     <View style={styles.sectionHeader}>
       <StickySectionHeader title="HISTORIAL CREDITICIO" moduleTheme="verification" />
     </View>
@@ -152,6 +214,8 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
       value={tieneOtroCreditoGrupal}
       options={['Sí', 'No']}
       onSelect={(value) => {
+        setAbrirFinanciera(value === 'Sí');
+        if (value === 'No') setAbrirMotivoNoRenovacion(false);
         onTieneOtroCreditoGrupalChange(value);
         if (value === 'No') onLimpiarCreditoGrupal();
       }}
@@ -162,13 +226,17 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
     {tieneOtroCreditoGrupal === 'Sí' ? (
       <>
         <PickerField
+          key={`financiera-${abrirFinanciera && !financieraCreditoGrupal.trim() ? 'abrir' : 'cerrado'}`}
           label="¿Con qué financiera tuvo su último crédito grupal?"
           value={financieraCreditoGrupal}
-          options={FINANCIERAS_CREDITO_GRUPAL_NUEVO_LEON}
-          onSelect={onFinancieraCreditoGrupalChange}
+          options={[...financierasCreditoGrupalOptions]}
+          onSelect={(value) => {
+            setAbrirFinanciera(false);
+            onFinancieraCreditoGrupalChange(value);
+          }}
           placeholder="Seleccionar financiera"
           moduleTheme="verification"
-          autoOpen
+          autoOpen={abrirFinanciera && !financieraCreditoGrupal.trim()}
           confirmSelection
           highlightSelectedValue
           required
@@ -179,6 +247,7 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
           value={creditoGrupalAnteriorActivo}
           options={['Sí', 'No']}
           onSelect={(value) => {
+            setAbrirMotivoNoRenovacion(value === 'No');
             if (value !== creditoGrupalAnteriorActivo) onLimpiarRutaCreditoGrupal();
             onCreditoGrupalAnteriorActivoChange(value);
           }}
@@ -194,6 +263,17 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
                 : '¿De qué valor era su ficha?'}
               value={valorFichaCreditoGrupal}
               onChangeText={(value) => onValorFichaCreditoGrupalChange(normalizeCurrencyInput(value))}
+              keyboardType="numeric"
+              placeholder="$ 0"
+              required
+            />
+
+            <TextInput
+              label="¿Qué monto fue su último préstamo?"
+              value={montoUltimoPrestamoCreditoGrupal}
+              onChangeText={(value) => (
+                onMontoUltimoPrestamoCreditoGrupalChange(normalizeCurrencyInput(value))
+              )}
               keyboardType="numeric"
               placeholder="$ 0"
               required
@@ -260,7 +340,6 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
               placeholder="Seleccionar tasa"
               moduleTheme="verification"
               confirmSelection
-              required
             />
 
             {tipoEvidenciaActual ? (
@@ -268,11 +347,16 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
                 <SectionTitle title="Evidencia de otra financiera" />
                 <Text allowFontScaling={false} style={styles.helpText}>
                   Aquí aparecen las imágenes del comprobante de línea de crédito capturadas en
-                  Documentación. Puedes agregar todas las fotografías que necesites; las nuevas se
-                  guardan con ubicación y usuario.
+                  Documentación. Puedes tomar una foto o elegir una imagen del carrete; las nuevas se
+                  guardan con su origen, ubicación actual y usuario. Antes de guardar cada evidencia
+                  debes clasificarla en verde, amarillo o rojo y seleccionar a qué integrantes corresponde.
                 </Text>
 
-                {tipoEvidenciaGuardando === tipoEvidenciaActual ? (
+                {evidenciaPendienteClasificacion ? (
+                  <StatusBadge label="CLASIFICA EVIDENCIA" tone="pending" />
+                ) : evidenciaPendienteDeAsignar ? (
+                  <StatusBadge label="SELECCIONA INTEGRANTES" tone="pending" />
+                ) : tipoEvidenciaGuardando === tipoEvidenciaActual ? (
                   <StatusBadge label="GUARDANDO FOTOGRAFÍAS" tone="progress" />
                 ) : loadingEvidencias || loadingComprobante ? (
                   <StatusBadge label="CONSULTANDO EVIDENCIAS" tone="progress" />
@@ -287,7 +371,7 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
                     tone="success"
                   />
                 ) : (
-                  <StatusBadge label="PENDIENTE" tone="pending" />
+                  <StatusBadge label="OPCIONAL" tone="progress" />
                 )}
 
                 {loadingEvidencias || loadingComprobante ? (
@@ -304,12 +388,29 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
                       : 'EVIDENCIA DE OTRA FINANCIERA · CRÉDITO ANTERIOR'}
                     pages={paginasEvidencias}
                     moduleTheme="verification"
-                    helperText="Desliza para revisar las fotografías. Toca una imagen para ampliarla."
+                    helperText="Desliza para revisar las fotografías. Al ampliar una evidencia de Entrevista puedes editar sus integrantes."
                   />
                 ) : null}
 
                 {errorEvidencias ? (
                   <Text allowFontScaling={false} style={styles.errorText}>{errorEvidencias}</Text>
+                ) : null}
+
+                {evidenciaPendienteClasificacion ? (
+                  <EvidenceTrafficLightPanel
+                    key={evidenciaPendienteClasificacion.key}
+                    imageUri={evidenciaPendienteClasificacion.uri}
+                    motivos={motivosClasificacionEvidencia}
+                    motivosError={errorMotivosClasificacionEvidencia}
+                    onConfirm={onClasificarEvidencia}
+                    onCancel={onDescartarEvidenciaPendiente}
+                  />
+                ) : null}
+                {!loadingEvidencias && opcionesIntegrantesEvidencia.length === 0 ? (
+                  <Text allowFontScaling={false} style={styles.errorText}>
+                    No se pudieron cargar las integrantes del expediente. Reabre la verificación
+                    antes de tomar otra fotografía.
+                  </Text>
                 ) : null}
                 {errorComprobante ? (
                   <>
@@ -323,31 +424,76 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
                   </>
                 ) : null}
 
+                {evidenciaPendienteDeAsignar ? (
+                  <MultiSelectPickerField
+                    label="¿De qué integrantes es esta evidencia?"
+                    value={integrantesEvidenciaSeleccionadas}
+                    options={opcionesIntegrantesEvidencia}
+                    onSelect={(integranteIds) => {
+                      onIntegrantesEvidenciaChange(integranteIds);
+                      onGuardarEvidenciaParaIntegrantes(integranteIds);
+                    }}
+                    onCancel={onDescartarEvidenciaPendiente}
+                    placeholder="Seleccionar integrantes"
+                    helperText="Selecciona una, varias o todas. La fotografía se guarda una sola vez."
+                    errorText={opcionesIntegrantesEvidencia.length === 0
+                      ? 'No se pudieron cargar las integrantes del expediente.'
+                      : undefined}
+                    moduleTheme="verification"
+                    openOnMount
+                    minSelections={1}
+                    selectAllLabel="Todas las integrantes"
+                    confirmLabel="Guardar evidencia"
+                    selectedItemsTitle="Esta evidencia corresponde a"
+                    required
+                  />
+                ) : null}
+
                 <View style={styles.actions}>
                   {evidenciasPendientes > 0 ? (
                     <>
                       <SecondaryButton
-                        title="Tomar otra fotografía"
+                        title="Agregar otra evidencia"
                         moduleTheme="verification"
-                        disabled={Boolean(tipoEvidenciaGuardando || loadingEvidencias || loadingComprobante)}
-                        onPress={() => onCapturarEvidencia(tipoEvidenciaActual)}
+                        disabled={Boolean(
+                          tipoEvidenciaGuardando
+                          || loadingEvidencias
+                          || loadingComprobante
+                          || evidenciaPendienteClasificacion
+                          || evidenciaPendienteDeAsignar
+                          || opcionesIntegrantesEvidencia.length === 0
+                        )}
+                        onPress={abrirOpcionesEvidencia}
                       />
                       <PrimaryButton
                         title="Reintentar pendientes"
                         moduleTheme="verification"
-                        disabled={Boolean(tipoEvidenciaGuardando || loadingEvidencias || loadingComprobante)}
+                        disabled={Boolean(
+                          tipoEvidenciaGuardando
+                          || loadingEvidencias
+                          || loadingComprobante
+                          || evidenciaPendienteClasificacion
+                          || evidenciaPendienteDeAsignar
+                        )}
                         onPress={() => onReintentarEvidencias(tipoEvidenciaActual)}
                       />
                     </>
                   ) : (
                     <PrimaryButton
-                      title={fotografiasGuardadas > 0 ? 'Tomar otra fotografía' : 'Tomar fotografía'}
+                      title={fotografiasGuardadas > 0 ? 'Agregar otra evidencia' : 'Agregar evidencia'}
                       moduleTheme="verification"
-                      disabled={Boolean(tipoEvidenciaGuardando || loadingEvidencias || loadingComprobante)}
-                      onPress={() => onCapturarEvidencia(tipoEvidenciaActual)}
+                      disabled={Boolean(
+                        tipoEvidenciaGuardando
+                        || loadingEvidencias
+                        || loadingComprobante
+                        || evidenciaPendienteClasificacion
+                        || evidenciaPendienteDeAsignar
+                        || opcionesIntegrantesEvidencia.length === 0
+                      )}
+                      onPress={abrirOpcionesEvidencia}
                       accessibilityLabel={creditoGrupalAnteriorActivo === 'Sí'
-                        ? 'Tomar evidencia fotográfica del crédito activo con la cámara'
-                        : 'Tomar evidencia fotográfica del crédito anterior con la cámara'}
+                        ? 'Agregar evidencia del crédito activo desde cámara o carrete'
+                        : 'Agregar evidencia del crédito anterior desde cámara o carrete'}
                     />
                   )}
                 </View>
@@ -374,13 +520,17 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
 
             {creditoGrupalAnteriorActivo === 'No' ? (
               <PickerField
+                key={`motivo-no-renovacion-${abrirMotivoNoRenovacion && !motivoNoRenovacionCreditoGrupal.trim() ? 'abrir' : 'cerrado'}`}
                 label="¿Por qué no renovó en esa financiera?"
                 value={motivoNoRenovacionCreditoGrupal}
-                options={MOTIVOS_NO_RENOVACION}
-                onSelect={onMotivoNoRenovacionCreditoGrupalChange}
+                options={[...opcionesNoRenovacion]}
+                onSelect={(value) => {
+                  setAbrirMotivoNoRenovacion(false);
+                  onMotivoNoRenovacionCreditoGrupalChange(value);
+                }}
                 placeholder="Seleccionar motivo"
                 moduleTheme="verification"
-                autoOpen
+                autoOpen={abrirMotivoNoRenovacion && !motivoNoRenovacionCreditoGrupal.trim()}
                 confirmSelection
                 required
               />
@@ -389,8 +539,9 @@ export const EntrevistaHistorialCrediticioSection: React.FC<
         ) : null}
       </>
     ) : null}
-  </>
-);
+    </>
+  );
+};
 
 const styles = StyleSheet.create({
   sectionHeader: {

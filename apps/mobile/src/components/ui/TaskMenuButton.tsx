@@ -15,6 +15,7 @@ import { CompletionIndicator } from './CompletionIndicator';
 
 interface TaskMenuButtonProps {
   title: string;
+  description?: string;
   iconLabel: string;
   moduleTheme: ModuleThemeKey;
   onPress?: () => void | Promise<void>;
@@ -26,6 +27,7 @@ interface TaskMenuButtonProps {
 
 export const TaskMenuButton: React.FC<TaskMenuButtonProps> = ({
   title,
+  description,
   iconLabel,
   moduleTheme,
   onPress,
@@ -45,11 +47,14 @@ export const TaskMenuButton: React.FC<TaskMenuButtonProps> = ({
       : completed
         ? 'Realizado'
         : '';
+  const accessibilityLabel = [title, description, accessibilityStatus]
+    .filter(Boolean)
+    .join('. ');
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={accessibilityStatus ? `${title}. ${accessibilityStatus}` : title}
+      accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled }}
       disabled={disabled}
@@ -67,9 +72,16 @@ export const TaskMenuButton: React.FC<TaskMenuButtonProps> = ({
           </Text>
         </View>
 
-        <Text allowFontScaling={false} style={styles.title}>
-          {title}
-        </Text>
+        <View style={styles.textContent}>
+          <Text allowFontScaling={false} style={styles.title}>
+            {title}
+          </Text>
+          {description ? (
+            <Text allowFontScaling={false} style={styles.description}>
+              {description}
+            </Text>
+          ) : null}
+        </View>
 
         {showIndicator ? (
           <CompletionIndicator tone={resultIsNegative ? 'negative' : 'positive'} />
@@ -120,7 +132,14 @@ const styles = StyleSheet.create({
   title: {
     ...typography.sectionTitle,
     color: colors.textPrimary,
+  },
+  textContent: {
     flex: 1,
+  },
+  description: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
   chevron: {
     ...typography.title,

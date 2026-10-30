@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExpedientesController } from './expedientes.controller';
-import { ExpedientesService } from './expedientes.service';
+import { ExpedienteDetalle, ExpedientesService } from './expedientes.service';
 import { ExpedienteEntity } from './expediente.entity';
 
 describe('ExpedientesController', () => {
@@ -81,12 +81,13 @@ describe('ExpedientesController', () => {
 
   describe('GET /expedientes/:id', () => {
     it('debe obtener un expediente por id', async () => {
-      jest.spyOn(service, 'getById').mockResolvedValue(mockExpediente);
+      const detalle: ExpedienteDetalle = { ...mockExpediente, asesora: null };
+      jest.spyOn(service, 'getById').mockResolvedValue(detalle);
 
       const result = await controller.getById(mockExpediente.id, request);
 
       expect(service.getById).toHaveBeenCalledWith(mockExpediente.id, scope);
-      expect(result).toEqual(mockExpediente);
+      expect(result).toEqual(detalle);
     });
   });
 

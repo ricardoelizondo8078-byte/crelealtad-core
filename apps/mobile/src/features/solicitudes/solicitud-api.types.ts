@@ -9,6 +9,8 @@ export interface IntegranteApiResponse {
   montoSolicitado?: number | null;
   montoProspectivo?: number | null;
   montoAutorizadoAnterior?: number | null;
+  cicloNumeroActual?: number | null;
+  tiene_historial_interno?: boolean | null;
   comparacionMontoDisponible?: boolean;
   esRenovacion?: boolean;
   montoReferenciaPaso6?: number | null;
@@ -77,6 +79,7 @@ export interface SolicitudApiResponse {
   doc_comprobante_ruta?: string;
   doc_ine_beneficiario_ruta?: string;
   doc_solicitud_firmada_ruta?: string;
+  doc_control_pagos_ruta?: string;
   doc_comprobante_credito_ruta?: string;
 }
 

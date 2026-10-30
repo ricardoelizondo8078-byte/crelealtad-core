@@ -13,6 +13,10 @@ import * as bcrypt from 'bcrypt';
 import { PermisosRol } from '../catalogos/entities/rol.entity';
 import { registrarAuditoria } from '../common/audit-log';
 import { resolverPermisosEfectivos } from './permissions.utils';
+import {
+  isDevelopmentUniversalAccessEnabled,
+  matchesDevelopmentUniversalPin,
+} from './development-auth.config';
 
 export interface LoginResponse {
   usuario: {
@@ -35,6 +39,8 @@ export interface CambioPinResponse {
 
 const BCRYPT_ROUNDS = 10;
 
+type MetodoAutenticacion = 'PIN_INDIVIDUAL' | 'PIN_UNIVERSAL_DESARROLLO';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -55,11 +61,17 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    const passwordValida = await bcrypt.compare(dto.pin, usuario.password_hash);
+    const pinIndividualValido = await bcrypt.compare(dto.pin, usuario.password_hash);
+    const pinUniversalValido = matchesDevelopmentUniversalPin(dto.pin);
+    const passwordValida = pinIndividualValido || pinUniversalValido;
 
     if (!passwordValida) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
+
+    const metodoAutenticacion: MetodoAutenticacion = pinUniversalValido
+      ? 'PIN_UNIVERSAL_DESARROLLO'
+      : 'PIN_INDIVIDUAL';
 
     // Verificar que el usuario esté activo
     if (usuario.estado !== 'ACTIVO' || usuario.rol?.estado !== 'ACTIVO') {
@@ -71,6 +83,7 @@ export class AuthService {
       sub: usuario.id,
       abreviatura: usuario.abreviatura,
       rol: usuario.rol_id,
+      acceso_pin_universal_desarrollo: pinUniversalValido || undefined,
     };
 
     const token = this.jwtService.sign(payload);
@@ -88,6 +101,7 @@ export class AuthService {
           rol_id: usuario.rol_id,
           sucursal_id: usuario.sucursal_id,
           requiere_cambio_pin: usuario.requiere_cambio_pin,
+          metodo_autenticacion: metodoAutenticacion,
         },
       });
     });
@@ -101,7 +115,7 @@ export class AuthService {
         rol_nombre: usuario.rol.nombre,
         sucursal_id: usuario.sucursal_id,
         estado: usuario.estado,
-        requiere_cambio_pin: usuario.requiere_cambio_pin,
+        requiere_cambio_pin: usuario.requiere_cambio_pin && !pinUniversalValido,
         permisos: resolverPermisosEfectivos(usuario),
       },
       token,
@@ -123,6 +137,11 @@ export class AuthService {
       ) {
         return null;
       }
+
+      usuario.acceso_pin_universal_desarrollo = Boolean(
+        payload.acceso_pin_universal_desarrollo
+        && isDevelopmentUniversalAccessEnabled(),
+      );
 
       return usuario;
     } catch {

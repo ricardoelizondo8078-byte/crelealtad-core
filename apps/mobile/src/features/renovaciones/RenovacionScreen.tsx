@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { SectionList, StyleSheet, Text, View } from 'react-native';
-import { AppHeader, ScreenContainer, ScreenState, ScreenTitleBar } from '../../components/ui';
+import { SectionList, StyleSheet, Text } from 'react-native';
+import { AppHeader, ResponsiveContent, ScreenContainer, ScreenState, ScreenTitleBar } from '../../components/ui';
 import { api } from '../../services/api-client';
 import { colors, spacing, typography } from '../../theme/tokens';
 import { RenovacionGroupCard } from './RenovacionGroupCard';
@@ -61,7 +61,7 @@ export const RenovacionScreen: React.FC<Props> = ({ onBack, onCreated }) => {
         <ScreenState title="No hay grupos asignados" message="Los grupos aparecerán cuando el último ciclo esté asociado a tu cuenta." />
       ) : null}
       {!loading && !loadError && grupos.length > 0 ? (
-        <View style={styles.content}>
+        <ResponsiveContent variant="detail" fill style={styles.content}>
           {actionError ? <Text allowFontScaling={false} style={styles.actionError}>{actionError}</Text> : null}
           <SectionList
             sections={sections}
@@ -78,7 +78,7 @@ export const RenovacionScreen: React.FC<Props> = ({ onBack, onCreated }) => {
               />
             )}
           />
-        </View>
+        </ResponsiveContent>
       ) : null}
     </ScreenContainer>
   );

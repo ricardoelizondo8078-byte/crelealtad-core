@@ -1,14 +1,24 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 const USER_STORAGE_KEY = 'crelealtad:usuario:v2';
 const LEGACY_TOKEN_STORAGE_KEY = 'crelealtad:token:v2';
 const SECURE_TOKEN_KEY = 'crelealtad_token_v3';
+const WEB_SESSION_TOKEN_KEY = 'crelealtad:token:web-session:v1';
 
 type SessionInvalidatedListener = () => void;
 const invalidatedListeners = new Set<SessionInvalidatedListener>();
 
+function getWebSessionStorage(): Storage | null {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
+  return window.sessionStorage;
+}
+
 export async function getStoredToken(): Promise<string | null> {
+  const webStorage = getWebSessionStorage();
+  if (webStorage) return webStorage.getItem(WEB_SESSION_TOKEN_KEY);
+
   const secureToken = await SecureStore.getItemAsync(SECURE_TOKEN_KEY);
   if (secureToken) return secureToken;
 
@@ -49,7 +59,12 @@ export function isStoredJwtUsableOffline(token: string, nowMs = Date.now()): boo
 
 export async function saveSession(token: string, user: unknown): Promise<void> {
   try {
-    await SecureStore.setItemAsync(SECURE_TOKEN_KEY, token);
+    const webStorage = getWebSessionStorage();
+    if (webStorage) {
+      webStorage.setItem(WEB_SESSION_TOKEN_KEY, token);
+    } else {
+      await SecureStore.setItemAsync(SECURE_TOKEN_KEY, token);
+    }
     await saveStoredUser(user);
     await AsyncStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
   } catch (error) {
@@ -59,8 +74,11 @@ export async function saveSession(token: string, user: unknown): Promise<void> {
 }
 
 export async function clearStoredSession(): Promise<void> {
+  const webStorage = getWebSessionStorage();
+  if (webStorage) webStorage.removeItem(WEB_SESSION_TOKEN_KEY);
+
   await Promise.all([
-    SecureStore.deleteItemAsync(SECURE_TOKEN_KEY),
+    ...(webStorage ? [] : [SecureStore.deleteItemAsync(SECURE_TOKEN_KEY)]),
     AsyncStorage.removeItem(USER_STORAGE_KEY),
     AsyncStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY),
   ]);

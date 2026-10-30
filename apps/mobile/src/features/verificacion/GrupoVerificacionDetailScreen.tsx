@@ -1,19 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppHeader, Card, ContextHeader, IntegranteCard, ScreenContainer, ScreenTitleBar, SectionTitle } from '../../components/ui';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppHeader, Card, ContactCallRow, ContextHeader, IntegranteCard, PrimaryButton, ScreenContainer, ScreenTitleBar, SectionTitle } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api-client';
 import {
   completarDistanciasAproximadas,
   DISTANCIA_MAXIMA_TESORERA_KM,
 } from '../../services/domicilio-distance';
-import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
+import { colors, layout, moduleThemes, radius, spacing, touchTargets, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
+import { llamar } from '../../utils/phone';
 import {
   getLocalVerificationProgress,
   VERIFICATION_TOTAL_STEPS,
 } from './verificacion-progress.storage';
 import { VERIFICACION_READ_REQUEST_OPTIONS } from './verificacion-api-context';
+import {
+  calcularResumenGrupoVerificacion,
+  type EstadoVerificacionGrupo,
+} from './grupo-verificacion-summary';
+import { obtenerIntegrantesVerificadasRequeridas } from '../parametros/parametros-verificacion-cierre.api';
+import { evaluarFinalizacionGrupo } from './grupo-verificacion-finalizacion';
 
 const parseCycleNumber = (value: unknown): number | null => {
   const parsed = Number(value);
@@ -27,18 +34,35 @@ interface GrupoInfo {
   expedienteId: string;
 }
 
+interface AsesoraInfo {
+  id: string;
+  nombre: string;
+  abreviatura: string | null;
+  telefono: string | null;
+}
+
+interface ExpedienteVerificacionDetalle {
+  grupo?: {
+    id: string;
+    nombre: string;
+    estado: string;
+  } | null;
+  asesora?: AsesoraInfo | null;
+}
+
 interface IntegranteVerificacion {
   id: string;
   nombre: string;
   telefono: string | null;
   montoSolicitado: number | null;
+  montoVerificado: number | null;
   montoAutorizadoAnterior: number | null;
   esNuevaConNosotros: boolean;
   tieneHistorialInterno: boolean | null;
   edad: number | null;
   superaLimiteEdad: boolean;
   distanciaTesoreraAproxKm: number | null;
-  estadoVerificacion: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | null;
+  estadoVerificacion: EstadoVerificacionGrupo;
   esTesorera: boolean;
   completedSteps: number;
   needsDocumentation: boolean;
@@ -60,18 +84,26 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
   const { usuario } = useAuth();
   const [grupo, setGrupo] = useState<GrupoInfo | null>(null);
   const [integrantes, setIntegrantes] = useState<IntegranteVerificacion[]>([]);
+  const [asesora, setAsesora] = useState<AsesoraInfo | null>(null);
   const [cicloNumeroActual, setCicloNumeroActual] = useState<number | null>(null);
+  const [integrantesVerificadasRequeridas, setIntegrantesVerificadasRequeridas] = useState<number | null>(null);
+  const [estadoParametroCierre, setEstadoParametroCierre] = useState<
+    'loading' | 'ready' | 'unconfigured' | 'error'
+  >('loading');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       setCicloNumeroActual(null);
+      setIntegrantesVerificadasRequeridas(null);
+      setEstadoParametroCierre('loading');
       try {
-        const expData = await api.get<any>(
+        const expData = await api.get<ExpedienteVerificacionDetalle>(
           `/expedientes/${expedienteId}`,
           VERIFICACION_READ_REQUEST_OPTIONS,
         );
+        setAsesora(expData.asesora ?? null);
 
         if (expData.grupo) {
           const grupoData = {
@@ -116,6 +148,9 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
             montoSolicitado: int.montoSolicitado == null
               ? null
               : Number(int.montoSolicitado),
+            montoVerificado: (int.montoVerificado ?? int.monto_verificado) == null
+              ? null
+              : Number(int.montoVerificado ?? int.monto_verificado),
             montoAutorizadoAnterior: int.montoAutorizadoAnterior == null
               ? null
               : Number(int.montoAutorizadoAnterior),
@@ -141,6 +176,20 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
         }));
 
         setIntegrantes(enriched);
+
+        try {
+          const response = await obtenerIntegrantesVerificadasRequeridas();
+          if (response.parametro) {
+            setIntegrantesVerificadasRequeridas(
+              response.parametro.integrantes_verificadas_requeridas,
+            );
+            setEstadoParametroCierre('ready');
+          } else {
+            setEstadoParametroCierre('unconfigured');
+          }
+        } catch {
+          setEstadoParametroCierre('error');
+        }
       } catch (error) {
         Alert.alert(
           'No se pudo abrir el grupo',
@@ -154,13 +203,21 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
     loadData();
   }, [expedienteId, usuario?.id]);
 
-  const aprobados = integrantes.filter((int) => int.estadoVerificacion === 'APROBADO').length;
-  const rechazados = integrantes.filter((int) => int.estadoVerificacion === 'RECHAZADO').length;
-  const pendientes = integrantes.filter((int) => int.estadoVerificacion === 'PENDIENTE').length;
-
-  const montoTotal = integrantes
-    .filter((int) => int.estadoVerificacion === 'APROBADO')
-    .reduce((sum, int) => sum + Number(int.montoSolicitado || 0), 0);
+  const resumenGrupo = calcularResumenGrupoVerificacion(integrantes);
+  const finalizacion = evaluarFinalizacionGrupo(
+    resumenGrupo.integrantesVerificadas,
+    integrantesVerificadasRequeridas,
+  );
+  const mensajeFinalizacion = estadoParametroCierre === 'ready'
+    ? finalizacion.habilitado
+      ? `Requisito cumplido: ${resumenGrupo.integrantesVerificadas} de ${integrantesVerificadasRequeridas} verificadas.`
+      : `Faltan ${finalizacion.faltantes} ${finalizacion.faltantes === 1 ? 'integrante verificada' : 'integrantes verificadas'} para habilitar el cierre.`
+    : estadoParametroCierre === 'unconfigured'
+      ? 'Administración debe configurar cuántas integrantes verificadas habilitan el cierre.'
+      : estadoParametroCierre === 'error'
+        ? 'No se pudo confirmar el parámetro de cierre. Revisa la conexión.'
+        : 'Consultando el parámetro de cierre…';
+  const telefonoAsesoraVisible = asesora?.telefono || '0000000000';
 
   return (
     <ScreenContainer moduleTheme="verification">
@@ -179,47 +236,61 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
       ) : (
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
           <Card style={styles.mainCard}>
-            {/* Resumen: Integrantes y Monto Total */}
+            <ContactCallRow
+              label="Asesor"
+              name={asesora?.abreviatura || 'SIN ABREV.'}
+              phone={telefonoAsesoraVisible}
+              moduleTheme="verification"
+              onCall={() => llamar(telefonoAsesoraVisible, asesora?.nombre || 'el asesor')}
+            />
+
+            {/* Resumen solicitado y verificado */}
             <View style={styles.resumenContainer}>
-              <View style={styles.resumenCardSmall}>
-                <Text allowFontScaling={false} style={styles.resumenLabel}>Integrantes</Text>
-                <Text allowFontScaling={false} style={styles.resumenValor}>{aprobados}</Text>
+              <View style={[styles.resumenRow, styles.resumenRowSolicitado]}>
+                <View style={styles.resumenCardSmall}>
+                  <Text allowFontScaling={false} style={styles.resumenLabel}>Integrantes</Text>
+                  <Text allowFontScaling={false} style={[styles.resumenValor, styles.resumenValorSolicitado]}>
+                    {resumenGrupo.integrantes}
+                  </Text>
+                </View>
+
+                <View style={styles.resumenDividerVertical} />
+
+                <View style={styles.resumenCardLarge}>
+                  <Text allowFontScaling={false} style={styles.resumenLabel}>Monto solicitado</Text>
+                  <Text allowFontScaling={false} style={[styles.resumenValor, styles.resumenValorSolicitado]}>
+                    {formatCurrency(resumenGrupo.montoSolicitado)}
+                  </Text>
+                </View>
               </View>
 
-              <View style={styles.resumenDivider} />
+              <View style={styles.resumenDividerHorizontal} />
 
-              <View style={styles.resumenCardLarge}>
-                <Text allowFontScaling={false} style={styles.resumenLabel}>Monto total</Text>
-                <Text allowFontScaling={false} style={styles.resumenValor}>{formatCurrency(montoTotal)}</Text>
-              </View>
-            </View>
+              <View style={styles.resumenRow}>
+                <View style={styles.resumenCardSmall}>
+                  <Text allowFontScaling={false} style={styles.resumenLabel}>Verificadas</Text>
+                  <Text allowFontScaling={false} style={styles.resumenValor}>
+                    {resumenGrupo.integrantesVerificadas}
+                  </Text>
+                </View>
 
-            {/* KPIs del grupo */}
-            <View style={styles.kpisRow}>
-              <View style={styles.kpiBubble}>
-                <Text allowFontScaling={false} style={styles.kpiValue}>{integrantes.length}</Text>
-                <Text allowFontScaling={false} style={styles.kpiLabel}>Total</Text>
-              </View>
-              <View style={[styles.kpiBubble, styles.kpiBubbleSuccess]}>
-                <Text allowFontScaling={false} style={styles.kpiValue}>{aprobados}</Text>
-                <Text allowFontScaling={false} style={styles.kpiLabel}>Aprobados</Text>
-              </View>
-              <View style={[styles.kpiBubble, styles.kpiBubbleWarning]}>
-                <Text allowFontScaling={false} style={styles.kpiValue}>{pendientes}</Text>
-                <Text allowFontScaling={false} style={styles.kpiLabel}>Pendientes</Text>
-              </View>
-              <View style={[styles.kpiBubble, styles.kpiBubbleDanger]}>
-                <Text allowFontScaling={false} style={styles.kpiValue}>{rechazados}</Text>
-                <Text allowFontScaling={false} style={styles.kpiLabel}>No aprobadas</Text>
+                <View style={styles.resumenDividerVertical} />
+
+                <View style={styles.resumenCardLarge}>
+                  <Text allowFontScaling={false} style={styles.resumenLabel}>Monto verificado</Text>
+                  <Text allowFontScaling={false} style={styles.resumenValor}>
+                    {resumenGrupo.montoVerificado == null
+                      ? '—'
+                      : formatCurrency(resumenGrupo.montoVerificado)}
+                  </Text>
+                </View>
               </View>
             </View>
 
             {/* Botón de finalizar verificación */}
-            <TouchableOpacity
-              style={[
-                styles.continueButton,
-                pendientes > 0 && styles.continueButtonDisabled
-              ]}
+            <PrimaryButton
+              title="Finalizar Verificación de Grupo"
+              moduleTheme="verification"
               onPress={() => {
                 Alert.alert(
                   'Finalizar verificación',
@@ -229,18 +300,20 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
                     {
                       text: 'Finalizar',
                       onPress: () => {
-                        // TODO: Implementar finalización
-                        Alert.alert('Éxito', 'Verificación finalizada');
+                        Alert.alert(
+                          'Cierre pendiente',
+                          'El requisito de integrantes está cumplido. La transición final del grupo todavía no está habilitada en el servidor.',
+                        );
                       }
                     }
                   ]
                 );
               }}
-              disabled={pendientes > 0}
-              activeOpacity={0.8}
-            >
-              <Text allowFontScaling={false} style={styles.continueButtonText}>Finalizar Verificación de Grupo</Text>
-            </TouchableOpacity>
+              disabled={!finalizacion.habilitado}
+            />
+            <Text allowFontScaling={false} style={styles.finalizacionHelp}>
+              {mensajeFinalizacion}
+            </Text>
           </Card>
 
           <View style={styles.section}>
@@ -263,6 +336,7 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
                   totalSteps={VERIFICATION_TOTAL_STEPS}
                   previousCreditAmount={integrante.montoAutorizadoAnterior}
                   requestedAmount={integrante.montoSolicitado}
+                  verifiedAmount={integrante.montoVerificado}
                   distanceToTreasurerLabel={integrante.distanciaTesoreraAproxKm == null
                     ? 'DIST. N/D'
                     : `DIST. ${integrante.distanciaTesoreraAproxKm.toFixed(1)} KM`}
@@ -283,7 +357,11 @@ export const GrupoVerificacionDetailScreen: React.FC<GrupoVerificacionDetailScre
                       : formatCurrency(integrante.montoAutorizadoAnterior)
                   }. Monto solicitado ${integrante.montoSolicitado == null
                     ? 'sin captura'
-                    : formatCurrency(integrante.montoSolicitado)}. Monto verificado pendiente. Estado ${integrante.estadoVerificacion || 'PENDIENTE'}.`}
+                    : formatCurrency(integrante.montoSolicitado)}. Monto verificado ${
+                    integrante.montoVerificado == null
+                      ? 'pendiente'
+                      : formatCurrency(integrante.montoVerificado)
+                  }. Estado ${integrante.estadoVerificacion || 'PENDIENTE'}.`}
                   onPress={() => {
                     onSelectIntegrante?.(integrante.id, index + 1, integrantes.length);
                   }}
@@ -301,6 +379,9 @@ const styles = StyleSheet.create({
   loader: { marginTop: spacing.xl },
   scroll: { flex: 1 },
   content: {
+    width: '100%',
+    maxWidth: layout.detailMaxWidth,
+    alignSelf: 'center',
     paddingHorizontal: spacing.lg,
     paddingTop: 0,
     paddingBottom: spacing.xl
@@ -310,63 +391,28 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     padding: spacing.md,
   },
-  kpisRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    gap: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  kpiBubble: {
-    flex: 1,
+  resumenContainer: {
     backgroundColor: colors.white,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
     borderRadius: radius.md,
     borderWidth: 2,
     borderColor: colors.gray[900],
-    padding: spacing.xs,
-    paddingTop: spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    minHeight: 55,
-  },
-  kpiBubbleSuccess: {
-    backgroundColor: colors.successSoft,
-    borderColor: colors.success,
-  },
-  kpiBubbleWarning: {
-    backgroundColor: colors.gray[300],
-    borderColor: colors.gray[500],
-  },
-  kpiBubbleDanger: {
-    backgroundColor: colors.dangerSoft,
-    borderColor: colors.error,
-  },
-  kpiValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 2,
-  },
-  kpiLabel: {
-    fontSize: 8,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  resumenContainer: {
-    flexDirection: 'row',
-    backgroundColor: colors.white,
-    marginBottom: spacing.lg,
-    padding: spacing.lg,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.gray[900],
+    overflow: 'hidden',
     shadowColor: colors.gray[900],
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  resumenRow: {
+    minHeight: touchTargets.primary,
+    flexDirection: 'row',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.lg,
+  },
+  resumenRowSolicitado: {
+    backgroundColor: colors.infoSoft,
   },
   resumenCardSmall: {
     flex: 0.7,
@@ -376,41 +422,37 @@ const styles = StyleSheet.create({
     flex: 2.3,
     alignItems: 'center',
   },
-  resumenDivider: {
+  resumenDividerVertical: {
     width: 1,
     backgroundColor: colors.border,
     marginHorizontal: spacing.md,
   },
+  resumenDividerHorizontal: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.lg,
+  },
   resumenLabel: {
-    fontSize: 13,
+    ...typography.caption,
     color: colors.textSecondary,
-    marginBottom: spacing.xs,
     textAlign: 'center',
   },
   resumenValor: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    ...typography.metricValue,
     color: moduleThemes.verification.primary,
+  },
+  resumenValorSolicitado: {
+    color: colors.info,
   },
   section: { marginTop: spacing.sm },
   empty: { color: colors.textSecondary, ...typography.body },
   integranteCard: {
     marginBottom: spacing.sm,
   },
-  continueButton: {
-    flex: 1,
-    backgroundColor: moduleThemes.verification.headerBg,
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  continueButtonDisabled: {
-    backgroundColor: '#D4B57E', // Amarillo claro del módulo (tono disabled)
-  },
-  continueButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '700',
+  finalizacionHelp: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+    textAlign: 'center',
   },
 });

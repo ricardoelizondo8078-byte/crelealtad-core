@@ -9,6 +9,7 @@ import React, {
 import { AppState } from 'react-native';
 import { useAuth } from './AuthContext';
 import { createOfflineOperationId } from '../offline/offline-sync.ids';
+import { durableFileUrisForResult } from '../offline/offline-enqueue-result';
 import {
   clearOfflineTemporaryFiles,
   materializeOfflineUrisForPreview,
@@ -17,6 +18,7 @@ import {
 } from '../offline/offline-file-store';
 import {
   enqueueOfflineOperation,
+  discardBlockedOfflineOperationsByDedupe,
   getOfflineDraft,
   getOfflineOperation,
   getOfflineServerVersion,
@@ -219,6 +221,12 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
     input: MultipartEnqueueInput,
   ): Promise<OfflineEnqueueResult> => {
     if (!userId) throw new Error('Se requiere una sesión para sincronizar.');
+    const blockedIds = await discardBlockedOfflineOperationsByDedupe(
+      userId,
+      input.dedupeKey,
+      'MULTIPART_REQUEST',
+    );
+    await Promise.all(blockedIds.map((blockedId) => removeOfflineFiles(userId, blockedId)));
     const operationId = createOfflineOperationId();
     const files = await persistOfflineFiles(userId, operationId, input.files);
     const current = new Date().toISOString();
@@ -254,12 +262,12 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
         return {
           ...result,
           durableFileUris: existing?.kind === 'MULTIPART_REQUEST'
-            ? existing.request.files.map((file) => file.uri)
+            ? durableFileUrisForResult(result, existing.request.files)
             : undefined,
         };
       }
       const result = await resolveEnqueueResult(storedId);
-      return { ...result, durableFileUris: files.map((file) => file.uri) };
+      return { ...result, durableFileUris: durableFileUrisForResult(result, files) };
     } catch (error) {
       await removeOfflineFiles(userId, operationId);
       throw error;
@@ -270,6 +278,12 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
     input: DocumentEnqueueInput,
   ): Promise<OfflineEnqueueResult> => {
     if (!userId) throw new Error('Se requiere una sesión para sincronizar.');
+    const blockedIds = await discardBlockedOfflineOperationsByDedupe(
+      userId,
+      input.dedupeKey,
+      'DOCUMENT_UPLOAD',
+    );
+    await Promise.all(blockedIds.map((blockedId) => removeOfflineFiles(userId, blockedId)));
     const operationId = createOfflineOperationId();
     const files = await persistOfflineFiles(userId, operationId, input.files);
     const current = new Date().toISOString();
@@ -304,12 +318,12 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
         return {
           ...result,
           durableFileUris: existing?.kind === 'DOCUMENT_UPLOAD'
-            ? existing.request.files.map((file) => file.uri)
+            ? durableFileUrisForResult(result, existing.request.files)
             : undefined,
         };
       }
       const result = await resolveEnqueueResult(storedId);
-      return { ...result, durableFileUris: files.map((file) => file.uri) };
+      return { ...result, durableFileUris: durableFileUrisForResult(result, files) };
     } catch (error) {
       await removeOfflineFiles(userId, operationId);
       throw error;

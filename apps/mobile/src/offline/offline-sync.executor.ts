@@ -1,10 +1,17 @@
 import { apiRequest } from '../services/api-client';
+import { VERIFICACION_CONTEXT_HEADERS } from '../services/api-request-context';
 import {
   appendDocumentFile,
   uploadDocumentFiles,
 } from '../services/document-upload';
 import { materializeOfflineFiles } from './offline-file-store';
 import { OfflineOperation } from './offline-sync.types';
+
+const getRequestContextHeaders = (operation: OfflineOperation) => (
+  operation.module === 'VERIFICACION'
+    ? VERIFICACION_CONTEXT_HEADERS
+    : undefined
+);
 
 export const executeOfflineOperation = async (
   operation: OfflineOperation,
@@ -14,6 +21,7 @@ export const executeOfflineOperation = async (
     return apiRequest(operation.request.endpoint, {
       method: operation.request.method,
       body: operation.request.body,
+      headers: getRequestContextHeaders(operation),
       showProcessing: false,
     });
   }
@@ -36,6 +44,7 @@ export const executeOfflineOperation = async (
       return await apiRequest(operation.request.endpoint, {
         method: operation.request.method,
         body: formData,
+        headers: getRequestContextHeaders(operation),
         timeoutMs: operation.request.timeoutMs,
         showProcessing: false,
       });

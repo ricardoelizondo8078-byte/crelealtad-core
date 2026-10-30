@@ -33,7 +33,11 @@ export class PermissionsGuard implements CanActivate {
       PERMITE_CAMBIO_CREDENCIAL_PENDIENTE_KEY,
       targets,
     );
-    if (request.user?.requiere_cambio_pin && !permiteCambioPinPendiente) {
+    if (
+      request.user?.requiere_cambio_pin
+      && !request.user.acceso_pin_universal_desarrollo
+      && !permiteCambioPinPendiente
+    ) {
       throw new ForbiddenException({
         statusCode: 403,
         code: 'PIN_CHANGE_REQUIRED',

@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { AppHeader, Card, ScreenContainer, ScreenTitleBar, StatusCard } from '../../components/ui';
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  AppHeader,
+  Card,
+  ScreenContainer,
+  ScreenTitleBar,
+  StatusCard,
+  getResponsiveColumnCount,
+  useResponsiveLayout,
+} from '../../components/ui';
 import { api } from '../../services/api-client';
-import { colors, radius, spacing, typography } from '../../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
 
 export interface ExpedienteSummary {
   id: string;
@@ -55,8 +63,15 @@ export const ExpedientesListScreen: React.FC<ExpedientesListScreenProps> = ({
   newlyCreatedExpedienteId,
   onBack,
 }) => {
+  const { width } = useResponsiveLayout();
   const [expedientes, setExpedientes] = useState<ExpedienteSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const columnCount = getResponsiveColumnCount(width, {
+    mobile: 1,
+    tablet: 2,
+    desktop: 2,
+    wide: 3,
+  });
 
   const calcularDiasEnEstado = (estadoFecha?: string): number => {
     if (!estadoFecha) {
@@ -116,15 +131,27 @@ export const ExpedientesListScreen: React.FC<ExpedientesListScreenProps> = ({
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" />
       ) : (
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
-          <Text allowFontScaling={false} style={styles.subtitle}>Selecciona un expediente para continuar con la documentación.</Text>
-          {expedientes.length === 0 ? (
+        <FlatList
+          key={`expedientes-${columnCount}`}
+          style={styles.scroll}
+          data={expedientes}
+          numColumns={columnCount}
+          keyExtractor={(expediente) => expediente.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.list}
+          columnWrapperStyle={columnCount > 1 ? styles.row : undefined}
+          ListHeaderComponent={(
+            <Text allowFontScaling={false} style={styles.subtitle}>
+              Selecciona un expediente para continuar con la documentación.
+            </Text>
+          )}
+          ListEmptyComponent={(
             <Card>
               <Text allowFontScaling={false} style={styles.emptyTitle}>No tienes expedientes asignados</Text>
               <Text allowFontScaling={false} style={styles.subtitle}>Los expedientes nuevos que registres aparecerán aquí.</Text>
             </Card>
-          ) : null}
-          {expedientes.map((expediente, index) => {
+          )}
+          renderItem={({ item: expediente, index }) => {
             const config = getEstadoConfig(expediente.estado);
             const dias = calcularDiasEnEstado(expediente.estado_fecha);
             const esDocumentando = expediente.estado === 'EN_DOCUMENTACION' || expediente.estado === 'FORMANDO';
@@ -133,15 +160,16 @@ export const ExpedientesListScreen: React.FC<ExpedientesListScreenProps> = ({
             const requiereRevisionDocumental = expediente.requiere_revision_documental === true;
 
             return (
-              <Pressable
+              <View style={styles.gridItem}>
+                <Pressable
                 key={expediente.id}
                 accessibilityRole="button"
                 accessibilityLabel={`${expediente.nombre}.${requiereRevisionDocumental ? ' Revisar documentación.' : esGrupoNuevo ? ' Grupo nuevo, ciclo 1.' : ''} Estado ${expediente.estado.replace(/_/g, ' ').toLowerCase()}${esDocumentando ? `. ${dias} ${dias === 1 ? 'día' : 'días'} en este estado` : ''}.`}
                 onPress={() => {
                   onSelectExpediente?.(expediente.expedienteId ?? expediente.id);
                 }}
-              >
-                <StatusCard
+                >
+                  <StatusCard
                   compact
                   narrowStripe
                   status={requiereRevisionDocumental
@@ -165,11 +193,12 @@ export const ExpedientesListScreen: React.FC<ExpedientesListScreenProps> = ({
                       </View>
                     ) : null}
                   </View>
-                </StatusCard>
-              </Pressable>
+                  </StatusCard>
+                </Pressable>
+              </View>
             );
-          })}
-        </ScrollView>
+          }}
+        />
       )}
     </ScreenContainer>
   );
@@ -178,7 +207,15 @@ export const ExpedientesListScreen: React.FC<ExpedientesListScreenProps> = ({
 const styles = StyleSheet.create({
   loader: { marginTop: spacing.xl },
   scroll: { flex: 1 },
-  list: { padding: spacing.lg, gap: spacing.md },
+  list: {
+    width: '100%',
+    maxWidth: layout.contentMaxWidth,
+    alignSelf: 'center',
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  row: { gap: spacing.lg },
+  gridItem: { flex: 1 },
   subtitle: { color: colors.textSecondary, marginBottom: spacing.xs, ...typography.body },
   emptyTitle: { color: colors.textPrimary, ...typography.sectionTitle },
   cardWithBorder: {

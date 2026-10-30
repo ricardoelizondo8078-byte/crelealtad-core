@@ -16,12 +16,6 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-const COMO_CONOCIO_ASESORA = [
-  'OTRA_INTEGRANTE',
-  'OTRA_FINANCIERA',
-  'FACEBOOK',
-  'OTRO',
-] as const;
 const ANTIGUEDAD_DOMICILIO = ['0_A_1', '1_A_3', 'MAS_DE_3'] as const;
 const TIPO_DOMICILIO = ['RENTA', 'PROPIA', 'FAMILIAR'] as const;
 const FAMILIAR_DOMICILIO = ['PAPAS', 'HIJOS', 'ABUELOS', 'OTRO_FAMILIAR'] as const;
@@ -54,7 +48,8 @@ export class GuardarEntrevistaDto {
   conoce_asesora?: boolean | null;
 
   @IsOptional()
-  @IsIn(COMO_CONOCIO_ASESORA)
+  @IsString()
+  @MaxLength(40)
   como_conocio_asesora?: string | null;
 
   @IsOptional()
@@ -124,6 +119,12 @@ export class GuardarEntrevistaDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   valor_ficha_credito_grupal?: number | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  monto_ultimo_prestamo_credito_grupal?: number | null;
 
   @IsOptional()
   @Type(() => Number)

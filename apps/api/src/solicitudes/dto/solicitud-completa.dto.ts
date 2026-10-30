@@ -102,6 +102,8 @@ export interface SolicitudCompletaDto {
   doc_ine_beneficiario_fecha?: Date;
   doc_solicitud_firmada_ruta?: string;
   doc_solicitud_firmada_fecha?: Date;
+  doc_control_pagos_ruta?: string;
+  doc_control_pagos_fecha?: Date;
   doc_comprobante_credito_ruta?: string;
   doc_comprobante_credito_fecha?: Date;
 }

@@ -1,8 +1,8 @@
 # 20 Module Catalog — Catálogo de Módulos
 
-Versión: 2.23.0
+Versión: 2.26.0
 Estado: Vigente y verificado
-Fecha de auditoría: 2026-10-04
+Fecha de auditoría: 2026-10-08
 
 ## Criterio de catalogación
 
@@ -234,19 +234,44 @@ Pendiente:
 
 - Catálogo de KPIs, fórmulas, alcance por rol, API, exportación y UI.
 
-## M11 Parámetros — No implementado
+## M11 Parámetros — Parcial funcional
 
-Objetivo: administrar políticas con vigencia, aprobación y auditoría.
+Objetivo: permitir que Dirección, mediante el rol `ADMINISTRADOR`, defina y publique políticas con
+vigencia, versionado y auditoría.
 
 Verificado:
 
 - `productos_credito` cubre parte de configuración de productos.
+- `docs/modules/M11_PARAMETROS.md` especifica el catálogo de financieras competidoras y los tres
+  catálogos de motivos de evidencia por color.
+- API y mobile implementan nombre/alias, clasificación, motivo, vigencia, historial, baja lógica y
+  publicación directa por Administración en una sola transacción auditada.
+- Cada financiera muestra las tres opciones exclusivas `Óptima`, `Atención` y `No interesa`; la
+  selección prepara el cambio que Administración revisa y publica desde el mismo formulario.
+- Verificación consulta el catálogo disponible en Parámetros y conserva las trece financieras
+  iniciales sólo como respaldo offline, sin asignarles una clasificación.
+- El inicio de M11 abre pantallas independientes para conceptos verdes, amarillos y rojos.
+  Administración puede dar de alta, desactivar y reactivar sin borrar; Verificación consulta sólo
+  activos y exige exactamente un motivo del mismo color por fotografía nueva de historial externo.
+- Parámetros conserva el nombre oficial en cada versión; el pop-up muestra el primer alias, que es
+  el nombre cotidiano reconocido por las integrantes, con respaldo al nombre oficial si falta.
+- Las migraciones 037–039 y sus reversiones fueron validadas en PostgreSQL temporal; se aplicaron
+  primero en `crelealtad_test` y después en `crelealtad` con respaldo verificado.
+- La migración 040 pasó aplicación, rollback y reaplicación en `crelealtad_test`; después incorporó
+  las trece identidades base en `crelealtad` con respaldo verificado y sin precargar versiones.
+- Las migraciones 041–045 versionan nombre oficial, captura opcional, producto, sucursales y
+  descripción extensa. La 046 sustituye la aprobación de Gerencia por publicación directa y
+  exclusiva de Administración. La migración 050 agrega el catálogo y la referencia restrictiva de
+  motivo por fotografía; pasó ida/vuelta en prueba y despliegue con respaldo. Ambas bases quedaron
+  47/47 sin pendientes, drift o entradas desconocidas.
+- DEC-189 habilita temporalmente la consulta a todos los usuarios mediante la capacidad exacta
+  `parametros:leer`, sin ampliar las acciones de gobierno del catálogo.
 
 Pendiente crítico:
 
-- No se verificaron tablas canónicas `parametros` y `reglas` en el esquema actual.
-- Motor de vigencias, autorización dual, historial, API y UI.
-- Migrar políticas críticas que permanecen hardcodeadas.
+- Capturar y publicar desde Administración las clasificaciones iniciales reales; no se precargaron
+  inferencias.
+- Extender M11 a productos y a las demás políticas críticas que permanecen hardcodeadas.
 
 ## M12 Administración — Base parcial
 

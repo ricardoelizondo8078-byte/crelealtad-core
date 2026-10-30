@@ -8,6 +8,11 @@ export interface OperationalAccess {
   canViewVerification: boolean;
   canRenew: boolean;
   canOpenDocumentation: boolean;
+  canReadParameters: boolean;
+  canUpdateParameters: boolean;
+  canPublishParameters: boolean;
+  canOpenParameters: boolean;
+  canReviewModuleColors: boolean;
 }
 
 export function useOperationalAccess(): OperationalAccess {
@@ -18,6 +23,10 @@ export function useOperationalAccess(): OperationalAccess {
     const canReadDocumentation = tienePermiso('documentacion', 'leer');
     const canViewExpedientes = tienePermiso('expedientes', 'leer');
     const canViewVerification = tienePermiso('verificacion', 'leer');
+    const canReadParameters = tienePermiso('parametros', 'leer');
+    const canUpdateParameters = tienePermiso('parametros', 'actualizar');
+    const canPublishParameters = tienePermiso('parametros', 'registrar');
+    const canReviewModuleColors = tienePermiso('administracion', 'leer');
 
     return {
       canCreateGroup,
@@ -26,6 +35,11 @@ export function useOperationalAccess(): OperationalAccess {
       canViewVerification,
       canRenew: canCreateGroup && canReadDocumentation && canViewExpedientes,
       canOpenDocumentation: canCreateGroup || canReadDocumentation || canViewExpedientes,
+      canReadParameters,
+      canUpdateParameters,
+      canPublishParameters,
+      canOpenParameters: canReadParameters,
+      canReviewModuleColors,
     };
   }, [tienePermiso]);
 }

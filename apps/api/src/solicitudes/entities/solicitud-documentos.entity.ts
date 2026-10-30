@@ -33,6 +33,12 @@ export class SolicitudDocumentosEntity {
   doc_solicitud_firmada_fecha: Date | null;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
+  doc_control_pagos_ruta: string | null;
+
+  @Column({ type: 'date', nullable: true })
+  doc_control_pagos_fecha: Date | null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
   doc_comprobante_credito_ruta: string | null;
 
   @Column({ type: 'date', nullable: true })

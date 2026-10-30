@@ -18,6 +18,7 @@ describe('ExpedientesService - bandeja de verificación', () => {
   };
   const expedienteRepository = {
     createQueryBuilder: jest.fn(() => queryBuilder),
+    findOne: jest.fn(),
   };
   const expedienteTransactionRepository = {
     findOne: jest.fn(),
@@ -111,6 +112,36 @@ describe('ExpedientesService - bandeja de verificación', () => {
       'documentando',
       IntegranteEstado.DOCUMENTANDO,
     );
+  });
+
+  it('incluye el contacto de la asesora en el detalle del expediente', async () => {
+    const expediente = {
+      id: 'expediente-1',
+      asesora_id: 'empleado-1',
+      grupo: { id: 'grupo-1', nombre: 'GRUPO UNO' },
+    };
+    expedienteRepository.findOne.mockResolvedValue(expediente);
+    dataSource.query.mockResolvedValue([{
+      id: 'empleado-1',
+      nombre: 'ASESORA PRUEBA',
+      abreviatura: 'A. PRUEBA',
+      telefono: '8112345678',
+    }]);
+
+    const result = await service.getById('expediente-1', scope);
+
+    expect(dataSource.query).toHaveBeenCalledWith(
+      expect.stringContaining('empleados_contacto'),
+      ['empleado-1'],
+    );
+    expect(result).toEqual(expect.objectContaining({
+      asesora: {
+        id: 'empleado-1',
+        nombre: 'ASESORA PRUEBA',
+        abreviatura: 'A. PRUEBA',
+        telefono: '8112345678',
+      },
+    }));
   });
 
   it('envía a verificación de forma atómica y registra auditoría', async () => {

@@ -104,6 +104,9 @@ export class DocumentosStorageService extends DocumentosStoragePort {
     if (tipo === 'ine' && totalArchivos !== 2) {
       throw new BadRequestException('El INE requiere frente y reverso');
     }
+    if (tipo === 'control_pagos' && totalArchivos !== 2) {
+      throw new BadRequestException('El Control de pagos CRELEALTAD requiere exactamente dos imágenes');
+    }
 
     const documentoId = carga.carga_id ?? randomUUID();
     assertUuid(documentoId, 'carga');

@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
-import { AppHeader, Card, FormField, PrimaryButton, ScreenContainer, ScreenTitleBar } from '../../components/ui';
+import { Alert, StyleSheet, Text, TextInput } from 'react-native';
+import {
+  AppHeader,
+  Card,
+  FormField,
+  PrimaryButton,
+  ResponsiveContent,
+  ScreenContainer,
+  ScreenTitleBar,
+} from '../../components/ui';
 import { api, ApiError } from '../../services/api-client';
 import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import { normalizeUppercaseText } from '../../utils/input';
@@ -76,28 +84,28 @@ export const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ onBack, on
     <ScreenContainer>
       <AppHeader showBackButton onBackPress={onBack} moduleTheme="documentation" />
       <ScreenTitleBar title="Crear Grupo" moduleTheme="documentation" />
-      <View style={styles.content}>
-        <Card>
-          <Text allowFontScaling={false} style={styles.subtitle}>
-            <Text allowFontScaling={false} style={styles.subtitleEmphasis}>Registra</Text> el nombre del grupo para iniciar la documentación.
-          </Text>
-          <FormField label="Nombre del grupo" required helperText="Se guardará en mayúsculas" errorText={nameError}>
-            <TextInput allowFontScaling={false}
-              style={styles.input}
-              placeholder="Nombre del grupo"
-              value={name}
-              autoCapitalize="characters"
-              onChangeText={(value) => {
-                setName(normalizeUppercaseText(value));
-                if (nameError) {
-                  setNameError(undefined);
-                }
-              }}
-            />
-          </FormField>
-          <PrimaryButton title={isSubmitting ? 'Creando...' : 'Crear grupo'} onPress={handleSubmit} disabled={isSubmitting} moduleTheme="documentation" />
-        </Card>
-      </View>
+      <ResponsiveContent variant="form" style={styles.content}>
+          <Card>
+            <Text allowFontScaling={false} style={styles.subtitle}>
+              <Text allowFontScaling={false} style={styles.subtitleEmphasis}>Registra</Text> el nombre del grupo para iniciar la documentación.
+            </Text>
+            <FormField label="Nombre del grupo" required helperText="Se guardará en mayúsculas" errorText={nameError}>
+              <TextInput allowFontScaling={false}
+                style={styles.input}
+                placeholder="Nombre del grupo"
+                value={name}
+                autoCapitalize="characters"
+                onChangeText={(value) => {
+                  setName(normalizeUppercaseText(value));
+                  if (nameError) {
+                    setNameError(undefined);
+                  }
+                }}
+              />
+            </FormField>
+            <PrimaryButton title={isSubmitting ? 'Creando...' : 'Crear grupo'} onPress={handleSubmit} disabled={isSubmitting} moduleTheme="documentation" />
+          </Card>
+      </ResponsiveContent>
     </ScreenContainer>
   );
 };

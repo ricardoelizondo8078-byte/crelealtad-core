@@ -18,15 +18,17 @@ describe('PermissionsGuard', () => {
     permisos?: PermisosRol,
     permisosPersonalizados?: PermisosRol | null,
     requiereCambioPin = false,
+    accesoPinUniversalDesarrollo = false,
   ) =>
     ({
       getHandler: () => handler,
       getClass: () => class ControladorPrueba {},
       switchToHttp: () => ({
         getRequest: () => ({
-          user: permisos || requiereCambioPin
+          user: permisos || requiereCambioPin || accesoPinUniversalDesarrollo
             ? {
               requiere_cambio_pin: requiereCambioPin,
+              acceso_pin_universal_desarrollo: accesoPinUniversalDesarrollo,
               permisos_personalizados: permisosPersonalizados,
               rol: { permisos },
             }
@@ -74,6 +76,23 @@ describe('PermissionsGuard', () => {
       handler,
       undefined,
       null,
+      true,
+    ))).toBe(true);
+  });
+
+  it('permite operar una sesión con acceso universal de desarrollo', () => {
+    const handler = (): void => undefined;
+    Reflect.defineMetadata(
+      PERMISO_REQUERIDO_KEY,
+      { modulo: 'expedientes', accion: 'leer' },
+      handler,
+    );
+
+    expect(guard.canActivate(crearContexto(
+      handler,
+      { modulos: ['expedientes'], acciones: ['leer'] },
+      null,
+      true,
       true,
     ))).toBe(true);
   });

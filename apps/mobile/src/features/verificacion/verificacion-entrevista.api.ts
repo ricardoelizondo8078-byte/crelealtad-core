@@ -14,6 +14,10 @@ export type TipoEvidenciaEntrevista =
   | 'CONTROL_PAGOS'
   | 'FOLLETO_PREMIO_TESORERA';
 
+export type ClasificacionSemaforoEvidencia = 'VERDE' | 'AMARILLO' | 'ROJO';
+export type FuenteEvidenciaEntrevista = 'CAMARA' | 'GALERIA';
+export type CalificacionRevisionEvidencia = 'TACHA' | 'AMARILLO' | 'PALOMITA';
+
 export interface DesacuerdoMontoEntrevista {
   integrante_id: string;
   motivo: string;
@@ -37,6 +41,7 @@ export interface EntrevistaPayload {
   financiera_credito_grupal: string | null;
   credito_grupal_anterior_activo: boolean | null;
   valor_ficha_credito_grupal: number | null;
+  monto_ultimo_prestamo_credito_grupal: number | null;
   semana_actual_credito_grupal: number | null;
   mes_desembolso_credito_grupal: number | null;
   mes_ultimo_pago_credito_grupal: number | null;
@@ -95,6 +100,13 @@ export interface EvidenciaEntrevistaGuardada {
   mime_type: 'image/jpeg' | 'image/png';
   foto_capturada_at: string | null;
   registrada_at: string;
+  integrante_ids: string[];
+  clasificacion_semaforo: ClasificacionSemaforoEvidencia | null;
+  motivo_clasificacion_id: string | null;
+  motivo_clasificacion: string | null;
+  captura_fuente: FuenteEvidenciaEntrevista;
+  calificacion_revision: CalificacionRevisionEvidencia | null;
+  calificada_at: string | null;
 }
 
 export interface EvidenciaEntrevistaPendiente {
@@ -103,8 +115,12 @@ export interface EvidenciaEntrevistaPendiente {
   nombre: string;
   mimeType: 'image/jpeg' | 'image/png';
   idempotencyKey: string;
-  fotoCapturadaAt: string;
+  capturaFuente: FuenteEvidenciaEntrevista;
+  fotoCapturadaAt: string | null;
   ubicacion: UbicacionEntrevista;
+  integranteIds?: string[];
+  clasificacionSemaforo?: ClasificacionSemaforoEvidencia;
+  motivoClasificacionId?: string;
 }
 
 export type EvidenciaNegocioPendiente = EvidenciaEntrevistaPendiente & { tipo: 'NEGOCIO' };
@@ -159,7 +175,19 @@ export const registrarEvidenciaEntrevista = async (
   const formData = new FormData();
   formData.append('tipo', pendiente.tipo);
   formData.append('idempotency_key', pendiente.idempotencyKey);
-  formData.append('foto_capturada_at', pendiente.fotoCapturadaAt);
+  formData.append('captura_fuente', pendiente.capturaFuente);
+  if (pendiente.integranteIds) {
+    formData.append('integrante_ids', JSON.stringify(pendiente.integranteIds));
+  }
+  if (pendiente.clasificacionSemaforo) {
+    formData.append('clasificacion_semaforo', pendiente.clasificacionSemaforo);
+  }
+  if (pendiente.motivoClasificacionId) {
+    formData.append('motivo_clasificacion_id', pendiente.motivoClasificacionId);
+  }
+  if (pendiente.fotoCapturadaAt) {
+    formData.append('foto_capturada_at', pendiente.fotoCapturadaAt);
+  }
   formData.append('ubicacion_latitud', String(pendiente.ubicacion.latitud));
   formData.append('ubicacion_longitud', String(pendiente.ubicacion.longitud));
   if (pendiente.ubicacion.precision_metros != null) {
@@ -183,6 +211,31 @@ export const registrarEvidenciaEntrevista = async (
     },
   );
 };
+
+export const actualizarIntegrantesEvidenciaEntrevista = async (
+  integranteId: string,
+  evidenciaId: string,
+  integranteIds: string[],
+) => api.put<{ evidencia: EvidenciaEntrevistaGuardada }>(
+  `/verificacion/integrantes/${integranteId}/entrevista/evidencias/${evidenciaId}/integrantes`,
+  { integrante_ids: integranteIds },
+  VERIFICACION_REQUEST_OPTIONS,
+);
+
+export const calificarEvidenciaEntrevista = async (
+  integranteId: string,
+  evidenciaId: string,
+  calificacion: CalificacionRevisionEvidencia,
+) => api.put<{
+  evidencia_id: string;
+  integrante_id: string;
+  calificacion_revision: CalificacionRevisionEvidencia;
+  calificada_at: string;
+}>(
+  `/verificacion/integrantes/${integranteId}/entrevista/evidencias/${evidenciaId}/calificacion`,
+  { calificacion },
+  VERIFICACION_REQUEST_OPTIONS,
+);
 
 export const registrarEvidenciaNegocio = (
   integranteId: string,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { SafeAreaView, ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { colors, moduleThemes, ModuleThemeKey } from '../../theme/tokens';
+import { colors, moduleThemes, ModuleTheme, ModuleThemeKey } from '../../theme/tokens';
 
 interface ScreenContainerProps {
   children: React.ReactNode;
@@ -8,6 +8,7 @@ interface ScreenContainerProps {
   contentStyle?: StyleProp<ViewStyle>;
   scroll?: boolean;
   moduleTheme?: ModuleThemeKey;
+  themeOverride?: ModuleTheme;
 }
 
 export const ScreenContainer: React.FC<ScreenContainerProps> = ({
@@ -16,8 +17,9 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   contentStyle,
   scroll = false,
   moduleTheme = 'documentation',
+  themeOverride,
 }) => {
-  const theme = moduleThemes[moduleTheme];
+  const theme = themeOverride ?? moduleThemes[moduleTheme];
 
   if (scroll) {
     return (

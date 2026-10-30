@@ -1,8 +1,8 @@
 # 12 Security Model - Modelo de Seguridad
 
-Version: 1.13.0
+Version: 1.16.0
 Estado: Vigente
-Fecha de actualizacion: 2026-10-04
+Fecha de actualizacion: 2026-10-09
 
 ## Objetivo
 
@@ -51,7 +51,7 @@ Estado de implementacion:
 - PostgreSQL, API, JWT y mobile ya identifican a los asesores por `usuarios.abreviatura`.
 - Los 49 asesores fueron cargados con rol `ASESOR`, sucursal `MATRIZ`, zona nula y estado `ACTIVO`.
 - Cada cuenta conserva un hash bcrypt individual; el valor temporal compartido `1234` fue autorizado únicamente para desarrollo y pruebas, con `requiere_cambio_pin = true`.
-- No existe bypass universal y los valores sensibles se redactan de los logs.
+- Durante el desarrollo local existe un acceso universal opcional aprobado por DEC-176. Sólo se habilita con `NODE_ENV=development` y `DEV_UNIVERSAL_PIN` válido en el `.env` protegido; se ignora en cualquier otro entorno, no cambia hashes ni marcas persistidas y audita el método sin registrar la credencial.
 - El cambio obligatorio ya está implementado: requiere JWT, PIN actual válido, un nuevo PIN de cuatro dígitos distinto y confirmación coincidente. La escritura usa bloqueo pesimista y transacción para reemplazar el hash bcrypt, desactivar la marca y registrar `CAMBIO_PIN` sin PIN ni hash. Recuperación administrativa y cambio voluntario posterior siguen pendientes; el valor temporal debe desaparecer de cada cuenta antes de producción.
 - La regla futura basada en grupos debe ejecutarse mediante un servicio auditable y no mediante una eliminacion de usuarios.
 - La API no expone una lista anonima de nombres o abreviaturas; el usuario escribe su identidad de acceso.
@@ -68,14 +68,20 @@ La autorizacion se evalua en dos niveles independientes:
 
 Los módulos y acciones aceptados por el código se declaran en un catálogo técnico único. Los permisos
 JSONB se normalizan con denegación por defecto y la migración 035 impide arreglos con elementos no
-textuales tanto en roles como en excepciones individuales. Esto valida el contrato técnico actual,
-pero no implementa la matriz funcional aprobada por DEC-175.
+textuales tanto en roles como en excepciones individuales. La migración 038 incorpora además
+`capacidades` exactas con formato `modulo:accion`; cuando un módulo declara al menos una, esos pares
+reemplazan para ese módulo al producto cartesiano heredado. Por ello `parametros:leer` no habilita
+acciones de cambio. La migración 039 introdujo el doble control inicial de M11 y la 046 lo sustituye,
+exclusivamente para ese módulo, por publicación directa de Administración.
+Esto todavía no implementa alcances territoriales ni la matriz funcional completa de DEC-175.
 
 DEC-175 aprueba capacidades por par módulo-acción y los alcances `PROPIO`, `SUCURSAL`, `ZONA` y
-`GLOBAL`, sin comodines productivos. También aprueba doble control para M11/M12, excepciones
+`GLOBAL`, sin comodines productivos. DEC-199 sustituye el doble control aprobado originalmente para
+M11: Administración representa a Dirección y define/publica sus parámetros en un solo paso. M12
+conserva el doble control, las excepciones
 restrictivas por defecto y Administración sin herencia de permisos operativos o financieros. El
 contrato v2, la migración y los filtros territoriales aún no están aplicados; hasta entonces el
-runtime conserva el contrato anterior y DEC-023.
+runtime conserva el contrato anterior, DEC-023 y la excepción exacta temporal DEC-189.
 
 Conocer un UUID no concede acceso. La navegacion filtrada ayuda a la usuaria, pero nunca sustituye
 estas comprobaciones de servidor. Una asignación territorial ausente debe fallar cerrado durante la
@@ -99,6 +105,13 @@ DEC-023, aprobada por Direccion el 2026-08-29, permite que todos los usuarios ac
 accedan a los modulos ejecutables mientras se completa su desarrollo. En el corte actual,
 la cuenta administradora ya tiene comodines globales y el rol `ASESOR` recibe
 `verificacion:leer` mediante la migracion 010.
+
+DEC-189 agrega durante la revisión de M11 la capacidad exacta `parametros:leer` a todos los roles y
+a las excepciones individuales existentes. DEC-199 limita toda mutación de M11 a
+`ADMINISTRADOR`: el servicio publica directamente y la migración 046 retira de roles y excepciones
+las capacidades `parametros:aprobar` y `parametros:rechazar`. Gerencia conserva sólo lectura en
+M11. La API continúa exigiendo JWT, capacidad exacta, validación de rol y auditoría; la reversión de
+046 restaura únicamente el estado previo verificado y se bloquea ante cambios posteriores.
 
 Esta excepcion:
 
@@ -177,6 +190,13 @@ hash, actor, fechas, origen `CAMARA`, coordenadas, precisión disponible y fuent
 Mobile no ofrece acceso al carrete o galería. La API rechaza capturas nuevas sin ubicación y omite
 las coordenadas exactas del evento de auditoría; el legado previo a 031 se conserva sin inventarlas.
 
+DEC-206 agrega autorización relacional para la evidencia de otra financiera: el cliente propone los
+UUID, pero la API deriva el expediente desde la integrante de captura y exige que cada seleccionada
+participe en ese mismo expediente y permanezca dentro del flujo de Verificación. La base refuerza la
+regla con FKs compuestas; una asociación conserva actor y fecha, y el archivo no se duplica. La
+idempotencia también compara el conjunto de integrantes para impedir que un reintento cambie su
+alcance silenciosamente.
+
 Las entradas multipart tienen límites explícitos de tamaño, cantidad de archivos por petición,
 campos, partes y encabezados. Las evidencias de Verificación aceptan un archivo por petición y los
 documentos hasta 12, siempre con 10 MB por archivo. Este límite es de transporte: DEC-172 conserva
@@ -198,6 +218,7 @@ actualiza la ruta vigente y emite la auditoría documental.
   su cifrado local auditado continúa como requisito obligatorio antes de capturar datos reales en
   producción.
 - `npm run security:secrets` bloquea credenciales literales en código ejecutable sin imprimir sus valores.
+- El PIN universal local nunca se versiona: sólo puede vivir en `DEV_UNIVERSAL_PIN` dentro del entorno protegido y debe retirarse antes de cualquier despliegue productivo.
 - Scripts administrativos y de migración reciben credenciales y PIN iniciales por variables de entorno y no los registran en consola.
 - El entorno local exige contraseña PostgreSQL mediante `scram-sha-256` incluso en loopback; la
   credencial anterior y las conexiones sin contraseña fueron rechazadas después de la rotación del

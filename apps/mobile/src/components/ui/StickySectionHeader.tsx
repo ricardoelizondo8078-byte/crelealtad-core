@@ -12,6 +12,7 @@ import {
 
 type StickySectionHeaderVariant = 'soft' | 'solid';
 type StickySectionHeaderTextTone = 'default' | 'withdrawn';
+type StickySectionHeaderPlacement = 'embedded' | 'standalone';
 
 interface StickySectionHeaderProps {
   title: string;
@@ -19,6 +20,7 @@ interface StickySectionHeaderProps {
   variant?: StickySectionHeaderVariant;
   textTone?: StickySectionHeaderTextTone;
   fullBleed?: boolean;
+  placement?: StickySectionHeaderPlacement;
 }
 
 export const StickySectionHeader: React.FC<StickySectionHeaderProps> = ({
@@ -27,6 +29,7 @@ export const StickySectionHeader: React.FC<StickySectionHeaderProps> = ({
   variant = 'soft',
   textTone = 'default',
   fullBleed = false,
+  placement = 'embedded',
 }) => {
   const [visibleTitle, setVisibleTitle] = useState(title);
   const opacity = useRef(new Animated.Value(1)).current;
@@ -68,7 +71,8 @@ export const StickySectionHeader: React.FC<StickySectionHeaderProps> = ({
         isSolid && {
           backgroundColor: theme.headerBg,
         },
-        fullBleed && styles.fullBleed,
+        fullBleed && placement === 'embedded' && styles.fullBleed,
+        placement === 'standalone' && styles.standalone,
       ]}
     >
       <Animated.Text
@@ -112,5 +116,10 @@ const styles = StyleSheet.create({
   },
   fullBleed: {
     marginHorizontal: -spacing.lg,
+  },
+  standalone: {
+    marginHorizontal: -spacing.xs,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
 });

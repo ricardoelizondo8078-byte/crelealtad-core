@@ -6,12 +6,29 @@ import {
   VERIFICACION_READ_REQUEST_OPTIONS,
   VERIFICACION_REQUEST_OPTIONS,
 } from './verificacion-api-context';
+import {
+  listarParametrosEntrevistaActivos,
+  type ParametroEntrevistaOpcion,
+} from '../parametros/parametros-entrevista.api';
+
+export interface OpcionVisitaVecino {
+  id: string;
+  codigo: string;
+  etiqueta: string;
+  orden: number;
+}
+
+export interface OpcionesVisitaVecino {
+  si: OpcionVisitaVecino[];
+  no: OpcionVisitaVecino[];
+}
 
 export interface ResumenVisitaVecino {
   resultado: {
     visita_id: string;
     conoce_y_sabe_donde_vive: boolean;
     fachada_id: string | null;
+    opciones_seleccionadas: OpcionVisitaVecino[];
     registrada_at: string;
   } | null;
 }
@@ -81,6 +98,22 @@ export const obtenerResumenFachadaVisita = (integranteId: string) => (
     VERIFICACION_READ_REQUEST_OPTIONS,
   )
 );
+
+const presentarOpciones = (
+  items: ParametroEntrevistaOpcion[],
+  familia: ParametroEntrevistaOpcion['familia'],
+): OpcionVisitaVecino[] => items
+  .filter((item) => item.activo && item.familia === familia)
+  .sort((left, right) => left.orden - right.orden)
+  .map(({ id, codigo, etiqueta, orden }) => ({ id, codigo, etiqueta, orden }));
+
+export const obtenerOpcionesVisitaVecino = async (): Promise<OpcionesVisitaVecino> => {
+  const response = await listarParametrosEntrevistaActivos();
+  return {
+    si: presentarOpciones(response.items, 'VISITA_VECINO_RESPUESTA_SI'),
+    no: presentarOpciones(response.items, 'VISITA_VECINO_RESPUESTA_NO'),
+  };
+};
 
 export const registrarFachadaVisita = async (
   integranteId: string,
@@ -156,6 +189,7 @@ export const registrarEvidenciaVisita = async (
 export const registrarVisitaVecino = async (
   integranteId: string,
   conoceYSabeDondeVive: boolean,
+  opcionIds: string[],
   fachadaId: string,
   idempotencyKey: string,
   ubicacion: UbicacionVisitaVecino,
@@ -166,6 +200,7 @@ export const registrarVisitaVecino = async (
       {
         fachada_id: fachadaId,
         conoce_y_sabe_donde_vive: conoceYSabeDondeVive,
+        opcion_ids: opcionIds,
         idempotency_key: idempotencyKey,
         ubicacion_latitud: ubicacion.latitud,
         ubicacion_longitud: ubicacion.longitud,

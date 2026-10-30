@@ -1,8 +1,13 @@
 # M12 Administración — Especificación y matriz de acceso propuesta
 
-Versión: 1.0.0
-Estado: Aprobado por Dirección mediante DEC-175; implementación técnica pendiente
+Versión: 1.0.1
+Estado: Aprobado por Dirección mediante DEC-175, con M11 actualizado por DEC-199; implementación
+técnica general pendiente
 Fecha de diseño: 2026-10-04
+
+Nota vigente 2026-10-08: DEC-189 concede `parametros:leer` a todos los roles para revisión durante
+desarrollo. DEC-199 sustituye el doble control únicamente en M11: Administración, integrada por
+Dirección, define y publica parámetros; Gerencia conserva lectura. M12 mantiene su doble control.
 
 ## 1. Identidad
 
@@ -161,7 +166,7 @@ Leyenda: `C` crear, `L` leer, `A` actualizar, `R` registrar, `P` aprobar, `X` re
 | M08 Mora | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO |
 | M09 Convenios | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO |
 | M10 Reportes | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO | BLOQUEADO |
-| M11 Parámetros | — | — | — | — | — | — | `L,P,X · GLOBAL` | `L,A,R · GLOBAL` |
+| M11 Parámetros | — | — | — | — | — | — | `L · GLOBAL` | `L,A,R · GLOBAL` |
 | M12 Administración | — | — | `L · SUCURSAL` | — | — | — | `L,P,X,E · ZONA` | `C,L,A,R,E · GLOBAL` |
 
 Interpretación obligatoria:
@@ -170,7 +175,8 @@ Interpretación obligatoria:
 - `ASESOR` pierde en la matriz productiva el acceso a M03 otorgado sólo para desarrollo por DEC-023.
 - M02 y M03 separan captura y verificación; un rol supervisor puede leer, pero no capturar ni dictaminar por herencia.
 - M04–M10 permanecen denegados aunque existan tablas o tarjetas `Próximamente`. Cada módulo deberá sustituir `BLOQUEADO` por pares y alcances aprobados en su propia especificación.
-- M11 propone doble control: `GERENTE` decide funcionalmente y `ADMINISTRADOR` publica técnicamente; ninguna persona puede aprobar y ejecutar el mismo cambio.
+- M11 queda gobernado por DEC-199: `ADMINISTRADOR`, como Dirección, define y publica directamente;
+  `GERENTE` sólo consulta. La publicación conserva versión, vigencia y auditoría.
 - M12 no da a `ADMINISTRADOR` permiso sobre módulos operativos o financieros. Su alcance global se limita al gobierno de acceso.
 - `COORDINADOR` sólo consulta el directorio de su sucursal; las solicitudes de cambio se modelan de forma específica en la matriz detallada.
 - Las lecturas supervisoras no incluyen automáticamente coordenadas precisas, documentos sensibles ni exportación de datos personales. Esas superficies requieren permiso y propósito específicos.
@@ -325,7 +331,8 @@ Dirección aprobó en conjunto estas reglas el 2026-10-04:
 2. Adoptar `PROPIO`, `SUCURSAL`, `ZONA` y `GLOBAL`, con fallo cerrado cuando falte asignación.
 3. Retirar el acceso productivo de `ASESOR` a M03 cuando termine DEC-023; M03 queda para `VERIFICADOR`, con lectura supervisora de Coordinación y Gerencia.
 4. Mantener M04–M10 bloqueados hasta aprobar la especificación de cada módulo.
-5. Aplicar doble control en M11 y M12: Gerencia decide y Administración publica; nadie decide su propio cambio.
+5. Aplicar doble control en M12. Para M11, DEC-199 sustituye esta regla: Administración define y
+   publica directamente como autoridad de Dirección, sin aprobación o devolución de Gerencia.
 6. Hacer restrictivas por defecto las excepciones individuales; cualquier ampliación será temporal, justificada y aprobada.
 7. No otorgar a `ADMINISTRADOR` acceso operativo o financiero por herencia.
 8. Abrir una decisión separada sobre los roles faltantes de Análisis/Autorización y Control interno/Auditoría antes de M04.

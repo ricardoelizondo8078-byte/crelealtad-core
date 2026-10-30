@@ -1,5 +1,9 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  ArrayUnique,
+  IsArray,
   IsBoolean,
   IsISO8601,
   IsNumber,
@@ -18,6 +22,13 @@ export class RegistrarVisitaVecinoDto {
 
   @IsBoolean()
   conoce_y_sabe_donde_vive: boolean;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(1)
+  @ArrayUnique()
+  @IsUUID('4', { each: true })
+  opcion_ids: string[];
 
   @IsString()
   @Length(16, 100)

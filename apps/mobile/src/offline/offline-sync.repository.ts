@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import {
   decryptOfflineJson,
   encryptOfflineJson,
@@ -19,6 +20,9 @@ import {
 const LEGACY_STORAGE_PREFIX = 'crelealtad:offline-sync:v1:';
 const STORAGE_PREFIX = 'crelealtad:offline-sync:v2:';
 const locks = new Map<string, Promise<unknown>>();
+// La web funciona únicamente en línea. Conservamos borradores y operaciones sólo
+// durante la pestaña abierta para no guardar datos personales sin cifrar en el navegador.
+const webSessionStores = new Map<string, OfflineUserStore>();
 
 const nowIso = (): string => new Date().toISOString();
 
@@ -34,6 +38,10 @@ const createEmptyStore = (userId: string): OfflineUserStore => ({
   serverVersions: {},
   updatedAt: nowIso(),
 });
+
+const cloneStore = (store: OfflineUserStore): OfflineUserStore => (
+  JSON.parse(JSON.stringify(store)) as OfflineUserStore
+);
 
 const normalizeStore = (userId: string, value: unknown): OfflineUserStore => {
   if (!value || typeof value !== 'object') {
@@ -129,6 +137,11 @@ const serialize = async <T>(userId: string, task: () => Promise<T>): Promise<T> 
 };
 
 const readUnlocked = async (userId: string): Promise<OfflineUserStore> => {
+  if (Platform.OS === 'web') {
+    const store = webSessionStores.get(userId);
+    return store ? cloneStore(store) : createEmptyStore(userId);
+  }
+
   const raw = await AsyncStorage.getItem(storageKey(userId));
   if (raw) {
     try {
@@ -181,6 +194,10 @@ const readUnlocked = async (userId: string): Promise<OfflineUserStore> => {
 };
 
 const writeUnlocked = async (store: OfflineUserStore): Promise<void> => {
+  if (Platform.OS === 'web') {
+    webSessionStores.set(store.userId, cloneStore({ ...store, updatedAt: nowIso() }));
+    return;
+  }
   await writeEncryptedStore(store);
 };
 
@@ -320,6 +337,34 @@ export const enqueueOfflineOperation = async (
     };
   }
   return operation.id;
+});
+
+export const discardBlockedOfflineOperationsByDedupe = async (
+  userId: string,
+  dedupeKey: string,
+  kind: 'MULTIPART_REQUEST' | 'DOCUMENT_UPLOAD',
+): Promise<string[]> => mutateStore(userId, (store) => {
+  const removed = store.operations.filter((operation) => (
+    operation.dedupeKey === dedupeKey
+    && operation.kind === kind
+    && operation.status === 'BLOCKED'
+  ));
+  if (removed.length === 0) return [];
+
+  const removedIds = new Set(removed.map((operation) => operation.id));
+  store.operations = store.operations.filter((operation) => !removedIds.has(operation.id));
+  for (const operation of removed) {
+    if (!operation.draftKey || !store.drafts[operation.draftKey]) continue;
+    const hasPending = store.operations.some(
+      (candidate) => candidate.draftKey === operation.draftKey,
+    );
+    store.drafts[operation.draftKey] = {
+      ...store.drafts[operation.draftKey],
+      status: hasPending ? 'PENDING' : 'LOCAL',
+      lastError: undefined,
+    };
+  }
+  return [...removedIds];
 });
 
 export const getOfflineOperation = async (

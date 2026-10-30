@@ -26,8 +26,14 @@ describe('AuthService - login por abreviatura y PIN', () => {
   };
 
   let service: AuthService;
+  let originalNodeEnv: string | undefined;
+  let originalDevUniversalPin: string | undefined;
 
   beforeEach(() => {
+    originalNodeEnv = process.env.NODE_ENV;
+    originalDevUniversalPin = process.env.DEV_UNIVERSAL_PIN;
+    process.env.NODE_ENV = 'test';
+    delete process.env.DEV_UNIVERSAL_PIN;
     jest.clearAllMocks();
     queryBuilder.where.mockReturnThis();
     queryBuilder.leftJoinAndSelect.mockReturnThis();
@@ -35,6 +41,13 @@ describe('AuthService - login por abreviatura y PIN', () => {
       callback(transactionManager)
     ));
     service = new AuthService(usuariosRepo as never, jwtService as never);
+  });
+
+  afterEach(() => {
+    if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = originalNodeEnv;
+    if (originalDevUniversalPin === undefined) delete process.env.DEV_UNIVERSAL_PIN;
+    else process.env.DEV_UNIVERSAL_PIN = originalDevUniversalPin;
   });
 
   it('normaliza la abreviatura y autentica contra el hash individual', async () => {
@@ -95,6 +108,58 @@ describe('AuthService - login por abreviatura y PIN', () => {
 
     await expect(
       service.login({ abreviatura: 'ANA_VAZQUEZ', pin: '1234' }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('permite el PIN universal configurado únicamente en desarrollo y audita el método', async () => {
+    process.env.NODE_ENV = 'development';
+    process.env.DEV_UNIVERSAL_PIN = '2468';
+    queryBuilder.getOne.mockResolvedValue({
+      id: 'usuario-1',
+      nombre: 'Asesor de prueba',
+      abreviatura: 'ANA_VAZQUEZ',
+      password_hash: await bcrypt.hash('9876', 4),
+      rol_id: 'rol-asesor',
+      sucursal_id: 'sucursal-matriz',
+      estado: UsuarioEstado.ACTIVO,
+      requiere_cambio_pin: true,
+      rol: {
+        nombre: 'ASESOR',
+        estado: 'ACTIVO',
+        permisos: null,
+      },
+    });
+
+    await expect(
+      service.login({ abreviatura: 'ANA_VAZQUEZ', pin: '2468' }),
+    ).resolves.toMatchObject({
+      usuario: {
+        abreviatura: 'ANA_VAZQUEZ',
+        requiere_cambio_pin: false,
+      },
+    });
+    expect(jwtService.sign).toHaveBeenCalledWith(expect.objectContaining({
+      acceso_pin_universal_desarrollo: true,
+    }));
+
+    const auditoriaSerializada = JSON.stringify(transactionManager.query.mock.calls);
+    expect(auditoriaSerializada).toContain('PIN_UNIVERSAL_DESARROLLO');
+    expect(auditoriaSerializada).not.toContain('2468');
+  });
+
+  it('rechaza el PIN universal configurado fuera de desarrollo', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.DEV_UNIVERSAL_PIN = '2468';
+    queryBuilder.getOne.mockResolvedValue({
+      id: 'usuario-1',
+      abreviatura: 'ANA_VAZQUEZ',
+      password_hash: await bcrypt.hash('9876', 4),
+      estado: UsuarioEstado.ACTIVO,
+      rol: { estado: 'ACTIVO', permisos: null },
+    });
+
+    await expect(
+      service.login({ abreviatura: 'ANA_VAZQUEZ', pin: '2468' }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 

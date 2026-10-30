@@ -10,6 +10,20 @@ export const TIPOS_EVIDENCIA_ENTREVISTA = [
 
 export type TipoEvidenciaEntrevista = (typeof TIPOS_EVIDENCIA_ENTREVISTA)[number];
 
+export const FUENTES_EVIDENCIA_ENTREVISTA = ['CAMARA', 'GALERIA'] as const;
+
+export type FuenteEvidenciaEntrevista = (typeof FUENTES_EVIDENCIA_ENTREVISTA)[number];
+
+export const CLASIFICACIONES_SEMAFORO_EVIDENCIA = [
+  'VERDE',
+  'AMARILLO',
+  'ROJO',
+] as const;
+
+export type ClasificacionSemaforoEvidencia = (
+  typeof CLASIFICACIONES_SEMAFORO_EVIDENCIA
+)[number];
+
 @Entity('verificacion_entrevista_evidencias')
 @Index(
   'ux_verificacion_entrevista_evidencia_actor_idempotencia',
@@ -27,8 +41,17 @@ export class VerificacionEntrevistaEvidenciaEntity {
   @Column({ type: 'uuid' })
   integrante_id: string;
 
+  @Column({ type: 'uuid' })
+  expediente_id: string;
+
   @Column({ type: 'varchar', length: 40 })
   tipo: TipoEvidenciaEntrevista;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  clasificacion_semaforo: ClasificacionSemaforoEvidencia | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  motivo_clasificacion_id: string | null;
 
   @Column({ type: 'varchar', length: 500 })
   ruta: string;
@@ -43,7 +66,7 @@ export class VerificacionEntrevistaEvidenciaEntity {
   sha256: string;
 
   @Column({ type: 'varchar', length: 20 })
-  captura_fuente: 'GALERIA' | 'CAMARA';
+  captura_fuente: FuenteEvidenciaEntrevista;
 
   @Column({ type: 'timestamptz', nullable: true })
   foto_capturada_at: Date | null;

@@ -23,6 +23,8 @@ import {
   accessScopeFromContext,
 } from '../common/access-scope';
 import { ArchivoEvidenciaEntrevistaRecibido } from './entrevista-evidencia-storage.service';
+import { ActualizarIntegrantesEvidenciaDto } from './dto/actualizar-integrantes-evidencia.dto';
+import { CalificarEvidenciaIntegranteDto } from './dto/calificar-evidencia-integrante.dto';
 import { GuardarEntrevistaDto } from './dto/guardar-entrevista.dto';
 import { RegistrarEvidenciaEntrevistaDto } from './dto/registrar-evidencia-entrevista.dto';
 import { VerificacionEntrevistaService } from './verificacion-entrevista.service';
@@ -87,6 +89,40 @@ export class VerificacionEntrevistaController {
       accessScopeFromContext(request.user, context, 'registrar'),
       dto,
       foto,
+    );
+  }
+
+  @Put('evidencias/:evidenciaId/integrantes')
+  @RequierePermiso('verificacion', 'registrar')
+  actualizarIntegrantesEvidencia(
+    @Param('integranteId', new ParseUUIDPipe()) integranteId: string,
+    @Param('evidenciaId', new ParseUUIDPipe()) evidenciaId: string,
+    @Body() dto: ActualizarIntegrantesEvidenciaDto,
+    @Req() request: { user: Usuario },
+    @Headers(ACCESS_CONTEXT_HEADER) context?: string,
+  ) {
+    return this.entrevistaService.actualizarIntegrantesEvidencia(
+      integranteId,
+      evidenciaId,
+      accessScopeFromContext(request.user, context, 'registrar'),
+      dto,
+    );
+  }
+
+  @Put('evidencias/:evidenciaId/calificacion')
+  @RequierePermiso('verificacion', 'registrar')
+  calificarEvidenciaIntegrante(
+    @Param('integranteId', new ParseUUIDPipe()) integranteId: string,
+    @Param('evidenciaId', new ParseUUIDPipe()) evidenciaId: string,
+    @Body() dto: CalificarEvidenciaIntegranteDto,
+    @Req() request: { user: Usuario },
+    @Headers(ACCESS_CONTEXT_HEADER) context?: string,
+  ) {
+    return this.entrevistaService.calificarEvidenciaIntegrante(
+      integranteId,
+      evidenciaId,
+      accessScopeFromContext(request.user, context, 'registrar'),
+      dto,
     );
   }
 

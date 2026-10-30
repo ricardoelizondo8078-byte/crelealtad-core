@@ -38,10 +38,12 @@ entrevista-verificacion-movil-site/
 
 # Artefactos locales de herramientas y ejecuciones temporales.
 .codex-runtime/
+.tmp-*/
 tmp/
 output/
 outputs/
 work/
+site-output/
 ~$*
 
 # Spec-Kit

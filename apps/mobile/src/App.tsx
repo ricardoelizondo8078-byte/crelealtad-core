@@ -18,11 +18,16 @@ import {
 import { GruposVerificacionListScreen, GrupoVerificacionDetailScreen, IntegranteVerificacionScreen } from './features/verificacion';
 import { RenovacionScreen } from './features/renovaciones';
 import { PendingReviewOverlay } from './features/pendientes';
+import { ParametrosScreen } from './features/parametros';
+import {
+  DefinedModuleColorsScreen,
+  ModuleColorReviewScreen,
+} from './features/administracion';
 
 // Mantener splash screen visible hasta que las fuentes carguen
 SplashScreen.preventAutoHideAsync();
 
-type AppScreen = 'modules' | 'documentation' | 'create-group' | 'expedientes' | 'renovacion' | 'verificacion';
+type AppScreen = 'modules' | 'documentation' | 'create-group' | 'expedientes' | 'renovacion' | 'verificacion' | 'parametros' | 'module-colors' | 'defined-module-colors';
 
 function AppContent() {
   const { usuario, loading: authLoading, logout } = useAuth();
@@ -33,6 +38,10 @@ function AppContent() {
     canViewVerification: puedeVerVerificacion,
     canRenew: puedeRenovar,
     canOpenDocumentation: puedeAbrirDocumentacion,
+    canOpenParameters: puedeAbrirParametros,
+    canUpdateParameters: puedeActualizarParametros,
+    canPublishParameters: puedePublicarParametros,
+    canReviewModuleColors: puedeRevisarColoresModulos,
   } = useOperationalAccess();
   const [screen, setScreen] = useState<AppScreen>('modules');
   const [selectedExpedienteId, setSelectedExpedienteId] = useState<string | null>(null);
@@ -233,14 +242,36 @@ function AppContent() {
     );
   }
 
+  if (puedeAbrirParametros && screen === 'parametros') {
+    return (
+      <ParametrosScreen
+        canUpdate={puedeActualizarParametros && puedePublicarParametros}
+        onBack={handleBackToModuleMenu}
+      />
+    );
+  }
+
+  if (puedeRevisarColoresModulos && screen === 'module-colors') {
+    return <ModuleColorReviewScreen onBack={handleBackToModuleMenu} />;
+  }
+
+  if (puedeRevisarColoresModulos && screen === 'defined-module-colors') {
+    return <DefinedModuleColorsScreen onBack={handleBackToModuleMenu} />;
+  }
+
   const modules = buildOperationalModuleOptions(
     {
       canOpenDocumentation: puedeAbrirDocumentacion,
       canViewVerification: puedeVerVerificacion,
+      canOpenParameters: puedeAbrirParametros,
+      canReviewModuleColors: puedeRevisarColoresModulos,
     },
     {
       openDocumentation: () => setScreen('documentation'),
       openVerification: () => setScreen('verificacion'),
+      openParameters: () => setScreen('parametros'),
+      openModuleColorReview: () => setScreen('module-colors'),
+      openDefinedModuleColors: () => setScreen('defined-module-colors'),
     },
     __DEV__,
   );

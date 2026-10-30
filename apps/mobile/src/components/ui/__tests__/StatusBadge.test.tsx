@@ -8,7 +8,7 @@ describe('StatusBadge', () => {
       <StatusBadge label="SINCRONIZADO" tone="success" leadingMark="✓" />,
     );
 
-    expect(screen.getByText('SINCRONIZADO')).toBeTruthy();
+    expect(screen.getByText('SINCRONIZADO')).toHaveStyle({ fontWeight: '700' });
     expect(screen.getByText('✓')).toBeTruthy();
   });
 

@@ -18,11 +18,18 @@ class MigrationCatalog {
       .sort((left, right) => left.localeCompare(right))
       .map((fileName) => {
         const migrationPath = path.join(this.migrationsDirectory, fileName);
-        const content = fs.readFileSync(migrationPath);
+        const rawContent = fs.readFileSync(migrationPath, 'utf8');
+        const content = rawContent.replace(/\r\n/g, '\n');
+        const crlfContent = content.replace(/\n/g, '\r\n');
+        const checksum = createHash('sha256').update(content).digest('hex');
         return {
           version: fileName,
           sequence: Number(fileName.slice(0, 3)),
-          checksum: createHash('sha256').update(content).digest('hex'),
+          checksum,
+          compatibleChecksums: [...new Set([
+            checksum,
+            createHash('sha256').update(crlfContent).digest('hex'),
+          ])],
           path: migrationPath,
         };
       });

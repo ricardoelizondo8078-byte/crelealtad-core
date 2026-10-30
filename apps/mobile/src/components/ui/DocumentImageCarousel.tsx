@@ -2,15 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Image,
-  Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
-  SafeAreaView,
-  StatusBar,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import {
@@ -23,13 +19,37 @@ import {
   touchTargets,
   typography,
 } from '../../theme/tokens';
-import { ZoomableImage } from './ZoomableImage';
+import { DocumentViewer } from './DocumentViewer';
+import {
+  getEvidenceClassificationFrameStyle,
+  type ZoomableImageAction,
+} from './ZoomableImage';
 
 export interface DocumentImageCarouselPage {
   uri: string;
   label: string;
   headers?: Record<string, string>;
+  leftAction?: ZoomableImageAction;
+  frameColor?: string;
+  frameLabel?: string;
+  frameAccessibilityLabel?: string;
 }
+
+export const getDocumentImageCarouselPageAction = (
+  page: DocumentImageCarouselPage,
+  closeFullscreen: () => void,
+): ZoomableImageAction | undefined => {
+  const action = page.leftAction;
+  if (!action) return undefined;
+
+  return {
+    ...action,
+    onPress: () => {
+      closeFullscreen();
+      return action.onPress();
+    },
+  };
+};
 
 interface DocumentImageCarouselProps {
   title: string;
@@ -51,12 +71,10 @@ export const DocumentImageCarousel: React.FC<DocumentImageCarouselProps> = ({
 }) => {
   const theme = moduleThemes[moduleTheme];
   const previewScrollRef = useRef<FlatList<DocumentImageCarouselPage>>(null);
-  const fullscreenScrollRef = useRef<FlatList<DocumentImageCarouselPage>>(null);
   const [previewWidth, setPreviewWidth] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
-  const { width: windowWidth } = useWindowDimensions();
 
   useEffect(() => {
     setActiveIndex(0);
@@ -82,12 +100,7 @@ export const DocumentImageCarousel: React.FC<DocumentImageCarouselProps> = ({
     setActiveIndex(getPageIndex(event.nativeEvent.contentOffset.x, previewWidth, pages.length));
   };
 
-  const handleFullscreenScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setFullscreenIndex(getPageIndex(event.nativeEvent.contentOffset.x, windowWidth, pages.length));
-  };
-
   const activePage = pages[activeIndex];
-  const activeFullscreenPage = pages[fullscreenIndex];
 
   return (
     <View style={styles.container}>
@@ -124,12 +137,16 @@ export const DocumentImageCarousel: React.FC<DocumentImageCarouselProps> = ({
             renderItem={({ item: page, index }) => (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Ampliar ${title}, ${page.label}`}
+                accessibilityLabel={[
+                  `Ampliar ${title}, ${page.label}`,
+                  page.frameAccessibilityLabel,
+                ].filter(Boolean).join('. ')}
                 accessibilityHint="Abre la imagen sin mostrar el fondo de la aplicación"
                 onPress={() => openFullscreen(index)}
                 style={({ pressed }) => [
                   styles.previewPage,
                   { width: previewWidth },
+                  getEvidenceClassificationFrameStyle(page.frameColor),
                   pressed && styles.previewPagePressed,
                 ]}
               >
@@ -171,82 +188,31 @@ export const DocumentImageCarousel: React.FC<DocumentImageCarouselProps> = ({
         </Text>
       </View>
 
-      <Modal
+      <DocumentViewer
         visible={fullscreenVisible}
-        transparent={false}
-        presentationStyle="fullScreen"
-        statusBarTranslucent
-        animationType="fade"
-        onRequestClose={closeFullscreen}
-        onShow={() => {
-          requestAnimationFrame(() => {
-            fullscreenScrollRef.current?.scrollToOffset({
-              offset: fullscreenIndex * windowWidth,
-              animated: false,
-            });
-          });
-        }}
-      >
-        <StatusBar hidden />
-        <SafeAreaView style={styles.fullscreen}>
-          <View style={styles.fullscreenHeader}>
-            <View style={styles.fullscreenTitleContainer}>
-              <Text allowFontScaling={false} numberOfLines={1} style={styles.fullscreenTitle}>
-                {title}
-              </Text>
-              <Text allowFontScaling={false} style={styles.fullscreenSubtitle}>
-                {activeFullscreenPage?.label} · {fullscreenIndex + 1} de {pages.length}
-              </Text>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Cerrar imagen ampliada"
-              hitSlop={spacing.sm}
-              onPress={closeFullscreen}
-              style={({ pressed }) => [
-                styles.closeButton,
-                pressed && styles.closeButtonPressed,
-              ]}
-            >
-              <Text allowFontScaling={false} style={styles.closeButtonText}>✕</Text>
-            </Pressable>
-          </View>
-
-          <FlatList
-            ref={fullscreenScrollRef}
-            data={pages}
-            horizontal
-            pagingEnabled
-            directionalLockEnabled
-            decelerationRate="fast"
-            showsHorizontalScrollIndicator={false}
-            initialNumToRender={1}
-            maxToRenderPerBatch={2}
-            windowSize={3}
-            removeClippedSubviews
-            getItemLayout={(_, index) => ({
-              length: windowWidth,
-              offset: windowWidth * index,
-              index,
-            })}
-            keyExtractor={(page, index) => `fullscreen-${page.label}-${page.uri}-${index}`}
-            onMomentumScrollEnd={handleFullscreenScrollEnd}
-            style={styles.fullscreenCarousel}
-            renderItem={({ item: page }) => (
-              <View
-                style={[styles.fullscreenPage, { width: windowWidth }]}
-              >
-                <ZoomableImage
-                  uri={page.uri}
-                  headers={page.headers}
-                  accessibilityLabel={`${title}, ${page.label}, imagen ampliada`}
-                  style={styles.fullscreenImage}
-                />
-              </View>
-            )}
-          />
-        </SafeAreaView>
-      </Modal>
+        title={title}
+        pages={pages.map((page) => ({
+          uri: page.uri,
+          headers: page.headers,
+          mimeType: 'image/jpeg',
+          label: page.label,
+          leftAction: page.leftAction ? {
+            ...page.leftAction,
+            onPress: () => (
+              getDocumentImageCarouselPageAction(page, closeFullscreen)?.onPress()
+            ),
+          } : undefined,
+          frameColor: page.frameColor,
+          frameLabel: page.frameLabel,
+          frameAccessibilityLabel: [page.label, page.frameAccessibilityLabel]
+            .filter(Boolean)
+            .join('. '),
+        }))}
+        initialPageIndex={fullscreenIndex}
+        onPageIndexChange={setFullscreenIndex}
+        onClose={closeFullscreen}
+        moduleTheme={moduleTheme}
+      />
     </View>
   );
 };
@@ -263,7 +229,7 @@ const styles = StyleSheet.create({
     height: layout.documentPreviewHeight,
     overflow: 'hidden',
     borderRadius: radius.md,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -271,7 +237,7 @@ const styles = StyleSheet.create({
     height: layout.documentPreviewHeight,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.white,
   },
   previewPagePressed: {
     opacity: 0.84,
@@ -313,60 +279,5 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
     marginLeft: spacing.xs,
-  },
-  fullscreen: {
-    flex: 1,
-    backgroundColor: colors.gray[900],
-  },
-  fullscreenHeader: {
-    minHeight: touchTargets.largeAction,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    gap: spacing.md,
-    backgroundColor: colors.gray[900],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray[700],
-  },
-  fullscreenTitleContainer: {
-    flex: 1,
-  },
-  fullscreenTitle: {
-    ...typography.sectionTitle,
-    color: colors.white,
-  },
-  fullscreenSubtitle: {
-    ...typography.caption,
-    color: colors.gray[300],
-    marginTop: spacing.xs,
-  },
-  closeButton: {
-    width: touchTargets.minimum,
-    height: touchTargets.minimum,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.gray[700],
-  },
-  closeButtonPressed: {
-    backgroundColor: colors.gray[600],
-  },
-  closeButtonText: {
-    ...typography.contextTitle,
-    color: colors.white,
-  },
-  fullscreenCarousel: {
-    flex: 1,
-    backgroundColor: colors.gray[900],
-  },
-  fullscreenPage: {
-    flex: 1,
-    backgroundColor: colors.gray[900],
-  },
-  fullscreenImage: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: colors.gray[900],
   },
 });

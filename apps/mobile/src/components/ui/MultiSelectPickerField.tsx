@@ -23,6 +23,7 @@ interface MultiSelectPickerFieldProps {
   value: string[];
   options: MultiSelectPickerOption[];
   onSelect: (selected: string[]) => void;
+  onCancel?: () => void;
   placeholder?: string;
   required?: boolean;
   helperText?: string;
@@ -30,8 +31,13 @@ interface MultiSelectPickerFieldProps {
   moduleTheme?: ModuleThemeKey;
   disabled?: boolean;
   openOnMount?: boolean;
+  showTrigger?: boolean;
   modalSubtitle?: string;
+  selectAllLabel?: string;
+  confirmLabel?: string;
   selectedItemsTitle?: string;
+  selectedCountLabel?: string;
+  emptyMessage?: string;
   showSelectedItemsTitleWhenTrigger?: boolean;
   minSelections?: number;
   maxSelections?: number;
@@ -47,6 +53,7 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
   value,
   options,
   onSelect,
+  onCancel,
   placeholder = 'Seleccionar integrantes',
   required = false,
   helperText,
@@ -54,8 +61,13 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
   moduleTheme = 'verification',
   disabled = false,
   openOnMount = false,
+  showTrigger = true,
   modalSubtitle = 'Selecciona una o varias integrantes',
+  selectAllLabel,
+  confirmLabel = 'Guardar selección',
   selectedItemsTitle = 'Integrantes seleccionadas',
+  selectedCountLabel = 'integrantes seleccionadas',
+  emptyMessage = 'No hay otras integrantes disponibles.',
   showSelectedItemsTitleWhenTrigger = false,
   minSelections = 0,
   maxSelections,
@@ -73,6 +85,16 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
   const autoOpened = useRef(false);
   const themeColors = moduleThemes[moduleTheme];
   const dangerSelection = selectionTone === 'danger';
+  const selectableValues = options.map((option) => option.value);
+  const allSelected = selectableValues.length > 0
+    && selectableValues.every((value) => draft.includes(value));
+  const partiallySelected = !allSelected
+    && selectableValues.some((value) => draft.includes(value));
+  const canSelectAll = Boolean(
+    selectAllLabel
+    && !followUp
+    && (maxSelections == null || maxSelections >= selectableValues.length),
+  );
 
   useEffect(() => {
     if (!openOnMount || disabled || autoOpened.current) return;
@@ -89,6 +111,11 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
     setFollowUpOption(null);
     setPendingFollowUpValue('');
     setOpen(true);
+  };
+
+  const cancelPicker = () => {
+    setOpen(false);
+    onCancel?.();
   };
 
   const toggleOption = (option: MultiSelectPickerOption) => {
@@ -142,6 +169,10 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
     setFollowUpOption(null);
   };
 
+  const toggleAll = () => {
+    setDraft(allSelected ? [] : selectableValues);
+  };
+
   const selectedOptions = options.filter((option) => value.includes(option.value));
   const selectedLabels = selectedOptions.map((option) => option.label);
   const confirmDisabled = draft.length < minSelections
@@ -150,7 +181,7 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
     ? placeholder
     : selectedLabels.length === 1
       ? selectedLabels[0]
-      : `${selectedLabels.length} integrantes seleccionadas`;
+      : `${selectedLabels.length} ${selectedCountLabel}`;
 
   const renderSelectedItem = (selectedOption: MultiSelectPickerOption) => {
     const selectedFollowUpValue = followUp?.values[selectedOption.value];
@@ -225,52 +256,54 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
 
   return (
     <View style={styles.container}>
-      <FormField
-        label={hideLabelWhenSelected && selectedLabels.length > 0 ? null : label}
-        required={hideLabelWhenSelected && selectedLabels.length > 0 ? false : required}
-        helperText={helperText}
-        errorText={errorText}
-      >
-        {!selectedItemsAreTrigger || selectedLabels.length === 0 ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${label}. ${summary}`}
-            disabled={disabled}
-            style={[styles.trigger, disabled && styles.triggerDisabled]}
-            onPress={openPicker}
-          >
-            <Text
-              allowFontScaling={false}
-              style={selectedLabels.length > 0 ? styles.valueText : styles.placeholderText}
+      {showTrigger ? (
+        <FormField
+          label={hideLabelWhenSelected && selectedLabels.length > 0 ? null : label}
+          required={hideLabelWhenSelected && selectedLabels.length > 0 ? false : required}
+          helperText={helperText}
+          errorText={errorText}
+        >
+          {!selectedItemsAreTrigger || selectedLabels.length === 0 ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${label}. ${summary}`}
+              disabled={disabled}
+              style={[styles.trigger, disabled && styles.triggerDisabled]}
+              onPress={openPicker}
             >
-              {summary}
-            </Text>
-            <Text allowFontScaling={false} style={styles.chevron}>⌄</Text>
-          </Pressable>
-        ) : null}
-
-        {selectedLabels.length > 0 ? (
-          <View
-            accessible={!selectedItemsAreTrigger}
-            accessibilityLabel={selectedItemsAreTrigger
-              ? undefined
-              : `${selectedItemsTitle}: ${selectedLabels.join(', ')}`}
-            style={[
-              styles.selectedItems,
-              selectedItemsAreTrigger && styles.selectedItemsAsTrigger,
-            ]}
-          >
-            {!selectedItemsAreTrigger || showSelectedItemsTitleWhenTrigger ? (
-              <Text allowFontScaling={false} style={styles.selectedItemsTitle}>
-                {selectedItemsTitle}
+              <Text
+                allowFontScaling={false}
+                style={selectedLabels.length > 0 ? styles.valueText : styles.placeholderText}
+              >
+                {summary}
               </Text>
-            ) : null}
-            <View style={styles.selectedItemsList}>
-              {selectedOptions.map(renderSelectedItem)}
+              <Text allowFontScaling={false} style={styles.chevron}>⌄</Text>
+            </Pressable>
+          ) : null}
+
+          {selectedLabels.length > 0 ? (
+            <View
+              accessible={!selectedItemsAreTrigger}
+              accessibilityLabel={selectedItemsAreTrigger
+                ? undefined
+                : `${selectedItemsTitle}: ${selectedLabels.join(', ')}`}
+              style={[
+                styles.selectedItems,
+                selectedItemsAreTrigger && styles.selectedItemsAsTrigger,
+              ]}
+            >
+              {!selectedItemsAreTrigger || showSelectedItemsTitleWhenTrigger ? (
+                <Text allowFontScaling={false} style={styles.selectedItemsTitle}>
+                  {selectedItemsTitle}
+                </Text>
+              ) : null}
+              <View style={styles.selectedItemsList}>
+                {selectedOptions.map(renderSelectedItem)}
+              </View>
             </View>
-          </View>
-        ) : null}
-      </FormField>
+          ) : null}
+        </FormField>
+      ) : null}
 
       <Modal
         visible={open}
@@ -281,10 +314,10 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
             cancelFollowUp();
             return;
           }
-          setOpen(false);
+          cancelPicker();
         }}
       >
-        <Pressable style={styles.modalBackdrop} onPress={() => setOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={cancelPicker}>
           <Pressable style={styles.modalSheet} onPress={() => undefined}>
             {followUpOption && followUp ? (
               <>
@@ -363,6 +396,40 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false}>
+                  {canSelectAll ? (
+                    <Pressable
+                      accessibilityRole="checkbox"
+                      accessibilityLabel={selectAllLabel}
+                      accessibilityState={{ checked: partiallySelected ? 'mixed' : allSelected }}
+                      style={[styles.modalOption, styles.selectAllOption]}
+                      onPress={toggleAll}
+                    >
+                      <View
+                        style={[
+                          styles.checkbox,
+                          (allSelected || partiallySelected) && {
+                            borderColor: themeColors.primary,
+                            backgroundColor: allSelected ? themeColors.primary : colors.surface,
+                          },
+                        ]}
+                      >
+                        {allSelected || partiallySelected ? (
+                          <Text
+                            allowFontScaling={false}
+                            style={[
+                              styles.checkmark,
+                              partiallySelected && { color: themeColors.primary },
+                            ]}
+                          >
+                            {allSelected ? '✓' : '—'}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <Text allowFontScaling={false} style={styles.selectAllText}>
+                        {selectAllLabel}
+                      </Text>
+                    </Pressable>
+                  ) : null}
                   {options.length > 0 ? options.map((option) => {
                     const selected = draft.includes(option.value);
                     const selectedOptionDanger = dangerSelection
@@ -371,6 +438,7 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
                       <Pressable
                         key={option.value}
                         accessibilityRole={maxSelections === 1 ? 'radio' : 'checkbox'}
+                        accessibilityLabel={option.label}
                         accessibilityState={{ checked: selected }}
                         style={[
                           styles.modalOption,
@@ -400,17 +468,23 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
                     );
                   }) : (
                     <Text allowFontScaling={false} style={styles.emptyText}>
-                      No hay otras integrantes disponibles.
+                      {emptyMessage}
                     </Text>
                   )}
                 </ScrollView>
 
                 <View style={styles.modalActions}>
-                  <Pressable style={styles.cancelButton} onPress={() => setOpen(false)}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Cancelar selección"
+                    style={styles.cancelButton}
+                    onPress={cancelPicker}
+                  >
                     <Text allowFontScaling={false} style={styles.cancelButtonText}>Cancelar</Text>
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
+                    accessibilityLabel={confirmLabel}
                     accessibilityState={{ disabled: confirmDisabled }}
                     disabled={confirmDisabled}
                     style={[
@@ -433,7 +507,7 @@ export const MultiSelectPickerField: React.FC<MultiSelectPickerFieldProps> = ({
                     }}
                   >
                     <Text allowFontScaling={false} style={styles.confirmButtonText}>
-                      Guardar selección
+                      {confirmLabel}
                     </Text>
                   </Pressable>
                 </View>
@@ -572,6 +646,15 @@ const styles = StyleSheet.create({
   },
   modalOptionDanger: {
     backgroundColor: colors.dangerSoft,
+  },
+  selectAllOption: {
+    backgroundColor: colors.gray[100],
+    borderBottomColor: colors.border,
+  },
+  selectAllText: {
+    ...typography.bodyStrong,
+    color: colors.textPrimary,
+    flex: 1,
   },
   checkbox: {
     width: 24,

@@ -90,9 +90,11 @@ async function bootstrap() {
   app.enableCors(corsOptions);
 
   const port = process.env.PORT || 3100;
+  const host = process.env.HOST || '0.0.0.0';
 
-  // Escuchar en todas las interfaces de red para permitir conexiones desde dispositivos móviles
-  await app.listen(port, '0.0.0.0');
+  // En desarrollo remoto, Tailscale publica el puerto y lo reenvia a
+  // localhost. HOST conserva 0.0.0.0 como valor predeterminado para LAN.
+  await app.listen(port, host);
 
   bootstrapLogger.log(`API iniciada en el puerto ${port}`);
 }

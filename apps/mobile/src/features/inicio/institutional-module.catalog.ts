@@ -17,11 +17,16 @@ export type InstitutionalModuleId =
 interface OperationalModuleAccess {
   canOpenDocumentation: boolean;
   canViewVerification: boolean;
+  canOpenParameters: boolean;
+  canReviewModuleColors: boolean;
 }
 
 interface OperationalModuleHandlers {
   openDocumentation: () => void;
   openVerification: () => void;
+  openParameters: () => void;
+  openModuleColorReview: () => void;
+  openDefinedModuleColors: () => void;
 }
 
 export const PLANNED_MODULE_OPTIONS = [
@@ -89,15 +94,6 @@ export const PLANNED_MODULE_OPTIONS = [
     statusLabel: 'Próximamente',
   },
   {
-    key: 'parametros',
-    title: 'Parámetros',
-    description: 'Políticas y productos',
-    iconLabel: 'PA',
-    moduleTheme: 'parameters',
-    disabled: true,
-    statusLabel: 'Próximamente',
-  },
-  {
     key: 'administracion',
     title: 'Administración',
     description: 'Usuarios, roles y permisos',
@@ -136,6 +132,38 @@ export function buildOperationalModuleOptions(
     disabled: !access.canViewVerification,
     statusLabel: access.canViewVerification ? undefined : 'Requiere permiso',
   });
+
+  if (access.canOpenParameters || includePlannedModules) {
+    modules.push({
+      key: 'parameters',
+      title: 'Parámetros',
+      description: 'Políticas y catálogos',
+      iconLabel: 'PA',
+      moduleTheme: 'parameters',
+      onPress: access.canOpenParameters ? handlers.openParameters : undefined,
+      disabled: !access.canOpenParameters,
+      statusLabel: access.canOpenParameters ? undefined : 'Requiere permiso',
+    });
+  }
+
+  if (access.canReviewModuleColors) {
+    modules.push({
+      key: 'module-color-review',
+      title: 'Revisión de colores',
+      description: 'Encabezados y botones por módulo',
+      iconLabel: 'RC',
+      moduleTheme: 'administration',
+      onPress: handlers.openModuleColorReview,
+    });
+    modules.push({
+      key: 'defined-module-colors',
+      title: 'Colores definidos',
+      description: 'Muestras ya confirmadas',
+      iconLabel: 'CD',
+      moduleTheme: 'administration',
+      onPress: handlers.openDefinedModuleColors,
+    });
+  }
 
   if (includePlannedModules) modules.push(...PLANNED_MODULE_OPTIONS);
 

@@ -20,6 +20,7 @@ import {
   typography,
 } from '../../theme/tokens';
 import { normalizeCurrencyInput } from '../../utils/currency';
+import { codigoParametroEntrevista, useOpcionesEntrevista } from './verificacion-entrevista-parametros';
 
 interface EntrevistaIngresosSectionProps {
   capacidadPagoSemanal: string;
@@ -81,7 +82,13 @@ export const EntrevistaIngresosSection: React.FC<EntrevistaIngresosSectionProps>
   onLimpiarNegocio,
   onCapturarEvidenciaNegocio,
   onReintentarEvidenciasNegocio,
-}) => (
+}) => {
+  const opcionesFuentesIngreso = useOpcionesEntrevista('FUENTES_INGRESO', ['Sueldo', 'Negocio']);
+  const opcionesAntiguedadLaboral = useOpcionesEntrevista('ANTIGUEDAD_LABORAL', ['1 año', '2 años', '3 a 5 años', '≥ 5 años']);
+  const codigoFuente = (value: string) => codigoParametroEntrevista('FUENTES_INGRESO', value, { Sueldo: 'SUELDO', Negocio: 'NEGOCIO' });
+  const tieneSueldo = fuentesIngresoPersonal.some((value) => codigoFuente(value) === 'SUELDO');
+  const tieneNegocio = fuentesIngresoPersonal.some((value) => codigoFuente(value) === 'NEGOCIO');
+  return (
   <>
     <TextInput
       label="¿Cuánto puede pagar por semana?"
@@ -108,11 +115,11 @@ export const EntrevistaIngresosSection: React.FC<EntrevistaIngresosSectionProps>
     <MultiSelectField
       label="¿De dónde provienen sus ingresos?"
       value={fuentesIngresoPersonal}
-      options={['Sueldo', 'Negocio']}
+      options={[...opcionesFuentesIngreso]}
       onSelect={(seleccion) => {
         onFuentesIngresoPersonalChange(seleccion);
-        if (!seleccion.includes('Sueldo')) onLimpiarSueldo();
-        if (!seleccion.includes('Negocio')) onLimpiarNegocio();
+        if (!seleccion.some((value) => codigoFuente(value) === 'SUELDO')) onLimpiarSueldo();
+        if (!seleccion.some((value) => codigoFuente(value) === 'NEGOCIO')) onLimpiarNegocio();
       }}
       helperText="Puedes seleccionar una o ambas opciones."
       moduleTheme="verification"
@@ -120,7 +127,7 @@ export const EntrevistaIngresosSection: React.FC<EntrevistaIngresosSectionProps>
       required
     />
 
-    {fuentesIngresoPersonal.includes('Sueldo') ? (
+    {tieneSueldo ? (
       <>
         <View style={styles.sectionHeader}>
           <StickySectionHeader title="SUELDO" moduleTheme="verification" />
@@ -149,7 +156,7 @@ export const EntrevistaIngresosSection: React.FC<EntrevistaIngresosSectionProps>
         <SelectorField
           label="¿Desde hace cuánto tiempo trabaja ahí?"
           value={antiguedadLaboral}
-          options={['1 año', '2 años', '3 a 5 años', '≥ 5 años']}
+          options={[...opcionesAntiguedadLaboral]}
           onSelect={onAntiguedadLaboralChange}
           moduleTheme="verification"
           required
@@ -157,7 +164,7 @@ export const EntrevistaIngresosSection: React.FC<EntrevistaIngresosSectionProps>
       </>
     ) : null}
 
-    {fuentesIngresoPersonal.includes('Negocio') ? (
+    {tieneNegocio ? (
       <>
         <View style={styles.sectionHeader}>
           <StickySectionHeader title="NEGOCIO" moduleTheme="verification" />
@@ -270,7 +277,8 @@ export const EntrevistaIngresosSection: React.FC<EntrevistaIngresosSectionProps>
       </>
     ) : null}
   </>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   sectionHeader: {

@@ -20,6 +20,12 @@ import { VerificacionVisitasVecinoModule } from './verificacion-visitas-vecino/v
 import { VerificacionImagenesDomicilioModule } from './verificacion-imagenes-domicilio/verificacion-imagenes-domicilio.module';
 import { VerificacionEntrevistaModule } from './verificacion-entrevista/verificacion-entrevista.module';
 import { getDatabaseConfig } from './database.config';
+import { ParametrosFinancierasModule } from './parametros-financieras/parametros-financieras.module';
+import { ParametrosEvidenciaMotivosModule } from './parametros-evidencia-motivos/parametros-evidencia-motivos.module';
+import { ParametrosEntrevistaModule } from './parametros-entrevista/parametros-entrevista.module';
+import { ParametrosConclusionesModule } from './parametros-conclusiones/parametros-conclusiones.module';
+import { ParametrosVerificacionPasosModule } from './parametros-verificacion-pasos/parametros-verificacion-pasos.module';
+import { ParametrosVerificacionCierreModule } from './parametros-verificacion-cierre/parametros-verificacion-cierre.module';
 
 @Module({
   controllers: [HealthController],
@@ -58,6 +64,12 @@ import { getDatabaseConfig } from './database.config';
     VerificacionVisitasVecinoModule,
     VerificacionImagenesDomicilioModule,
     VerificacionEntrevistaModule,
+    ParametrosFinancierasModule,
+    ParametrosEvidenciaMotivosModule,
+    ParametrosEntrevistaModule,
+    ParametrosConclusionesModule,
+    ParametrosVerificacionPasosModule,
+    ParametrosVerificacionCierreModule,
   ],
 })
 export class AppModule implements NestModule {

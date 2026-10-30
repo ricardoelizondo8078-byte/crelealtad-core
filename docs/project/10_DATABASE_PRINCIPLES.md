@@ -1,8 +1,8 @@
 # 10 Database Principles — Principios de Base de Datos
 
-Versión: 2.15.0
+Versión: 2.19.0
 Estado: Vigente y verificado
-Fecha de auditoría: 2026-10-04
+Fecha de auditoría: 2026-10-18
 
 ## Principios
 
@@ -20,15 +20,15 @@ Fecha de auditoría: 2026-10-04
 - Motor: PostgreSQL 17.10.
 - Base local: `crelealtad`.
 - Esquema operativo: `public`.
-- Tablas base: 50.
+- Tablas base: 63.
 - Vistas: 1 (`solicitudes_completo`).
-- Índices: 181.
-- Llaves primarias: 50.
-- Llaves foráneas: 96.
-- Restricciones UNIQUE: 47.
-- Restricciones CHECK explícitas: 97.
+- Índices: 219.
+- Llaves primarias: 63.
+- Llaves foráneas: 121.
+- Restricciones UNIQUE: 63.
+- Restricciones CHECK explícitas: 150.
 - Row Level Security activo: 0 tablas.
-- Triggers en esquema público: 0.
+- Triggers en esquema público: 1, de integridad para opciones de Visita al vecino.
 
 ## Inventario de tablas por dominio
 
@@ -80,6 +80,7 @@ Fecha de auditoría: 2026-10-04
 - `verificacion_llamada_evidencias`
 - `verificacion_visita_vecino_fachadas`
 - `verificacion_visita_vecino_evidencias`
+- `verificacion_visita_vecino_opciones`
 - `verificacion_visitas_vecino`
 - `verificacion_imagenes_domicilio`
 - `verificacion_entrevistas`
@@ -171,17 +172,28 @@ Estado actual:
 - 45 relaciones entre tablas/vista exponen `created_at` en metadatos; 28 exponen `updated_at`.
 - Solo una tabla contiene `created_by`.
 - Ninguna tabla contiene `updated_by`.
-- No existen triggers públicos para poblar auditoría.
+- No existen triggers públicos para poblar auditoría. La migración 064 incorpora un único trigger
+  público de integridad para validar la familia y disponibilidad de las opciones de Visita al vecino.
 - La API escribe `audit_log` para login exitoso, altas de grupo/expediente e integrante, campos modificados de integrante/solicitud, documentos confirmados, inicio de renovación, handoff a Verificación, retiro, cambio de motivo, reintegro y otras acciones ya enlazadas; la cobertura transversal continúa incompleta.
 - Los eventos de captura nuevos conservan nombres de campos y contexto operativo, sin duplicar valores personales en la bitácora.
 - `verificacion_llamadas` funciona como bitácora operativa inmutable de intentos: conserva integrante, canal, resultado declarado, actor, fecha/hora, latitud, longitud, precisión horizontal opcional, fecha/hora de lectura y fuente `DISPOSITIVO`, con idempotencia por actor para impedir duplicados por reintento. Las coordenadas son obligatorias para escrituras nuevas mediante API; los intentos históricos permanecen íntegros con campos nulos.
 - `verificacion_llamada_encuestas` conserva una respuesta estructurada por intento contestado; `verificacion_llamada_caracteristicas` normaliza las seis coincidencias y `verificacion_llamada_evidencias` mantiene metadatos, SHA-256 y ruta protegida del archivo externo.
-- `verificacion_visitas_vecino` es la bitácora inmutable de la confirmación combinada `¿La conoce? ¿Sabe dónde vive?`: conserva integrante, respuesta booleana, actor, fecha, idempotencia, latitud, longitud, precisión horizontal opcional, fecha/hora de lectura y fuente `DISPOSITIVO`. Las migraciones 018 y 019 están aplicadas; la API guarda en transacción la fila y un evento de auditoría sin coordenadas, y el resumen obtiene la respuesta más reciente.
+- `verificacion_visitas_vecino` es la bitácora inmutable de la confirmación combinada `¿La conoce? ¿Sabe dónde vive?`: conserva integrante, respuesta booleana, actor, fecha, idempotencia, latitud, longitud, precisión horizontal opcional, fecha/hora de lectura y fuente `DISPOSITIVO`. Las migraciones 018 y 019 están aplicadas. La 064 agrega `verificacion_visita_vecino_opciones`; la 065 limita cada visita a una sola relación. Cada respuesta nueva guarda exactamente una opción activa de su rama en la misma transacción, con instantáneas de etiqueta/orden y un trigger de integridad; el evento de auditoría omite coordenadas y el resumen obtiene la respuesta más reciente con su opción.
 - `verificacion_visita_vecino_fachadas` conserva los metadatos de cada fotografía de fachada y su ubicación, mientras el archivo vive en almacenamiento protegido. La migración 020 agrega además `verificacion_visitas_vecino.fachada_id`; la API exige la fachada más reciente para toda respuesta nueva y preserva con `NULL` únicamente las filas históricas previas.
 - `verificacion_visita_vecino_evidencias` conserva cada fotografía posterior a la pregunta, ligada por FK restrictiva a la respuesta concreta. La migración 021 mantiene metadatos, hash, actor, idempotencia y ubicación; el archivo queda protegido fuera de PostgreSQL y la API sólo admite evidencias para la respuesta más reciente.
 - `verificacion_imagenes_domicilio` conserva el historial de las cuatro clases técnicas de captura del domicilio. Las migraciones 022 y 023 relacionan cada fila con integrante y usuario mediante FKs restrictivas, limitan el tipo, formato, tamaño, hash, fuente y rango geográfico, e impiden duplicados de reintento por actor e idempotencia. Los archivos permanecen fuera de PostgreSQL en almacenamiento protegido; el resumen sólo presenta la toma más reciente de cada tipo y omite coordenadas. M03 exige fachada y, después, una respuesta persistida sobre el medidor: `Sí` requiere su fotografía y `No` una causa controlada que la sustituye para el cierre. La fachada con la integrante es opcional; `NOMENCLATURAS_CALLES` se conserva sin borrado para el módulo futuro.
 - `verificacion_entrevistas` conserva una captura parcial por integrante con tipos de dominio, revisión monotónica y actores inicial/final derivados del JWT. `verificacion_entrevista_familiares` y `verificacion_entrevista_desacuerdos_montos` son historiales inmutables de altas y retiros; sus FKs compuestas impiden relacionar integrantes de otro expediente.
-- `verificacion_entrevista_evidencias` conserva cada fotografía propia de Entrevista como una fila histórica de tipo `NEGOCIO`, `CONTROL_PAGOS` o `FOLLETO_PREMIO_TESORERA`, con FKs restrictivas, ruta protegida, MIME, tamaño, SHA-256, cámara, horas de foto/ubicación, actor, coordenadas, precisión disponible e idempotencia. Toda escritura nueva requiere ubicación; las filas anteriores a la migración 031 se preservan mediante `legado_sin_ubicacion` y nunca reciben coordenadas inventadas. La auditoría omite respuestas personales y coordenadas exactas.
+- La migración 054 agrega `monto_ultimo_prestamo_credito_grupal NUMERIC(12,2) NULL` a
+  `verificacion_entrevistas`, valida que no sea negativo y lo prohíbe cuando se declara que no hubo
+  otro crédito. El `NULL` conserva el autoguardado parcial; mobile exige la respuesta para concluir
+  cualquiera de las dos ramas del historial externo.
+- `verificacion_entrevista_evidencias` conserva cada fotografía propia de Entrevista como una fila histórica de tipo `NEGOCIO`, `HISTORIAL_CREDITO_ACTIVO`, `HISTORIAL_CREDITO_INACTIVO`, `CONTROL_PAGOS` o `FOLLETO_PREMIO_TESORERA`, con FKs restrictivas, ruta protegida, MIME, tamaño, SHA-256, cámara, horas de foto/ubicación, actor, coordenadas, precisión disponible e idempotencia. La migración 049 agrega `clasificacion_semaforo`: la API exige `VERDE`, `AMARILLO` o `ROJO` únicamente para nuevas evidencias de historial externo. La 050 agrega `motivo_clasificacion_id` y `motivos_clasificacion_evidencia`; una FK compuesta garantiza el mismo color y un `CHECK NOT VALID` exige color y motivo en filas nuevas sin rechazar el legado existente. Los campos nullable conservan ese legado sin inventar clasificación ni explicación. Toda escritura nueva requiere ubicación; las filas anteriores a la migración 031 se preservan mediante `legado_sin_ubicacion` y nunca reciben coordenadas inventadas. La auditoría omite respuestas personales y coordenadas exactas.
+- `verificacion_entrevista_evidencia_integrantes` relaciona un único archivo de historial crediticio externo con una o varias integrantes del mismo expediente. La PK evita asociaciones duplicadas; las FKs compuestas impiden cruces de expediente y cada relación conserva actor y fecha. La migración 047 agrega el expediente derivado a la evidencia y asigna el legado únicamente a su integrante de origen. La 048 agrega vigencia y último actor/fecha: una corrección desactiva relaciones sin borrarlas y las consultas operativas filtran sólo las activas.
+- `parametros_entrevista_opciones` conserva 20 catálogos administrables de Verificación: 18 de
+  Entrevista y dos independientes para las ramas `Sí` y `No` de Visita al vecino. Código y familia
+  son identidad estable; etiqueta, orden y disponibilidad cambian mediante baja lógica y auditoría.
+  Las migraciones 053 y 064 son aditivas, usan FKs restrictivas y no modifican respuestas ya
+  guardadas. Las dos familias nuevas inician vacías para no inventar opciones operativas.
 - La conclusión de `Llamada` se deriva de `completada_at`: exige todas las coincidencias positivas, evidencia confirmada y una acción distinta de `LLAMAR_MAS_TARDE`. El alta de la encuesta también genera la acción abreviada `ENCUESTA_LLAMADA` en `audit_log`, que respeta el límite vigente de 20 caracteres.
 
 Brecha constitucional:
@@ -196,7 +208,10 @@ Brecha constitucional:
 - Ninguna migración debe ejecutarse por nombre o fecha sin revisar SQL, precondiciones, respaldo, compatibilidad y reversión.
 - Los cambios se prueban primero en `crelealtad_test` cuando corresponda.
 - `schema_migrations` conserva versión, SHA-256, origen, actor y duración. `npm run db:migrations:apply -- --database=<base> --through=<secuencia>` exige confirmación nominal mediante `MIGRATION_APPLY_CONFIRM`, ejecuta cada archivo canónico dentro de una transacción y registra el ledger sólo al confirmar.
-- La cadena canónica tiene 33 migraciones aplicadas hasta 036 en `crelealtad_test` y `crelealtad`. La 036 fue probada con aplicación repetida, rollback, reconstrucción desde dump y pruebas de rechazo antes de aplicarse a la base operativa.
+- La cadena canónica tiene 51 migraciones aplicadas hasta 054 en `crelealtad_test` y `crelealtad`,
+  sin pendientes, drift ni entradas desconocidas. La 054 pasó aplicación, rollback protegido y
+  reaplicación en prueba; se desplegó con respaldo operativo verificado. Las migraciones 047 y 048
+  conservan siete asociaciones activas, ninguna sin actor o fecha y cero filas huérfanas.
 - `db:migrations:status` termina con error si detecta pendientes, drift o entradas desconocidas. La reconstrucción destructiva de `crelealtad_test` exige `TEST_DB_RESET_CONFIRM=crelealtad_test` y registra como `BASELINE` el catálogo exacto representado por el dump; no mantiene listas paralelas de migraciones.
 - Está prohibido activar `synchronize: true`.
 - D01 identifica cada corte por SHA-256, genera manifiesto, prevalida relaciones y carga en una sola transacción; repetir el mismo hash no duplica filas.
@@ -205,7 +220,8 @@ Brecha constitucional:
 
 1. RLS inexistente.
 2. Auditoría parcial: el recorrido de Documentación está cubierto en sus altas y cambios principales, pero faltan módulos futuros y gobierno transversal.
-3. Sin triggers de auditoría o integridad adicional.
+3. Sin triggers de auditoría; el único trigger público de integridad valida las opciones de Visita
+   al vecino y no sustituye las validaciones transaccionales de API.
 4. Matriz funcional y alcance territorial aprobados por DEC-175, pero todavía no implementados; el JSONB vigente conserva listas independientes y comodines temporales.
 5. Tabla de respaldo mezclada con entidades operativas.
 6. Las tres validaciones SI/NO en solicitudes siguen siendo decisión funcional abierta.

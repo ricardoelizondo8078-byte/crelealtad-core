@@ -21,6 +21,7 @@ import {
   Card,
   ContextHeader,
   CreditAmountsSummary,
+  MultiSelectPickerField,
   PrimaryButton,
   ScreenContainer,
   ScreenTitleBar,
@@ -34,6 +35,8 @@ import {
 } from '../../components/ui';
 import type {
   DocumentImageCarouselPage,
+  EvidenceReviewValue,
+  MultiSelectPickerOption,
   YesNoValue,
 } from '../../components/ui';
 import { apiUrl } from '../../config/api';
@@ -50,6 +53,7 @@ import {
 import { useDebounce } from '../../hooks/useDebounce';
 import {
   colors,
+  layout,
   moduleThemes,
   radius,
   spacing,
@@ -64,7 +68,22 @@ import { formatCurrency, normalizeCurrencyInput } from '../../utils/currency';
 import { formatPhone } from '../../utils/input';
 import { abrirWhatsApp, llamar } from '../../utils/phone';
 import {
-  getLocalVerificationProgress,
+  listarFinancierasCompetidorasVigentes,
+  type FinancieraCompetidoraVigente,
+} from '../parametros/parametros-financieras.api';
+import {
+  listarMotivosClasificacionEvidenciaVigentes,
+  type MotivoClasificacionEvidencia,
+} from '../parametros/parametros-evidencia-motivos.api';
+import {
+  obtenerRequisitosVerificacionIntegrante,
+  type RequisitosVerificacionIntegrante,
+} from '../parametros/parametros-verificacion-pasos.api';
+import {
+  construirOpcionesFinancierasCreditoGrupal,
+  normalizarNombreFinanciera,
+} from '../parametros/parametros-financieras.model';
+import {
   markNeedsDocumentation as saveNeedsDocumentationProgress,
   saveStepOneCompleted,
 } from './verificacion-progress.storage';
@@ -91,6 +110,15 @@ import { VerificacionDocumentoModal } from './VerificacionDocumentoModal';
 import { EntrevistaEvidenceViewers } from './EntrevistaEvidenceViewers';
 import { VerificacionLlamadaModals } from './VerificacionLlamadaModals';
 import { DocumentosRevisionSection } from './DocumentosRevisionSection';
+import { ConclusionesResumen } from './ConclusionesResumen';
+import {
+  useCalificacionCiclosCredito,
+  useCalificacionSemanaCredito,
+  useConcordanciaFicha,
+  useConcordanciaPrestamo,
+  usePromedioEvidencias,
+  useToleranciaSemanaDesembolso,
+} from './verificacion-conclusiones-parametros';
 import { useEntrevistaForm } from './useEntrevistaForm';
 import { useDocumentoRevisionModal } from './useDocumentoRevisionModal';
 import {
@@ -110,12 +138,15 @@ import {
   crearClaveIdempotenciaVisitaVecino,
   EvidenciaVisitaPendiente,
   FachadaVisitaPendiente,
+  obtenerOpcionesVisitaVecino,
   obtenerResumenEvidenciaVisita,
   obtenerResumenFachadaVisita,
   obtenerResumenVisitaVecino,
   registrarEvidenciaVisita,
   registrarFachadaVisita,
   registrarVisitaVecino,
+  type OpcionVisitaVecino,
+  type OpcionesVisitaVecino,
 } from './verificacion-visitas-vecino.api';
 import {
   getVerificacionDocumentHeaders,
@@ -133,6 +164,10 @@ import {
   TipoImagenDomicilio,
 } from './verificacion-imagenes-domicilio.api';
 import {
+  actualizarIntegrantesEvidenciaEntrevista,
+  calificarEvidenciaEntrevista,
+  type CalificacionRevisionEvidencia,
+  type ClasificacionSemaforoEvidencia,
   crearClaveIdempotenciaEvidenciaNegocio,
   crearClaveIdempotenciaEvidenciaEntrevista,
   EntrevistaPayload,
@@ -144,11 +179,13 @@ import {
   registrarEvidenciaEntrevista,
   registrarEvidenciaNegocio,
 } from './verificacion-entrevista.api';
+import { obtenerPresentacionClasificacionEvidencia } from './verificacion-evidencia-semaforo.model';
 import {
   crearEntrevistaPayload,
   restaurarEntrevista,
   type EntrevistaRestaurada,
 } from './verificacion-entrevista.mapper';
+import { evaluarCompletitudEntrevista } from './verificacion-entrevista-completion';
 import {
   calcularSemanasTranscurridasDesdeMes,
   NO_CONOCE_TESORERA_VALUE,
@@ -161,11 +198,13 @@ import {
   crearEvidenciasHistorialCreditoVacias,
   crearImagenesDomicilioPendientesVacias,
   crearImagenesDomicilioVacias,
+  IMAGENES_DOMICILIO,
 } from './verificacion-domicilio.model';
 import {
   cycleNumber,
   esTipoDocumentoRevision,
   mapCreditHistory,
+  obtenerPresentacionCicloIndividual,
   obtenerTelefonosLlamadaDisponibles,
   TIPO_DOCUMENTO_POR_CLAVE,
 } from './verificacion-individual.model';
@@ -176,6 +215,7 @@ import {
   type DocumentoRemoto,
   type ErroresEvidenciasHistorialCredito,
   type EvidenciaNegocioVista,
+  type EvidenciaHistorialCreditoVista,
   type EvidenciasHistorialCredito,
   type EvidenciasHistorialCreditoPendientes,
   type ImagenDomicilioPendienteEnPantalla,
@@ -196,6 +236,13 @@ interface IntegranteVerificacionScreenProps {
   integrantePosition?: number;
   integrantesTotal?: number;
   onBack?: () => void;
+}
+
+interface EvidenciaHistorialCreditoEnEdicion {
+  id: string;
+  tipo: TipoEvidenciaHistorialCredito;
+  integranteIds: string[];
+  apertura: number;
 }
 
 type VerificationTextInputProps = React.ComponentProps<typeof UiTextInput>;
@@ -243,6 +290,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     financieraCreditoGrupal, setFinancieraCreditoGrupal,
     creditoGrupalAnteriorActivo, setCreditoGrupalAnteriorActivo,
     valorFichaCreditoGrupal, setValorFichaCreditoGrupal,
+    montoUltimoPrestamoCreditoGrupal, setMontoUltimoPrestamoCreditoGrupal,
     semanaActualCreditoGrupal, setSemanaActualCreditoGrupal,
     mesDesembolsoCreditoGrupal, setMesDesembolsoCreditoGrupal,
     mesUltimoPagoCreditoGrupal, setMesUltimoPagoCreditoGrupal,
@@ -289,6 +337,9 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const [solicitudData, setSolicitudData] = useState<SolicitudData | null>(null);
   const [documentos, setDocumentos] = useState<DocumentoItem[]>([]);
   const [integrantesGrupo, setIntegrantesGrupo] = useState<IntegranteData[]>([]);
+  const [requisitosVerificacion, setRequisitosVerificacion] = useState<
+    RequisitosVerificacionIntegrante | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [markingNeedsDocumentation, setMarkingNeedsDocumentation] = useState(false);
   const [pasoActual, setPasoActual] = useState<PasoVerificacion>('documentos');
@@ -434,6 +485,12 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const [evidenciasHistorialCreditoPendientes, setEvidenciasHistorialCreditoPendientes] = useState<
     EvidenciasHistorialCreditoPendientes
   >(crearEvidenciasHistorialCreditoPendientesVacias);
+  const [evidenciaHistorialCreditoPorAsignar, setEvidenciaHistorialCreditoPorAsignar] = useState<
+    EvidenciaEntrevistaPendiente | null
+  >(null);
+  const [integrantesEvidenciaSeleccionadas, setIntegrantesEvidenciaSeleccionadas] = useState<
+    string[]
+  >([]);
   const [loadingEvidenciasHistorialCredito, setLoadingEvidenciasHistorialCredito] = useState(false);
   const [guardandoEvidenciasHistorialCredito, setGuardandoEvidenciasHistorialCredito] = useState<
     TipoEvidenciaHistorialCredito | null
@@ -446,8 +503,33 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   >([]);
   const [loadingComprobanteLineaCredito, setLoadingComprobanteLineaCredito] = useState(false);
   const [errorComprobanteLineaCredito, setErrorComprobanteLineaCredito] = useState<string | null>(null);
+  const [evidenciaHistorialCreditoVisible, setEvidenciaHistorialCreditoVisible] = useState(false);
+  const [fotografiasConclusionesVisible, setFotografiasConclusionesVisible] = useState<
+    'casa' | 'negocio' | null
+  >(null);
+  const [evidenciaHistorialCreditoEnEdicion, setEvidenciaHistorialCreditoEnEdicion] = useState<
+    EvidenciaHistorialCreditoEnEdicion | null
+  >(null);
+  const [calificandoEvidenciaId, setCalificandoEvidenciaId] = useState<string | null>(null);
   const comprobanteLineaCreditoRequestRef = useRef(0);
   const [entrevistaCargada, setEntrevistaCargada] = useState(false);
+  const [fechaCapturaEntrevista, setFechaCapturaEntrevista] = useState<string | null>(null);
+  const calificacionSemanaCredito = useCalificacionSemanaCredito();
+  const calificacionCiclosCredito = useCalificacionCiclosCredito();
+  const toleranciaSemanaDesembolso = useToleranciaSemanaDesembolso();
+  const concordanciaFicha = useConcordanciaFicha();
+  const concordanciaPrestamo = useConcordanciaPrestamo();
+  const calificacionPromedioEvidencias = usePromedioEvidencias();
+  const [catalogoFinancierasCompetidoras, setCatalogoFinancierasCompetidoras] = useState<
+    FinancieraCompetidoraVigente[]
+  >([]);
+  const [catalogoFinancierasDisponible, setCatalogoFinancierasDisponible] = useState(false);
+  const [motivosClasificacionEvidencia, setMotivosClasificacionEvidencia] = useState<
+    MotivoClasificacionEvidencia[]
+  >([]);
+  const [errorMotivosClasificacionEvidencia, setErrorMotivosClasificacionEvidencia] = useState<
+    string | null
+  >(null);
   const [guardandoEntrevista, setGuardandoEntrevista] = useState(false);
   const [errorGuardadoEntrevista, setErrorGuardadoEntrevista] = useState<string | null>(null);
   const [estadoSyncEntrevista, setEstadoSyncEntrevista] = useState<
@@ -457,6 +539,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const guardadoEntrevistaEnCursoRef = useRef(false);
   const entrevistaPendienteRef = useRef<string | null>(null);
   const entrevistaAbiertaRef = useRef(false);
+  const [abrirComoConocioAsesora, setAbrirComoConocioAsesora] = useState(false);
   const [evidenciaEntrevistaHeaders, setEvidenciaEntrevistaHeaders] = useState<Record<string, string>>();
   const [evidenciaControlPagosPendiente, setEvidenciaControlPagosPendiente] = useState<EvidenciaEntrevistaPendiente | null>(null);
   const [evidenciaFolletoPendiente, setEvidenciaFolletoPendiente] = useState<EvidenciaEntrevistaPendiente | null>(null);
@@ -498,12 +581,17 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const [loadingIneVisita, setLoadingIneVisita] = useState(false);
   const [errorIneVisita, setErrorIneVisita] = useState<string | null>(null);
   const [vecinoConoceDomicilio, setVecinoConoceDomicilio] = useState<YesNoValue>(null);
+  const [opcionesVisitaVecino, setOpcionesVisitaVecino] = useState<OpcionesVisitaVecino>({ si: [], no: [] });
+  const [opcionesSeleccionadasVisita, setOpcionesSeleccionadasVisita] = useState<OpcionVisitaVecino[]>([]);
+  const [loadingOpcionesVisita, setLoadingOpcionesVisita] = useState(false);
+  const [errorOpcionesVisita, setErrorOpcionesVisita] = useState<string | null>(null);
   const [visitaVecinoActualId, setVisitaVecinoActualId] = useState<string | null>(null);
   const [errorResumenVisitaVecino, setErrorResumenVisitaVecino] = useState(false);
   const [guardandoResultadoVecino, setGuardandoResultadoVecino] = useState(false);
   const [idempotenciaVisitaVecinoPendiente, setIdempotenciaVisitaVecinoPendiente] = useState<{
     clave: string;
     respuesta: Exclude<YesNoValue, null>;
+    opcionIds: string[];
   } | null>(null);
   const [fachadaVisita, setFachadaVisita] = useState<{
     id: string;
@@ -527,6 +615,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const [errorEvidenciaVisita, setErrorEvidenciaVisita] = useState<string | null>(null);
 
   const aplicarEntrevistaRestaurada = (restaurada: EntrevistaRestaurada) => {
+    setAbrirComoConocioAsesora(false);
     setConoceAsesora(restaurada.conoceAsesora);
     setComoConocioAsesora(restaurada.comoConocioAsesora);
     setConoceIntegrantes(restaurada.conoceIntegrantes);
@@ -544,6 +633,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     setFinancieraCreditoGrupal(restaurada.financieraCreditoGrupal);
     setCreditoGrupalAnteriorActivo(restaurada.creditoGrupalAnteriorActivo);
     setValorFichaCreditoGrupal(restaurada.valorFichaCreditoGrupal);
+    setMontoUltimoPrestamoCreditoGrupal(restaurada.montoUltimoPrestamoCreditoGrupal);
     setSemanaActualCreditoGrupal(restaurada.semanaActualCreditoGrupal);
     setMesDesembolsoCreditoGrupal(restaurada.mesDesembolsoCreditoGrupal);
     setMesUltimoPagoCreditoGrupal(restaurada.mesUltimoPagoCreditoGrupal);
@@ -599,6 +689,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   };
 
   const cargarEntrevistaGuardada = async () => {
+    setAbrirComoConocioAsesora(false);
     setEntrevistaCargada(false);
     const localDraft = await getDraft<EntrevistaPayload>(entrevistaDraftKey);
     try {
@@ -609,18 +700,29 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
       );
       const usaBorradorLocal = Boolean(localDraft && localDraft.status !== 'SYNCED');
       const payload = usaBorradorLocal ? localDraft?.data : respuesta.entrevista;
+      setFechaCapturaEntrevista(
+        usaBorradorLocal
+          ? localDraft?.updatedAt ?? respuesta.entrevista?.updated_at ?? null
+          : respuesta.entrevista?.updated_at ?? null,
+      );
       if (payload) {
         if (usaBorradorLocal) {
           aplicarEntrevistaPayload(payload);
+          ultimaEntrevistaConfirmadaRef.current = JSON.stringify(payload);
         } else {
-          aplicarEntrevistaRestaurada(restaurarEntrevista(
+          const entrevistaRestaurada = restaurarEntrevista(
             respuesta.entrevista!,
+            NO_SABE_DOMICILIO_RECOLECCION_VALUE,
+          );
+          aplicarEntrevistaRestaurada(entrevistaRestaurada);
+          ultimaEntrevistaConfirmadaRef.current = JSON.stringify(crearEntrevistaPayload(
+            entrevistaRestaurada,
             NO_SABE_DOMICILIO_RECOLECCION_VALUE,
           ));
         }
-        ultimaEntrevistaConfirmadaRef.current = JSON.stringify(payload);
       } else {
         ultimaEntrevistaConfirmadaRef.current = '';
+        setFechaCapturaEntrevista(null);
       }
       setEstadoSyncEntrevista(
         localDraft?.status === 'BLOCKED'
@@ -640,6 +742,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     } catch (error) {
       if (error instanceof ApiError && error.status === 0 && localDraft) {
         aplicarEntrevistaPayload(localDraft.data);
+        setFechaCapturaEntrevista(localDraft.updatedAt);
         ultimaEntrevistaConfirmadaRef.current = JSON.stringify(localDraft.data);
         setEstadoSyncEntrevista(localDraft.status === 'BLOCKED' ? 'blocked' : 'pending');
         setErrorGuardadoEntrevista(
@@ -651,6 +754,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
         return;
       }
       setEntrevistaCargada(false);
+      setFechaCapturaEntrevista(null);
       setEstadoSyncEntrevista('idle');
       setErrorGuardadoEntrevista(
         'No se pudo recuperar la entrevista guardada. Revisa tu conexión antes de capturar.',
@@ -714,11 +818,17 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
       setFotoFolletoPremioTesorera(evidenciaFolleto ? apiUrl(evidenciaFolleto.archivo_url) : null);
       const presentarEvidenciaCredito = (
         evidencia: (typeof resumen.evidencias)[number],
-      ): EvidenciaNegocioVista => ({
+      ): EvidenciaHistorialCreditoVista => ({
         id: evidencia.id,
         uri: apiUrl(evidencia.archivo_url),
         headers,
         registradaAt: evidencia.registrada_at,
+        integranteIds: evidencia.integrante_ids,
+        clasificacionSemaforo: evidencia.clasificacion_semaforo,
+        motivoClasificacionId: evidencia.motivo_clasificacion_id,
+        motivoClasificacion: evidencia.motivo_clasificacion,
+        calificacionRevision: evidencia.calificacion_revision,
+        calificadaAt: evidencia.calificada_at,
       });
       setEvidenciasHistorialCredito({
         HISTORIAL_CREDITO_ACTIVO: evidenciasCreditoActivo.map(presentarEvidenciaCredito),
@@ -890,6 +1000,10 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     setLoadingIneVisita(false);
     setErrorIneVisita(null);
     setVecinoConoceDomicilio(null);
+    setOpcionesVisitaVecino({ si: [], no: [] });
+    setOpcionesSeleccionadasVisita([]);
+    setLoadingOpcionesVisita(true);
+    setErrorOpcionesVisita(null);
     setVisitaVecinoActualId(null);
     setErrorResumenVisitaVecino(false);
     setGuardandoResultadoVecino(false);
@@ -914,6 +1028,8 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     setEvidenciasHistorialCreditoPendientes(
       crearEvidenciasHistorialCreditoPendientesVacias(),
     );
+    setEvidenciaHistorialCreditoPorAsignar(null);
+    setIntegrantesEvidenciaSeleccionadas([]);
     setLoadingEvidenciasHistorialCredito(true);
     setGuardandoEvidenciasHistorialCredito(null);
     setErroresEvidenciasHistorialCredito(crearErroresEvidenciasHistorialCreditoVacios());
@@ -921,7 +1037,11 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     setPaginasComprobanteLineaCredito([]);
     setLoadingComprobanteLineaCredito(false);
     setErrorComprobanteLineaCredito(null);
+    setEvidenciaHistorialCreditoVisible(false);
+    setFotografiasConclusionesVisible(null);
+    setEvidenciaHistorialCreditoEnEdicion(null);
     setEntrevistaCargada(false);
+    setFechaCapturaEntrevista(null);
     setGuardandoEntrevista(false);
     setErrorGuardadoEntrevista(null);
     setEstadoSyncEntrevista('idle');
@@ -929,6 +1049,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     guardadoEntrevistaEnCursoRef.current = false;
     entrevistaPendienteRef.current = null;
     entrevistaAbiertaRef.current = false;
+    setAbrirComoConocioAsesora(false);
     setEvidenciaEntrevistaHeaders(undefined);
     setEvidenciaControlPagosPendiente(null);
     setEvidenciaFolletoPendiente(null);
@@ -1022,12 +1143,8 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
       setLoading(true);
       setResumenLlamadas(null);
       setErrorResumenLlamadas(false);
+      setRequisitosVerificacion(null);
       try {
-        const savedProgress = usuario?.id
-          ? await getLocalVerificationProgress(usuario.id, integranteId)
-          : null;
-        let hasAllRequiredDocuments = false;
-
         const integranteData = await api.get<any>(
           `/integrantes/${integranteId}`,
           VERIFICACION_READ_REQUEST_OPTIONS,
@@ -1064,6 +1181,14 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
           distanciaTesoreraAproxKm: null,
         });
         setTelefonoConfirmado(formatPhone(integranteData.telefono ?? ''));
+
+        try {
+          setRequisitosVerificacion(
+            await obtenerRequisitosVerificacionIntegrante(integranteId),
+          );
+        } catch {
+          setRequisitosVerificacion(null);
+        }
 
         await cargarEntrevistaGuardada();
         await cargarImagenesDomicilio();
@@ -1111,6 +1236,8 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
           setLoadingFachadaVisita(false);
         }
 
+        await cargarOpcionesVisitaVecino();
+
         try {
           const resumenVisita = await obtenerResumenVisitaVecino(integranteId);
           const resultadoVigente = resumenVisita.resultado
@@ -1126,6 +1253,9 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
               : null,
           );
           setVisitaVecinoActualId(resultadoVigente?.visita_id ?? null);
+          setOpcionesSeleccionadasVisita(
+            resultadoVigente?.opciones_seleccionadas ?? [],
+          );
           setErrorResumenVisitaVecino(false);
 
           if (resultadoVigente) {
@@ -1161,6 +1291,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
           }
         } catch {
           setVecinoConoceDomicilio(null);
+          setOpcionesSeleccionadasVisita([]);
           setVisitaVecinoActualId(null);
           setEvidenciaVisita(null);
           setLoadingEvidenciaVisita(false);
@@ -1271,35 +1402,14 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
           void cargarComprobanteLineaCredito(
             docsMap.find((documento) => documento.tipo === 'comprobante_credito'),
           );
-          const documentosObligatorios = docsMap.filter((doc) => doc.obligatorioRevision);
-          hasAllRequiredDocuments = documentosObligatorios.length === TIPOS_DOCUMENTO_REVISION.length
-            && documentosObligatorios.every((doc) => doc.estado === 'Capturado');
         } else {
           setSolicitudData(null);
           setDocumentos([]);
           void cargarComprobanteLineaCredito();
         }
 
-        if (
-          (savedProgress?.currentStep === 'menu'
-            || savedProgress?.currentStep === 'llamada-integrante')
-          && hasAllRequiredDocuments
-        ) {
-          setPasoActual('menu');
-        } else {
-          setPasoActual('documentos');
-          if (
-            (savedProgress?.currentStep === 'menu'
-              || savedProgress?.currentStep === 'llamada-integrante')
-            && usuario?.id
-          ) {
-            try {
-              await saveNeedsDocumentationProgress(usuario.id, integranteId);
-            } catch (error) {
-              console.warn('No se pudo actualizar la incidencia documental.', error);
-            }
-          }
-        }
+        setConsultandoDocumentos(false);
+        setPasoActual('menu');
 
         // Cargar integrantes del grupo para el selector de tesorera
         if (integranteData.expediente_id) {
@@ -1400,6 +1510,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
           const pendiente = entrevistaPendienteRef.current;
           entrevistaPendienteRef.current = null;
           const payload = JSON.parse(pendiente) as EntrevistaPayload;
+          const fechaCaptura = new Date().toISOString();
           await saveDraft({
             key: entrevistaDraftKey,
             module: 'VERIFICACION',
@@ -1407,6 +1518,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
             entityId: integranteId,
             data: payload,
           });
+          setFechaCapturaEntrevista(fechaCaptura);
           const result = await enqueueJson({
             module: 'VERIFICACION',
             entityType: 'entrevista',
@@ -1557,6 +1669,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
           || `evidencia-entrevista-${Date.now()}.${mimeType === 'image/png' ? 'png' : 'jpg'}`,
         mimeType,
         idempotencyKey: crearClaveIdempotenciaEvidenciaEntrevista(tipo),
+        capturaFuente: 'CAMARA',
         fotoCapturadaAt,
         ubicacion,
       };
@@ -1991,6 +2104,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
 
   const handleRespuestaVisitaVecino = async (
     respuesta: Exclude<YesNoValue, null>,
+    opcionIds: string[],
   ) => {
     if (guardandoResultadoVecino) return;
     if (!fachadaVisita) {
@@ -2001,11 +2115,17 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
       return;
     }
 
+    const opcionIdsOrdenados = [...opcionIds].sort();
     const intento = idempotenciaVisitaVecinoPendiente?.respuesta === respuesta
+      && idempotenciaVisitaVecinoPendiente.opcionIds.length === opcionIdsOrdenados.length
+      && idempotenciaVisitaVecinoPendiente.opcionIds.every(
+        (id, index) => id === opcionIdsOrdenados[index],
+      )
       ? idempotenciaVisitaVecinoPendiente
       : {
           clave: crearClaveIdempotenciaVisitaVecino(),
           respuesta,
+          opcionIds: opcionIdsOrdenados,
         };
 
     setIdempotenciaVisitaVecinoPendiente(intento);
@@ -2016,6 +2136,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
       const registro = await registrarVisitaVecino(
         integranteId,
         respuesta === 'si',
+        opcionIdsOrdenados,
         fachadaVisita.id,
         intento.clave,
         ubicacion,
@@ -2027,6 +2148,9 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
           : null,
       );
       setVisitaVecinoActualId(registro.visita.id);
+      setOpcionesSeleccionadasVisita(
+        resultadoConfirmado?.opciones_seleccionadas ?? [],
+      );
       setEvidenciaVisita(null);
       setEvidenciaVisitaPendiente(null);
       setErrorEvidenciaVisita(null);
@@ -2062,6 +2186,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
       setFachadaVisitaPendiente(null);
       setErrorFachadaVisita(null);
       setVecinoConoceDomicilio(null);
+      setOpcionesSeleccionadasVisita([]);
       setVisitaVecinoActualId(null);
       setIdempotenciaVisitaVecinoPendiente(null);
       setEvidenciaVisita(null);
@@ -2497,6 +2622,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
           || `evidencia-negocio-${Date.now()}.${mimeType === 'image/png' ? 'png' : 'jpg'}`,
         mimeType,
         idempotencyKey: crearClaveIdempotenciaEvidenciaNegocio(),
+        capturaFuente: 'CAMARA',
         fotoCapturadaAt,
         ubicacion,
       };
@@ -2526,18 +2652,33 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
 
     for (const pendiente of pendientes) {
       try {
+        if (!pendiente.integranteIds?.length) {
+          throw new Error('Selecciona al menos una integrante para guardar la evidencia.');
+        }
+        if (!pendiente.clasificacionSemaforo) {
+          throw new Error('Clasifica la evidencia en verde, amarillo o rojo antes de guardarla.');
+        }
+        if (!pendiente.motivoClasificacionId) {
+          throw new Error('Selecciona un motivo para la clasificación antes de guardarla.');
+        }
         const registro = await registrarEvidenciaEntrevista(integranteId, pendiente);
-        setEvidenciasHistorialCredito((actuales) => ({
-          ...actuales,
-          [tipo]: [
-            ...actuales[tipo].filter((evidencia) => evidencia.id !== registro.evidencia.id),
-            {
-              id: registro.evidencia.id,
-              uri: pendiente.uri,
-              registradaAt: registro.evidencia.registrada_at,
-            },
-          ],
-        }));
+        if (registro.evidencia.integrante_ids.includes(integranteId)) {
+          setEvidenciasHistorialCredito((actuales) => ({
+            ...actuales,
+            [tipo]: [
+              ...actuales[tipo].filter((evidencia) => evidencia.id !== registro.evidencia.id),
+              {
+                id: registro.evidencia.id,
+                uri: pendiente.uri,
+                registradaAt: registro.evidencia.registrada_at,
+                integranteIds: registro.evidencia.integrante_ids,
+                clasificacionSemaforo: registro.evidencia.clasificacion_semaforo,
+                motivoClasificacionId: registro.evidencia.motivo_clasificacion_id,
+                motivoClasificacion: registro.evidencia.motivo_clasificacion,
+              },
+            ],
+          }));
+        }
       } catch {
         fallidas.push(pendiente);
       }
@@ -2556,10 +2697,52 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     setGuardandoEvidenciasHistorialCredito(null);
   };
 
+  const prepararEvidenciaHistorialCredito = async (
+    tipo: TipoEvidenciaHistorialCredito,
+    asset: ImagePicker.ImagePickerAsset,
+    capturaFuente: 'CAMARA' | 'GALERIA',
+  ) => {
+    if (asset.fileSize && asset.fileSize > 10 * 1024 * 1024) {
+      setErroresEvidenciasHistorialCredito((actuales) => ({
+        ...actuales,
+        [tipo]: capturaFuente === 'CAMARA'
+          ? 'La fotografía supera 10 MB. Vuelve a tomarla con una resolución menor.'
+          : 'La imagen supera 10 MB. Selecciona otra con un tamaño menor.',
+      }));
+      return;
+    }
+    if (asset.mimeType && !['image/jpeg', 'image/png'].includes(asset.mimeType)) {
+      setErroresEvidenciasHistorialCredito((actuales) => ({
+        ...actuales,
+        [tipo]: 'El formato no es compatible. Usa una imagen JPEG o PNG.',
+      }));
+      return;
+    }
+
+    const mimeType: 'image/jpeg' | 'image/png' = asset.mimeType === 'image/png'
+      ? 'image/png'
+      : 'image/jpeg';
+    const ubicacion = await obtenerUbicacionEntrevista();
+    const nueva: EvidenciaEntrevistaPendiente = {
+      tipo,
+      uri: asset.uri,
+      nombre: asset.fileName
+        || `evidencia-historial-credito-${Date.now()}.${mimeType === 'image/png' ? 'png' : 'jpg'}`,
+      mimeType,
+      idempotencyKey: crearClaveIdempotenciaEvidenciaEntrevista(tipo),
+      capturaFuente,
+      fotoCapturadaAt: capturaFuente === 'CAMARA' ? new Date().toISOString() : null,
+      ubicacion,
+    };
+    setErroresEvidenciasHistorialCredito((actuales) => ({ ...actuales, [tipo]: null }));
+    setIntegrantesEvidenciaSeleccionadas([]);
+    setEvidenciaHistorialCreditoPorAsignar(nueva);
+  };
+
   const capturarEvidenciaHistorialCredito = async (
     tipo: TipoEvidenciaHistorialCredito,
   ) => {
-    if (guardandoEvidenciasHistorialCredito) return;
+    if (guardandoEvidenciasHistorialCredito || evidenciaHistorialCreditoPorAsignar) return;
 
     try {
       const permiso = await ImagePicker.requestCameraPermissionsAsync();
@@ -2580,41 +2763,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
       });
       const asset = resultado.canceled ? undefined : resultado.assets[0];
       if (!asset) return;
-
-      if (asset.fileSize && asset.fileSize > 10 * 1024 * 1024) {
-        setErroresEvidenciasHistorialCredito((actuales) => ({
-          ...actuales,
-          [tipo]: 'La fotografía supera 10 MB. Vuelve a tomarla con una resolución menor.',
-        }));
-        return;
-      }
-      if (asset.mimeType && !['image/jpeg', 'image/png'].includes(asset.mimeType)) {
-        setErroresEvidenciasHistorialCredito((actuales) => ({
-          ...actuales,
-          [tipo]: 'La cámara generó un formato no compatible. Vuelve a tomar la fotografía.',
-        }));
-        return;
-      }
-
-      const mimeType: 'image/jpeg' | 'image/png' = asset.mimeType === 'image/png'
-        ? 'image/png'
-        : 'image/jpeg';
-      const ubicacion = await obtenerUbicacionEntrevista();
-      const nueva: EvidenciaEntrevistaPendiente = {
-        tipo,
-        uri: asset.uri,
-        nombre: asset.fileName
-          || `evidencia-historial-credito-${Date.now()}.${mimeType === 'image/png' ? 'png' : 'jpg'}`,
-        mimeType,
-        idempotencyKey: crearClaveIdempotenciaEvidenciaEntrevista(tipo),
-        fotoCapturadaAt: new Date().toISOString(),
-        ubicacion,
-      };
-
-      await guardarEvidenciasHistorialCredito(
-        tipo,
-        [...evidenciasHistorialCreditoPendientes[tipo], nueva],
-      );
+      await prepararEvidenciaHistorialCredito(tipo, asset, 'CAMARA');
     } catch (error) {
       setErroresEvidenciasHistorialCredito((actuales) => ({
         ...actuales,
@@ -2622,6 +2771,200 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
           ? error.message
           : 'No se pudo abrir la cámara. Verifica el permiso e inténtalo nuevamente.',
       }));
+    }
+  };
+
+  const seleccionarEvidenciaHistorialDesdeCarrete = async (
+    tipo: TipoEvidenciaHistorialCredito,
+  ) => {
+    if (guardandoEvidenciasHistorialCredito || evidenciaHistorialCreditoPorAsignar) return;
+
+    try {
+      const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permiso.status !== 'granted') {
+        setErroresEvidenciasHistorialCredito((actuales) => ({
+          ...actuales,
+          [tipo]: 'Permite el acceso a tus imágenes para seleccionar la evidencia.',
+        }));
+        return;
+      }
+
+      const resultado = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 0.9,
+        base64: false,
+        exif: false,
+        selectionLimit: 1,
+      });
+      const asset = resultado.canceled ? undefined : resultado.assets[0];
+      if (!asset) return;
+      await prepararEvidenciaHistorialCredito(tipo, asset, 'GALERIA');
+    } catch (error) {
+      setErroresEvidenciasHistorialCredito((actuales) => ({
+        ...actuales,
+        [tipo]: error instanceof Error
+          ? error.message
+          : 'No se pudo abrir el carrete. Verifica el permiso e inténtalo nuevamente.',
+      }));
+    }
+  };
+
+  const guardarEvidenciaHistorialParaIntegrantes = async (integranteIds: string[]) => {
+    const pendiente = evidenciaHistorialCreditoPorAsignar;
+    if (
+      !pendiente
+      || !pendiente.clasificacionSemaforo
+      || !pendiente.motivoClasificacionId
+      || integranteIds.length === 0
+    ) return;
+    const tipo = pendiente.tipo as TipoEvidenciaHistorialCredito;
+    const evidenciaAsignada: EvidenciaEntrevistaPendiente = {
+      ...pendiente,
+      integranteIds,
+    };
+    setEvidenciaHistorialCreditoPorAsignar(null);
+    setIntegrantesEvidenciaSeleccionadas([]);
+    await guardarEvidenciasHistorialCredito(
+      tipo,
+      [...evidenciasHistorialCreditoPendientes[tipo], evidenciaAsignada],
+    );
+  };
+
+  const clasificarEvidenciaHistorial = (
+    clasificacionSemaforo: ClasificacionSemaforoEvidencia,
+    motivoClasificacionId: string,
+  ) => {
+    setEvidenciaHistorialCreditoPorAsignar((pendiente) => (
+      pendiente
+        ? { ...pendiente, clasificacionSemaforo, motivoClasificacionId }
+        : pendiente
+    ));
+  };
+
+  const descartarEvidenciaHistorialPendiente = () => {
+    setEvidenciaHistorialCreditoPorAsignar(null);
+    setIntegrantesEvidenciaSeleccionadas([]);
+  };
+
+  const abrirEdicionIntegrantesEvidencia = (
+    evidenciaId: string,
+    integranteIds: string[],
+  ) => {
+    if (!tipoEvidenciaHistorialCreditoActual || guardandoEvidenciasHistorialCredito) return;
+    setEvidenciaHistorialCreditoVisible(false);
+    setEvidenciaHistorialCreditoEnEdicion({
+      id: evidenciaId,
+      tipo: tipoEvidenciaHistorialCreditoActual,
+      integranteIds,
+      apertura: Date.now(),
+    });
+  };
+
+  const guardarIntegrantesEvidenciaEditada = async (integranteIds: string[]) => {
+    const evidenciaEnEdicion = evidenciaHistorialCreditoEnEdicion;
+    if (!evidenciaEnEdicion || integranteIds.length === 0) return;
+
+    setGuardandoEvidenciasHistorialCredito(evidenciaEnEdicion.tipo);
+    try {
+      const respuesta = await actualizarIntegrantesEvidenciaEntrevista(
+        integranteId,
+        evidenciaEnEdicion.id,
+        integranteIds,
+      );
+      const integrantesActualizadas = respuesta.evidencia.integrante_ids;
+      setEvidenciasHistorialCredito((actuales) => ({
+        ...actuales,
+        [evidenciaEnEdicion.tipo]: integrantesActualizadas.includes(integranteId)
+          ? actuales[evidenciaEnEdicion.tipo].map((evidencia) => (
+            evidencia.id === evidenciaEnEdicion.id
+              ? { ...evidencia, integranteIds: integrantesActualizadas }
+              : evidencia
+          ))
+          : actuales[evidenciaEnEdicion.tipo].filter(
+            (evidencia) => evidencia.id !== evidenciaEnEdicion.id,
+          ),
+      }));
+      setEvidenciaHistorialCreditoEnEdicion(null);
+      setErrorGuardadoEntrevista(null);
+    } catch (error) {
+      const mensaje = error instanceof Error
+        ? error.message
+        : 'No se pudieron actualizar las integrantes de esta evidencia.';
+      Alert.alert(
+        'No se guardó el cambio',
+        mensaje,
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+            onPress: () => setEvidenciaHistorialCreditoEnEdicion(null),
+          },
+          {
+            text: 'Reintentar',
+            onPress: () => setEvidenciaHistorialCreditoEnEdicion((actual) => actual ? ({
+              ...actual,
+              integranteIds,
+              apertura: actual.apertura + 1,
+            }) : null),
+          },
+        ],
+      );
+    } finally {
+      setGuardandoEvidenciasHistorialCredito(null);
+    }
+  };
+
+  const calificarEvidenciaHistorial = async (
+    evidenciaId: string,
+    value: Exclude<EvidenceReviewValue, null>,
+  ) => {
+    if (calificandoEvidenciaId) return;
+    const calificacionPorValor: Record<
+      Exclude<EvidenceReviewValue, null>,
+      CalificacionRevisionEvidencia
+    > = {
+      rejected: 'TACHA',
+      attention: 'AMARILLO',
+      approved: 'PALOMITA',
+    };
+    const calificacion = calificacionPorValor[value];
+    setCalificandoEvidenciaId(evidenciaId);
+    try {
+      const respuesta = await calificarEvidenciaEntrevista(
+        integranteId,
+        evidenciaId,
+        calificacion,
+      );
+      setEvidenciasHistorialCredito((actuales) => ({
+        HISTORIAL_CREDITO_ACTIVO: actuales.HISTORIAL_CREDITO_ACTIVO.map((evidencia) => (
+          evidencia.id === evidenciaId
+            ? {
+              ...evidencia,
+              calificacionRevision: respuesta.calificacion_revision,
+              calificadaAt: respuesta.calificada_at,
+            }
+            : evidencia
+        )),
+        HISTORIAL_CREDITO_INACTIVO: actuales.HISTORIAL_CREDITO_INACTIVO.map((evidencia) => (
+          evidencia.id === evidenciaId
+            ? {
+              ...evidencia,
+              calificacionRevision: respuesta.calificacion_revision,
+              calificadaAt: respuesta.calificada_at,
+            }
+            : evidencia
+        )),
+      }));
+    } catch (error) {
+      Alert.alert(
+        'No se guardó la calificación',
+        error instanceof Error
+          ? error.message
+          : 'No fue posible calificar esta imagen. Intenta de nuevo.',
+      );
+    } finally {
+      setCalificandoEvidenciaId(null);
     }
   };
 
@@ -2662,6 +3005,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
           || accionPosteriorLlamada === 'entrevista-larga'
         )
       ) {
+        setAbrirComoConocioAsesora(false);
         entrevistaAbiertaRef.current = true;
         setPasoActual('validacion-integrante');
       } else {
@@ -2929,6 +3273,23 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     }
   };
 
+  const cargarOpcionesVisitaVecino = async () => {
+    setLoadingOpcionesVisita(true);
+    setErrorOpcionesVisita(null);
+    try {
+      setOpcionesVisitaVecino(await obtenerOpcionesVisitaVecino());
+    } catch (error) {
+      setOpcionesVisitaVecino({ si: [], no: [] });
+      setErrorOpcionesVisita(
+        error instanceof Error
+          ? error.message
+          : 'No se pudieron consultar las opciones de la visita al vecino.',
+      );
+    } finally {
+      setLoadingOpcionesVisita(false);
+    }
+  };
+
   const getTituloPaso = (): string => {
     switch (pasoActual) {
       case 'documentos':
@@ -2986,6 +3347,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     fachadaVisita
       && visitaVecinoActualId
       && vecinoConoceDomicilio
+      && opcionesSeleccionadasVisita.length > 0
       && evidenciaVisita
       && !evidenciaVisitaPendiente
       && !guardandoResultadoVecino
@@ -3041,23 +3403,223 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
   const errorEvidenciasHistorialCreditoActual = tipoEvidenciaHistorialCreditoActual
     ? erroresEvidenciasHistorialCredito[tipoEvidenciaHistorialCreditoActual]
     : null;
-  const paginasEvidenciasHistorialCredito: DocumentImageCarouselPage[] = [
+  const paginasEvidenciasHistorialCreditoGuardadas = [
     ...paginasComprobanteLineaCredito,
-    ...evidenciasHistorialCreditoActual.map((evidencia, index) => ({
-      uri: evidencia.uri,
-      headers: evidencia.headers,
-      label: `Evidencia ${index + 1}`,
-    })),
-    ...evidenciasHistorialCreditoPendientesActuales.map((evidencia, index) => ({
-      uri: evidencia.uri,
-      label: `Pendiente ${index + 1}`,
-    })),
+    ...evidenciasHistorialCreditoActual.map((evidencia, index) => {
+      const presentacion = obtenerPresentacionClasificacionEvidencia(
+        evidencia.clasificacionSemaforo,
+      );
+      return {
+        uri: evidencia.uri,
+        headers: evidencia.headers,
+        label: `Evidencia ${index + 1}${presentacion ? ` · ${presentacion.label}` : ''}${evidencia.motivoClasificacion ? ` · ${evidencia.motivoClasificacion}` : ''}`,
+        evidenciaId: evidencia.id,
+        integranteIds: evidencia.integranteIds,
+        frameColor: presentacion?.color,
+        frameLabel: evidencia.motivoClasificacion ?? undefined,
+        frameAccessibilityLabel: presentacion
+          ? `Clasificación ${presentacion.label}${evidencia.motivoClasificacion ? `. Motivo: ${evidencia.motivoClasificacion}` : ''}`
+          : 'Evidencia histórica sin clasificación de color',
+        reviewValue: evidencia.calificacionRevision === 'TACHA'
+          ? 'rejected' as const
+          : evidencia.calificacionRevision === 'AMARILLO'
+            ? 'attention' as const
+          : evidencia.calificacionRevision === 'PALOMITA'
+            ? 'approved' as const
+            : null,
+        reviewDisabled: calificandoEvidenciaId !== null,
+        leftAction: {
+          title: 'Integrantes',
+          accessibilityLabel: 'Editar integrantes de esta evidencia',
+          disabled: guardandoEvidenciasHistorialCredito !== null,
+          onPress: () => abrirEdicionIntegrantesEvidencia(
+            evidencia.id,
+            evidencia.integranteIds,
+          ),
+        },
+      };
+    }),
+  ];
+  const fotografiasCasaConclusiones = IMAGENES_DOMICILIO.flatMap((definicion) => {
+    const imagen = imagenesDomicilio[definicion.tipo];
+    return imagen ? [{
+      uri: imagen.uri,
+      headers: imagen.headers,
+      label: definicion.titulo,
+    }] : [];
+  });
+  const fotografiasNegocioConclusiones = evidenciasNegocio.map((evidencia, index) => ({
+    uri: evidencia.uri,
+    headers: evidencia.headers,
+    label: `Evidencia de negocio ${index + 1}`,
+  }));
+  const fotografiasConclusiones = fotografiasConclusionesVisible === 'casa'
+    ? fotografiasCasaConclusiones
+    : fotografiasConclusionesVisible === 'negocio'
+      ? fotografiasNegocioConclusiones
+      : [];
+  const presentacionEvidenciaHistorialPorAsignar = obtenerPresentacionClasificacionEvidencia(
+    evidenciaHistorialCreditoPorAsignar?.clasificacionSemaforo ?? null,
+  );
+  const motivoEvidenciaHistorialPorAsignar = motivosClasificacionEvidencia.find(
+    (item) => item.id === evidenciaHistorialCreditoPorAsignar?.motivoClasificacionId,
+  );
+  const paginasEvidenciasHistorialCredito: DocumentImageCarouselPage[] = [
+    ...paginasEvidenciasHistorialCreditoGuardadas,
+    ...evidenciasHistorialCreditoPendientesActuales.map((evidencia, index) => {
+      const presentacion = obtenerPresentacionClasificacionEvidencia(
+        evidencia.clasificacionSemaforo,
+      );
+      const motivo = motivosClasificacionEvidencia.find(
+        (item) => item.id === evidencia.motivoClasificacionId,
+      );
+      return {
+        uri: evidencia.uri,
+        label: `Pendiente ${index + 1} · ${evidencia.integranteIds?.length ?? 0} integrante${evidencia.integranteIds?.length === 1 ? '' : 's'}${presentacion ? ` · ${presentacion.label}` : ''}${motivo ? ` · ${motivo.concepto}` : ''}`,
+        frameColor: presentacion?.color,
+        frameLabel: motivo?.concepto,
+        frameAccessibilityLabel: presentacion
+          ? `Clasificación ${presentacion.label}${motivo ? `. Motivo: ${motivo.concepto}` : ''}`
+          : undefined,
+      };
+    }),
+    ...(evidenciaHistorialCreditoPorAsignar?.tipo === tipoEvidenciaHistorialCreditoActual
+      && evidenciaHistorialCreditoPorAsignar.clasificacionSemaforo
+      && evidenciaHistorialCreditoPorAsignar.motivoClasificacionId
+      ? [{
+        uri: evidenciaHistorialCreditoPorAsignar.uri,
+        label: `Pendiente de asignar integrantes · ${presentacionEvidenciaHistorialPorAsignar?.label ?? evidenciaHistorialCreditoPorAsignar.clasificacionSemaforo}${motivoEvidenciaHistorialPorAsignar ? ` · ${motivoEvidenciaHistorialPorAsignar.concepto}` : ''}`,
+        frameColor: presentacionEvidenciaHistorialPorAsignar?.color,
+        frameLabel: motivoEvidenciaHistorialPorAsignar?.concepto,
+        frameAccessibilityLabel: `Clasificación ${presentacionEvidenciaHistorialPorAsignar?.label ?? evidenciaHistorialCreditoPorAsignar.clasificacionSemaforo}${motivoEvidenciaHistorialPorAsignar ? `. Motivo: ${motivoEvidenciaHistorialPorAsignar.concepto}` : ''}`,
+      }]
+      : []),
   ];
   const fotografiasOtraFinancieraGuardadas = paginasComprobanteLineaCredito.length
     + evidenciasHistorialCreditoActual.length;
+  const fotografiasOtraFinancieraCalificadas = evidenciasHistorialCreditoActual.reduce(
+    (conteos, evidencia) => {
+      if (evidencia.calificacionRevision === 'PALOMITA') conteos.verdes += 1;
+      if (evidencia.calificacionRevision === 'AMARILLO') conteos.amarillas += 1;
+      if (evidencia.calificacionRevision === 'TACHA') conteos.rojas += 1;
+      return conteos;
+    },
+    { verdes: 0, amarillas: 0, rojas: 0 },
+  );
   const comprobanteLineaCredito = documentos.find(
     (documento) => documento.tipo === 'comprobante_credito',
   );
+  const opcionesIntegrantesEvidencia: MultiSelectPickerOption[] = integrantesGrupo.map(
+    (integranteGrupo) => ({
+      value: integranteGrupo.id,
+      label: integranteGrupo.nombre,
+    }),
+  );
+
+  useEffect(() => {
+    let activo = true;
+
+    void listarFinancierasCompetidorasVigentes()
+      .then((respuesta) => {
+        if (activo) {
+          setCatalogoFinancierasCompetidoras(respuesta.items);
+          setCatalogoFinancierasDisponible(true);
+        }
+      })
+      .catch(() => {
+        if (activo) {
+          setCatalogoFinancierasCompetidoras([]);
+          setCatalogoFinancierasDisponible(false);
+        }
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+    setErrorMotivosClasificacionEvidencia(null);
+
+    void listarMotivosClasificacionEvidenciaVigentes()
+      .then((respuesta) => {
+        if (activo) setMotivosClasificacionEvidencia(respuesta.items);
+      })
+      .catch(() => {
+        if (activo) {
+          setMotivosClasificacionEvidencia([]);
+          setErrorMotivosClasificacionEvidencia(
+            'No se pudieron consultar los motivos. Revisa tu conexión y reabre la verificación.',
+          );
+        }
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const financierasCreditoGrupalOptions = useMemo(() => (
+    construirOpcionesFinancierasCreditoGrupal(
+      catalogoFinancierasCompetidoras,
+      catalogoFinancierasDisponible,
+      financieraCreditoGrupal,
+    )
+  ), [
+    catalogoFinancierasCompetidoras,
+    catalogoFinancierasDisponible,
+    financieraCreditoGrupal,
+  ]);
+
+  const clasificacionFinancieraCreditoGrupal = useMemo(() => {
+    const seleccion = normalizarNombreFinanciera(financieraCreditoGrupal);
+    if (!seleccion || seleccion === 'OTRA') return null;
+    return catalogoFinancierasCompetidoras.find((financiera) => (
+      normalizarNombreFinanciera(financiera.nombre) === seleccion
+      || financiera.aliases.some((alias) => normalizarNombreFinanciera(alias) === seleccion)
+    ))?.clasificacion ?? null;
+  }, [catalogoFinancierasCompetidoras, financieraCreditoGrupal]);
+
+  const mostrarControlTesorera = Boolean(
+    integrante?.esTesorera && integrante.tieneHistorialInterno === true,
+  );
+  const mostrarEncuestaServicio = integrante?.tieneHistorialInterno === true;
+  const sinEvidenciasEntrevistaPendientes = Boolean(
+    !evidenciaControlPagosPendiente
+      && !evidenciaFolletoPendiente
+      && !evidenciaHistorialCreditoPorAsignar
+      && evidenciasNegocioPendientes.length === 0
+      && Object.values(evidenciasHistorialCreditoPendientes).every(
+        (pendientes) => pendientes.length === 0,
+      )
+      && Object.values(imagenesDomicilioPendientes).every((pendiente) => !pendiente)
+      && !guardandoEvidenciaEntrevista
+      && !guardandoEvidenciasNegocio
+      && !guardandoEvidenciasHistorialCredito
+      && !guardandoImagenDomicilio
+      && !guardandoRespuestaMedidorLuz,
+  );
+  const entrevistaCompletitud = evaluarCompletitudEntrevista(
+    entrevistaFormValues,
+    {
+      entrevistaCargada,
+      entrevistaSincronizada: Boolean(
+        estadoSyncEntrevista === 'synced'
+          && !guardandoEntrevista
+          && !errorGuardadoEntrevista
+          && entrevistaSerializada === ultimaEntrevistaConfirmadaRef.current,
+      ),
+      sinEvidenciasPendientes: sinEvidenciasEntrevistaPendientes,
+      imagenesDomicilioCompletadas: imagenesDomicilioListasParaTerminar,
+      telefonoPrincipalConfirmado: telefonoPrincipalEstaConfirmado,
+      mostrarControlTesorera,
+      mostrarEncuestaServicio,
+      fotoControlPagosConfirmada: Boolean(fotoControlPagos1),
+      fotoFolletoConfirmada: Boolean(fotoFolletoPremioTesorera),
+    },
+  );
+  const entrevistaListaParaTerminar = entrevistaCompletitud.completa;
 
   const handleTerminarVisitaVecino = () => {
     if (!visitaVecinoListaParaTerminar) return;
@@ -3071,7 +3633,18 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     scrollViewRef.current?.scrollTo({ y: 0, animated: false });
   };
 
+  const handleTerminarEntrevista = () => {
+    if (!entrevistaListaParaTerminar) return;
+    setAbrirComoConocioAsesora(false);
+    setPasoActual('menu');
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+  };
+
   const handleBackPress = () => {
+    if (pasoActual === 'validacion-integrante') {
+      setAbrirComoConocioAsesora(false);
+    }
+
     if (pasoActual === 'llamada-integrante' && vistaLlamada === 'encuesta') {
       setVistaLlamada('acciones');
       scrollViewRef.current?.scrollTo({ y: 0, animated: false });
@@ -3107,11 +3680,13 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
       setVistaLlamada('acciones');
     }
     if (process === 'validacion-integrante') {
+      setAbrirComoConocioAsesora(false);
       entrevistaAbiertaRef.current = true;
     }
     setPasoActual(process);
     scrollViewRef.current?.scrollTo({ y: 0, animated: false });
     if (process === 'visita-vecino') {
+      void cargarOpcionesVisitaVecino();
       if (fachadaVisita) {
         void cargarIneVisita();
       }
@@ -3184,11 +3759,10 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
     );
   }
 
-  const creditosParticipadosLabel = integrante?.creditosParticipados == null
-    ? 'CICLOS N/D'
-    : integrante.creditosParticipados === 1
-      ? '1 CICLO'
-      : `${integrante.creditosParticipados} CICLOS`;
+  const cicloIndividualPresentacion = obtenerPresentacionCicloIndividual(
+    integrante?.creditosParticipados ?? null,
+    integrante?.esNuevaConNosotros === true,
+  );
   const edadLabel = integrante?.edad == null ? 'EDAD N/D' : `${integrante.edad} AÑOS`;
   const distanciaTesoreraLabel = integrante?.distanciaTesoreraAproxKm == null
     ? 'DIST. N/D'
@@ -3259,15 +3833,11 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
               ) : null}
 
               <View style={styles.integranteMetricsRow}>
-                <View
-                  accessibilityLabel={integrante?.creditosParticipados == null
-                    ? 'Ciclos individuales registrados no disponibles'
-                    : `${integrante.creditosParticipados} ${integrante.creditosParticipados === 1 ? 'ciclo individual registrado' : 'ciclos individuales registrados'}`}
-                  style={styles.creditHistoryBadge}
-                >
-                  <Text allowFontScaling={false} numberOfLines={1} style={styles.creditHistoryText}>
-                    {creditosParticipadosLabel}
-                  </Text>
+                <View accessible accessibilityLabel={cicloIndividualPresentacion.accessibilityLabel}>
+                  <StatusBadge
+                    label={cicloIndividualPresentacion.label}
+                    tone={cicloIndividualPresentacion.tone}
+                  />
                 </View>
 
                 <View
@@ -3375,9 +3945,12 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
       >
         {pasoActual === 'menu' && (
           <VerificationProcessMenu
+            documentosCompletados={isDocumentosValidadosCompleto()}
             llamadaCompletada={llamadaCompletada}
             imagenesDomicilioCompletadas={imagenesDomicilioListasParaTerminar}
+            entrevistaCompletada={entrevistaListaParaTerminar}
             visitaVecinoResultado={vecinoConoceDomicilio}
+            requisitos={requisitosVerificacion}
             onSelect={handleSelectProcess}
           />
         )}
@@ -3439,6 +4012,10 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
             loadingIne={loadingIneVisita}
             errorIne={errorIneVisita}
             vecinoConoceDomicilio={vecinoConoceDomicilio}
+            opcionesVisitaVecino={opcionesVisitaVecino}
+            opcionesSeleccionadas={opcionesSeleccionadasVisita}
+            loadingOpciones={loadingOpcionesVisita}
+            errorOpciones={errorOpcionesVisita}
             visitaActualId={visitaVecinoActualId}
             errorResumenVisita={errorResumenVisitaVecino}
             guardandoResultado={guardandoResultadoVecino}
@@ -3450,7 +4027,10 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
             onCaptureFachada={() => void capturarFachadaVisita()}
             onSaveFachada={(pendiente) => void guardarFachadaVisita(pendiente)}
             onRetryIne={() => void cargarIneVisita()}
-            onRespuestaChange={(value) => void handleRespuestaVisitaVecino(value)}
+            onRetryOpciones={() => void cargarOpcionesVisitaVecino()}
+            onRespuestaChange={(value, opcionIds) => (
+              void handleRespuestaVisitaVecino(value, opcionIds)
+            )}
             onCaptureEvidencia={() => void capturarEvidenciaVisita()}
             onSaveEvidencia={(pendiente) => void guardarEvidenciaVisita(pendiente)}
           />
@@ -3996,6 +4576,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
               guardadoLocalPendiente={estadoSyncEntrevista === 'pending'}
               conoceAsesora={conoceAsesora}
               comoConocioAsesora={comoConocioAsesora}
+              abrirComoConocioAsesora={abrirComoConocioAsesora}
               conoceIntegrantes={conoceIntegrantes}
               tiempoConoceIntegrantes={tiempoConoceIntegrantes}
               sabeMontosCompaneras={sabeMontosCompaneras}
@@ -4013,10 +4594,14 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
               onRecuperarEntrevista={() => void cargarEntrevistaGuardada()}
               onReintentarGuardado={() => void reintentarGuardadoEntrevista()}
               onConoceAsesoraChange={(respuesta) => {
+                setAbrirComoConocioAsesora(respuesta === 'Sí');
                 setConoceAsesora(respuesta);
                 if (respuesta === 'No') setComoConocioAsesora('');
               }}
-              onComoConocioAsesoraChange={setComoConocioAsesora}
+              onComoConocioAsesoraChange={(respuesta) => {
+                setAbrirComoConocioAsesora(false);
+                setComoConocioAsesora(respuesta);
+              }}
               onConoceIntegrantesChange={setConoceIntegrantes}
               onTiempoConoceIntegrantesChange={setTiempoConoceIntegrantes}
               onSabeMontosCompanerasChange={setSabeMontosCompaneras}
@@ -4038,10 +4623,12 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
 
             <EntrevistaHistorialCrediticioSection
               historialInterno={integrante?.historialCrediticioInterno}
+              financierasCreditoGrupalOptions={financierasCreditoGrupalOptions}
               tieneOtroCreditoGrupal={tieneOtroCreditoGrupal}
               financieraCreditoGrupal={financieraCreditoGrupal}
               creditoGrupalAnteriorActivo={creditoGrupalAnteriorActivo}
               valorFichaCreditoGrupal={valorFichaCreditoGrupal}
+              montoUltimoPrestamoCreditoGrupal={montoUltimoPrestamoCreditoGrupal}
               semanaActualCreditoGrupal={semanaActualCreditoGrupal}
               mesDesembolsoCreditoGrupal={mesDesembolsoCreditoGrupal}
               mesUltimoPagoCreditoGrupal={mesUltimoPagoCreditoGrupal}
@@ -4059,12 +4646,31 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
               evidenciasPendientes={evidenciasHistorialCreditoPendientesActuales.length}
               fotografiasGuardadas={fotografiasOtraFinancieraGuardadas}
               paginasEvidencias={paginasEvidenciasHistorialCredito}
+              opcionesIntegrantesEvidencia={opcionesIntegrantesEvidencia}
+              motivosClasificacionEvidencia={motivosClasificacionEvidencia}
+              errorMotivosClasificacionEvidencia={errorMotivosClasificacionEvidencia}
+              integrantesEvidenciaSeleccionadas={integrantesEvidenciaSeleccionadas}
+              evidenciaPendienteClasificacion={
+                evidenciaHistorialCreditoPorAsignar?.tipo === tipoEvidenciaHistorialCreditoActual
+                  && !evidenciaHistorialCreditoPorAsignar.clasificacionSemaforo
+                  ? {
+                    key: evidenciaHistorialCreditoPorAsignar.idempotencyKey,
+                    uri: evidenciaHistorialCreditoPorAsignar.uri,
+                  }
+                  : null
+              }
+              evidenciaPendienteDeAsignar={Boolean(
+                evidenciaHistorialCreditoPorAsignar?.tipo === tipoEvidenciaHistorialCreditoActual
+                && evidenciaHistorialCreditoPorAsignar.clasificacionSemaforo
+                && evidenciaHistorialCreditoPorAsignar.motivoClasificacionId,
+              )}
               errorEvidencias={errorEvidenciasHistorialCreditoActual}
               errorComprobante={errorComprobanteLineaCredito}
               onTieneOtroCreditoGrupalChange={setTieneOtroCreditoGrupal}
               onFinancieraCreditoGrupalChange={setFinancieraCreditoGrupal}
               onCreditoGrupalAnteriorActivoChange={setCreditoGrupalAnteriorActivo}
               onValorFichaCreditoGrupalChange={setValorFichaCreditoGrupal}
+              onMontoUltimoPrestamoCreditoGrupalChange={setMontoUltimoPrestamoCreditoGrupal}
               onSemanaActualCreditoGrupalChange={setSemanaActualCreditoGrupal}
               onMesDesembolsoCreditoGrupalChange={setMesDesembolsoCreditoGrupal}
               onUltimoPagoCreditoGrupalChange={(month, year) => {
@@ -4080,6 +4686,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
                 setFinancieraCreditoGrupal('');
                 setCreditoGrupalAnteriorActivo('');
                 setValorFichaCreditoGrupal('');
+                setMontoUltimoPrestamoCreditoGrupal('');
                 setSemanaActualCreditoGrupal('');
                 setMesDesembolsoCreditoGrupal('');
                 setMesUltimoPagoCreditoGrupal('');
@@ -4092,6 +4699,7 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
               }}
               onLimpiarRutaCreditoGrupal={() => {
                 setValorFichaCreditoGrupal('');
+                setMontoUltimoPrestamoCreditoGrupal('');
                 setSemanaActualCreditoGrupal('');
                 setMesDesembolsoCreditoGrupal('');
                 setMesUltimoPagoCreditoGrupal('');
@@ -4106,6 +4714,15 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
                 comprobanteLineaCredito,
               )}
               onCapturarEvidencia={(tipo) => void capturarEvidenciaHistorialCredito(tipo)}
+              onSeleccionarEvidenciaCarrete={(tipo) => (
+                void seleccionarEvidenciaHistorialDesdeCarrete(tipo)
+              )}
+              onIntegrantesEvidenciaChange={setIntegrantesEvidenciaSeleccionadas}
+              onGuardarEvidenciaParaIntegrantes={(integranteIds) => {
+                void guardarEvidenciaHistorialParaIntegrantes(integranteIds);
+              }}
+              onClasificarEvidencia={clasificarEvidenciaHistorial}
+              onDescartarEvidenciaPendiente={descartarEvidenciaHistorialPendiente}
               onReintentarEvidencias={(tipo) => void guardarEvidenciasHistorialCredito(
                 tipo,
                 evidenciasHistorialCreditoPendientes[tipo],
@@ -4198,10 +4815,8 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
             />
 
             <EntrevistaEncuestasSection
-              mostrarControlTesorera={Boolean(
-                integrante?.esTesorera && integrante.tieneHistorialInterno === true,
-              )}
-              mostrarEncuestaServicio={integrante?.tieneHistorialInterno === true}
+              mostrarControlTesorera={mostrarControlTesorera}
+              mostrarEncuestaServicio={mostrarEncuestaServicio}
               tieneControlPagos={tieneControlPagos}
               motivoSinControl={motivoSinControl}
               asesoraAcudioSemanalmente={asesoraAcudioSemanalmente}
@@ -4262,12 +4877,78 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
                 );
               }}
             />
+
+            {entrevistaListaParaTerminar ? (
+              <StatusBadge label="ENTREVISTA COMPLETA" tone="success" />
+            ) : (
+              <Card variant="warning" style={styles.entrevistaPendientesCard}>
+                <Text allowFontScaling={false} style={styles.entrevistaPendientesTitle}>
+                  Falta completar lo siguiente:
+                </Text>
+                {entrevistaCompletitud.faltantes.map((faltante) => (
+                  <Text
+                    allowFontScaling={false}
+                    key={faltante}
+                    style={styles.entrevistaPendienteText}
+                  >
+                    • {faltante}
+                  </Text>
+                ))}
+              </Card>
+            )}
           </Card>
         )}
 
         {/* Conclusiones del verificador */}
         {pasoActual === 'observaciones' && (
           <Card style={styles.mainCard}>
+            <SectionTitle title="Resumen de entrevista" />
+            <ConclusionesResumen
+              ciclosIndividualesRegistrados={integrante?.creditosParticipados ?? null}
+              esNuevaConNosotros={integrante?.esNuevaConNosotros === true}
+              sabeMontosCompaneras={sabeMontosCompaneras}
+              acuerdoMontos={acuerdoMontos}
+              companerasMontoNoAcordadoIds={companerasMontoNoAcordadoIds}
+              conoceTesoreraDelGrupo={conoceTesoreraDelGrupo}
+              quienEsTesorera={quienEsTesorera}
+              domicilioRecoleccion={domicilioRecoleccion}
+              integrantesGrupo={integrantesGrupo}
+              tieneHistorialCrelealtad={integrante?.tieneHistorialInterno ?? null}
+              historialCrelealtad={integrante?.historialCrediticioInterno ?? null}
+              historialOtraFinanciera={{
+                tieneOtroCreditoGrupal,
+                financieraCreditoGrupal,
+                creditoGrupalAnteriorActivo,
+                valorFichaCreditoGrupal,
+                montoUltimoPrestamoCreditoGrupal,
+                semanaActualCreditoGrupal,
+                mesDesembolsoCreditoGrupal,
+                mesUltimoPagoCreditoGrupal,
+                anioUltimoPagoCreditoGrupal,
+                semanasDesdeUltimoPagoCreditoGrupal,
+                numeroCiclosCreditoGrupal,
+                tasaCreditoGrupal,
+                motivoNoRenovacionCreditoGrupal,
+                fotografiasGuardadas: fotografiasOtraFinancieraGuardadas,
+                fotografiasPendientes: evidenciasHistorialCreditoPendientesActuales.length,
+                fotografiasCalificables: evidenciasHistorialCreditoActual.length,
+                fotografiasCalificadas: fotografiasOtraFinancieraCalificadas,
+                fechaCapturaEntrevista,
+                clasificacionFinanciera: clasificacionFinancieraCreditoGrupal,
+              }}
+              calificacionSemanaCredito={calificacionSemanaCredito}
+              calificacionCiclosCredito={calificacionCiclosCredito}
+              toleranciaSemanaDesembolso={toleranciaSemanaDesembolso}
+              concordanciaFicha={concordanciaFicha}
+              concordanciaPrestamo={concordanciaPrestamo}
+              calificacionPromedioEvidencias={calificacionPromedioEvidencias}
+              onVerEvidenciasOtraFinanciera={() => setEvidenciaHistorialCreditoVisible(true)}
+              fotografiasCasa={fotografiasCasaConclusiones.length}
+              fotografiasNegocio={fotografiasNegocioConclusiones.length}
+              onVerFotografiasCasa={() => setFotografiasConclusionesVisible('casa')}
+              onVerFotografiasNegocio={() => setFotografiasConclusionesVisible('negocio')}
+            />
+
             <SectionTitle title="Conclusiones del verificador" />
 
             <SelectorField
@@ -4361,6 +5042,16 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
             accessibilityLabel="Terminar imágenes del domicilio. Se habilita al guardar la fachada y confirmar la respuesta sobre el medidor de luz; si existe, también requiere su fotografía."
             onPress={handleTerminarImagenesDomicilio}
           />
+        ) : pasoActual === 'validacion-integrante' ? (
+          <PrimaryButton
+            title="Terminar entrevista"
+            moduleTheme="verification"
+            disabled={!entrevistaListaParaTerminar}
+            accessibilityLabel={entrevistaListaParaTerminar
+              ? 'Terminar entrevista y volver a procesos'
+              : `Terminar entrevista deshabilitado. ${entrevistaCompletitud.faltantes[0] ?? 'Faltan requisitos por completar'}`}
+            onPress={handleTerminarEntrevista}
+          />
         ) : (
           <SecondaryButton title="← Volver a procesos" onPress={handleBackPress} />
         )}
@@ -4425,10 +5116,46 @@ export const IntegranteVerificacionScreen: React.FC<IntegranteVerificacionScreen
           uri: evidenciaFolletoPendiente?.uri || fotoFolletoPremioTesorera || '',
           headers: evidenciaFolletoPendiente ? undefined : evidenciaEntrevistaHeaders,
         } : null}
+        historialCreditoVisible={evidenciaHistorialCreditoVisible}
+        historialCredito={paginasEvidenciasHistorialCreditoGuardadas}
+        historialCreditoTitle={creditoGrupalAnteriorActivo === 'Sí'
+          ? 'Evidencia de otra financiera · Crédito activo'
+          : 'Evidencia de otra financiera · Crédito anterior'}
+        fotografiasResumenVisible={fotografiasConclusionesVisible !== null}
+        fotografiasResumen={fotografiasConclusiones}
+        fotografiasResumenTitle={fotografiasConclusionesVisible === 'casa'
+          ? 'Fotografías de casa'
+          : 'Fotografías de negocio'}
         onCloseControlPagos={() => setFotoControlPagosVisible(false)}
         onCloseImagenDomicilio={() => setImagenDomicilioEnVista(null)}
         onCloseFolleto={() => setFotoFolletoPremioVisible(false)}
+        onCloseHistorialCredito={() => setEvidenciaHistorialCreditoVisible(false)}
+        onCloseFotografiasResumen={() => setFotografiasConclusionesVisible(null)}
+        onEditHistorialCreditoIntegrantes={abrirEdicionIntegrantesEvidencia}
+        onCalificarHistorialCredito={(evidenciaId, value) => (
+          void calificarEvidenciaHistorial(evidenciaId, value)
+        )}
       />
+
+      {evidenciaHistorialCreditoEnEdicion ? (
+        <MultiSelectPickerField
+          key={`${evidenciaHistorialCreditoEnEdicion.id}-${evidenciaHistorialCreditoEnEdicion.apertura}`}
+          label="¿De qué integrantes es esta evidencia?"
+          value={evidenciaHistorialCreditoEnEdicion.integranteIds}
+          options={opcionesIntegrantesEvidencia}
+          onSelect={(integranteIds) => void guardarIntegrantesEvidenciaEditada(integranteIds)}
+          onCancel={() => setEvidenciaHistorialCreditoEnEdicion(null)}
+          moduleTheme="verification"
+          openOnMount
+          showTrigger={false}
+          minSelections={1}
+          selectAllLabel="Todas las integrantes"
+          confirmLabel="Guardar cambios"
+          selectedItemsTitle="Esta evidencia corresponde a"
+          disabled={Boolean(guardandoEvidenciasHistorialCredito)}
+          required
+        />
+      ) : null}
 
       </KeyboardAvoidingView>
     </ScreenContainer>
@@ -4439,12 +5166,18 @@ const styles = StyleSheet.create({
   loader: { marginTop: spacing.xl },
   scroll: { flex: 1 },
   content: {
+    width: '100%',
+    maxWidth: layout.detailMaxWidth,
+    alignSelf: 'center',
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: 0,
     paddingBottom: spacing.xl,
   },
   fixedSolicitanteContainer: {
+    width: '100%',
+    maxWidth: layout.detailMaxWidth,
+    alignSelf: 'center',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     backgroundColor: colors.background,
@@ -4482,20 +5215,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: spacing.xs,
     marginLeft: 'auto',
-  },
-  creditHistoryBadge: {
-    flexShrink: 0,
-    backgroundColor: colors.successSoft,
-    borderColor: colors.primary,
-    borderWidth: 1,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  creditHistoryText: {
-    color: colors.primary,
-    ...typography.caption,
-    fontWeight: '700',
   },
   ageBadge: {
     flexShrink: 0,
@@ -4693,6 +5412,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.gray[800],
+  },
+  entrevistaPendientesCard: {
+    gap: spacing.xs,
+    marginTop: spacing.lg,
+  },
+  entrevistaPendientesTitle: {
+    ...typography.bodyStrong,
+    color: colors.textPrimary,
+  },
+  entrevistaPendienteText: {
+    ...typography.body,
+    color: colors.textPrimary,
   },
   infoBox: {
     backgroundColor: colors.gray[50],

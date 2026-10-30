@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   MultiSelectField,
@@ -15,6 +15,20 @@ import {
   FAMILIARES_DOMICILIO,
   MOTIVOS_NO_VIVE_EN_DOMICILIO,
 } from './verificacion-entrevista.catalog';
+import {
+  codigoParametroEntrevista,
+  etiquetaParametroEntrevista,
+  useOpcionesEntrevista,
+} from './verificacion-entrevista-parametros';
+
+const CONVIVIENTES_RESPALDO: Record<string, string> = {
+  'Cónyuge': 'CONYUGE',
+  Conyuge: 'CONYUGE',
+  Hijos: 'HIJOS',
+  Padres: 'PADRES',
+  Hermanos: 'HERMANOS',
+  Otros: 'OTROS',
+};
 
 interface EntrevistaDatosPersonalesSectionProps {
   nombreIntegrante: string;
@@ -84,8 +98,36 @@ export const EntrevistaDatosPersonalesSection: React.FC<EntrevistaDatosPersonale
   onConfirmarTelefonoSecundario,
   onVerEvidenciaTelefonoPrincipal,
   onVerEvidenciaTelefonoSecundario,
-}) => (
-  <>
+}) => {
+  const opcionesMotivoNoVive = useOpcionesEntrevista('MOTIVO_NO_VIVE_DOMICILIO', MOTIVOS_NO_VIVE_EN_DOMICILIO);
+  const opcionesTipoDomicilio = useOpcionesEntrevista('TIPO_DOMICILIO', ['Renta', 'Dueña', 'Familiar']);
+  const opcionesFamiliarDomicilio = useOpcionesEntrevista('FAMILIAR_DOMICILIO', FAMILIARES_DOMICILIO);
+  const opcionesAntiguedadDomicilio = useOpcionesEntrevista('ANTIGUEDAD_DOMICILIO', ['0-1 años', '1-3 años', '3+ años']);
+  const opcionesPersonasCasa = useOpcionesEntrevista('PERSONAS_VIVEN_CASA', ['1', '2', '3', '4', '5', '≥6']);
+  const opcionesConvivientes = useOpcionesEntrevista('CONVIVIENTES', ['Cónyuge', 'Hijos', 'Padres', 'Hermanos', 'Otros']);
+  const esDomicilioFamiliar = codigoParametroEntrevista('TIPO_DOMICILIO', tipoDomicilio, {
+    Renta: 'RENTA', Dueña: 'PROPIA', Familiar: 'FAMILIAR',
+  }) === 'FAMILIAR';
+  const [abrirMotivoNoVive, setAbrirMotivoNoVive] = useState(false);
+  const [abrirFamiliarDomicilio, setAbrirFamiliarDomicilio] = useState(false);
+
+  useEffect(() => {
+    const normalizados = [...new Set(quienViveConUsted.map((etiqueta) => {
+      const codigo = codigoParametroEntrevista('CONVIVIENTES', etiqueta, CONVIVIENTES_RESPALDO);
+      return codigo
+        ? etiquetaParametroEntrevista('CONVIVIENTES', codigo, CONVIVIENTES_RESPALDO) || etiqueta
+        : etiqueta;
+    }))];
+    if (
+      normalizados.length !== quienViveConUsted.length
+      || normalizados.some((etiqueta, indice) => etiqueta !== quienViveConUsted[indice])
+    ) {
+      onQuienViveConUstedChange(normalizados);
+    }
+  }, [onQuienViveConUstedChange, opcionesConvivientes, quienViveConUsted]);
+
+  return (
+    <>
     <View style={styles.sectionHeader}>
       <StickySectionHeader title="DATOS PERSONALES" moduleTheme="verification" />
     </View>
@@ -95,6 +137,7 @@ export const EntrevistaDatosPersonalesSection: React.FC<EntrevistaDatosPersonale
       value={viveEnDomicilioDeclarado}
       options={['Sí', 'No']}
       onSelect={(respuesta) => {
+        setAbrirMotivoNoVive(respuesta === 'No');
         onViveEnDomicilioChange(respuesta);
         onMotivoNoViveEnDomicilioChange('');
       }}
@@ -104,13 +147,17 @@ export const EntrevistaDatosPersonalesSection: React.FC<EntrevistaDatosPersonale
 
     {viveEnDomicilioDeclarado === 'No' ? (
       <PickerField
+        key={`motivo-no-vive-${abrirMotivoNoVive && !motivoNoViveEnDomicilio.trim() ? 'abrir' : 'cerrado'}`}
         label="¿Por qué no vive en este domicilio?"
         value={motivoNoViveEnDomicilio}
-        options={MOTIVOS_NO_VIVE_EN_DOMICILIO}
-        onSelect={onMotivoNoViveEnDomicilioChange}
+        options={[...opcionesMotivoNoVive]}
+        onSelect={(value) => {
+          setAbrirMotivoNoVive(false);
+          onMotivoNoViveEnDomicilioChange(value);
+        }}
         placeholder="Seleccionar motivo"
         moduleTheme="verification"
-        autoOpen
+        autoOpen={abrirMotivoNoVive && !motivoNoViveEnDomicilio.trim()}
         confirmSelection
         highlightSelectedValue
         selectionTone="danger"
@@ -121,24 +168,32 @@ export const EntrevistaDatosPersonalesSection: React.FC<EntrevistaDatosPersonale
     <SelectorField
       label="¿Renta, o es Dueña del domicilio?"
       value={tipoDomicilio}
-      options={['Renta', 'Dueña', 'Familiar']}
+      options={[...opcionesTipoDomicilio]}
       onSelect={(opcion) => {
+        const familiar = codigoParametroEntrevista('TIPO_DOMICILIO', opcion, {
+          Renta: 'RENTA', Dueña: 'PROPIA', Familiar: 'FAMILIAR',
+        }) === 'FAMILIAR';
+        setAbrirFamiliarDomicilio(familiar);
         onTipoDomicilioChange(opcion);
-        if (opcion !== 'Familiar') onFamiliarDomicilioChange('');
+        if (!familiar) onFamiliarDomicilioChange('');
       }}
       moduleTheme="verification"
       required
     />
 
-    {tipoDomicilio === 'Familiar' ? (
+    {esDomicilioFamiliar ? (
       <PickerField
+        key={`familiar-domicilio-${abrirFamiliarDomicilio && !familiarDomicilio.trim() ? 'abrir' : 'cerrado'}`}
         label="¿De qué familiar es el domicilio?"
         value={familiarDomicilio}
-        options={FAMILIARES_DOMICILIO}
-        onSelect={onFamiliarDomicilioChange}
+        options={[...opcionesFamiliarDomicilio]}
+        onSelect={(value) => {
+          setAbrirFamiliarDomicilio(false);
+          onFamiliarDomicilioChange(value);
+        }}
         placeholder="Seleccionar familiar"
         moduleTheme="verification"
-        autoOpen
+        autoOpen={abrirFamiliarDomicilio && !familiarDomicilio.trim()}
         confirmSelection
         highlightSelectedValue
         required
@@ -148,7 +203,7 @@ export const EntrevistaDatosPersonalesSection: React.FC<EntrevistaDatosPersonale
     <SelectorField
       label="¿Hace cuántos años vive en este domicilio?"
       value={aniosEnDomicilio}
-      options={['0-1 años', '1-3 años', '3+ años']}
+      options={[...opcionesAntiguedadDomicilio]}
       onSelect={onAniosEnDomicilioChange}
       moduleTheme="verification"
       required
@@ -157,7 +212,7 @@ export const EntrevistaDatosPersonalesSection: React.FC<EntrevistaDatosPersonale
     <SelectorField
       label="¿Cuántas personas viven en casa?"
       value={personasVivenCasa}
-      options={['1', '2', '3', '4', '5', '≥6']}
+      options={[...opcionesPersonasCasa]}
       onSelect={onPersonasVivenCasaChange}
       moduleTheme="verification"
       variant="countBubbles"
@@ -167,7 +222,7 @@ export const EntrevistaDatosPersonalesSection: React.FC<EntrevistaDatosPersonale
     <MultiSelectField
       label="¿Quién vive actualmente con usted?"
       value={quienViveConUsted}
-      options={['Conyuge', 'Hijos', 'Padres', 'Hermanos', 'Otros']}
+      options={[...opcionesConvivientes]}
       onSelect={onQuienViveConUstedChange}
       helperText="Selecciona todas las opciones que apliquen"
       moduleTheme="verification"
@@ -239,8 +294,9 @@ export const EntrevistaDatosPersonalesSection: React.FC<EntrevistaDatosPersonale
       confirmed={telefonoSecundarioEstaConfirmado}
       callAccessibilityLabel="Confirmar el número secundario y elegir llamada telefónica o WhatsApp"
     />
-  </>
-);
+    </>
+  );
+};
 
 const styles = StyleSheet.create({
   sectionHeader: {

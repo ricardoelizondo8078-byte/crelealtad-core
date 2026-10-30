@@ -23,6 +23,9 @@ describe('VerificacionVisitasVecino integración', () => {
   const grupoId = randomUUID();
   const expedienteId = randomUUID();
   const integranteId = randomUUID();
+  const opcionSiId = randomUUID();
+  const opcionSiAlternaId = randomUUID();
+  const opcionNoId = randomUUID();
   let app: INestApplication;
   let dataSource: DataSource;
   let testActor: TestActorFixture;
@@ -85,6 +88,15 @@ describe('VerificacionVisitasVecino integración', () => {
       'INSERT INTO integrantes (id, expediente_id, estado) VALUES ($1, $2, $3)',
       [integranteId, expedienteId, 'SUJETA_CREDITO'],
     );
+    await dataSource.query(
+      `INSERT INTO parametros_entrevista_opciones
+         (id, familia, codigo, etiqueta, etiqueta_normalizada, orden, created_by)
+       VALUES
+         ($1, 'VISITA_VECINO_RESPUESTA_SI', 'TEST_SI', 'Confirma el domicilio', 'CONFIRMA EL DOMICILIO', 1, $4),
+         ($2, 'VISITA_VECINO_RESPUESTA_SI', 'TEST_SI_ALTERNA', 'La conoce personalmente', 'LA CONOCE PERSONALMENTE', 2, $4),
+         ($3, 'VISITA_VECINO_RESPUESTA_NO', 'TEST_NO', 'No conoce el domicilio', 'NO CONOCE EL DOMICILIO', 1, $4)`,
+      [opcionSiId, opcionSiAlternaId, opcionNoId, usuarioId],
+    );
   });
 
   afterAll(async () => {
@@ -93,6 +105,10 @@ describe('VerificacionVisitasVecino integración', () => {
       await rm(storageRoot, { recursive: true, force: true });
       return;
     }
+    await dataSource.query(
+      'DELETE FROM verificacion_visita_vecino_opciones WHERE visita_id IN (SELECT id FROM verificacion_visitas_vecino WHERE integrante_id=$1)',
+      [integranteId],
+    );
     await dataSource.query(
       "DELETE FROM audit_log WHERE tabla='verificacion_visita_vecino_evidencias' AND registro_id IN (SELECT e.id FROM verificacion_visita_vecino_evidencias e JOIN verificacion_visitas_vecino v ON v.id=e.visita_id WHERE v.integrante_id=$1)",
       [integranteId],
@@ -117,6 +133,10 @@ describe('VerificacionVisitasVecino integración', () => {
       'DELETE FROM verificacion_visita_vecino_fachadas WHERE integrante_id=$1',
       [integranteId],
     );
+    await dataSource.query(
+      'DELETE FROM parametros_entrevista_opciones WHERE id = ANY($1::uuid[])',
+      [[opcionSiId, opcionSiAlternaId, opcionNoId]],
+    );
     await dataSource.query('DELETE FROM integrantes WHERE id=$1', [integranteId]);
     await dataSource.query('DELETE FROM expedientes WHERE id=$1', [expedienteId]);
     await dataSource.query('DELETE FROM grupos WHERE id=$1', [grupoId]);
@@ -132,6 +152,7 @@ describe('VerificacionVisitasVecino integración', () => {
       .set('X-Crelealtad-Context', 'verificacion')
       .send({
         conoce_y_sabe_donde_vive: true,
+        opcion_ids: [opcionSiId],
         fachada_id: randomUUID(),
         idempotency_key: `neighbor_sin_ubicacion_${Date.now()}`,
       })
@@ -216,12 +237,28 @@ describe('VerificacionVisitasVecino integración', () => {
     });
 
     const idempotencyKey = `neighbor_test_${Date.now()}`;
+
+    await request(app.getHttpServer())
+      .post(`/verificacion/integrantes/${integranteId}/visitas-vecino`)
+      .set('X-Crelealtad-Context', 'verificacion')
+      .send({
+        fachada_id: fachada.body.fachada.id,
+        conoce_y_sabe_donde_vive: true,
+        opcion_ids: [opcionSiId, opcionSiAlternaId],
+        idempotency_key: `neighbor_dos_opciones_${Date.now()}`,
+        ubicacion_latitud: 25.686614238,
+        ubicacion_longitud: -100.316112689,
+        ubicacion_capturada_at: '2026-09-22T18:43:00.000Z',
+      })
+      .expect(400);
+
     const primera = await request(app.getHttpServer())
       .post(`/verificacion/integrantes/${integranteId}/visitas-vecino`)
       .set('X-Crelealtad-Context', 'verificacion')
       .send({
         fachada_id: fachada.body.fachada.id,
         conoce_y_sabe_donde_vive: true,
+        opcion_ids: [opcionSiId],
         idempotency_key: idempotencyKey,
         ubicacion_latitud: 25.686614238,
         ubicacion_longitud: -100.316112689,
@@ -231,7 +268,20 @@ describe('VerificacionVisitasVecino integración', () => {
       .expect(201);
 
     expect(primera.body.resumen.resultado.conoce_y_sabe_donde_vive).toBe(true);
+    expect(primera.body.resumen.resultado.opciones_seleccionadas).toEqual([
+      expect.objectContaining({
+        id: opcionSiId,
+        etiqueta: 'Confirma el domicilio',
+      }),
+    ]);
     expect(primera.body.resumen.resultado.visita_id).toBe(primera.body.visita.id);
+
+    await expect(dataSource.query(
+      `INSERT INTO verificacion_visita_vecino_opciones
+         (visita_id, opcion_id, etiqueta_snapshot, orden_snapshot)
+       VALUES ($1, $2, 'se reemplaza por trigger', 99)`,
+      [primera.body.visita.id, opcionSiAlternaId],
+    )).rejects.toMatchObject({ code: '23505' });
 
     const repetida = await request(app.getHttpServer())
       .post(`/verificacion/integrantes/${integranteId}/visitas-vecino`)
@@ -239,6 +289,7 @@ describe('VerificacionVisitasVecino integración', () => {
       .send({
         fachada_id: fachada.body.fachada.id,
         conoce_y_sabe_donde_vive: true,
+        opcion_ids: [opcionSiId],
         idempotency_key: idempotencyKey,
         ubicacion_latitud: 25.686614238,
         ubicacion_longitud: -100.316112689,
@@ -330,6 +381,7 @@ describe('VerificacionVisitasVecino integración', () => {
       .send({
         fachada_id: fachada.body.fachada.id,
         conoce_y_sabe_donde_vive: false,
+        opcion_ids: [opcionNoId],
         idempotency_key: `neighbor_test_no_${Date.now()}`,
         ubicacion_latitud: 25.68660001,
         ubicacion_longitud: -100.31610001,
@@ -345,6 +397,12 @@ describe('VerificacionVisitasVecino integración', () => {
     expect(resumen.body.resultado.conoce_y_sabe_donde_vive).toBe(false);
     expect(resumen.body.resultado.visita_id).toBe(segunda.body.visita.id);
     expect(resumen.body.resultado.fachada_id).toBe(fachada.body.fachada.id);
+    expect(resumen.body.resultado.opciones_seleccionadas).toEqual([
+      expect.objectContaining({
+        id: opcionNoId,
+        etiqueta: 'No conoce el domicilio',
+      }),
+    ]);
 
     const evidenciaSegundaRespuesta = await request(app.getHttpServer())
       .get(
@@ -376,6 +434,28 @@ describe('VerificacionVisitasVecino integración', () => {
       precision_metros: 8.57,
       ubicacion_fuente: 'DISPOSITIVO',
     });
+
+    const opcionesGuardadas = await dataSource.query(
+      `SELECT visita_id, opcion_id, etiqueta_snapshot, orden_snapshot
+       FROM verificacion_visita_vecino_opciones
+       WHERE visita_id = ANY($1::uuid[])
+       ORDER BY created_at`,
+      [[primera.body.visita.id, segunda.body.visita.id]],
+    );
+    expect(opcionesGuardadas).toEqual([
+      {
+        visita_id: primera.body.visita.id,
+        opcion_id: opcionSiId,
+        etiqueta_snapshot: 'Confirma el domicilio',
+        orden_snapshot: 1,
+      },
+      {
+        visita_id: segunda.body.visita.id,
+        opcion_id: opcionNoId,
+        etiqueta_snapshot: 'No conoce el domicilio',
+        orden_snapshot: 1,
+      },
+    ]);
 
     const audits = await dataSource.query(
       `SELECT datos_despues

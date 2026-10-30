@@ -8,13 +8,22 @@ class MigrationLedger {
     this.databaseName = databaseName;
     this.migrationsDirectory = path.resolve(__dirname, '../../../database/migrations');
     this.catalog = new MigrationCatalog(this.migrationsDirectory);
-    this.client = new Client({
-      host: process.env.DB_HOST || 'localhost',
-      port: Number(process.env.DB_PORT || 5432),
-      user: process.env.DB_USERNAME || process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || process.env.DB_PASS,
-      database: databaseName,
-    });
+    const databaseUrl = process.env.DATABASE_URL?.trim();
+    const sslEnabled = process.env.NODE_ENV === 'production' || process.env.DB_SSL === 'true';
+    const ssl = sslEnabled
+      ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' }
+      : false;
+
+    this.client = new Client(databaseUrl
+      ? { connectionString: databaseUrl, ssl }
+      : {
+          host: process.env.DB_HOST || 'localhost',
+          port: Number(process.env.DB_PORT || 5432),
+          user: process.env.DB_USERNAME || process.env.DB_USER || 'postgres',
+          password: process.env.DB_PASSWORD || process.env.DB_PASS,
+          database: databaseName,
+          ssl,
+        });
   }
 
   discover() {
@@ -51,7 +60,9 @@ class MigrationLedger {
     const drift = discovered
       .filter((migration) => (
         applied.has(migration.version)
-        && applied.get(migration.version).checksum !== migration.checksum
+        && !(
+          migration.compatibleChecksums || [migration.checksum]
+        ).includes(applied.get(migration.version).checksum)
       ))
       .map((migration) => migration.version);
     const unknown = entries

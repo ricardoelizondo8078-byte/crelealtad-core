@@ -4,6 +4,7 @@ import {
   colors,
   moduleThemes,
   ModuleThemeKey,
+  ModuleTheme,
   radius,
   shadows,
   spacing,
@@ -14,6 +15,7 @@ interface CardProps {
   style?: StyleProp<ViewStyle>;
   variant?: 'default' | 'warning' | 'accent' | 'outlined';
   moduleTheme?: ModuleThemeKey;
+  themeOverride?: ModuleTheme;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -21,8 +23,9 @@ export const Card: React.FC<CardProps> = ({
   style,
   variant = 'default',
   moduleTheme = 'general',
+  themeOverride,
 }) => {
-  const theme = moduleThemes[moduleTheme];
+  const theme = themeOverride ?? moduleThemes[moduleTheme];
 
   return (
     <View

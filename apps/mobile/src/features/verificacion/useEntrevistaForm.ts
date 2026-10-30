@@ -28,6 +28,7 @@ export const useEntrevistaForm = () => {
   const [financieraCreditoGrupal, setFinancieraCreditoGrupal] = useState('');
   const [creditoGrupalAnteriorActivo, setCreditoGrupalAnteriorActivo] = useState('');
   const [valorFichaCreditoGrupal, setValorFichaCreditoGrupal] = useState('');
+  const [montoUltimoPrestamoCreditoGrupal, setMontoUltimoPrestamoCreditoGrupal] = useState('');
   const [semanaActualCreditoGrupal, setSemanaActualCreditoGrupal] = useState('');
   const [mesDesembolsoCreditoGrupal, setMesDesembolsoCreditoGrupal] = useState('');
   const [mesUltimoPagoCreditoGrupal, setMesUltimoPagoCreditoGrupal] = useState('');
@@ -88,6 +89,7 @@ export const useEntrevistaForm = () => {
     financieraCreditoGrupal,
     creditoGrupalAnteriorActivo,
     valorFichaCreditoGrupal,
+    montoUltimoPrestamoCreditoGrupal,
     semanaActualCreditoGrupal,
     mesDesembolsoCreditoGrupal,
     mesUltimoPagoCreditoGrupal,
@@ -150,6 +152,7 @@ export const useEntrevistaForm = () => {
     financieraCreditoGrupal, setFinancieraCreditoGrupal,
     creditoGrupalAnteriorActivo, setCreditoGrupalAnteriorActivo,
     valorFichaCreditoGrupal, setValorFichaCreditoGrupal,
+    montoUltimoPrestamoCreditoGrupal, setMontoUltimoPrestamoCreditoGrupal,
     semanaActualCreditoGrupal, setSemanaActualCreditoGrupal,
     mesDesembolsoCreditoGrupal, setMesDesembolsoCreditoGrupal,
     mesUltimoPagoCreditoGrupal, setMesUltimoPagoCreditoGrupal,

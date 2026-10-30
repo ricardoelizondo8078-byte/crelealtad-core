@@ -3,6 +3,7 @@ import {
   cycleNumber,
   esTipoDocumentoRevision,
   mapCreditHistory,
+  obtenerPresentacionCicloIndividual,
   obtenerTelefonosLlamadaDisponibles,
 } from '../verificacion-individual.model';
 import type { IntegranteData } from '../verificacion-individual.types';
@@ -31,6 +32,24 @@ describe('modelo de Verificación individual', () => {
     expect(cycleNumber('3')).toBe(3);
     expect(cycleNumber(0)).toBeNull();
     expect(cycleNumber(2.5)).toBeNull();
+  });
+
+  it('presenta el mismo ciclo individual registrado sin sumar el expediente actual', () => {
+    expect(obtenerPresentacionCicloIndividual(1, false)).toEqual({
+      accessibilityLabel: '1 ciclo individual registrado, primer ciclo',
+      label: '1 CICLO',
+      tone: 'pending',
+    });
+    expect(obtenerPresentacionCicloIndividual(3, false)).toEqual({
+      accessibilityLabel: '3 ciclos individuales registrados',
+      label: '3 CICLOS',
+      tone: 'success',
+    });
+    expect(obtenerPresentacionCicloIndividual(0, true)).toEqual({
+      accessibilityLabel: 'Integrante nueva, sin ciclos individuales registrados',
+      label: 'NUEVO',
+      tone: 'progress',
+    });
   });
 
   it('normaliza historial válido y descarta ciclos recientes inválidos', () => {

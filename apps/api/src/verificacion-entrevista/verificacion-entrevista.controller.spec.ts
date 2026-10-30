@@ -7,6 +7,8 @@ describe('VerificacionEntrevistaController', () => {
     guardarEntrevista: jest.fn(),
     obtenerEvidencias: jest.fn(),
     registrarEvidencia: jest.fn(),
+    actualizarIntegrantesEvidencia: jest.fn(),
+    calificarEvidenciaIntegrante: jest.fn(),
     obtenerArchivo: jest.fn(),
   };
   const controller = new VerificacionEntrevistaController(service as never);
@@ -94,6 +96,73 @@ describe('VerificacionEntrevistaController', () => {
     expect(Reflect.getMetadata(
       PERMISO_REQUERIDO_KEY,
       VerificacionEntrevistaController.prototype.registrarEvidencia,
+    )).toEqual({ modulo: 'verificacion', accion: 'registrar' });
+  });
+
+  it('actualiza las integrantes de una evidencia con permiso de registro', async () => {
+    const evidenciaId = '22222222-2222-4222-8222-222222222222';
+    const dto = {
+      integrante_ids: [
+        integranteId,
+        '66666666-6666-4666-8666-666666666666',
+      ],
+    };
+    service.actualizarIntegrantesEvidencia.mockResolvedValue({ evidencia: {} });
+
+    await controller.actualizarIntegrantesEvidencia(
+      integranteId,
+      evidenciaId,
+      dto,
+      request as never,
+      'verificacion',
+    );
+
+    expect(service.actualizarIntegrantesEvidencia).toHaveBeenCalledWith(
+      integranteId,
+      evidenciaId,
+      {
+        usuarioId,
+        rolNombre: 'VERIFICADOR',
+        mode: 'INSTITUCIONAL',
+      },
+      dto,
+    );
+    expect(Reflect.getMetadata(
+      PERMISO_REQUERIDO_KEY,
+      VerificacionEntrevistaController.prototype.actualizarIntegrantesEvidencia,
+    )).toEqual({ modulo: 'verificacion', accion: 'registrar' });
+  });
+
+  it('califica una evidencia para la integrante consultada con permiso de registro', async () => {
+    const evidenciaId = '22222222-2222-4222-8222-222222222222';
+    const dto = { calificacion: 'PALOMITA' as const };
+    service.calificarEvidenciaIntegrante.mockResolvedValue({
+      evidencia_id: evidenciaId,
+      integrante_id: integranteId,
+      calificacion_revision: 'PALOMITA',
+    });
+
+    await controller.calificarEvidenciaIntegrante(
+      integranteId,
+      evidenciaId,
+      dto,
+      request as never,
+      'verificacion',
+    );
+
+    expect(service.calificarEvidenciaIntegrante).toHaveBeenCalledWith(
+      integranteId,
+      evidenciaId,
+      {
+        usuarioId,
+        rolNombre: 'VERIFICADOR',
+        mode: 'INSTITUCIONAL',
+      },
+      dto,
+    );
+    expect(Reflect.getMetadata(
+      PERMISO_REQUERIDO_KEY,
+      VerificacionEntrevistaController.prototype.calificarEvidenciaIntegrante,
     )).toEqual({ modulo: 'verificacion', accion: 'registrar' });
   });
 });

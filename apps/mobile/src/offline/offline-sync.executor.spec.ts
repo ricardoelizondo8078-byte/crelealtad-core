@@ -7,6 +7,7 @@ import { materializeOfflineFiles } from './offline-file-store';
 import { executeOfflineOperation } from './offline-sync.executor';
 import {
   OfflineDocumentOperation,
+  OfflineJsonOperation,
   OfflineMultipartOperation,
 } from './offline-sync.types';
 
@@ -34,6 +35,73 @@ describe('offline-sync.executor', () => {
       files: [clearFile],
       cleanup,
     });
+  });
+
+  it('conserva el contexto de Verificación al sincronizar una operación JSON', async () => {
+    const operation: OfflineJsonOperation = {
+      version: 1,
+      id: 'operacion-entrevista-1',
+      userId: 'usuario-prueba',
+      module: 'VERIFICACION',
+      entityType: 'entrevista',
+      entityId: 'integrante-1',
+      dedupeKey: 'entrevista:integrante-1',
+      kind: 'JSON_REQUEST',
+      status: 'BLOCKED',
+      attempts: 1,
+      nextAttemptAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      request: {
+        endpoint: '/verificacion/integrantes/integrante-1/entrevista',
+        method: 'PUT',
+        body: { conoce_asesora: true },
+      },
+    };
+    jest.mocked(apiRequest).mockResolvedValueOnce({ entrevista: { revision: 2 } });
+
+    await expect(executeOfflineOperation(operation, async () => undefined))
+      .resolves.toMatchObject({ entrevista: { revision: 2 } });
+    expect(apiRequest).toHaveBeenCalledWith(
+      '/verificacion/integrantes/integrante-1/entrevista',
+      expect.objectContaining({
+        method: 'PUT',
+        body: { conoce_asesora: true },
+        headers: { 'X-Crelealtad-Context': 'verificacion' },
+        showProcessing: false,
+      }),
+    );
+  });
+
+  it('no amplía el contexto de las operaciones de Documentación', async () => {
+    const operation: OfflineJsonOperation = {
+      version: 1,
+      id: 'operacion-solicitud-1',
+      userId: 'usuario-prueba',
+      module: 'DOCUMENTACION',
+      entityType: 'solicitud',
+      entityId: 'integrante-1',
+      dedupeKey: 'solicitud:integrante-1',
+      kind: 'JSON_REQUEST',
+      status: 'PENDING',
+      attempts: 0,
+      nextAttemptAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      request: {
+        endpoint: '/solicitudes/integrante/integrante-1',
+        method: 'PUT',
+        body: { monto_solicitado: 18000 },
+      },
+    };
+    jest.mocked(apiRequest).mockResolvedValueOnce({ id: 'solicitud-1' });
+
+    await executeOfflineOperation(operation, async () => undefined);
+
+    expect(apiRequest).toHaveBeenCalledWith(
+      '/solicitudes/integrante/integrante-1',
+      expect.objectContaining({ headers: undefined }),
+    );
   });
 
   it('usa la copia temporal para multipart y la limpia aunque la API falle', async () => {
@@ -67,6 +135,12 @@ describe('offline-sync.executor', () => {
       clearFile.uri,
       clearFile.name,
       clearFile.fieldName,
+    );
+    expect(apiRequest).toHaveBeenCalledWith(
+      '/verificacion/evidencia',
+      expect.objectContaining({
+        headers: { 'X-Crelealtad-Context': 'verificacion' },
+      }),
     );
     expect(cleanup).toHaveBeenCalledTimes(1);
   });

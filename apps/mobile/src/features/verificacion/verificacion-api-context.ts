@@ -1,8 +1,7 @@
 import { getAuthorizationHeaders } from '../../services/api-client';
+import { VERIFICACION_CONTEXT_HEADERS } from '../../services/api-request-context';
 
-export const VERIFICACION_CONTEXT_HEADERS = {
-  'X-Crelealtad-Context': 'verificacion',
-} as const;
+export { VERIFICACION_CONTEXT_HEADERS } from '../../services/api-request-context';
 
 export const VERIFICACION_REQUEST_OPTIONS = {
   headers: VERIFICACION_CONTEXT_HEADERS,

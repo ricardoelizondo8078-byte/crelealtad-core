@@ -11,7 +11,7 @@ import {
 import { AppHeader, Card, FormField, PrimaryButton, ScreenContainer, ScreenTitleBar } from '../../components/ui';
 import { api } from '../../services/api-client';
 import { MAX_SOLICITUD_AMOUNT } from '../../config/parameters';
-import { colors, radius, spacing, typography } from '../../theme/tokens';
+import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
 import { formatCurrency } from '../../utils/currency';
 import { formatPhone, normalizeDigits, normalizePhone, normalizeUppercaseLettersOnly, validatePhone10 } from '../../utils/input';
 
@@ -233,7 +233,14 @@ export const IntegranteFormScreen: React.FC<IntegranteFormScreenProps> = ({ expe
 
 const styles = StyleSheet.create({
   keyboardContainer: { flex: 1 },
-  form: { padding: spacing.lg, gap: spacing.md, paddingBottom: 300 },
+  form: {
+    width: '100%',
+    maxWidth: layout.formMaxWidth,
+    alignSelf: 'center',
+    padding: spacing.lg,
+    gap: spacing.md,
+    paddingBottom: 300,
+  },
   subtitle: { color: colors.textSecondary, marginBottom: spacing.sm, ...typography.body },
   input: {
     borderWidth: 1,

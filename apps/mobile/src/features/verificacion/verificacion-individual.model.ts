@@ -42,6 +42,53 @@ export const cycleNumber = (value: unknown): number | null => {
   return Number.isInteger(numeric) && numeric > 0 ? numeric : null;
 };
 
+export interface PresentacionCicloIndividual {
+  accessibilityLabel: string;
+  label: string;
+  tone: 'pending' | 'progress' | 'success';
+}
+
+export const obtenerPresentacionCicloIndividual = (
+  ciclosIndividualesRegistrados: number | null,
+  esNuevaConNosotros: boolean,
+): PresentacionCicloIndividual => {
+  const ciclosValidos = ciclosIndividualesRegistrados != null
+    && Number.isInteger(ciclosIndividualesRegistrados)
+    && ciclosIndividualesRegistrados >= 0
+    ? ciclosIndividualesRegistrados
+    : null;
+
+  if (ciclosValidos == null) {
+    return {
+      accessibilityLabel: 'Ciclo individual no disponible',
+      label: 'CICLO INDIVIDUAL N/D',
+      tone: 'progress',
+    };
+  }
+
+  if (ciclosValidos === 0 && esNuevaConNosotros) {
+    return {
+      accessibilityLabel: 'Integrante nueva, sin ciclos individuales registrados',
+      label: 'NUEVO',
+      tone: 'progress',
+    };
+  }
+
+  if (ciclosValidos === 1) {
+    return {
+      accessibilityLabel: '1 ciclo individual registrado, primer ciclo',
+      label: '1 CICLO',
+      tone: 'pending',
+    };
+  }
+
+  return {
+    accessibilityLabel: `${ciclosValidos} ciclos individuales registrados`,
+    label: `${ciclosValidos} CICLOS`,
+    tone: ciclosValidos > 1 ? 'success' : 'progress',
+  };
+};
+
 const mapCreditHistoryExtreme = (value: unknown): CreditHistoryExtreme | null => {
   const record = recordFromUnknown(value);
   const authorizedAmount = positiveNumber(record?.monto_autorizado);

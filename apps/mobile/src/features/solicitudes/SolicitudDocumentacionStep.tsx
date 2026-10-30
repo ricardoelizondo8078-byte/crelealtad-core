@@ -30,7 +30,7 @@ export const SolicitudDocumentacionStep: React.FC<SolicitudDocumentacionStepProp
     <View style={styles.header}>
       <Text allowFontScaling={false} style={styles.title}>Documentos Requeridos</Text>
       <Text allowFontScaling={false} style={styles.subtitle}>
-        Debes cargar los 3 documentos obligatorios para continuar
+        Debes cargar los {documentos.filter((documento) => documento.obligatorio).length} documentos obligatorios para continuar
       </Text>
     </View>
 
@@ -56,6 +56,11 @@ export const SolicitudDocumentacionStep: React.FC<SolicitudDocumentacionStepProp
             <Text allowFontScaling={false} style={styles.documentName}>
               {documento.nombre}
             </Text>
+            {documento.cantidadImagenesRequerida ? (
+              <Text allowFontScaling={false} style={styles.imageRequirement}>
+                {documento.cantidadImagenesRequerida} imágenes obligatorias
+              </Text>
+            ) : null}
             <View
               style={[
                 styles.statusBadge,
@@ -128,7 +133,7 @@ export const SolicitudDocumentacionStep: React.FC<SolicitudDocumentacionStepProp
     <View style={styles.footer}>
       <Text allowFontScaling={false} style={styles.footerText}>
         * INE Beneficiario y Comprobante Línea de Crédito son opcionales. En el
-        comprobante puedes seleccionar todas las fotos necesarias.
+        comprobante de otra financiera puedes seleccionar todas las fotos necesarias.
       </Text>
     </View>
   </>
@@ -196,6 +201,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  imageRequirement: {
+    fontSize: 12,
+    color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   statusBadge: {

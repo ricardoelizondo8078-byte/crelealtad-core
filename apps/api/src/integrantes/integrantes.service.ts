@@ -679,6 +679,7 @@ export class IntegrantesService {
       'doc_comprobante_ruta': 'Comprobante de domicilio',
       'doc_ine_beneficiario_ruta': 'INE del beneficiario',
       'doc_solicitud_firmada_ruta': 'Solicitud firmada',
+      'doc_control_pagos_ruta': 'Control de pagos CRELEALTAD (2 imágenes)',
     };
 
     return etiquetas[campo] || campo;
@@ -686,6 +687,8 @@ export class IntegrantesService {
 
   async validarSolicitudCompleta(integranteId: string): Promise<{ completa: boolean; pasosIncompletos: string[]; camposFaltantes: Record<string, string[]> }> {
     const solicitud = await this.solicitudesService.getBySolicitanteInterno(integranteId);
+    const historialInterno = await this.getHistorialInterno([integranteId]);
+    const requiereControlPagos = historialInterno.get(integranteId)?.tieneHistorial === true;
     const estaVacio = (valor: unknown): boolean => (
       valor === null
       || valor === undefined
@@ -743,6 +746,9 @@ export class IntegrantesService {
             this.obtenerEtiquetaLegible('monto_solicitado'),
           ],
           'Paso 7': [
+            ...(requiereControlPagos
+              ? [this.obtenerEtiquetaLegible('doc_control_pagos_ruta')]
+              : []),
             this.obtenerEtiquetaLegible('doc_ine_ruta'),
             this.obtenerEtiquetaLegible('doc_comprobante_ruta'),
             this.obtenerEtiquetaLegible('doc_solicitud_firmada_ruta'),
@@ -820,6 +826,12 @@ export class IntegrantesService {
 
     // Paso 7: la referencia debe apuntar a un manifiesto y archivos reales del servidor.
     const documentos = [
+      ...(requiereControlPagos ? [{
+        tipo: 'control_pagos' as const,
+        ruta: solicitud.doc_control_pagos_ruta,
+        campo: 'doc_control_pagos_ruta',
+        cantidadArchivos: 2,
+      }] : []),
       { tipo: 'ine' as const, ruta: solicitud.doc_ine_ruta, campo: 'doc_ine_ruta' },
       { tipo: 'comprobante' as const, ruta: solicitud.doc_comprobante_ruta, campo: 'doc_comprobante_ruta' },
       { tipo: 'solicitud_firmada' as const, ruta: solicitud.doc_solicitud_firmada_ruta, campo: 'doc_solicitud_firmada_ruta' },
@@ -829,6 +841,7 @@ export class IntegrantesService {
         integranteId,
         documento.tipo,
         documento.ruta,
+        documento.cantidadArchivos,
       )
     )));
     const faltantesPaso7 = documentos

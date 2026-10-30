@@ -2,7 +2,6 @@ import React from 'react';
 import {
   ActivityIndicator,
   Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -62,26 +61,13 @@ export const SolicitudDocumentOverlays: React.FC<SolicitudDocumentOverlaysProps>
   onCloseViewer,
 }) => (
   <>
-    <Modal
-      visible={viewingImage !== null}
-      transparent
-      animationType="fade"
-      onRequestClose={onCloseViewingImage}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text allowFontScaling={false} style={styles.modalTitle}>{viewingImage?.titulo}</Text>
-            <TouchableOpacity style={styles.modalCloseButton} onPress={onCloseViewingImage}>
-              <Text allowFontScaling={false} style={styles.modalCloseText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          {viewingImage?.uri ? (
-            <Image source={{ uri: viewingImage.uri }} style={styles.modalImage} resizeMode="contain" />
-          ) : null}
-        </View>
-      </View>
-    </Modal>
+    <DocumentViewer
+      visible={Boolean(viewingImage)}
+      title={viewingImage?.titulo || ''}
+      pages={viewingImage?.uri ? [{ uri: viewingImage.uri, mimeType: 'image/jpeg' }] : []}
+      onClose={onCloseViewingImage}
+      moduleTheme="documentation"
+    />
 
     {previewImage ? (
       <View accessibilityViewIsModal style={styles.localModalLayer}>
@@ -156,39 +142,23 @@ export const SolicitudDocumentOverlays: React.FC<SolicitudDocumentOverlaysProps>
       </View>
     ) : null}
 
-    {documentCarousel ? (
-      <View accessibilityViewIsModal style={styles.localModalLayer}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.carouselModalContainer}>
-            <View style={styles.modalHeader}>
-              <Text allowFontScaling={false} style={styles.modalTitle}>{documentCarousel.title}</Text>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Cerrar comprobante"
-                style={styles.modalCloseButton}
-                onPress={onCloseCarousel}
-              >
-                <Text allowFontScaling={false} style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.savedCarouselContent}>
-              <DocumentImageCarousel
-                title={documentCarousel.title}
-                pages={documentCarousel.pages}
-                moduleTheme="documentation"
-                helperText="Desliza para revisar las fotografías. Toca una imagen para verla completa y hacer zoom."
-              />
-            </View>
-          </View>
-        </View>
-      </View>
-    ) : null}
+    <DocumentViewer
+      visible={Boolean(documentCarousel)}
+      title={documentCarousel?.title || ''}
+      pages={(documentCarousel?.pages || []).map((page) => ({
+        ...page,
+        mimeType: 'image/jpeg',
+      }))}
+      onClose={onCloseCarousel}
+      moduleTheme="documentation"
+    />
 
     <DocumentViewer
       visible={Boolean(documentViewer)}
       title={documentViewer?.title || ''}
       pages={documentViewer?.pages || []}
       onClose={onCloseViewer}
+      moduleTheme="documentation"
     />
   </>
 );
@@ -216,12 +186,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     overflow: 'hidden',
   },
-  carouselModalContainer: {
-    width: '95%',
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -244,17 +208,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '300',
   },
-  modalImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
   previewCarouselContent: {
     flex: 1,
     justifyContent: 'center',
-    padding: spacing.md,
-  },
-  savedCarouselContent: {
     padding: spacing.md,
   },
   previewScrollContent: {

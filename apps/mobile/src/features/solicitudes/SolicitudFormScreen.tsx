@@ -14,7 +14,16 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppHeader, Card, CreditAmountsSummary, PrimaryButton, ScreenContainer, ScreenTitleBar } from '../../components/ui';
+import {
+  AppHeader,
+  Card,
+  CreditAmountsSummary,
+  PrimaryButton,
+  ScreenContainer,
+  ScreenTitleBar,
+  StepFlowLayout,
+  useResponsiveLayout,
+} from '../../components/ui';
 import type { DocumentImageCarouselPage } from '../../components/ui';
 import { apiUrl } from '../../config/api';
 import {
@@ -27,7 +36,7 @@ import { useProcessing } from '../../context/ProcessingContext';
 import { useOfflineSync } from '../../context/OfflineSyncContext';
 import { offlineDraftKey } from '../../offline/offline-sync.ids';
 import { DEFAULT_STATE } from '../../catalogs';
-import { colors, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
+import { colors, layout, moduleThemes, radius, spacing, typography } from '../../theme/tokens';
 import {
   formatISODateToDDMMMYYYY,
   formatPhone,
@@ -58,7 +67,8 @@ import { SolicitudReferenciasStep } from './SolicitudReferenciasStep';
 import { SolicitudValidacionesStep } from './SolicitudValidacionesStep';
 import { SolicitudDocumentOverlays } from './SolicitudDocumentOverlays';
 import {
-  DOCUMENTOS_REQUERIDOS,
+  crearDocumentosRequeridos,
+  reconciliarDocumentosRequeridos,
   RUTAS_DOCUMENTO,
   TIPOS_DOCUMENTO_API,
   type DocumentStatus,
@@ -101,6 +111,8 @@ interface IntegranteSolicitudResumen {
   telefono: string;
   montoSolicitado: number | null;
   montoAutorizadoAnterior?: number | null;
+  cicloNumeroActual?: number | null;
+  tiene_historial_interno?: boolean | null;
 }
 
 interface SolicitudOfflineDraftData {
@@ -127,6 +139,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
   onBack,
   onDataChange,
 }) => {
+  const { isDesktop } = useResponsiveLayout();
   const { refresh: refreshPendingReviews } = usePendingReviews();
   const { run } = useProcessing();
   const {
@@ -142,7 +155,9 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
   } = useOfflineSync();
   const documentationTheme = moduleThemes.documentation;
   const [currentStep, setCurrentStep] = useState(initialStep ?? 1);
-  const [documentos, setDocumentos] = useState<DocumentoRequerido[]>(DOCUMENTOS_REQUERIDOS);
+  const [documentos, setDocumentos] = useState<DocumentoRequerido[]>(
+    () => crearDocumentosRequeridos(false),
+  );
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
   const [openingDocId, setOpeningDocId] = useState<string | null>(null);
   const [documentUploadError, setDocumentUploadError] = useState<string | null>(null);
@@ -283,7 +298,10 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     setForm(draft.form);
     setFechaNacimientoInput(draft.fechaNacimientoInput);
     setCurrentStep(Math.max(1, Math.min(draft.currentStep, WIZARD_STEPS.length)));
-    setDocumentos(draft.documentos);
+    setDocumentos(reconciliarDocumentosRequeridos(
+      draft.documentos,
+      draft.integrante?.tiene_historial_interno === true,
+    ));
     setIntegrante(draft.integrante);
     setMontoReferencia(draft.montoReferencia);
     setMontoMaximoSolicitable(draft.montoMaximoSolicitable);
@@ -457,7 +475,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
       setIsLoadingSolicitud(true);
       setSolicitudLoadError(null);
       isInitialLoadRef.current = true;
-      setDocumentos(DOCUMENTOS_REQUERIDOS.map((documento) => ({ ...documento })));
+      setDocumentos(crearDocumentosRequeridos(false));
       setMontoReferencia(null);
 
       try {
@@ -476,6 +494,9 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             montoAutorizadoAnterior: integranteData.montoAutorizadoAnterior == null
               ? null
               : Number(integranteData.montoAutorizadoAnterior),
+            cicloNumeroActual: integranteData.cicloNumeroActual == null
+              ? null
+              : Number(integranteData.cicloNumeroActual),
           });
 
           const limiteApi = Number(integranteData.montoMaximoSolicitable);
@@ -598,7 +619,9 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             // Actualizar estado de documentos según los campos doc_*_ruta
             const cargarDocumentosAsync = async () => {
               const documentosActualizados = await Promise.all(
-                DOCUMENTOS_REQUERIDOS.map(async (doc) => {
+                crearDocumentosRequeridos(
+                  integranteData?.tiene_historial_interno === true,
+                ).map(async (doc) => {
                   let status: DocumentStatus = doc.status;
                   let uriFrente: string | undefined;
                   let uriReverso: string | undefined;
@@ -1027,6 +1050,99 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         return;
       }
 
+      if (documentoId === 'control_pagos_crelealtad') {
+        const mostrarVistaPrevia = (uris: string[]) => {
+          if (uris.length !== 2) {
+            Alert.alert(
+              'Faltan imágenes',
+              'El Control de pagos CRELEALTAD requiere exactamente 2 imágenes.',
+            );
+            finalizarOperacionDocumento(documentoId);
+            return;
+          }
+          setPreviewImage({
+            uris,
+            documentoId,
+            titulo: 'Control de pagos CRELEALTAD',
+          });
+          finalizarOperacionDocumento(documentoId);
+        };
+
+        const seleccionarDelCarrete = async () => {
+          try {
+            const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (permiso.status !== 'granted') {
+              Alert.alert('Permiso requerido', 'Se necesita acceso al carrete para seleccionar las 2 imágenes.');
+              finalizarOperacionDocumento(documentoId);
+              return;
+            }
+            const resultado = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ['images'],
+              allowsEditing: false,
+              allowsMultipleSelection: true,
+              selectionLimit: 2,
+              orderedSelection: true,
+              quality: 0.9,
+              base64: false,
+            });
+            if (resultado.canceled) {
+              finalizarOperacionDocumento(documentoId);
+              return;
+            }
+            mostrarVistaPrevia(resultado.assets.map((asset) => asset.uri));
+          } catch (error) {
+            Alert.alert('No se pudo abrir el carrete', error instanceof Error ? error.message : 'Intenta nuevamente.');
+            finalizarOperacionDocumento(documentoId);
+          }
+        };
+
+        const tomarConCamara = async () => {
+          try {
+            const permiso = await ImagePicker.requestCameraPermissionsAsync();
+            if (permiso.status !== 'granted') {
+              Alert.alert('Permiso requerido', 'Se necesita acceso a la cámara para tomar las 2 imágenes.');
+              finalizarOperacionDocumento(documentoId);
+              return;
+            }
+            const primera = await ImagePicker.launchCameraAsync({
+              mediaTypes: ['images'],
+              allowsEditing: false,
+              quality: 0.9,
+              base64: false,
+            });
+            if (primera.canceled || !primera.assets[0]) {
+              finalizarOperacionDocumento(documentoId);
+              return;
+            }
+            const segunda = await ImagePicker.launchCameraAsync({
+              mediaTypes: ['images'],
+              allowsEditing: false,
+              quality: 0.9,
+              base64: false,
+            });
+            if (segunda.canceled || !segunda.assets[0]) {
+              finalizarOperacionDocumento(documentoId);
+              return;
+            }
+            mostrarVistaPrevia([primera.assets[0].uri, segunda.assets[0].uri]);
+          } catch (error) {
+            Alert.alert('No se pudo abrir la cámara', error instanceof Error ? error.message : 'Intenta nuevamente.');
+            finalizarOperacionDocumento(documentoId);
+          }
+        };
+
+        Alert.alert(
+          'Control de pagos CRELEALTAD',
+          'Agrega las 2 imágenes desde la cámara o el carrete.',
+          [
+            { text: 'Cancelar', style: 'cancel', onPress: () => finalizarOperacionDocumento(documentoId) },
+            { text: 'Carrete', onPress: () => void seleccionarDelCarrete() },
+            { text: 'Cámara', onPress: () => void tomarConCamara() },
+          ],
+        );
+        return;
+      }
+
       // Solicitar permisos para acceder a la galería
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -1123,7 +1239,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         }
 
         // Mostrar previsualización antes de guardar
-        const nombreDoc = DOCUMENTOS_REQUERIDOS.find(d => d.id === documentoId)?.nombre || 'Documento';
+        const nombreDoc = documentos.find(d => d.id === documentoId)?.nombre || 'Documento';
         setPreviewImage({
           uris: result.assets.map((asset) => asset.uri),
           documentoId,
@@ -1161,6 +1277,13 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
     documentoId: string,
     uris: string[],
   ): Promise<boolean> => {
+    if (documentoId === 'control_pagos_crelealtad' && uris.length !== 2) {
+      Alert.alert(
+        'Faltan imágenes',
+        'El Control de pagos CRELEALTAD requiere exactamente 2 imágenes.',
+      );
+      return false;
+    }
     if (!iniciarOperacionDocumento(documentoId)) {
       return false;
     }
@@ -1194,7 +1317,11 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
           name: `${tipo}-${index + 1}.${uri.split('?')[0].split('.').pop()?.toLowerCase() === 'png' ? 'png' : 'jpg'}`,
         })),
       });
-      const durableUris = result.durableFileUris?.length ? result.durableFileUris : uris;
+      const durableUris = result.status === 'CONFIRMED'
+        ? []
+        : result.durableFileUris?.length
+          ? result.durableFileUris
+          : uris;
       const rutaServidor = result.status === 'CONFIRMED'
         ? `/solicitudes/integrante/${integranteId}/documentos/${tipo}/${result.operationId}`
         : undefined;
@@ -1209,7 +1336,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                   : 'PENDIENTE_SUBIR' as const,
               uriFrente: durableUris[0],
               uriReverso: durableUris[1],
-              urisLocales: durableUris,
+              urisLocales: durableUris.length > 0 ? durableUris : undefined,
               rutaServidor,
             }
           : doc
@@ -1275,7 +1402,10 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         : [documento.uriFrente, documento.uriReverso]
             .filter((uri): uri is string => Boolean(uri));
 
-      if (documento.id === 'comprobante_linea_credito' && urisLocales.length > 0) {
+      if (
+        ['control_pagos_crelealtad', 'comprobante_linea_credito'].includes(documento.id)
+        && urisLocales.length > 0
+      ) {
         await preparedPreviewCleanupRef.current?.();
         const prepared = await prepareFilePreview(urisLocales);
         preparedPreviewCleanupRef.current = prepared.cleanup;
@@ -1327,7 +1457,7 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         api.get<DocumentoRemoto>(documento.rutaServidor, { showProcessing: false }),
         getAuthorizationHeaders(),
       ]);
-      if (documento.id === 'comprobante_linea_credito') {
+      if (['control_pagos_crelealtad', 'comprobante_linea_credito'].includes(documento.id)) {
         const imagenes = remoto.archivos.filter((archivo) => archivo.mime_type.startsWith('image/'));
         if (imagenes.length === 0) {
           throw new Error('El comprobante no contiene imágenes que puedan mostrarse.');
@@ -1503,8 +1633,12 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 0}
         >
+        <View style={isDesktop ? styles.desktopContextRow : undefined}>
         {/* Tarjeta del integrante */}
-        <View style={styles.fixedSolicitanteContainer}>
+        <View style={[
+          styles.fixedSolicitanteContainer,
+          isDesktop && styles.fixedSolicitanteContainerDesktop,
+        ]}>
           <Card style={styles.integranteCard}>
             <View style={styles.integranteHeader}>
               {/* Nombre a la izquierda - Actualización inmediata */}
@@ -1522,8 +1656,11 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 
             {/* Teléfono e importes del ciclo */}
             {integrante && (
-              <>
-                <View style={styles.contactInfoRow}>
+              <View style={isDesktop ? styles.integranteDetailsDesktop : undefined}>
+                <View style={[
+                  styles.contactInfoRow,
+                  isDesktop && styles.contactInfoRowDesktop,
+                ]}>
                   {/* Teléfono - Ícono fuera del recuadro celeste */}
                   <View style={styles.phoneRowContainer}>
                     <TouchableOpacity
@@ -1537,23 +1674,41 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
                     </View>
                   </View>
                 </View>
-                <CreditAmountsSummary
-                  previousAmount={integrante.montoAutorizadoAnterior}
-                  requestedAmount={
-                    form.montoSolicitado.trim()
-                      && Number.isFinite(Number(form.montoSolicitado))
-                      && Number(form.montoSolicitado) > 0
-                      ? Number(form.montoSolicitado)
-                      : null
-                  }
-                />
-              </>
+                <View style={isDesktop ? styles.creditAmountsDesktop : undefined}>
+                  <CreditAmountsSummary
+                    previousAmount={integrante.montoAutorizadoAnterior}
+                    requestedAmount={
+                      form.montoSolicitado.trim()
+                        && Number.isFinite(Number(form.montoSolicitado))
+                        && Number(form.montoSolicitado) > 0
+                        ? Number(form.montoSolicitado)
+                        : null
+                    }
+                  />
+                </View>
+              </View>
             )}
           </Card>
         </View>
+        </View>
 
+        <StepFlowLayout
+          currentStepId={currentStep}
+          moduleTheme="documentation"
+          steps={WIZARD_STEPS.map((step) => ({
+            id: step.id,
+            title: step.shortTitle,
+            complete: isStepComplete(step.id),
+          }))}
+        >
+        <View style={isDesktop ? styles.desktopActiveStep : styles.mobileActiveStep}>
+
+        <View style={isDesktop ? styles.desktopProgressColumn : undefined}>
         {/* Barra de progreso del wizard */}
-        <View style={styles.wizardProgressContainer}>
+        <View style={[
+          styles.wizardProgressContainer,
+          isDesktop && styles.wizardProgressContainerDesktop,
+        ]}>
           <View style={styles.wizardHeaderOneLine}>
             <Text allowFontScaling={false} style={styles.wizardStepTitleCompact}>
               {WIZARD_STEPS[currentStep - 1].title}
@@ -1584,13 +1739,15 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             <Text allowFontScaling={false} style={styles.autoSaveTextError}>Revisión necesaria antes de sincronizar</Text>
           )}
         </View>
+        </View>
 
         <ScrollView
           ref={scrollViewRef}
-          contentContainerStyle={styles.form}
+          style={styles.formScroll}
+          contentContainerStyle={[styles.form, isDesktop && styles.formDesktop]}
           keyboardShouldPersistTaps="always"
           keyboardDismissMode="on-drag"
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={Platform.OS === 'web'}
           onScrollBeginDrag={() => Keyboard.dismiss()}
         >
           <Card>
@@ -1760,7 +1917,10 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
         </ScrollView>
 
         {/* Botones de navegación fijos en la parte inferior */}
-        <View style={styles.navigationButtons}>
+        <View style={[
+          styles.navigationButtons,
+          isDesktop && styles.navigationButtonsDesktop,
+        ]}>
           {currentStep > 1 && (
             <TouchableOpacity
               style={styles.backButton}
@@ -1805,6 +1965,8 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
             </TouchableOpacity>
           )}
         </View>
+        </View>
+        </StepFlowLayout>
         </KeyboardAvoidingView>
       )}
 
@@ -1827,7 +1989,17 @@ export const SolicitudFormScreen: React.FC<SolicitudFormScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  keyboardContainer: { flex: 1 },
+  keyboardContainer: { flex: 1, minHeight: 0 },
+  mobileActiveStep: { flex: 1, minHeight: 0 },
+  desktopActiveStep: {
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    borderRadius: radius.md,
+  },
   loadStateContainer: {
     flex: 1,
     alignItems: 'center',
@@ -1845,7 +2017,22 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
   },
-  form: { padding: spacing.lg, gap: spacing.md, paddingBottom: 400 },
+  form: {
+    width: '100%',
+    maxWidth: layout.detailMaxWidth,
+    alignSelf: 'center',
+    padding: spacing.lg,
+    gap: spacing.md,
+    paddingBottom: 400,
+  },
+  formScroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  formDesktop: {
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+  },
   grupoBanner: {
     backgroundColor: moduleThemes.documentation.headerBg,
     paddingVertical: 6,
@@ -1867,6 +2054,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     backgroundColor: colors.background,
+  },
+  desktopContextRow: {
+    width: '100%',
+    maxWidth: layout.contentMaxWidth,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    paddingHorizontal: layout.desktopGutter,
+  },
+  fixedSolicitanteContainerDesktop: {
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 0,
+  },
+  integranteDetailsDesktop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  desktopProgressColumn: {
+    width: '100%',
+    minWidth: 0,
   },
   integranteCard: {
     padding: spacing.sm,
@@ -1902,6 +2111,17 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E7EB',
     gap: spacing.sm,
   },
+  contactInfoRowDesktop: {
+    flex: 1,
+    minWidth: 0,
+    marginTop: 0,
+    paddingTop: 0,
+    borderTopWidth: 0,
+  },
+  creditAmountsDesktop: {
+    flex: 2,
+    minWidth: 0,
+  },
   phoneRowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1934,6 +2154,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  wizardProgressContainerDesktop: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderTopLeftRadius: radius.md,
+    borderTopRightRadius: radius.md,
+    justifyContent: 'center',
   },
   wizardHeaderOneLine: {
     flexDirection: 'row',
@@ -2022,6 +2249,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
+  },
+  navigationButtonsDesktop: {
+    position: 'relative',
+    width: '100%',
+    maxWidth: layout.detailMaxWidth,
+    alignSelf: 'center',
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    shadowOpacity: 0,
+    elevation: 0,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft,
   },
   continueButton: {
     flex: 1,

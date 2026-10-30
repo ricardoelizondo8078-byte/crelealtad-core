@@ -249,17 +249,25 @@ export const materializeOfflineUrisForPreview = async (
   }
 
   const operationId = operationIdFromEncryptedUri(encryptedUris[0]);
-  const references: OfflineFileRef[] = uris.map((uri, index) => ({
-    uri,
-    name: uri.endsWith(ENCRYPTED_EXTENSION)
-      ? Paths.basename(uri).slice(0, -ENCRYPTED_EXTENSION.length).replace(/^\d+-/, '')
-      : Paths.basename(uri),
-    fieldName: `preview-${index}`,
-    size: new File(uri).size,
-    encryption: uri.endsWith(ENCRYPTED_EXTENSION)
-      ? { version: 1, algorithm: 'AES-256-GCM' }
-      : undefined,
-  }));
+  const references: OfflineFileRef[] = uris.map((uri, index) => {
+    const file = new File(uri);
+    if (!file.exists || file.size <= 0) {
+      throw new Error(
+        'La copia local de esta evidencia ya no está disponible. Vuelve a abrirla para consultar la versión confirmada por CRELEALTAD.',
+      );
+    }
+    return {
+      uri,
+      name: uri.endsWith(ENCRYPTED_EXTENSION)
+        ? Paths.basename(uri).slice(0, -ENCRYPTED_EXTENSION.length).replace(/^\d+-/, '')
+        : Paths.basename(uri),
+      fieldName: `preview-${index}`,
+      size: file.size,
+      encryption: uri.endsWith(ENCRYPTED_EXTENSION)
+        ? { version: 1, algorithm: 'AES-256-GCM' }
+        : undefined,
+    };
+  });
   const result = await materializeOfflineFiles(
     userId,
     'preview',
